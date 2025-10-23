@@ -15,6 +15,7 @@
 - [x] Refactor processing script into modular pipeline with reporting
 - [x] Update lint/type/security configurations and ensure green baseline
 - [ ] Expand expectation coverage to eliminate contact email format failure
+- [x] Gate CI processing behind QA workflow checks (lint, format, tests, types, security)
 
 ## Deliverables
 
@@ -30,6 +31,7 @@
 - [x] Ruff lint + format clean
 - [x] Mypy type checks scoped to project packages
 - [x] Bandit security scan clean
+- [x] GitHub Actions `qa` job must pass before processing artifacts
 - [ ] Data validation schema + Great Expectations suite succeed with zero critical errors
 - [ ] Ensure refined workbook artifacts remain gitignored and reproducible
 
@@ -46,5 +48,8 @@
 - Great Expectations suite currently fails `contact_primary_email format`; investigate expectation definitions or normalization rules.
 - Need to ensure POPIA compliance by redacting/limiting PII exposure in outputs and reports.
 - Refined workbook now generated per-run; confirm CI artifact upload remains configured.
+- QA workflow now blocks artifact generation if lint/test/type/security checks fail.
+- Ruff lint currently flags `UP024` in `src/hotpass/pipeline.py`; plan targeted clean-up.
+- `ruff format --check` reports formatting drift in `scripts/process_data.py`; reconcile formatting with project standards.
 - Pending decision on final SSOT schema fields and deduplication rules.
 - Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.

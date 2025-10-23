@@ -18,7 +18,16 @@ This repository is optimized for validating, normalizing, processing, and refini
 
 ## GitHub Actions
 
-The repository uses ephemeral runners via GitHub Actions to automatically process data on pushes to the main branch. The refined data is uploaded as an artifact.
+The repository uses ephemeral runners via GitHub Actions to automatically process data on pushes to the main branch. A `qa` job provisions Python 3.13 with cached dependencies and enforces quality controls before any data processing runs:
+
+- `pip install -r requirements.txt`
+- `ruff check`
+- `ruff format --check`
+- `pytest`
+- `mypy src tests scripts`
+- `bandit -r src scripts`
+
+Only after these checks succeed does the `process-data` job execute the refinement script and upload the refined workbook as an artifact.
 
 ## Copilot Instructions
 
