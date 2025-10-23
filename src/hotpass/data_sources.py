@@ -68,7 +68,7 @@ class RawRecord:
 
 def _extract_normalized_emails(value: object | None) -> list[str]:
     if isinstance(value, str):
-        parts = re.split(r"[\s;,/|]+", value)
+        parts = [p.strip() for p in re.split(r"[;,/|]+", value) if p.strip()]
     else:
         parts = [value]
     emails: list[str] = []
