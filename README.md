@@ -14,7 +14,7 @@ This repository is optimized for validating, normalizing, processing, and refini
 1. Clone the repository.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Place your Excel files in the `data/` directory.
-4. Run the processing script to regenerate the refined workbook: `python scripts/process_data.py`
+4. Run the processing script to regenerate the refined workbook: `python scripts/process_data.py`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
 
 ## GitHub Actions
 
@@ -27,7 +27,13 @@ The repository uses ephemeral runners via GitHub Actions to automatically proces
 - `mypy src tests scripts`
 - `bandit -r src scripts`
 
-Only after these checks succeed does the `process-data` job execute the refinement script and upload the refined workbook as an artifact.
+Only after these checks succeed does the `process-data` job execute the refinement script, upload the refined workbook, and package the matching archive as artifacts.
+
+## Retrieving Packaged Artifacts
+
+- **Local runs**: `python scripts/process_data.py --archive` writes the refined workbook to `data/refined_data.xlsx` and a zip archive named `refined-data-<timestamp>-<checksum>.zip` to `dist/`. The archive contains the workbook and a `SHA256SUMS` manifest so the checksum in the filename can be verified.
+- **GitHub Actions artifacts**: Successful workflow runs publish two artifacts—`refined-data` (the Excel workbook) and `refined-data-archive` (the packaged zip). Download them directly from the workflow summary page.
+- **Data artifacts branch**: On pushes to `main`, the `publish-artifact` job downloads the packaged zip and force-pushes it to the `data-artifacts` branch using the `DATA_ARTIFACT_PAT` secret. Consumers can fetch the branch to retrieve the latest archive without navigating workflow logs.
 
 ## Data Quality Expectations
 
