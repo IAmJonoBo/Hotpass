@@ -155,7 +155,7 @@ def test_pipeline_generates_refined_dataset(tmp_path: Path, sample_data_dir: Pat
     assert aero_record["contact_primary_phone"] == "+27821234567"
     assert aero_record["website"] == "https://aero.example"
     assert aero_record["province"] == "Gauteng"
-    assert pytest.approx(aero_record["data_quality_score"], 0.01) == 1.0
+    assert aero_record["data_quality_score"] == pytest.approx(1.0, abs=0.01)
     assert "Reachout Database" in aero_record["source_datasets"]
     assert aero_record["last_interaction_date"] == "2025-03-10"
 
