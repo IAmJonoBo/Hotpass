@@ -70,7 +70,7 @@ def _extract_normalized_emails(value: object | None) -> list[str]:
     if isinstance(value, str):
         parts = [p.strip() for p in re.split(r"[;,/|]+", value) if p.strip()]
     else:
-        parts = [value]
+        parts = []
     emails: list[str] = []
     for part in parts:
         normalised = normalize_email(part)
