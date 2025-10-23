@@ -49,7 +49,7 @@
 - Need to ensure POPIA compliance by redacting/limiting PII exposure in outputs and reports.
 - Refined workbook now generated per-run; confirm CI artifact upload remains configured.
 - QA workflow now blocks artifact generation if lint/test/type/security checks fail.
-- Ruff lint currently flags `UP024` in `src/hotpass/pipeline.py`; plan targeted clean-up.
-- `ruff format --check` reports formatting drift in `scripts/process_data.py`; reconcile formatting with project standards.
+- Ruff `UP024` warning in `src/hotpass/pipeline.py` resolved by consolidating error handling under `OSError`.
+- `scripts/process_data.py` reformatted with `ruff format` to match repository standards; monitor for future drift.
 - Pending decision on final SSOT schema fields and deduplication rules.
 - Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.
