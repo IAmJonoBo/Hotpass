@@ -10,7 +10,7 @@ from pandera import Column, DataFrameSchema
 
 try:
     from great_expectations.dataset.pandas_dataset import PandasDataset  # type: ignore
-except Exception:  # pragma: no cover - fallback for trimmed GE installations
+except ImportError:  # pragma: no cover - fallback for trimmed GE installations
     PandasDataset = None  # type: ignore[assignment]
 
 
