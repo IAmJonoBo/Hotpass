@@ -16,6 +16,8 @@
 - [x] Update lint/type/security configurations and ensure green baseline
 - [x] Expand expectation coverage to eliminate contact email format failure
 - [x] Gate CI processing behind QA workflow checks (lint, format, tests, types, security)
+- [x] Align fallback expectation thresholds with GE defaults and normalise blank contact values
+- [ ] Monitor override needs for contact expectation thresholds using fresh vendor samples
 
 ## Deliverables
 
@@ -31,6 +33,7 @@
 - [x] Ruff lint + format clean
 - [x] Mypy type checks scoped to project packages
 - [x] Bandit security scan clean
+- [x] Email/phone/website expectations require ≥85% regex match among non-null/non-blank values (configurable per run)
 - [x] GitHub Actions `qa` job must pass before processing artifacts
 - [x] Data validation schema + Great Expectations suite succeed with zero critical errors
 - [ ] Ensure refined workbook artifacts remain gitignored and reproducible
@@ -54,3 +57,4 @@
 - `scripts/process_data.py` reformatted with `ruff format` to match repository standards; monitor for future drift.
 - Pending decision on final SSOT schema fields and deduplication rules.
 - Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.
+- Contact expectation defaults documented: blanks are treated as null-equivalent, and threshold tuning (default 0.85) must be justified when deviating for specific datasets.
