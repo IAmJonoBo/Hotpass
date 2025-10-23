@@ -72,7 +72,12 @@ def run_expectations(
         "website",
     ]
     for column in contact_columns:
-        sanitized[column] = sanitized[column].replace(r"^\s*$", pd.NA, regex=True)
+        sanitized[column] = (
+            sanitized[column]
+            .astype(str)
+            .replace(r"^\s*$", pd.NA, regex=True)
+            .where(sanitized[column].notna(), pd.NA)
+        )
 
     failures: list[str] = []
     if PandasDataset is not None:
