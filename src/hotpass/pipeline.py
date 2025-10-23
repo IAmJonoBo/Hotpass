@@ -244,7 +244,7 @@ def _load_sources(config: PipelineConfig) -> pd.DataFrame:
             frame = loader(config.input_dir, config.country_code)
         except FileNotFoundError:
             continue
-        except (OSError, IOError, ValueError) as exc:  # pragma: no cover - defensive logging hook
+        except (OSError, ValueError) as exc:  # pragma: no cover - defensive logging hook
             raise RuntimeError(f"Failed to load source via {loader.__name__}: {exc}") from exc
         if not frame.empty:
             frames.append(frame)
