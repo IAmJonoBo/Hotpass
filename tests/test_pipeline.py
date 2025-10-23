@@ -122,7 +122,7 @@ def sample_data_dir(tmp_path: Path) -> Path:
             "Contact Number": ["0821234567", "0215550000"],
             "Contact Email Address": [
                 "jane.doe@aero.example",
-                "kelly@heliops.example",
+                "kelly@heliops.example; ops@heliops.example",
             ],
         }
     )
@@ -178,6 +178,7 @@ def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_
     heli = result.refined.loc[result.refined["organization_name"] == "Heli Ops"].iloc[0]
 
     assert heli["contact_primary_email"] == "kelly@heliops.example"
+    assert heli["contact_secondary_emails"] == "ops@heliops.example"
     assert heli["data_quality_score"] < 1.0
     assert "missing_website" in heli["data_quality_flags"].split(";")
     assert heli["last_interaction_date"] == "2025-02-18"

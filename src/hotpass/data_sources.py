@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -65,6 +66,19 @@ class RawRecord:
         }
 
 
+def _extract_normalized_emails(value: object | None) -> list[str]:
+    if isinstance(value, str):
+        parts = re.split(r"[\s;,/|]+", value)
+    else:
+        parts = [value]
+    emails: list[str] = []
+    for part in parts:
+        normalised = normalize_email(part)
+        if normalised and normalised not in emails:
+            emails.append(normalised)
+    return emails
+
+
 def _normalise_contacts(
     df: pd.DataFrame,
     country_code: str,
@@ -77,7 +91,14 @@ def _normalise_contacts(
     for _, row in df.iterrows():
         name_parts = [clean_string(row.get(field)) for field in name_fields]
         name = join_non_empty(name_parts)
-        email = normalize_email(row.get(email_field))
+        raw_email = row.get(email_field)
+        email_candidates = _extract_normalized_emails(raw_email)
+        if not email_candidates:
+            email_value: str | list[str] | None = None
+        elif len(email_candidates) == 1:
+            email_value = email_candidates[0]
+        else:
+            email_value = email_candidates
         phones: list[str] = []
         for field in phone_fields:
             normalised_phone = normalize_phone(row.get(field), country_code=country_code)
@@ -87,7 +108,7 @@ def _normalise_contacts(
         contacts.append(
             {
                 "name": name,
-                "email": email,
+                "email": email_value,
                 "phones": [phone for phone in phones if phone],
                 "role": role,
             }
@@ -112,6 +133,10 @@ def _split_contact_fields(
         email = contact.get("email")
         if isinstance(email, str) and email:
             emails.append(email)
+        elif isinstance(email, list):
+            for value in email:
+                if isinstance(value, str) and value:
+                    emails.append(value)
         contact_phones = contact.get("phones", [])
         if isinstance(contact_phones, list):
             for phone in contact_phones:
@@ -249,9 +274,16 @@ def load_sacaa_cleaned(input_dir: Path, country_code: str) -> pd.DataFrame:
         org_name = clean_string(row.get("Name of Organisation"))
         if not org_name:
             continue
+        email_candidates = _extract_normalized_emails(row.get("Contact Email Address"))
+        if not email_candidates:
+            contact_email: str | list[str] | None = None
+        elif len(email_candidates) == 1:
+            contact_email = email_candidates[0]
+        else:
+            contact_email = email_candidates
         contact_row = {
             "name": clean_string(row.get("Contact Person")),
-            "email": normalize_email(row.get("Contact Email Address")),
+            "email": contact_email,
             "phones": [normalize_phone(row.get("Contact Number"), country_code=country_code)],
             "role": None,
         }
