@@ -4,7 +4,7 @@ This repository is optimized for validating, normalizing, processing, and refini
 
 ## Project Structure
 
-- `data/`: Contains input Excel files and output refined data.
+- `data/`: Contains input Excel files. Run the pipeline to regenerate the refined workbook (ignored in git).
 - `scripts/`: Python scripts for data processing.
 - `docs/`: Additional documentation.
 - `.github/workflows/`: GitHub Actions for automated processing.
@@ -14,7 +14,7 @@ This repository is optimized for validating, normalizing, processing, and refini
 1. Clone the repository.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Place your Excel files in the `data/` directory.
-4. Run the processing script: `python scripts/process_data.py`
+4. Run the processing script to regenerate the refined workbook: `python scripts/process_data.py`
 
 ## GitHub Actions
 
