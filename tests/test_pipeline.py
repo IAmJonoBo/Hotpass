@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import hotpass.quality as quality
 from hotpass.pipeline import SSOT_COLUMNS, PipelineConfig, PipelineResult, run_pipeline
 
 
@@ -182,3 +183,45 @@ def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_
     assert heli["data_quality_score"] < 1.0
     assert "missing_website" in heli["data_quality_flags"].split(";")
     assert heli["last_interaction_date"] == "2025-02-18"
+
+
+def test_run_expectations_fallback_pass(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(quality, "PandasDataset", None)
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Valid Org", "Blank Org"],
+            "organization_slug": ["valid-org", "blank-org"],
+            "data_quality_score": [0.9, 0.8],
+            "contact_primary_email": ["valid@example.com", ""],
+            "contact_primary_phone": ["+27123456789", ""],
+            "website": ["https://valid.example", ""],
+            "country": ["South Africa", "South Africa"],
+        }
+    )
+
+    summary = quality.run_expectations(df)
+
+    assert summary.success
+    assert summary.failures == []
+
+
+def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(quality, "PandasDataset", None)
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Org A", "Org B"],
+            "organization_slug": ["org-a", "org-b"],
+            "data_quality_score": [0.7, 0.6],
+            "contact_primary_email": ["invalid", "also_invalid"],
+            "contact_primary_phone": ["+27123456789", "+27123456780"],
+            "website": ["https://org-a.example", "https://org-b.example"],
+            "country": ["South Africa", "South Africa"],
+        }
+    )
+
+    summary = quality.run_expectations(df, email_mostly=0.9)
+
+    assert not summary.success
+    assert any("contact_primary_email format" in failure for failure in summary.failures)

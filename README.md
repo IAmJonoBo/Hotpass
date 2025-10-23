@@ -29,6 +29,10 @@ The repository uses ephemeral runners via GitHub Actions to automatically proces
 
 Only after these checks succeed does the `process-data` job execute the refinement script and upload the refined workbook as an artifact.
 
+## Data Quality Expectations
+
+Hotpass uses Great Expectations when available, with a manual fallback that mirrors its behaviour. Email, phone, and website columns must match their respective regex patterns for at least 85% of non-null, non-blank rows by default (configurable via `run_expectations`). Blank strings are normalised to null-equivalent values prior to validation so that optional fields do not count against match rates. Override the default `mostly` thresholds only when a specific dataset justifies a different tolerance, and record the rationale in project documentation.
+
 ## Copilot Instructions
 
 When using GitHub Copilot for this project:

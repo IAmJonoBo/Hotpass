@@ -58,10 +58,30 @@ def build_ssot_schema() -> DataFrameSchema:
     )
 
 
-def run_expectations(df: pd.DataFrame) -> ExpectationSummary:
+def run_expectations(
+    df: pd.DataFrame,
+    *,
+    email_mostly: float = 0.85,
+    phone_mostly: float = 0.85,
+    website_mostly: float = 0.85,
+) -> ExpectationSummary:
+    sanitized = df.copy()
+    contact_columns = [
+        "contact_primary_email",
+        "contact_primary_phone",
+        "website",
+    ]
+    for column in contact_columns:
+        sanitized[column] = (
+            sanitized[column]
+            .astype(str)
+            .replace(r"^\s*$", pd.NA, regex=True)
+            .where(sanitized[column].notna(), pd.NA)
+        )
+
     failures: list[str] = []
     if PandasDataset is not None:
-        dataset = PandasDataset(df.copy())
+        dataset = PandasDataset(sanitized)
         dataset.set_default_expectation_argument("catch_exceptions", True)
 
         dataset.expect_column_values_to_not_be_null("organization_name")
@@ -70,12 +90,16 @@ def run_expectations(df: pd.DataFrame) -> ExpectationSummary:
             "data_quality_score", min_value=0.0, max_value=1.0, mostly=1.0
         )
         dataset.expect_column_values_to_match_regex(
-            "contact_primary_email", r"^[^@\s]+@[^@\s]+\.[^@\s]+$", mostly=0.85
+            "contact_primary_email",
+            r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            mostly=email_mostly,
         )
         dataset.expect_column_values_to_match_regex(
-            "contact_primary_phone", r"^\+\d{6,}$", mostly=0.85
+            "contact_primary_phone",
+            r"^\+\d{6,}$",
+            mostly=phone_mostly,
         )
-        dataset.expect_column_values_to_match_regex("website", r"^https?://", mostly=0.85)
+        dataset.expect_column_values_to_match_regex("website", r"^https?://", mostly=website_mostly)
         dataset.expect_column_values_to_be_in_set("country", {"South Africa"})
 
         validation = dataset.validate()
@@ -99,22 +123,40 @@ def run_expectations(df: pd.DataFrame) -> ExpectationSummary:
             success = False
             failures.append(message)
 
-    _record_failure(df["organization_name"].notna().all(), "organization_name nulls")
-    _record_failure(df["organization_slug"].notna().all(), "organization_slug nulls")
-    _record_failure(df["data_quality_score"].between(0.0, 1.0).all(), "data_quality_score bounds")
-
-    email_series = df["contact_primary_email"].dropna()
+    _record_failure(sanitized["organization_name"].notna().all(), "organization_name nulls")
+    _record_failure(sanitized["organization_slug"].notna().all(), "organization_slug nulls")
     _record_failure(
-        email_series.str.contains(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", regex=True).all(),
-        "contact_primary_email format",
+        sanitized["data_quality_score"].between(0.0, 1.0).all(),
+        "data_quality_score bounds",
     )
 
-    phone_series = df["contact_primary_phone"].dropna()
-    _record_failure(phone_series.str.startswith("+").all(), "contact_primary_phone format")
+    def _record_mostly(series: pd.Series, pattern: str, mostly: float, message: str) -> None:
+        relevant = series.dropna()
+        if relevant.empty:
+            return
+        matches = relevant.astype(str).str.match(pattern)
+        success_ratio = float(matches.mean())
+        if success_ratio >= mostly:
+            return
+        _record_failure(
+            False,
+            f"{message} success_rate={success_ratio:.0%} threshold={mostly:.0%}",
+        )
 
-    website_series = df["website"].dropna()
-    _record_failure(website_series.str.startswith("http").all(), "website scheme")
+    _record_mostly(
+        sanitized["contact_primary_email"],
+        r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+        email_mostly,
+        "contact_primary_email format",
+    )
+    _record_mostly(
+        sanitized["contact_primary_phone"],
+        r"^\+\d{6,}$",
+        phone_mostly,
+        "contact_primary_phone format",
+    )
+    _record_mostly(sanitized["website"], r"^https?://", website_mostly, "website scheme")
 
-    _record_failure((df["country"] == "South Africa").all(), "country constraint")
+    _record_failure((sanitized["country"] == "South Africa").all(), "country constraint")
 
     return ExpectationSummary(success=success, failures=failures)
