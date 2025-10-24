@@ -1,15 +1,20 @@
 # Hotpass Data Refinement Repository
 
 [![Release Status](https://img.shields.io/badge/status-release--ready-brightgreen)](https://github.com/IAmJonoBo/Hotpass)
-[![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/IAmJonoBo/Hotpass)
+[![Test Coverage](https://img.shields.io/badge/coverage-87%25-brightgreen)](https://github.com/IAmJonoBo/Hotpass)
 [![Python Version](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
 
 This repository is optimized for validating, normalizing, processing, and refining multiple Excel documents into a highly-refined single source of truth. It uses Python with libraries like pandas, pandera, and great-expectations for data quality assurance.
 
-**🎉 RELEASE READY**: Hotpass has reached release state with 85% test coverage, comprehensive QA gates, and all major roadmap features implemented. See [Next Steps](Next_Steps.md) for release notes.
+**🎉 RELEASE READY**: Hotpass has reached release state with 87% test coverage (152 tests), comprehensive QA gates, orchestration with Prefect, entity resolution with Splink, and real-time monitoring dashboard. See [Implementation Status](IMPLEMENTATION_STATUS.md) for detailed roadmap progress.
 
-**NEW**: Hotpass now includes comprehensive enhancements for industry-agnostic data consolidation with intelligent column mapping, advanced error handling, and multi-contact support. See [Implementation Guide](docs/implementation-guide.md) and [Gap Analysis](docs/gap-analysis.md) for details.
+**NEW FEATURES**:
+- ✨ **Orchestration**: Prefect-based workflow orchestration with retry logic and scheduling
+- ✨ **Observability**: OpenTelemetry metrics and monitoring
+- ✨ **Entity Resolution**: Probabilistic duplicate detection with Splink
+- ✨ **Dashboard**: Real-time Streamlit monitoring dashboard
+- ✨ **Enhanced CLI**: New commands for orchestration, entity resolution, and dashboard
 
 ## Key Features
 
@@ -39,14 +44,81 @@ This repository is optimized for validating, normalizing, processing, and refini
   - [Expectation Catalogue](docs/expectation-catalogue.md) - Validation rules
 - `.github/workflows/`: GitHub Actions for automated processing.
 
-## Setup
+## Installation
 
-1. Install [uv](https://github.com/astral-sh/uv) (one-time): `curl -LsSf https://astral.sh/uv/install.sh | sh`.
-2. Clone the repository and create a virtual environment: `uv venv`.
-3. Synchronise dependencies (including dev/doc extras): `uv sync --extra dev --extra docs`.
-4. Install pre-commit hooks: `uv run pre-commit install`.
-5. Place your Excel files in the `data/` directory.
-6. Run the pipeline via uv: `uv run hotpass`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
+### Prerequisites
+- Python 3.13
+- [uv](https://github.com/astral-sh/uv) package manager
+
+### Basic Installation
+```bash
+# Install uv (one-time)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone repository
+git clone https://github.com/IAmJonoBo/Hotpass.git
+cd Hotpass
+
+# Create virtual environment and install dependencies
+uv venv
+uv sync --extra dev --extra docs
+
+# Install pre-commit hooks
+uv run pre-commit install
+```
+
+### Feature-Specific Installation
+
+**With Orchestration & Monitoring:**
+```bash
+uv sync --extra dev --extra docs --extra orchestration --extra dashboards
+```
+
+**With Entity Resolution:**
+```bash
+uv sync --extra dev --extra docs --extra entity_resolution
+```
+
+**Full Installation (All Features):**
+```bash
+uv sync --extra dev --extra docs --extra orchestration --extra entity_resolution --extra ml_scoring --extra enrichment --extra geospatial --extra compliance --extra dashboards --extra caching
+```
+
+## Quick Start
+
+### Standard Pipeline Run
+```bash
+# Basic usage
+hotpass
+
+# With options
+hotpass --input-dir ./data --output-path ./output/refined.xlsx --archive
+```
+
+### Orchestrated Run (NEW)
+```bash
+# Run with Prefect orchestration
+hotpass-enhanced orchestrate --profile aviation --archive
+
+# Deploy to Prefect for scheduled runs
+hotpass-enhanced deploy --name hotpass-prod --schedule "0 2 * * *"
+```
+
+### Entity Resolution (NEW)
+```bash
+# Deduplicate data with probabilistic matching
+hotpass-enhanced resolve \
+  --input-file data/duplicates.xlsx \
+  --output-file data/clean.xlsx \
+  --threshold 0.8 \
+  --use-splink
+```
+
+### Monitoring Dashboard (NEW)
+```bash
+# Launch real-time monitoring dashboard
+hotpass-enhanced dashboard --port 8501
+```
 
 ## CLI Usage
 
