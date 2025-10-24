@@ -10,7 +10,7 @@
 
 ## Phase Breakdown
 
-### Phase 0 – Foundations *(Complete – October 2025)*
+### Phase 0 – Foundations _(Complete – October 2025)_
 
 - [x] Adopted `uv` for dependency management (pyproject, lock file, CI integration, Docker image).
 - [x] Introduced pre-commit hooks (`ruff`, `mypy`, `black`, `detect-secrets`) with Python 3.13 default.

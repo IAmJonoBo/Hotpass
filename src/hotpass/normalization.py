@@ -72,7 +72,9 @@ def normalize_phone(value: str | None, country_code: str = "ZA") -> str | None:
         parsed = phonenumbers.parse(digits, country_code)
     except phonenumbers.NumberParseException:
         return None
-    if not phonenumbers.is_possible_number(parsed) or not phonenumbers.is_valid_number(parsed):
+    if not phonenumbers.is_possible_number(parsed) or not phonenumbers.is_valid_number(
+        parsed
+    ):
         return None
     return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
