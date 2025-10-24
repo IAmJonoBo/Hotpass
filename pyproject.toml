@@ -80,6 +80,7 @@ docs = [
 
 [project.scripts]
 hotpass = "hotpass.cli:main"
+hotpass-enhanced = "hotpass.cli_enhanced:main"
 
 [tool.ruff]
 line-length = 100
