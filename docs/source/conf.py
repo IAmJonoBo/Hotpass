@@ -12,6 +12,7 @@ project = "Hotpass"
 author = "Hotpass Team"
 release = "0.1.0"
 copyright_notice = f"{datetime.now():%Y}, {author}"
+globals()["copyright"] = copyright_notice
 
 extensions = [
     "myst_parser",

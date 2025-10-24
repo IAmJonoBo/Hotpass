@@ -85,7 +85,7 @@ Large Excel inputs can be streamed and optionally staged to parquet for reuse:
 
 ## GitHub Actions
 
-The repository uses ephemeral runners via GitHub Actions to automatically lint, test, and package data on pushes and pull requests. The workflow now relies on `astral-sh/setup-uv` to provision Python 3.12 and the `uv` resolver for reproducible installs:
+The repository uses ephemeral runners via GitHub Actions to automatically lint, test, and package data on pushes and pull requests. The workflow now relies on `astral-sh/setup-uv` to provision Python 3.13 and the `uv` resolver for reproducible installs:
 
 - `uv sync --extra dev --frozen` ensures QA jobs respect the lock file.
 - `uv run ruff check` and `uv run ruff format --check` enforce style and formatting.

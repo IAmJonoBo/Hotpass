@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -40,15 +40,13 @@ def create_refined_archive(
     checksum = hashlib.sha256(excel_bytes).hexdigest()[:checksum_prefix_length]
 
     if timestamp is None:
-        timestamp = datetime.now(timezone.utc)
-    timestamp_label = timestamp.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(UTC)
+    timestamp_label = timestamp.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
 
     archive_name = f"refined-data-{timestamp_label}-{checksum}.zip"
     archive_path = archive_dir / archive_name
 
-    with zipfile.ZipFile(
-        archive_path, mode="w", compression=zipfile.ZIP_DEFLATED
-    ) as zip_file:
+    with zipfile.ZipFile(archive_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
         zip_file.write(excel_path, excel_path.name)
         zip_file.writestr("SHA256SUMS", f"{checksum}  {excel_path.name}\n")
 

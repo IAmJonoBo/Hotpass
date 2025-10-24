@@ -3,29 +3,30 @@ Name: hotpass
 Version: 0.1.0
 Summary: Hotpass data refinement pipeline
 License-Expression: LicenseRef-Proprietary
-Requires-Python: <3.13,>=3.12
+Requires-Python: <3.14,>=3.13
 Description-Content-Type: text/markdown
-Requires-Dist: pandas>=2.0.0
-Requires-Dist: openpyxl>=3.1.0
-Requires-Dist: pandera>=0.18.0
-Requires-Dist: great-expectations>=0.18.0
-Requires-Dist: phonenumbers>=8.13.0
-Requires-Dist: rich>=13.0.0
-Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: openpyxl>=3.1.5
+Requires-Dist: pandera>=0.26.1
+Requires-Dist: great-expectations>=1.8.0
+Requires-Dist: phonenumbers>=9.0.17
+Requires-Dist: rich>=14.2.0
+Requires-Dist: pyyaml>=6.0.3
 Provides-Extra: dev
-Requires-Dist: pytest>=8.3.0; extra == "dev"
-Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
-Requires-Dist: mypy>=1.12.0; extra == "dev"
-Requires-Dist: ruff>=0.6.0; extra == "dev"
-Requires-Dist: bandit>=1.7.10; extra == "dev"
-Requires-Dist: black>=24.8.0; extra == "dev"
-Requires-Dist: pre-commit>=3.7.0; extra == "dev"
+Requires-Dist: pytest>=8.4.2; extra == "dev"
+Requires-Dist: pytest-cov>=7.0.0; extra == "dev"
+Requires-Dist: mypy>=1.18.2; extra == "dev"
+Requires-Dist: ruff>=0.14.2; extra == "dev"
+Requires-Dist: bandit>=1.8.6; extra == "dev"
+Requires-Dist: black>=25.9.0; extra == "dev"
+Requires-Dist: pre-commit>=4.3.0; extra == "dev"
 Requires-Dist: detect-secrets>=1.5.0; extra == "dev"
+Requires-Dist: types-PyYAML>=6.0.12; extra == "dev"
 Provides-Extra: docs
-Requires-Dist: sphinx>=7.3.0; extra == "docs"
-Requires-Dist: myst-parser>=2.0.0; extra == "docs"
-Requires-Dist: sphinx-autodoc-typehints>=2.3.0; extra == "docs"
-Requires-Dist: furo>=2024.8.6; extra == "docs"
+Requires-Dist: sphinx>=8.2.3; extra == "docs"
+Requires-Dist: myst-parser>=4.0.1; extra == "docs"
+Requires-Dist: sphinx-autodoc-typehints>=3.5.2; extra == "docs"
+Requires-Dist: furo>=2025.9.25; extra == "docs"
 
 # Hotpass Data Refinement Repository
 
@@ -114,7 +115,7 @@ Large Excel inputs can be streamed and optionally staged to parquet for reuse:
 
 ## GitHub Actions
 
-The repository uses ephemeral runners via GitHub Actions to automatically lint, test, and package data on pushes and pull requests. The workflow now relies on `astral-sh/setup-uv` to provision Python 3.12 and the `uv` resolver for reproducible installs:
+The repository uses ephemeral runners via GitHub Actions to automatically lint, test, and package data on pushes and pull requests. The workflow now relies on `astral-sh/setup-uv` to provision Python 3.13 and the `uv` resolver for reproducible installs:
 
 - `uv sync --extra dev --frozen` ensures QA jobs respect the lock file.
 - `uv run ruff check` and `uv run ruff format --check` enforce style and formatting.

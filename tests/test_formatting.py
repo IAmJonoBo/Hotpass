@@ -162,9 +162,7 @@ def test_export_to_multiple_formats_all(tmp_path):
     df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
     base_path = tmp_path / "output"
-    result = export_to_multiple_formats(
-        df, base_path, formats=["excel", "csv", "parquet", "json"]
-    )
+    result = export_to_multiple_formats(df, base_path, formats=["excel", "csv", "parquet", "json"])
 
     assert len(result) == 4
     assert all(path.exists() for path in result.values())

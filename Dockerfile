@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 FROM mambaorg/micromamba:1.5.0
 
-ARG PYTHON_VERSION=3.12
+ARG PYTHON_VERSION=3.13
 ENV PATH="/root/.local/bin:${PATH}"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

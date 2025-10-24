@@ -15,7 +15,7 @@ jobs:
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Synchronise dependencies
         run: uv sync --extra dev --frozen
@@ -44,7 +44,7 @@ jobs:
       - name: Set up uv and Python
         uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Synchronise dependencies
         run: uv sync --frozen

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime, tzinfo
 from pathlib import Path
 
 import pandas as pd
@@ -17,7 +17,7 @@ def test_create_refined_archive_embeds_checksum(tmp_path: Path) -> None:
     df = pd.DataFrame({"organization_name": ["Aero School"], "province": ["Gauteng"]})
     df.to_excel(excel_path, index=False)
 
-    timestamp = datetime(2025, 1, 1, 12, 30, tzinfo=timezone.utc)
+    timestamp = datetime(2025, 1, 1, 12, 30, tzinfo=UTC)
     archive_dir = tmp_path / "dist"
 
     archive_path = create_refined_archive(excel_path, archive_dir, timestamp=timestamp)
@@ -41,11 +41,11 @@ def test_create_refined_archive_defaults_to_utc(
     excel_path = tmp_path / "refined_data.xlsx"
     pd.DataFrame({"organization_name": ["Heli Ops"]}).to_excel(excel_path, index=False)
 
-    fixed_timestamp = datetime(2025, 1, 2, 15, 45, tzinfo=timezone.utc)
+    fixed_timestamp = datetime(2025, 1, 2, 15, 45, tzinfo=UTC)
 
     class _FrozenDateTime(datetime):
         @classmethod
-        def now(cls, tz: timezone | None = None) -> datetime:  # type: ignore[override]
+        def now(cls, tz: tzinfo | None = None) -> datetime:  # type: ignore[override]
             return fixed_timestamp
 
     monkeypatch.setattr(artifacts, "datetime", _FrozenDateTime)
