@@ -1,7 +1,6 @@
 """Tests for quality validation functionality."""
 
 import pandas as pd
-import pytest
 
 from hotpass.quality import ExpectationSummary, build_ssot_schema, run_expectations
 

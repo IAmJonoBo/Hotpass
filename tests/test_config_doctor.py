@@ -110,9 +110,7 @@ def test_config_doctor_empty_display_name():
     results = doctor.diagnose()
 
     # Should detect empty display name
-    display_issues = [
-        r for r in results if r.check_name == "profile_display_name" and not r.passed
-    ]
+    display_issues = [r for r in results if r.check_name == "profile_display_name" and not r.passed]
     assert len(display_issues) > 0
     assert display_issues[0].severity == "warning"
 
@@ -130,9 +128,7 @@ def test_config_doctor_high_threshold_warning():
     results = doctor.diagnose()
 
     # Should warn about high website threshold
-    website_warnings = [
-        r for r in results if "website" in r.check_name and r.severity == "warning"
-    ]
+    website_warnings = [r for r in results if "website" in r.check_name and r.severity == "warning"]
     assert len(website_warnings) > 0
 
 
@@ -141,15 +137,15 @@ def test_config_doctor_no_source_priorities():
     from hotpass.config import IndustryProfile
 
     profile = IndustryProfile(
-        name="test", display_name="Test", source_priorities={}  # Empty priorities
+        name="test",
+        display_name="Test",
+        source_priorities={},  # Empty priorities
     )
     doctor = ConfigDoctor(profile=profile)
     results = doctor.diagnose()
 
     # Should detect missing source priorities
-    priority_issues = [
-        r for r in results if r.check_name == "source_priorities" and not r.passed
-    ]
+    priority_issues = [r for r in results if r.check_name == "source_priorities" and not r.passed]
     assert len(priority_issues) > 0
     assert priority_issues[0].severity == "warning"
 
@@ -167,9 +163,7 @@ def test_config_doctor_duplicate_source_priorities():
     results = doctor.diagnose()
 
     # Should detect duplicate priorities
-    dup_issues = [
-        r for r in results if r.check_name == "source_priorities_unique" and not r.passed
-    ]
+    dup_issues = [r for r in results if r.check_name == "source_priorities_unique" and not r.passed]
     assert len(dup_issues) > 0
 
 
@@ -178,15 +172,15 @@ def test_config_doctor_no_column_synonyms():
     from hotpass.config import IndustryProfile
 
     profile = IndustryProfile(
-        name="test", display_name="Test", column_synonyms={}  # No synonyms
+        name="test",
+        display_name="Test",
+        column_synonyms={},  # No synonyms
     )
     doctor = ConfigDoctor(profile=profile)
     results = doctor.diagnose()
 
     # Should detect missing column synonyms
-    synonym_issues = [
-        r for r in results if r.check_name == "column_synonyms" and not r.passed
-    ]
+    synonym_issues = [r for r in results if r.check_name == "column_synonyms" and not r.passed]
     assert len(synonym_issues) > 0
 
 
@@ -219,9 +213,7 @@ def test_config_doctor_no_required_fields():
     results = doctor.diagnose()
 
     # Should detect missing required fields
-    required_issues = [
-        r for r in results if r.check_name == "required_fields" and not r.passed
-    ]
+    required_issues = [r for r in results if r.check_name == "required_fields" and not r.passed]
     assert len(required_issues) > 0
 
 
@@ -230,15 +222,15 @@ def test_config_doctor_missing_org_name_in_required():
     from hotpass.config import IndustryProfile
 
     profile = IndustryProfile(
-        name="test", display_name="Test", required_fields=["other_field"]  # Missing org_name
+        name="test",
+        display_name="Test",
+        required_fields=["other_field"],  # Missing org_name
     )
     doctor = ConfigDoctor(profile=profile)
     results = doctor.diagnose()
 
     # Should detect missing organization_name in required fields
-    org_issues = [
-        r for r in results if r.check_name == "required_fields_org_name" and not r.passed
-    ]
+    org_issues = [r for r in results if r.check_name == "required_fields_org_name" and not r.passed]
     assert len(org_issues) > 0
 
 
@@ -258,9 +250,7 @@ def test_config_doctor_autofix_phone_threshold():
     """Test autofix for phone threshold."""
     from hotpass.config import IndustryProfile
 
-    profile = IndustryProfile(
-        name="test", display_name="Test", phone_validation_threshold=1.5
-    )
+    profile = IndustryProfile(name="test", display_name="Test", phone_validation_threshold=1.5)
     doctor = ConfigDoctor(profile=profile)
 
     fixed = doctor.autofix()
@@ -272,9 +262,7 @@ def test_config_doctor_autofix_website_threshold():
     """Test autofix for website threshold."""
     from hotpass.config import IndustryProfile
 
-    profile = IndustryProfile(
-        name="test", display_name="Test", website_validation_threshold=1.5
-    )
+    profile = IndustryProfile(name="test", display_name="Test", website_validation_threshold=1.5)
     doctor = ConfigDoctor(profile=profile)
 
     fixed = doctor.autofix()

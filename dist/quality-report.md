@@ -55,19 +55,19 @@ None
 
 | Metric | Value |
 | --- | ---: |
-| Load seconds | 0.7530 |
-| Aggregation seconds | 0.5953 |
+| Load seconds | 0.7602 |
+| Aggregation seconds | 0.6004 |
 | Expectations seconds | 0.0049 |
-| Write seconds | 0.9789 |
-| Total seconds | 2.3853 |
-| Rows per second | 273.7561 |
-| Load rows per second | 1045.2148 |
+| Write seconds | 0.9876 |
+| Total seconds | 2.4065 |
+| Rows per second | 271.3503 |
+| Load rows per second | 1035.3131 |
 
 ### Source Load Durations
 
 | Loader | Seconds |
 | --- | ---: |
-| load_contact_database | 0.4068 |
-| load_reachout_database | 0.2979 |
-| load_sacaa_cleaned | 0.0438 |
+| load_contact_database | 0.4129 |
+| load_reachout_database | 0.2994 |
+| load_sacaa_cleaned | 0.0435 |
 

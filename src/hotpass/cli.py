@@ -379,6 +379,32 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     logger = StructuredLogger(options.log_format)
 
+    # Pre-flight validation
+    if not options.input_dir.exists():
+        logger.log_error(f"Input directory does not exist: {options.input_dir}")
+        logger.log_error("Please create the directory or specify a different path with --input-dir")
+        return 1
+
+    if not options.input_dir.is_dir():
+        logger.log_error(f"Input path is not a directory: {options.input_dir}")
+        return 1
+
+    # Check for Excel files
+    excel_files = list(options.input_dir.glob("*.xlsx")) + list(options.input_dir.glob("*.xls"))
+    if not excel_files:
+        logger.log_error(f"No Excel files found in: {options.input_dir}")
+        logger.log_error("Please add Excel files to the input directory")
+        return 1
+
+    # Log startup info
+    if options.log_format == "rich":
+        console = Console()
+        console.print("[bold cyan]Hotpass Data Refinement Pipeline[/bold cyan]")
+        console.print(f"[dim]Input directory:[/dim] {options.input_dir}")
+        console.print(f"[dim]Output path:[/dim] {options.output_path}")
+        console.print(f"[dim]Found {len(excel_files)} Excel file(s)[/dim]")
+        console.print()
+
     excel_options = None
     if any(
         value is not None
@@ -403,10 +429,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = run_pipeline(config)
     except Exception as exc:  # pragma: no cover - surface runtime failures
         logger.log_error(str(exc))
+        if options.log_format == "rich":
+            console = Console()
+            console.print("[bold red]Pipeline failed with error:[/bold red]")
+            console.print_exception()
         return 1
 
     report = result.quality_report
     logger.log_summary(report)
+
+    # Success message
+    if options.log_format == "rich":
+        console = Console()
+        console.print()
+        console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
+        console.print(f"[dim]Refined data written to:[/dim] {options.output_path}")
 
     if options.report_path is not None:
         options.report_path.parent.mkdir(parents=True, exist_ok=True)

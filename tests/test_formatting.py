@@ -1,7 +1,5 @@
 """Tests for formatting functionality."""
 
-from pathlib import Path
-
 import pandas as pd
 import pytest
 
@@ -126,7 +124,7 @@ def test_export_to_csv(tmp_path):
 def test_export_to_parquet(tmp_path):
     """Test exporting to Parquet format."""
     pytest.importorskip("pyarrow", reason="pyarrow not installed")
-    
+
     df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
     base_path = tmp_path / "output"
@@ -160,13 +158,11 @@ def test_export_to_json(tmp_path):
 def test_export_to_multiple_formats_all(tmp_path):
     """Test exporting to all formats at once."""
     pytest.importorskip("pyarrow", reason="pyarrow not installed")
-    
+
     df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
     base_path = tmp_path / "output"
-    result = export_to_multiple_formats(
-        df, base_path, formats=["excel", "csv", "parquet", "json"]
-    )
+    result = export_to_multiple_formats(df, base_path, formats=["excel", "csv", "parquet", "json"])
 
     assert len(result) == 4
     assert all(path.exists() for path in result.values())

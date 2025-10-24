@@ -285,7 +285,7 @@ def test_error_handler_with_critical_recoverable_no_raise():
 
     # Should not raise in accumulate mode
     handler.handle_error(critical_ctx)
-    
+
     report = handler.get_report()
     assert report.has_critical_errors()
 
