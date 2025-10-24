@@ -1,0 +1,64 @@
+name: generic
+display_name: Generic Business
+default_country_code: ZA
+
+organization_term: organization
+organization_type_term: organization_type
+organization_category_term: category
+
+email_validation_threshold: 0.85
+phone_validation_threshold: 0.85
+website_validation_threshold: 0.75
+
+source_priorities: {}
+
+column_synonyms:
+  organization_name:
+    - name
+    - company
+    - business
+    - entity
+    - organization
+    - company_name
+    - business_name
+    - organisation
+  contact_email:
+    - email
+    - email_address
+    - e-mail
+    - e_mail
+    - mail
+    - contact_email
+    - primary_email
+  contact_phone:
+    - phone
+    - telephone
+    - phone_number
+    - tel
+    - mobile
+    - cell
+    - cellphone
+    - contact_number
+  website:
+    - url
+    - website
+    - web
+    - homepage
+    - site
+    - web_address
+  address:
+    - address
+    - location
+    - street_address
+    - mailing_address
+    - physical_address
+
+required_fields:
+  - organization_name
+
+optional_fields:
+  - contact_primary_email
+  - contact_primary_phone
+  - website
+  - province
+  - address_primary

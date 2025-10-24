@@ -1,0 +1,69 @@
+name: aviation
+display_name: Aviation & Flight Training
+default_country_code: ZA
+
+organization_term: flight_school
+organization_type_term: school_type
+organization_category_term: training_category
+
+email_validation_threshold: 0.85
+phone_validation_threshold: 0.85
+website_validation_threshold: 0.75
+
+source_priorities:
+  SACAA Cleaned: 3
+  Reachout Database: 2
+  Contact Database: 1
+
+column_synonyms:
+  organization_name:
+    - school_name
+    - institution_name
+    - provider_name
+    - company_name
+    - account_name
+    - organisation_name
+    - Name of Organisation
+  contact_email:
+    - email
+    - email_address
+    - primary_email
+    - contact_email_address
+    - Contact Email Address
+    - e-mail
+    - e_mail
+    - mail
+  contact_phone:
+    - phone
+    - telephone
+    - phone_number
+    - contact_number
+    - Contact Number
+    - tel
+    - mobile
+    - cell
+    - cellphone
+  website:
+    - url
+    - website_url
+    - web_address
+    - Website URL
+    - homepage
+    - site
+    - web
+  province:
+    - state
+    - region
+    - area
+    - Province
+    - territory
+
+required_fields:
+  - organization_name
+
+optional_fields:
+  - contact_primary_email
+  - contact_primary_phone
+  - website
+  - province
+  - address_primary
