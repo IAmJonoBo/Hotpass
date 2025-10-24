@@ -16,6 +16,7 @@ from typing import Any
 from prefect import flow, task
 from prefect.logging import get_run_logger
 
+from .artifacts import create_refined_archive
 from .config import get_default_profile
 from .data_sources import ExcelReadOptions
 from .pipeline import PipelineConfig, run_pipeline
@@ -100,7 +101,20 @@ def refinement_pipeline_flow(
 
     # Handle archiving if requested
     if archive:
-        logger.info("Archiving requested but not yet implemented in orchestration flow")
+        logger.info("Creating archive from output file...")
+        try:
+            archive_dir = Path(dist_dir)
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            archive_path = create_refined_archive(
+                excel_path=Path(result["output_path"]),
+                archive_dir=archive_dir,
+            )
+            logger.info(f"Archive created: {archive_path}")
+            result["archive_path"] = str(archive_path)
+        except Exception as e:
+            logger.error(f"Failed to create archive: {e}")
+            # Don't fail the entire flow for archiving errors
+            result["archive_error"] = str(e)
 
     logger.info(
         f"Pipeline flow completed - "
