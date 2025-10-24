@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from pandera.errors import SchemaErrors
@@ -42,10 +44,79 @@ SSOT_COLUMNS: list[str] = [
     "contact_secondary_phones",
     "data_quality_score",
     "data_quality_flags",
+    "selection_provenance",
     "last_interaction_date",
     "priority",
     "privacy_basis",
 ]
+
+
+SOURCE_PRIORITY: dict[str, int] = {
+    "SACAA Cleaned": 3,
+    "Reachout Database": 2,
+    "Contact Database": 1,
+}
+
+
+@dataclass(frozen=True)
+class RowMetadata:
+    index: int
+    source_dataset: str
+    source_record_id: str | None
+    source_priority: int
+    quality_score: int
+    last_interaction: pd.Timestamp | None
+
+
+@dataclass(frozen=True)
+class ValueSelection:
+    value: str
+    row_metadata: RowMetadata
+
+
+def _parse_last_interaction(value: object | None) -> pd.Timestamp | None:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    if isinstance(value, pd.Timestamp):
+        timestamp = pd.to_datetime(value, utc=True)
+        return timestamp if pd.notna(timestamp) else None
+    text = str(value).strip()
+    if not text:
+        return None
+    prefer_dayfirst = not YEAR_FIRST_PATTERN.match(text)
+    timestamp = pd.to_datetime(
+        text,
+        errors="coerce",
+        dayfirst=prefer_dayfirst,
+        utc=True,
+    )
+    if pd.isna(timestamp):
+        timestamp = pd.to_datetime(
+            text,
+            errors="coerce",
+            dayfirst=not prefer_dayfirst,
+            utc=True,
+        )
+    if pd.isna(timestamp):
+        return None
+    return timestamp
+
+
+def _value_present(value: object | None) -> bool:
+    if isinstance(value, list):
+        return any(_value_present(item) for item in value)
+    return bool(clean_string(value))
+
+
+def _row_quality_score(row: pd.Series) -> int:
+    checks = [
+        _value_present(row.get("contact_emails")),
+        _value_present(row.get("contact_phones")),
+        _value_present(row.get("website")),
+        _value_present(row.get("province")),
+        _value_present(row.get("address")),
+    ]
+    return sum(1 for present in checks if present)
 
 
 @dataclass
@@ -166,33 +237,223 @@ def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:
 
 def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]:
     organization_name = coalesce(*group["organization_name"].tolist())
-    provinces = _collect_unique(group["province"].tolist())
-    areas = _collect_unique(group["area"].tolist())
-    addresses = _collect_unique(group["address"].tolist())
-    categories = _collect_unique(group["category"].tolist())
-    org_types = _collect_unique(group["organization_type"].tolist())
-    statuses = _collect_unique(group.get("status", []).tolist())
-    websites = _collect_unique(group["website"].tolist())
-    planes = _collect_unique(group["planes"].tolist())
-    descriptions = _collect_unique(group["description"].tolist())
-    notes = _collect_unique(group["notes"].tolist())
-    priorities = _collect_unique(group["priority"].tolist())
+    group = group.reset_index(drop=True)
 
-    contact_names = _flatten_series_of_lists(group["contact_names"])
-    contact_roles = _flatten_series_of_lists(group["contact_roles"])
-    contact_emails = _flatten_series_of_lists(group["contact_emails"])
-    contact_phones = _flatten_series_of_lists(group["contact_phones"])
+    row_metadata: list[RowMetadata] = []
+    for idx, row in group.iterrows():
+        raw_dataset = row.get("source_dataset")
+        dataset = clean_string(raw_dataset)
+        if not dataset:
+            dataset = str(raw_dataset).strip() if raw_dataset else "Unknown"
+        record_id = clean_string(row.get("source_record_id"))
+        priority = SOURCE_PRIORITY.get(dataset, 0)
+        last_interaction = _parse_last_interaction(row.get("last_interaction_date"))
+        quality_score = _row_quality_score(row)
+        row_metadata.append(
+            RowMetadata(
+                index=idx,
+                source_dataset=dataset,
+                source_record_id=record_id,
+                source_priority=priority,
+                quality_score=quality_score,
+                last_interaction=last_interaction,
+            )
+        )
+
+    def _sort_key(meta: RowMetadata) -> tuple[Any, ...]:
+        timestamp_value = (
+            meta.last_interaction.value
+            if meta.last_interaction is not None
+            else pd.Timestamp.min.value
+        )
+        return (
+            meta.source_priority,
+            meta.quality_score,
+            timestamp_value,
+            -meta.index,
+            meta.source_dataset,
+            meta.source_record_id or "",
+        )
+
+    sorted_indices = sorted(
+        range(len(row_metadata)),
+        key=lambda idx: _sort_key(row_metadata[idx]),
+        reverse=True,
+    )
+
+    provenance: dict[str, dict[str, Any]] = {}
+
+    def _normalise_scalar(value: object | None) -> str | None:
+        if isinstance(value, str):
+            return clean_string(value)
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return None
+        return clean_string(str(value))
+
+    def _iter_values(column: str, treat_list: bool = False) -> list[ValueSelection]:
+        selections: list[ValueSelection] = []
+        seen: set[str] = set()
+        for idx in sorted_indices:
+            row = group.iloc[idx]
+            raw_value = row.get(column)
+            values: Iterable[object | None]
+            if treat_list and isinstance(raw_value, list):
+                values = raw_value
+            else:
+                values = [raw_value]
+            for raw in values:
+                normalised = _normalise_scalar(raw)
+                if not normalised:
+                    continue
+                if normalised in seen:
+                    continue
+                seen.add(normalised)
+                selections.append(ValueSelection(normalised, row_metadata[idx]))
+        return selections
+
+    def _build_provenance(
+        field: str, selection: ValueSelection, value: str | None
+    ) -> dict[str, Any]:
+        meta = selection.row_metadata
+        return {
+            "field": field,
+            "value": value,
+            "source_dataset": meta.source_dataset,
+            "source_record_id": meta.source_record_id,
+            "source_priority": meta.source_priority,
+            "quality_score": meta.quality_score,
+            "last_interaction_date": (
+                meta.last_interaction.date().isoformat()
+                if meta.last_interaction is not None
+                else None
+            ),
+        }
+
+    def _record_provenance(
+        field: str, selections: list[ValueSelection], value: str | None
+    ) -> ValueSelection | None:
+        if not selections or value is None:
+            return None
+        primary_selection = next((sel for sel in selections if sel.value == value), selections[0])
+        entry = _build_provenance(field, primary_selection, value)
+        contributors = [sel for sel in selections if sel is not primary_selection]
+        if contributors:
+            entry["contributors"] = [
+                {
+                    "source_dataset": sel.row_metadata.source_dataset,
+                    "source_record_id": sel.row_metadata.source_record_id,
+                    "value": sel.value,
+                }
+                for sel in contributors
+            ]
+        provenance[field] = entry
+        return primary_selection
+
+    provinces = _iter_values("province")
+    areas = _iter_values("area")
+    addresses = _iter_values("address")
+    categories = _iter_values("category")
+    org_types = _iter_values("organization_type")
+    statuses = _iter_values("status")
+    websites = _iter_values("website")
+    planes = _iter_values("planes")
+    descriptions = _iter_values("description")
+    notes = _iter_values("notes")
+    priorities = _iter_values("priority")
+
+    email_values = _iter_values("contact_emails", treat_list=True)
+    phone_values = _iter_values("contact_phones", treat_list=True)
+    name_values = _iter_values("contact_names", treat_list=True)
+    role_values = _iter_values("contact_roles", treat_list=True)
 
     source_datasets = "; ".join(sorted(_collect_unique(group["source_dataset"].tolist())))
     source_record_ids = "; ".join(sorted(_collect_unique(group["source_record_id"].tolist())))
 
-    primary_name = contact_names[0] if contact_names else None
-    primary_role = contact_roles[0] if contact_roles else None
-    primary_email = contact_emails[0] if contact_emails else None
-    primary_phone = contact_phones[0] if contact_phones else None
+    province = provinces[0].value if provinces else None
+    _record_provenance("province", provinces, province)
 
-    secondary_emails = ";".join(contact_emails[1:]) if len(contact_emails) > 1 else ""
-    secondary_phones = ";".join(contact_phones[1:]) if len(contact_phones) > 1 else ""
+    area = areas[0].value if areas else None
+    _record_provenance("area", areas, area)
+
+    address_primary = addresses[0].value if addresses else None
+    _record_provenance("address_primary", addresses, address_primary)
+
+    organization_category = categories[0].value if categories else None
+    _record_provenance("organization_category", categories, organization_category)
+
+    organization_type = org_types[0].value if org_types else None
+    _record_provenance("organization_type", org_types, organization_type)
+
+    status = statuses[0].value if statuses else None
+    _record_provenance("status", statuses, status)
+
+    website = websites[0].value if websites else None
+    _record_provenance("website", websites, website)
+
+    planes_value = "; ".join(selection.value for selection in planes) if planes else None
+    if planes_value:
+        _record_provenance("planes", planes, planes_value)
+
+    description_value = (
+        "; ".join(selection.value for selection in descriptions) if descriptions else None
+    )
+    if description_value:
+        _record_provenance("description", descriptions, description_value)
+
+    notes_value = "; ".join(selection.value for selection in notes) if notes else None
+    if notes_value:
+        _record_provenance("notes", notes, notes_value)
+
+    priority_value = priorities[0].value if priorities else None
+    _record_provenance("priority", priorities, priority_value)
+
+    primary_email_selection = _record_provenance(
+        "contact_primary_email", email_values, email_values[0].value if email_values else None
+    )
+    primary_email = primary_email_selection.value if primary_email_selection else None
+    secondary_email_values = email_values[1:]
+    secondary_emails = ";".join(selection.value for selection in secondary_email_values)
+    if secondary_emails:
+        _record_provenance("contact_secondary_emails", secondary_email_values, secondary_emails)
+
+    primary_phone_selection = _record_provenance(
+        "contact_primary_phone", phone_values, phone_values[0].value if phone_values else None
+    )
+    primary_phone = primary_phone_selection.value if primary_phone_selection else None
+    secondary_phone_values = phone_values[1:]
+    secondary_phones = ";".join(selection.value for selection in secondary_phone_values)
+    if secondary_phones:
+        _record_provenance("contact_secondary_phones", secondary_phone_values, secondary_phones)
+
+    def _first_value_from_row(selection: ValueSelection | None, column: str) -> str | None:
+        if selection is None:
+            return None
+        row = group.iloc[selection.row_metadata.index]
+        raw_value = row.get(column)
+        if isinstance(raw_value, list):
+            for item in raw_value:
+                candidate = _normalise_scalar(item)
+                if candidate:
+                    return candidate
+            return None
+        return _normalise_scalar(raw_value)
+
+    primary_contact_meta = primary_email_selection or primary_phone_selection
+    primary_name = _first_value_from_row(primary_contact_meta, "contact_names")
+    if primary_name:
+        _record_provenance("contact_primary_name", name_values, primary_name)
+    else:
+        primary_name = name_values[0].value if name_values else None
+        if primary_name:
+            _record_provenance("contact_primary_name", name_values, primary_name)
+
+    primary_role = _first_value_from_row(primary_contact_meta, "contact_roles")
+    if primary_role:
+        _record_provenance("contact_primary_role", role_values, primary_role)
+    else:
+        primary_role = role_values[0].value if role_values else None
+        if primary_role:
+            _record_provenance("contact_primary_role", role_values, primary_role)
 
     last_interaction = _latest_iso_date(group["last_interaction_date"].tolist())
 
@@ -200,26 +461,28 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         {
             "contact_primary_email": primary_email,
             "contact_primary_phone": primary_phone,
-            "website": websites[0] if websites else None,
-            "province": provinces[0] if provinces else None,
-            "address_primary": addresses[0] if addresses else None,
+            "website": website,
+            "province": province,
+            "address_primary": address_primary,
         }
     )
+
+    selection_provenance = json.dumps(provenance, sort_keys=True)
 
     return {
         "organization_name": organization_name,
         "organization_slug": slug,
-        "province": provinces[0] if provinces else None,
+        "province": province,
         "country": "South Africa",
-        "area": areas[0] if areas else None,
-        "address_primary": addresses[0] if addresses else None,
-        "organization_category": categories[0] if categories else None,
-        "organization_type": org_types[0] if org_types else None,
-        "status": statuses[0] if statuses else None,
-        "website": websites[0] if websites else None,
-        "planes": "; ".join(planes) if planes else None,
-        "description": "; ".join(descriptions) if descriptions else None,
-        "notes": "; ".join(notes) if notes else None,
+        "area": area,
+        "address_primary": address_primary,
+        "organization_category": organization_category,
+        "organization_type": organization_type,
+        "status": status,
+        "website": website,
+        "planes": planes_value,
+        "description": description_value,
+        "notes": notes_value,
         "source_datasets": source_datasets,
         "source_record_ids": source_record_ids,
         "contact_primary_name": primary_name,
@@ -230,8 +493,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         "contact_secondary_phones": secondary_phones,
         "data_quality_score": quality["score"],
         "data_quality_flags": quality["flags"],
+        "selection_provenance": selection_provenance,
         "last_interaction_date": last_interaction,
-        "priority": priorities[0] if priorities else None,
+        "priority": priority_value,
         "privacy_basis": "Legitimate Interest",
     }
 

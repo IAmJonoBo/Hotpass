@@ -49,6 +49,7 @@ def build_ssot_schema() -> DataFrameSchema:
             "contact_secondary_phones": string_col(),
             "data_quality_score": Column(pa.Float, nullable=False),
             "data_quality_flags": Column(pa.String, nullable=False),
+            "selection_provenance": Column(pa.String, nullable=False),
             "last_interaction_date": string_col(),
             "priority": string_col(),
             "privacy_basis": Column(pa.String, nullable=False),
