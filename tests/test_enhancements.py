@@ -1,10 +1,8 @@
 """Tests for enhanced pipeline features."""
 
-import tempfile
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from hotpass.config import get_default_profile
 from hotpass.formatting import OutputFormat
