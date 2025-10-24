@@ -6,7 +6,9 @@ import pytest
 from hotpass.quality import ExpectationSummary, build_ssot_schema, run_expectations
 
 try:
-    from great_expectations.dataset.pandas_dataset import PandasDataset  # type: ignore
+    from great_expectations.dataset.pandas_dataset import (  # type: ignore  # noqa: F401
+        PandasDataset,
+    )
 
     HAS_GE = True
 except ImportError:
@@ -386,7 +388,9 @@ def test_run_expectations_ge_with_invalid_quality_score():
     result = run_expectations(df)
 
     assert result.success is False
-    assert any("quality_score" in str(f).lower() or "between" in str(f).lower() for f in result.failures)
+    assert any(
+        "quality_score" in str(f).lower() or "between" in str(f).lower() for f in result.failures
+    )
 
 
 @pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
@@ -565,4 +569,3 @@ def test_run_expectations_ge_with_boundary_quality_scores():
 
     result2 = run_expectations(df_invalid)
     assert result2.success is False
-
