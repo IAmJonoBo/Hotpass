@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 
 import hotpass.cli as cli
@@ -37,6 +38,10 @@ def test_cli_outputs_json_summary(
 
     assert summary["data"]["total_records"] == 2
     assert summary["data"]["expectations_passed"] is True
+    metrics = summary["data"].get("performance_metrics")
+    assert metrics is not None
+    assert metrics["total_seconds"] >= 0.0
+    assert metrics["rows_per_second"] > 0.0
     assert output_path.exists()
 
 
@@ -70,6 +75,7 @@ def test_cli_writes_markdown_report(
     contents = report_path.read_text()
     assert "Hotpass Quality Report" in contents
     assert "Total records" in contents
+    assert "Performance Metrics" in contents
 
 
 def test_cli_merges_config_file(
@@ -130,8 +136,49 @@ def test_cli_supports_rich_logging(
     captured = capsys.readouterr()
     assert "Hotpass Quality Report" in captured.out
     assert "Archive created" in captured.out
+    assert "Load seconds" in captured.out
     assert report_path.exists()
     assert report_path.suffix == ".html"
+
+
+def test_cli_accepts_excel_tuning_options(
+    sample_data_dir: Path,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_path = tmp_path / "refined.xlsx"
+    stage_dir = tmp_path / "stage"
+
+    calls: list[Path] = []
+
+    def _fake_to_parquet(self: pd.DataFrame, path: Path, *, index: bool = False) -> None:
+        calls.append(Path(path))
+
+    monkeypatch.setattr(pd.DataFrame, "to_parquet", _fake_to_parquet, raising=False)
+
+    exit_code = cli.main(
+        [
+            "--input-dir",
+            str(sample_data_dir),
+            "--output-path",
+            str(output_path),
+            "--log-format",
+            "json",
+            "--excel-chunk-size",
+            "1",
+            "--excel-stage-dir",
+            str(stage_dir),
+        ]
+    )
+
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    summary = next(
+        item for item in _collect_json_lines(captured.out) if item["event"] == "pipeline.summary"
+    )
+    assert summary["data"]["total_records"] == 2
+    assert calls, "staging to parquet should be attempted when a stage directory is provided"
 
 
 def test_cli_parse_args_missing_config(tmp_path: Path) -> None:

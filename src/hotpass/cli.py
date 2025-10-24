@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.table import Table
 
 from hotpass.artifacts import create_refined_archive
+from hotpass.data_sources import ExcelReadOptions
 from hotpass.pipeline import PipelineConfig, QualityReport, run_pipeline
 
 
@@ -30,6 +31,20 @@ class CLIOptions:
     report_path: Path | None
     report_format: str | None
     config_paths: list[Path]
+    excel_chunk_size: int | None
+    excel_engine: str | None
+    excel_stage_dir: Path | None
+
+
+_PERFORMANCE_FIELDS: list[tuple[str, str]] = [
+    ("Load seconds", "load_seconds"),
+    ("Aggregation seconds", "aggregation_seconds"),
+    ("Expectations seconds", "expectations_seconds"),
+    ("Write seconds", "write_seconds"),
+    ("Total seconds", "total_seconds"),
+    ("Rows per second", "rows_per_second"),
+    ("Load rows per second", "load_rows_per_second"),
+]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -86,6 +101,21 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["markdown", "html"],
         help="Explicit format for the rendered quality report",
     )
+    parser.add_argument(
+        "--excel-chunk-size",
+        type=int,
+        help="Chunk size for streaming Excel sheets (enables chunked reading when set)",
+    )
+    parser.add_argument(
+        "--excel-engine",
+        type=str,
+        help="Explicit pandas Excel engine to use (e.g. openpyxl, pyxlsb)",
+    )
+    parser.add_argument(
+        "--excel-stage-dir",
+        type=Path,
+        help="Directory to stage chunked Excel reads to parquet for reuse",
+    )
     parser.set_defaults(archive=None)
     parser.add_argument(
         "--archive",
@@ -119,6 +149,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         "log_format": "rich",
         "report_path": None,
         "report_format": None,
+        "excel_chunk_size": None,
+        "excel_engine": None,
+        "excel_stage_dir": None,
     }
 
     config_values: dict[str, Any] = {}
@@ -141,6 +174,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         "log_format",
         "report_path",
         "report_format",
+        "excel_chunk_size",
+        "excel_engine",
+        "excel_stage_dir",
     ):
         value = getattr(namespace, field, None)
         if value is not None:
@@ -153,6 +189,14 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         output_path = input_dir / "refined_data.xlsx"
     dist_dir = Path(options["dist_dir"])
     report_path = Path(options["report_path"]) if options.get("report_path") else None
+    stage_dir = Path(options["excel_stage_dir"]) if options.get("excel_stage_dir") else None
+
+    chunk_size = options.get("excel_chunk_size")
+    if chunk_size is not None:
+        chunk_size = int(chunk_size)
+        if chunk_size <= 0:
+            msg = "--excel-chunk-size must be greater than zero"
+            raise ValueError(msg)
 
     report_format = options.get("report_format")
     if isinstance(report_format, str):
@@ -181,6 +225,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         report_path=report_path,
         report_format=report_format,
         config_paths=list(namespace.config_paths),
+        excel_chunk_size=chunk_size,
+        excel_engine=str(options["excel_engine"]) if options.get("excel_engine") else None,
+        excel_stage_dir=stage_dir,
     )
 
 
@@ -258,6 +305,28 @@ class StructuredLogger:
             for failure in report.expectation_failures:
                 console.print(f"  • {failure}")
 
+        if report.performance_metrics:
+            metrics_table = Table(title="Performance Metrics", show_header=True)
+            metrics_table.add_column("Metric", style="cyan")
+            metrics_table.add_column("Value", justify="right")
+            for label, key in _PERFORMANCE_FIELDS:
+                value = report.performance_metrics.get(key)
+                if value is None:
+                    continue
+                metrics_table.add_row(label, _format_metric_value(value))
+            console.print(metrics_table)
+
+            source_metrics = report.performance_metrics.get("source_load_seconds", {})
+            if source_metrics:
+                source_table = Table(title="Source Load Durations", show_header=True)
+                source_table.add_column("Loader", style="cyan")
+                source_table.add_column("Seconds", justify="right")
+                for loader, seconds in sorted(source_metrics.items()):
+                    source_table.add_row(loader, _format_metric_value(seconds))
+                console.print(source_table)
+        else:
+            console.print("[italic]No performance metrics recorded.[/italic]")
+
     def log_archive(self, archive_path: Path) -> None:
         if self.log_format == "json":
             self._emit_json("archive.created", {"path": archive_path})
@@ -295,6 +364,12 @@ def _convert_paths(data: dict[str, Any]) -> dict[str, Any]:
     return converted
 
 
+def _format_metric_value(value: Any) -> str:
+    if isinstance(value, int | float):
+        return f"{float(value):.4f}"
+    return str(value)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     try:
         options = parse_args(argv)
@@ -304,11 +379,24 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     logger = StructuredLogger(options.log_format)
 
+    excel_options = None
+    if any(
+        value is not None
+        for value in (options.excel_chunk_size, options.excel_engine, options.excel_stage_dir)
+    ):
+        excel_options = ExcelReadOptions(
+            chunk_size=options.excel_chunk_size,
+            engine=options.excel_engine,
+            stage_to_parquet=options.excel_stage_dir is not None,
+            stage_dir=options.excel_stage_dir,
+        )
+
     config = PipelineConfig(
         input_dir=options.input_dir,
         output_path=options.output_path,
         expectation_suite_name=options.expectation_suite_name,
         country_code=options.country_code,
+        excel_options=excel_options,
     )
 
     try:

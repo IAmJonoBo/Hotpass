@@ -7,6 +7,8 @@
 - [x] Harden CI-quality tooling coverage (Owner: Agent, Due: 2025-01-31)
 - [x] Document SSOT CLI behaviour and validation pipeline (Owner: Agent, Due: 2025-01-31)
 - [x] Add provenance-aware aggregation for conflicting source data (Owner: Agent, Due: 2025-01-31)
+- [x] Add performance instrumentation, chunked ingestion toggles, and benchmark tooling (Owner: Agent, Due: 2025-01-31)
+- [ ] Evaluate production data throughput regressions using benchmark harness (Owner: Ops, Due: 2025-02-15)
 
 ## Steps
 
@@ -23,6 +25,8 @@
 - [x] Prioritise aggregation selections using source reliability, recency, and persist provenance trail
 - [x] Replace standalone script with packaged CLI, structured logging, and optional report exports
 - [x] Publish architecture overview, field dictionary, mapping, and expectation catalogue under `docs/`
+- [x] Instrument pipeline stages with runtime metrics and expose results via CLI/report output
+- [x] Provide benchmark script and API for capturing throughput guardrails
 
 ## Deliverables
 
@@ -32,6 +36,7 @@
 - [x] Tooling configuration files (`pyproject.toml`, expectation suites, etc.)
 - [x] Documentation covering CLI usage, architecture, schema, and validation outputs
 - [x] Workflow publishing of packaged refined workbook archive (artifact + branch)
+- [x] Benchmarking script (`scripts/benchmark_pipeline.py`) and metrics reporting additions
 
 ## Quality Gates
 
@@ -43,27 +48,28 @@
 - [x] GitHub Actions `qa` job must pass before processing artifacts
 - [x] Data validation schema + Great Expectations suite succeed with zero critical errors
 - [x] Ensure refined workbook artifacts remain gitignored and reproducible
+- [x] Performance metrics emitted for each run and benchmark harness available for regression checks
 
 ## Links
 
-- Tests: `pytest` (see chunk `14a684`)
-- Lint: `ruff check` (see chunk `67aca2`)
-- Types: `mypy src tests scripts` (see chunk `402a31`)
-- Security: `bandit -r src scripts` (see chunk `5535b3`)
+- Tests: `pytest` (see chunk `9b49c4`)
+- Lint: `ruff check` (see chunk `6bdf1a`)
+- Types: `mypy src tests scripts` (see chunk `20c7f7`)
+- Security: `bandit -r src scripts` (see chunk `0347a7`)
 - CLI run: `python scripts/process_data.py` (chunk `b62601`)
-- Archive packaging tests: `pytest` (chunk `130a27`)
-- Lint run: `ruff check` (chunk `67aca2`)
-- Format check: `ruff format --check` (chunk `e3a454`)
-- Type check: `mypy src tests scripts` (chunk `402a31`)
-- Security scan: `bandit -r src scripts` (chunk `5535b3`)
+- Archive packaging tests: `pytest` (chunk `9b49c4`)
+- Lint run: `ruff check` (chunk `6bdf1a`)
+- Format check: `ruff format --check` (chunk `156308`)
+- Type check: `mypy src tests scripts` (chunk `20c7f7`)
+- Security scan: `bandit -r src scripts` (chunk `0347a7`)
 - Workflow packaging update: `.github/workflows/process-data.yml`
-- Latest regression: `pytest` (chunk `14a684`)
-- Most recent pytest run: `pytest` (chunk `14a684`)
-- Latest lint: `ruff check` (chunk `67aca2`)
-- Latest format check: `ruff format --check` (chunk `e3a454`)
-- Latest type check: `mypy src tests scripts` (chunk `402a31`)
-- Latest security scan: `bandit -r src scripts` (chunk `5535b3`)
-- Latest build: `python -m build` (chunk `7c3003`)
+- Latest regression: `pytest` (chunk `9b49c4`)
+- Most recent pytest run: `pytest` (chunk `9b49c4`)
+- Latest lint: `ruff check` (chunk `6bdf1a`)
+- Latest format check: `ruff format --check` (chunk `156308`)
+- Latest type check: `mypy src tests scripts` (chunk `20c7f7`)
+- Latest security scan: `bandit -r src scripts` (chunk `0347a7`)
+- Latest build: `python -m build` (chunk `d2e11d`)
 - Architecture overview: `docs/architecture-overview.md`
 - Field dictionary: `docs/ssot-field-dictionary.md`
 - Source mapping: `docs/source-to-target-mapping.md`
@@ -84,3 +90,5 @@
 - `DATA_ARTIFACT_PAT` secret must be provisioned for the `publish-artifact` job to succeed on pushes.
 - Source reliability precedence currently assumes SACAA > Reachout > Contact Database; revisit mapping with data governance stakeholders.
 - `hotpass` console script replaces `scripts/process_data.py`; ensure downstream automation (including workflows) depends on the new entry point going forward.
+- Chunked Excel ingestion leverages iterative parsing; consider adding pyarrow if parquet staging becomes mandatory for production workloads.
+- Benchmark harness available under `scripts/benchmark_pipeline.py`; schedule periodic baseline captures to detect performance regressions.

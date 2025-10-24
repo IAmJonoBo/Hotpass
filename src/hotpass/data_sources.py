@@ -20,6 +20,105 @@ from .normalization import (
 )
 
 
+@dataclass(frozen=True)
+class ExcelReadOptions:
+    """Options controlling how Excel sheets are loaded."""
+
+    engine: str | None = None
+    chunk_size: int | None = None
+    stage_to_parquet: bool = False
+    stage_dir: Path | None = None
+
+    def __post_init__(self) -> None:
+        if self.chunk_size is not None and self.chunk_size <= 0:
+            msg = "chunk_size must be greater than zero when provided"
+            raise ValueError(msg)
+
+    def as_reader_kwargs(self) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {}
+        if self.engine:
+            kwargs["engine"] = self.engine
+        return kwargs
+
+    def should_stage(self) -> bool:
+        return self.stage_to_parquet and (self.stage_dir is not None)
+
+    def resolve_stage_dir(self, workbook_path: Path) -> Path:
+        return self.stage_dir or workbook_path.parent
+
+
+def _sanitise_sheet_name(sheet_name: str) -> str:
+    clean = re.sub(r"[^A-Za-z0-9]+", "_", sheet_name.strip() or "sheet")
+    return clean.strip("_") or "sheet"
+
+
+def _read_excel(
+    workbook_path: Path,
+    sheet_name: str,
+    options: ExcelReadOptions | None,
+) -> pd.DataFrame:
+    engine = options.engine if options and options.engine else None
+    if options and options.chunk_size:
+        frame = _read_excel_chunked(
+            workbook_path,
+            sheet_name,
+            chunk_size=options.chunk_size,
+            engine=engine,
+        )
+    else:
+        kwargs: dict[str, Any] = {"sheet_name": sheet_name}
+        if engine:
+            kwargs["engine"] = engine
+        frame = pd.read_excel(workbook_path, **kwargs)
+
+    if options and options.should_stage():
+        stage_dir = options.resolve_stage_dir(workbook_path)
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        stage_path = stage_dir / f"{workbook_path.stem}__{_sanitise_sheet_name(sheet_name)}.parquet"
+        try:
+            frame.to_parquet(stage_path, index=False)
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            msg = "Staging to parquet requires the optional pyarrow dependency"
+            raise RuntimeError(msg) from exc
+    return frame
+
+
+def _read_excel_chunked(
+    workbook_path: Path,
+    sheet_name: str,
+    *,
+    chunk_size: int,
+    engine: str | None,
+) -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    columns: list[str] | None = None
+    data_rows_consumed = 0
+
+    with pd.ExcelFile(workbook_path, engine=engine) as excel_file:
+        while True:
+            skip_value = 0 if columns is None else data_rows_consumed + 1
+            chunk = pd.read_excel(
+                excel_file,
+                sheet_name=sheet_name,
+                header=0 if columns is None else None,
+                names=columns if columns is not None else None,
+                skiprows=skip_value,
+                nrows=chunk_size,
+            )
+            if chunk.empty:
+                break
+            if columns is None:
+                columns = list(chunk.columns)
+            frames.append(chunk)
+            data_rows_consumed += len(chunk)
+            if len(chunk) < chunk_size:
+                break
+
+    if not frames:
+        return pd.DataFrame(columns=columns or None)
+    return pd.concat(frames, ignore_index=True)
+
+
 @dataclass
 class RawRecord:
     organization_name: str
@@ -145,10 +244,12 @@ def _split_contact_fields(
     return names, roles, emails, phones
 
 
-def load_reachout_database(input_dir: Path, country_code: str) -> pd.DataFrame:
+def load_reachout_database(
+    input_dir: Path, country_code: str, options: ExcelReadOptions | None = None
+) -> pd.DataFrame:
     org_path = input_dir / "Reachout Database.xlsx"
-    organisation_df = pd.read_excel(org_path, sheet_name="Organisation")
-    contacts_df = pd.read_excel(org_path, sheet_name="Contact Info")
+    organisation_df = _read_excel(org_path, "Organisation", options)
+    contacts_df = _read_excel(org_path, "Contact Info", options)
 
     contact_groups = contacts_df.groupby("ID")
     records: list[RawRecord] = []
@@ -197,12 +298,14 @@ def load_reachout_database(input_dir: Path, country_code: str) -> pd.DataFrame:
     return pd.DataFrame([record.as_dict() for record in records])
 
 
-def load_contact_database(input_dir: Path, country_code: str) -> pd.DataFrame:
+def load_contact_database(
+    input_dir: Path, country_code: str, options: ExcelReadOptions | None = None
+) -> pd.DataFrame:
     path = input_dir / "Contact Database.xlsx"
-    company_df = pd.read_excel(path, sheet_name="Company_Cat")
-    contacts_df = pd.read_excel(path, sheet_name="Company_Contacts")
-    addresses_df = pd.read_excel(path, sheet_name="Company_Addresses")
-    capture_df = pd.read_excel(path, sheet_name="10-10-25 Capture")
+    company_df = _read_excel(path, "Company_Cat", options)
+    contacts_df = _read_excel(path, "Company_Contacts", options)
+    addresses_df = _read_excel(path, "Company_Addresses", options)
+    capture_df = _read_excel(path, "10-10-25 Capture", options)
 
     contacts_grouped = contacts_df.groupby("C_ID")
     address_map: dict[str, str] = {}
@@ -266,9 +369,11 @@ def load_contact_database(input_dir: Path, country_code: str) -> pd.DataFrame:
     return pd.DataFrame([record.as_dict() for record in records])
 
 
-def load_sacaa_cleaned(input_dir: Path, country_code: str) -> pd.DataFrame:
+def load_sacaa_cleaned(
+    input_dir: Path, country_code: str, options: ExcelReadOptions | None = None
+) -> pd.DataFrame:
     path = input_dir / "SACAA Flight Schools - Refined copy__CLEANED.xlsx"
-    df = pd.read_excel(path, sheet_name="Cleaned")
+    df = _read_excel(path, "Cleaned", options)
     records: list[RawRecord] = []
     for _, row in df.iterrows():
         org_name = clean_string(row.get("Name of Organisation"))
