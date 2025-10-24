@@ -6,6 +6,7 @@
 - [ ] Implement comprehensive data quality validation suite (Owner: Agent, Due: 2025-01-31)
 - [x] Harden CI-quality tooling coverage (Owner: Agent, Due: 2025-01-31)
 - [ ] Document SSOT CLI behaviour and validation pipeline (Owner: Agent, Due: 2025-01-31)
+- [x] Add provenance-aware aggregation for conflicting source data (Owner: Agent, Due: 2025-01-31)
 
 ## Steps
 
@@ -19,6 +20,7 @@
 - [x] Align fallback expectation thresholds with GE defaults and normalise blank contact values
 - [ ] Monitor override needs for contact expectation thresholds using fresh vendor samples
 - [x] Add checksum-stamped archive packaging and CI publication flow for refined workbook
+- [x] Prioritise aggregation selections using source reliability, recency, and persist provenance trail
 
 ## Deliverables
 
@@ -53,6 +55,11 @@
 - Type check: `mypy src tests scripts` (chunk `903177`)
 - Security scan: `bandit -r src scripts` (chunk `97ff89`)
 - Workflow packaging update: `.github/workflows/process-data.yml`
+- Latest regression: `pytest` (chunk `6f3f4e`)
+- Latest lint: `ruff check` (chunk `a7d22d`)
+- Latest format check: `ruff format --check` (chunk `5a323f`)
+- Latest type check: `mypy src tests scripts` (chunk `26510a`)
+- Latest security scan: `bandit -r src scripts` (chunk `57bd11`)
 
 ## Risks / Notes
 
@@ -67,3 +74,4 @@
 - Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.
 - Contact expectation defaults documented: blanks are treated as null-equivalent, and threshold tuning (default 0.85) must be justified when deviating for specific datasets.
 - `DATA_ARTIFACT_PAT` secret must be provisioned for the `publish-artifact` job to succeed on pushes.
+- Source reliability precedence currently assumes SACAA > Reachout > Contact Database; revisit mapping with data governance stakeholders.
