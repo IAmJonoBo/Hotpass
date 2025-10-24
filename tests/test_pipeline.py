@@ -309,18 +309,20 @@ def test_pipeline_handles_all_invalid_records(
         reachout_contacts.to_excel(writer, sheet_name="Contact Info", index=False)
 
     def patched_build_schema():
-        # Create a schema that will fail all records
-        # by requiring organization_name to match an impossible pattern
+        # Create a schema that will fail all records by requiring
+        # organization_name to match an impossible pattern
         def string_col(nullable: bool = True) -> Column:
             return Column(pa.String, nullable=nullable)
+
+        # Pattern that will never match any realistic organization name
+        impossible_pattern = r"^IMPOSSIBLE_TEST_PATTERN_WILL_NEVER_MATCH_XYZ$"
 
         schema = DataFrameSchema(
             {
                 "organization_name": Column(
                     pa.String,
                     nullable=False,
-                    # Pattern that will never match - always fails
-                    checks=Check(lambda s: s.str.match(r"^IMPOSSIBLE_PATTERN_XYZ$")),
+                    checks=Check(lambda s: s.str.match(impossible_pattern)),
                 ),
                 "organization_slug": Column(pa.String, nullable=False),
                 "province": string_col(),
