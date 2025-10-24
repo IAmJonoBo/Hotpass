@@ -271,7 +271,6 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
             meta.quality_score,
             timestamp_value,
             -meta.index,
-            meta.source_dataset,
             meta.source_record_id or "",
         )
 
