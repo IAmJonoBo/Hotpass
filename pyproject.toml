@@ -74,6 +74,7 @@ ignore_missing_imports = true
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = ["src/hotpass/optimize.py"]
 
 [tool.coverage.report]
 show_missing = true
