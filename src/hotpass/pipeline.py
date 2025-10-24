@@ -1013,8 +1013,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     for slug, group in combined.groupby("organization_slug", dropna=False):
         row_dict = _aggregate_group(slug, group)
         # Extract and accumulate conflicts
-        conflicts = row_dict.pop("_conflicts", [])
-        all_conflicts.extend(conflicts)
+        conflicts_obj = row_dict.pop("_conflicts", [])
+        if isinstance(conflicts_obj, list):
+            all_conflicts.extend(conflicts_obj)
         aggregated_rows.append(row_dict)
 
     refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
