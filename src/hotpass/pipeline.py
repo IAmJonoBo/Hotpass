@@ -5,8 +5,9 @@ from __future__ import annotations
 import html
 import json
 import re
+import time
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,7 @@ import pandas as pd
 from pandera.errors import SchemaErrors
 
 from .data_sources import (
+    ExcelReadOptions,
     load_contact_database,
     load_reachout_database,
     load_sacaa_cleaned,
@@ -126,6 +128,7 @@ class PipelineConfig:
     output_path: Path
     expectation_suite_name: str = "default"
     country_code: str = "ZA"
+    excel_options: ExcelReadOptions | None = None
 
 
 @dataclass
@@ -137,6 +140,7 @@ class QualityReport:
     expectation_failures: list[str]
     source_breakdown: dict[str, int]
     data_quality_distribution: dict[str, float]
+    performance_metrics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -147,6 +151,7 @@ class QualityReport:
             "expectation_failures": list(self.expectation_failures),
             "source_breakdown": dict(self.source_breakdown),
             "data_quality_distribution": dict(self.data_quality_distribution),
+            "performance_metrics": dict(self.performance_metrics),
         }
 
     def to_markdown(self) -> str:
@@ -191,6 +196,42 @@ class QualityReport:
             lines.extend(f"- {failure}" for failure in self.expectation_failures)
         else:
             lines.append("None")
+        lines.append("")
+
+        lines.append("## Performance Metrics")
+        lines.append("")
+        if self.performance_metrics:
+            lines.extend(["| Metric | Value |", "| --- | ---: |"])
+            primary_metrics = [
+                ("Load seconds", self.performance_metrics.get("load_seconds")),
+                ("Aggregation seconds", self.performance_metrics.get("aggregation_seconds")),
+                ("Expectations seconds", self.performance_metrics.get("expectations_seconds")),
+                ("Write seconds", self.performance_metrics.get("write_seconds")),
+                ("Total seconds", self.performance_metrics.get("total_seconds")),
+                ("Rows per second", self.performance_metrics.get("rows_per_second")),
+                ("Load rows per second", self.performance_metrics.get("load_rows_per_second")),
+            ]
+            for label, raw_value in primary_metrics:
+                if raw_value is None:
+                    continue
+                if isinstance(raw_value, int | float):
+                    value = f"{float(raw_value):.4f}"
+                else:
+                    value = str(raw_value)
+                lines.append(f"| {label} | {value} |")
+            lines.append("")
+
+            source_metrics = self.performance_metrics.get("source_load_seconds", {})
+            if source_metrics:
+                lines.append("### Source Load Durations")
+                lines.append("")
+                lines.extend(["| Loader | Seconds |", "| --- | ---: |"])
+                for loader, seconds in sorted(source_metrics.items()):
+                    lines.append(f"| {loader} | {float(seconds):.4f} |")
+                lines.append("")
+        else:
+            lines.append("No performance metrics recorded.")
+            lines.append("")
 
         return "\n".join(lines) + "\n"
 
@@ -266,15 +307,69 @@ class QualityReport:
             f"  <ul>{schema_items}</ul>\n"
             "  <h2>Expectation Failures</h2>\n"
             f"  <ul>{expectation_items}</ul>\n"
+            "  <h2>Performance Metrics</h2>\n"
+            "  <table>\n"
+            f"    <tbody>{_html_performance_rows(self.performance_metrics)}</tbody>\n"
+            "  </table>\n"
+            f"  {_html_source_performance(self.performance_metrics)}"
             "</body>\n"
             "</html>\n"
         )
+
+
+def _html_performance_rows(metrics: dict[str, Any]) -> str:
+    if not metrics:
+        return '<tr><td colspan="2">No performance metrics recorded.</td></tr>'
+    rows: list[str] = []
+    mapping = [
+        ("Load seconds", metrics.get("load_seconds")),
+        ("Aggregation seconds", metrics.get("aggregation_seconds")),
+        ("Expectations seconds", metrics.get("expectations_seconds")),
+        ("Write seconds", metrics.get("write_seconds")),
+        ("Total seconds", metrics.get("total_seconds")),
+        ("Rows per second", metrics.get("rows_per_second")),
+        ("Load rows per second", metrics.get("load_rows_per_second")),
+    ]
+    for label, raw in mapping:
+        if raw is None:
+            continue
+        if isinstance(raw, int | float):
+            value = f"{float(raw):.4f}"
+        else:
+            value = str(raw)
+        rows.append(f"<tr><td>{html.escape(label)}</td><td>{html.escape(value)}</td></tr>")
+    if not rows:
+        return '<tr><td colspan="2">No performance metrics recorded.</td></tr>'
+    return "".join(rows)
+
+
+def _html_source_performance(metrics: dict[str, Any]) -> str:
+    if not metrics:
+        return ""
+    sources = metrics.get("source_load_seconds", {})
+    if not sources:
+        return ""
+    rows = "".join(
+        "<tr><td>{}</td><td>{}</td></tr>".format(
+            html.escape(loader),
+            html.escape(f"{float(seconds):.4f}"),
+        )
+        for loader, seconds in sorted(sources.items())
+    )
+    return (
+        "  <h3>Source Load Durations</h3>\n"
+        "  <table>\n"
+        "    <thead><tr><th>Loader</th><th>Seconds</th></tr></thead>\n"
+        f"    <tbody>{rows}</tbody>\n"
+        "  </table>\n"
+    )
 
 
 @dataclass
 class PipelineResult:
     refined: pd.DataFrame
     quality_report: QualityReport
+    performance_metrics: dict[str, Any]
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
@@ -632,20 +727,25 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     }
 
 
-def _load_sources(config: PipelineConfig) -> pd.DataFrame:
+def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float]]:
     loaders = [load_reachout_database, load_contact_database, load_sacaa_cleaned]
     frames: list[pd.DataFrame] = []
+    timings: dict[str, float] = {}
     for loader in loaders:
+        start = time.perf_counter()
         try:
-            frame = loader(config.input_dir, config.country_code)
+            frame = loader(config.input_dir, config.country_code, config.excel_options)
         except FileNotFoundError:
+            timings[loader.__name__] = time.perf_counter() - start
             continue
         except (OSError, ValueError) as exc:  # pragma: no cover - defensive logging hook
             raise RuntimeError(f"Failed to load source via {loader.__name__}: {exc}") from exc
+        duration = time.perf_counter() - start
+        timings[loader.__name__] = duration
         if not frame.empty:
             frames.append(frame)
     if not frames:
-        return pd.DataFrame(
+        empty = pd.DataFrame(
             columns=[
                 "organization_name",
                 "source_dataset",
@@ -668,16 +768,45 @@ def _load_sources(config: PipelineConfig) -> pd.DataFrame:
                 "contact_phones",
             ]
         )
+        return empty, timings
     combined = pd.concat(frames, ignore_index=True, sort=False)
     combined["organization_slug"] = combined["organization_name"].apply(slugify)
     combined["province"] = combined["province"].apply(normalize_province)
-    return combined
+    return combined, timings
 
 
 def run_pipeline(config: PipelineConfig) -> PipelineResult:
-    combined = _load_sources(config)
+    pipeline_start = time.perf_counter()
+    load_start = time.perf_counter()
+    combined, source_timings = _load_sources(config)
+    load_seconds = time.perf_counter() - load_start
+    metrics: dict[str, Any] = {
+        "load_seconds": load_seconds,
+        "aggregation_seconds": 0.0,
+        "expectations_seconds": 0.0,
+        "write_seconds": 0.0,
+        "total_seconds": 0.0,
+        "rows_per_second": 0.0,
+        "load_rows_per_second": 0.0,
+        "source_load_seconds": source_timings,
+    }
+    if load_seconds > 0:
+        metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0
+
     if combined.empty:
         refined = pd.DataFrame(columns=SSOT_COLUMNS)
+        config.output_path.parent.mkdir(parents=True, exist_ok=True)
+        write_start = time.perf_counter()
+        refined.to_excel(config.output_path, index=False)
+        write_seconds = time.perf_counter() - write_start
+        metrics.update(
+            aggregation_seconds=0.0,
+            expectations_seconds=0.0,
+            write_seconds=write_seconds,
+            total_seconds=time.perf_counter() - pipeline_start,
+            rows_per_second=0.0,
+        )
+        metrics_copy = dict(metrics)
         report = QualityReport(
             total_records=0,
             invalid_records=0,
@@ -686,16 +815,21 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             expectation_failures=[],
             source_breakdown={},
             data_quality_distribution={"mean": 0.0, "min": 0.0, "max": 0.0},
+            performance_metrics=metrics_copy,
         )
-        config.output_path.parent.mkdir(parents=True, exist_ok=True)
-        refined.to_excel(config.output_path, index=False)
-        return PipelineResult(refined=refined, quality_report=report)
+        return PipelineResult(
+            refined=refined,
+            quality_report=report,
+            performance_metrics=metrics_copy,
+        )
 
     aggregated_rows = []
+    aggregation_start = time.perf_counter()
     for slug, group in combined.groupby("organization_slug", dropna=False):
         aggregated_rows.append(_aggregate_group(slug, group))
     refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
     refined_df = refined_df.sort_values("organization_name").reset_index(drop=True)
+    metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
 
     schema = build_ssot_schema()
     schema_errors: list[str] = []
@@ -710,7 +844,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
         validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
 
+    expectation_start = time.perf_counter()
     expectation_summary: ExpectationSummary = run_expectations(validated_df)
+    metrics["expectations_seconds"] = time.perf_counter() - expectation_start
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
     quality_distribution = {
@@ -719,6 +855,15 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         "max": float(validated_df["data_quality_score"].max()),
     }
 
+    config.output_path.parent.mkdir(parents=True, exist_ok=True)
+    write_start = time.perf_counter()
+    validated_df.to_excel(config.output_path, index=False)
+    metrics["write_seconds"] = time.perf_counter() - write_start
+    metrics["total_seconds"] = time.perf_counter() - pipeline_start
+    if metrics["total_seconds"] > 0:
+        metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
+
+    metrics_copy = dict(metrics)
     report = QualityReport(
         total_records=int(len(refined_df)),
         invalid_records=int(len(refined_df) - len(validated_df)),
@@ -727,9 +872,11 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         expectation_failures=expectation_summary.failures,
         source_breakdown=source_breakdown,
         data_quality_distribution=quality_distribution,
+        performance_metrics=metrics_copy,
     )
 
-    config.output_path.parent.mkdir(parents=True, exist_ok=True)
-    validated_df.to_excel(config.output_path, index=False)
-
-    return PipelineResult(refined=validated_df, quality_report=report)
+    return PipelineResult(
+        refined=validated_df,
+        quality_report=report,
+        performance_metrics=metrics_copy,
+    )

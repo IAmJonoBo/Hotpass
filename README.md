@@ -36,7 +36,15 @@ hotpass --config config/pipeline.toml --output-path /tmp/refined.xlsx
 
 Supported configuration files are JSON or TOML. CLI flags always take precedence over configuration values. When `--report-path` is provided the tool renders the `QualityReport` to Markdown by default, or HTML when `--report-format html` (or a `.html`/`.htm` extension) is used.
 
-Structured logs can be emitted in JSON (`--log-format json`) for ingestion by automation tooling, or as rich tables (`--log-format rich`, the default) for human-friendly summaries.
+Structured logs can be emitted in JSON (`--log-format json`) for ingestion by automation tooling, or as rich tables (`--log-format rich`, the default) for human-friendly summaries. Each CLI run now reports detailed performance metrics – including per-stage durations and throughput – in both the console summary and generated quality reports so ops teams can track runtime trends.
+
+### Performance tuning flags
+
+Large Excel inputs can be streamed and optionally staged to parquet for reuse:
+
+- `--excel-chunk-size <rows>` – enable chunked reads for all source workbooks.
+- `--excel-engine <name>` – override the pandas engine (e.g. `pyxlsb` for `.xlsb` inputs).
+- `--excel-stage-dir <path>` – persist chunked reads to parquet so subsequent runs can reuse staged data.
 
 ## GitHub Actions
 
@@ -91,3 +99,18 @@ Centralised documentation lives under `docs/`:
 1. Make changes in a branch.
 2. Test locally.
 3. Create a PR; GitHub Actions will run the processing pipeline.
+## Benchmarking and performance monitoring
+
+Use the lightweight benchmarking helper to capture baseline throughput and guard against regressions:
+
+```bash
+python scripts/benchmark_pipeline.py \
+  --input-dir data \
+  --output-path dist/benchmark.xlsx \
+  --runs 5 \
+  --excel-chunk-size 5000 \
+  --json
+```
+
+The command runs the pipeline multiple times, aggregates average stage timings (load, aggregation, expectations, write), and emits both JSON summaries and human-readable output. The data is also available programmatically via `hotpass.benchmarks.run_benchmark` for integration into CI checks or monitoring dashboards.
+
