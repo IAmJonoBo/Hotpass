@@ -331,7 +331,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     def _record_provenance(
         field: str, selections: list[ValueSelection], value: str | None
     ) -> ValueSelection | None:
-        if not selections or value is None:
+        if not selections:
             return None
         primary_selection = next((sel for sel in selections if sel.value == value), selections[0])
         entry = _build_provenance(field, primary_selection, value)
