@@ -60,7 +60,7 @@ class DataOptimizer:
 
         for normalized_name, indices in name_to_indices.items():
             if len(indices) > 1:
-                key = self.df.loc[indices[0], 'organization_name']
+                key = f"{normalized_name} ({self.df.loc[indices[0], 'organization_name']})"
                 duplicates[key] = indices
 
         logger.info(f"Found {len(duplicates)} potential duplicate groups")
