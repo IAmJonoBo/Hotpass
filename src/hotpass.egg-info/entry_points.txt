@@ -1,0 +1,2 @@
+[console_scripts]
+hotpass = hotpass.cli:main
