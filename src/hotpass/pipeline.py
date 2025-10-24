@@ -1051,7 +1051,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         ]
         invalid_indices = exc.failure_cases["index"].unique().tolist()
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
-        
+
         # Check if all records failed validation
         if not valid_indices:
             logger.error(
@@ -1086,7 +1086,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
                     },
                 }
             )
-    
+
     # Additional safeguard: if validated_df is empty after schema validation,
     # but refined_df had data, write the original refined_df instead
     if len(validated_df) == 0 and len(refined_df) > 0:
@@ -1120,7 +1120,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
-    
+
     # Handle empty validated_df gracefully
     if len(validated_df) > 0:
         quality_distribution = {

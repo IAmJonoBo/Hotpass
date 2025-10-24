@@ -257,17 +257,19 @@ def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> 
     assert any("contact_primary_email format" in failure for failure in summary.failures)
 
 
-def test_pipeline_handles_all_invalid_records(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test that pipeline handles gracefully when all records fail schema validation."""
-    # We'll use sample_data_dir but then patch the schema to make all records invalid
-    import hotpass.pipeline as pipeline_module
-    from pandera import Column
-    from pandera.errors import SchemaErrors
+def test_pipeline_handles_all_invalid_records(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test pipeline handles gracefully when all records fail schema validation."""
+    # Patch the schema to reject ALL records
     import pandera as pa
-    
+    from pandera import Check, Column, DataFrameSchema
+
+    import hotpass.pipeline as pipeline_module
+
     data_dir = tmp_path / "data"
     data_dir.mkdir()
-    
+
     # Create valid data that will load successfully
     reachout_org = pd.DataFrame(
         {
@@ -301,28 +303,24 @@ def test_pipeline_handles_all_invalid_records(tmp_path: Path, monkeypatch: pytes
             "Unnamed: 10": ["Validated", "Validated"],
         }
     )
-    
+
     with pd.ExcelWriter(data_dir / "Reachout Database.xlsx") as writer:
         reachout_org.to_excel(writer, sheet_name="Organisation", index=False)
         reachout_contacts.to_excel(writer, sheet_name="Contact Info", index=False)
-    
-    # Patch the schema to reject ALL records
-    original_build_schema = pipeline_module.build_ssot_schema
-    
+
     def patched_build_schema():
         # Create a schema that will fail all records
-        # by requiring organization_name to match a pattern that will never match
+        # by requiring organization_name to match an impossible pattern
         def string_col(nullable: bool = True) -> Column:
             return Column(pa.String, nullable=nullable)
-        
-        from pandera import DataFrameSchema, Check
-        
+
         schema = DataFrameSchema(
             {
                 "organization_name": Column(
                     pa.String,
                     nullable=False,
-                    checks=Check(lambda s: s.str.match(r"^IMPOSSIBLE_PATTERN_XYZ$"))  # Always fails
+                    # Pattern that will never match - always fails
+                    checks=Check(lambda s: s.str.match(r"^IMPOSSIBLE_PATTERN_XYZ$")),
                 ),
                 "organization_slug": Column(pa.String, nullable=False),
                 "province": string_col(),
@@ -355,9 +353,9 @@ def test_pipeline_handles_all_invalid_records(tmp_path: Path, monkeypatch: pytes
             name="hotpass_ssot_all_fail",
         )
         return schema
-    
+
     monkeypatch.setattr(pipeline_module, "build_ssot_schema", patched_build_schema)
-    
+
     output_path = tmp_path / "output.xlsx"
     config = PipelineConfig(
         input_dir=data_dir,
@@ -365,18 +363,18 @@ def test_pipeline_handles_all_invalid_records(tmp_path: Path, monkeypatch: pytes
         expectation_suite_name="default",
         country_code="ZA",
     )
-    
+
     # Run pipeline - should not raise an error
     result = run_pipeline(config)
-    
+
     # Verify the output file exists
     assert output_path.exists()
     output_df = pd.read_excel(output_path)
-    
+
     # When all records fail validation, we should still write the data (with our fix)
     # Previously this would result in an empty file
-    assert len(output_df) > 0, "Output should contain data even when all records fail validation"
-    
+    assert len(output_df) > 0, "Output should contain data when all fail validation"
+
     # Verify quality report reflects the issues
-    assert len(result.quality_report.schema_validation_errors) > 0, "Should have validation errors"
+    assert len(result.quality_report.schema_validation_errors) > 0
     assert result.quality_report.total_records > 0
