@@ -2,7 +2,8 @@
 # Hotpass CLI launcher
 
 # Set the Python path to include src
-export PYTHONPATH="$(dirname "$0")/src:$PYTHONPATH"
+dir="$(dirname "$0")"
+export PYTHONPATH="$dir/src:${PYTHONPATH}"
 
 # Run the CLI
 exec python -u "$(dirname "$0")/src/hotpass/cli.py" "$@"
