@@ -98,9 +98,7 @@ class ColumnMapper:
 
             # Try to match against each target column
             for target_col, synonyms in self.target_schema.items():
-                match_name, score = self._find_best_match(
-                    source_col, target_col, synonyms
-                )
+                match_name, score = self._find_best_match(source_col, target_col, synonyms)
 
                 if score > best_score:
                     best_score = score
@@ -174,9 +172,7 @@ def infer_column_types(df: pd.DataFrame) -> dict[str, str]:
 
         # Check for phone pattern
         phone_matches = sum(
-            1
-            for val in sample
-            if phone_pattern.match(val.strip()) and len(val.strip()) >= 7
+            1 for val in sample if phone_pattern.match(val.strip()) and len(val.strip()) >= 7
         )
         if phone_matches / len(sample) > 0.7:
             column_types[column] = "phone"

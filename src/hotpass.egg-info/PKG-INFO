@@ -1,5 +1,3 @@
-# Hotpass Data Refinement Pipeline
-
 Metadata-Version: 2.4
 Name: hotpass
 Version: 0.1.0
@@ -31,7 +29,7 @@ Requires-Dist: sphinx-autodoc-typehints>=3.5.2; extra == "docs"
 Requires-Dist: furo>=2025.9.25; extra == "docs"
 Requires-Dist: linkify-it-py>=2.0.3; extra == "docs"
 
-## Hotpass Data Refinement Repository
+# Hotpass Data Refinement Repository
 
 This repository is optimized for validating, normalizing, processing, and refining multiple Excel documents into a highly-refined single source of truth. It uses Python with libraries like pandas, pandera, and great-expectations for data quality assurance.
 
