@@ -255,3 +255,128 @@ def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert not summary.success
     assert any("contact_primary_email format" in failure for failure in summary.failures)
+
+
+def test_pipeline_handles_all_invalid_records(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that pipeline handles gracefully when all records fail schema validation."""
+    # We'll use sample_data_dir but then patch the schema to make all records invalid
+    import hotpass.pipeline as pipeline_module
+    from pandera import Column
+    from pandera.errors import SchemaErrors
+    import pandera as pa
+    
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    
+    # Create valid data that will load successfully
+    reachout_org = pd.DataFrame(
+        {
+            "Organisation Name": ["Valid School", "Good Org"],  # Valid names
+            "ID": [1, 2],
+            "Reachout Date": ["March 10, 2025", "2025-01-20"],
+            "Recent_Touch_Ind": ["Y", "N"],
+            "Area": ["Gauteng", "Western Cape"],
+            "Distance": [0, 1200],
+            "Type": ["Flight School", "Helicopter"],
+            "Website": ["www.test1.example", "www.test2.example"],
+            "Address": ["Address 1", "Address 2"],
+            "Planes": ["Plane 1", "Plane 2"],
+            "Description Type": ["Type 1", "Type 2"],
+            "Notes": ["Note 1", "Note 2"],
+            "Open Questions": ["Q1", "Q2"],
+        }
+    )
+    reachout_contacts = pd.DataFrame(
+        {
+            "ID": [1, 2],
+            "Organisation Name": ["Valid School", "Good Org"],
+            "Reachout Date": ["2025-01-15", "2025-01-20"],
+            "Firstname": ["John", "Jane"],
+            "Surname": ["Doe", "Smith"],
+            "Position": ["Manager", "Staff"],
+            "Phone": ["082 123 4567", "082 765 4321"],
+            "WhatsApp": ["0821234567", "0827654321"],
+            "Email": ["john@test.com", "jane@test.com"],
+            "Invalid": ["", ""],
+            "Unnamed: 10": ["Validated", "Validated"],
+        }
+    )
+    
+    with pd.ExcelWriter(data_dir / "Reachout Database.xlsx") as writer:
+        reachout_org.to_excel(writer, sheet_name="Organisation", index=False)
+        reachout_contacts.to_excel(writer, sheet_name="Contact Info", index=False)
+    
+    # Patch the schema to reject ALL records
+    original_build_schema = pipeline_module.build_ssot_schema
+    
+    def patched_build_schema():
+        # Create a schema that will fail all records
+        # by requiring organization_name to match a pattern that will never match
+        def string_col(nullable: bool = True) -> Column:
+            return Column(pa.String, nullable=nullable)
+        
+        from pandera import DataFrameSchema, Check
+        
+        schema = DataFrameSchema(
+            {
+                "organization_name": Column(
+                    pa.String,
+                    nullable=False,
+                    checks=Check(lambda s: s.str.match(r"^IMPOSSIBLE_PATTERN_XYZ$"))  # Always fails
+                ),
+                "organization_slug": Column(pa.String, nullable=False),
+                "province": string_col(),
+                "country": Column(pa.String, nullable=False),
+                "area": string_col(),
+                "address_primary": string_col(),
+                "organization_category": string_col(),
+                "organization_type": string_col(),
+                "status": string_col(),
+                "website": string_col(),
+                "planes": string_col(),
+                "description": string_col(),
+                "notes": string_col(),
+                "source_datasets": Column(pa.String, nullable=False),
+                "source_record_ids": Column(pa.String, nullable=False),
+                "contact_primary_name": string_col(),
+                "contact_primary_role": string_col(),
+                "contact_primary_email": string_col(),
+                "contact_primary_phone": string_col(),
+                "contact_secondary_emails": string_col(),
+                "contact_secondary_phones": string_col(),
+                "data_quality_score": Column(pa.Float, nullable=False),
+                "data_quality_flags": Column(pa.String, nullable=False),
+                "selection_provenance": Column(pa.String, nullable=False),
+                "last_interaction_date": string_col(),
+                "priority": string_col(),
+                "privacy_basis": Column(pa.String, nullable=False),
+            },
+            coerce=True,
+            name="hotpass_ssot_all_fail",
+        )
+        return schema
+    
+    monkeypatch.setattr(pipeline_module, "build_ssot_schema", patched_build_schema)
+    
+    output_path = tmp_path / "output.xlsx"
+    config = PipelineConfig(
+        input_dir=data_dir,
+        output_path=output_path,
+        expectation_suite_name="default",
+        country_code="ZA",
+    )
+    
+    # Run pipeline - should not raise an error
+    result = run_pipeline(config)
+    
+    # Verify the output file exists
+    assert output_path.exists()
+    output_df = pd.read_excel(output_path)
+    
+    # When all records fail validation, we should still write the data (with our fix)
+    # Previously this would result in an empty file
+    assert len(output_df) > 0, "Output should contain data even when all records fail validation"
+    
+    # Verify quality report reflects the issues
+    assert len(result.quality_report.schema_validation_errors) > 0, "Should have validation errors"
+    assert result.quality_report.total_records > 0

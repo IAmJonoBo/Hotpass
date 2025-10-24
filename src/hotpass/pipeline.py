@@ -1051,14 +1051,28 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         ]
         invalid_indices = exc.failure_cases["index"].unique().tolist()
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
-        validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
-        logger.warning(
-            f"Schema validation found {len(schema_errors)} errors",
-            extra={
-                "error_count": len(schema_errors),
-                "invalid_records": len(invalid_indices),
-            },
-        )
+        
+        # Check if all records failed validation
+        if not valid_indices:
+            logger.error(
+                f"All {len(refined_df)} records failed schema validation. "
+                "Writing unvalidated data with quality flags."
+            )
+            # Use the original refined_df instead of an empty dataframe
+            validated_df = refined_df
+            schema_errors.append(
+                f"CRITICAL: All {len(refined_df)} records failed schema validation. "
+                "Output contains unvalidated data."
+            )
+        else:
+            validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
+            logger.warning(
+                f"Schema validation found {len(schema_errors)} errors",
+                extra={
+                    "error_count": len(schema_errors),
+                    "invalid_records": len(invalid_indices),
+                },
+            )
 
         if config.enable_audit_trail:
             audit_trail.append(
@@ -1068,8 +1082,24 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
                     "details": {
                         "error_count": len(schema_errors),
                         "invalid_records": len(invalid_indices),
+                        "all_records_invalid": not bool(valid_indices),
                     },
                 }
+            )
+    
+    # Additional safeguard: if validated_df is empty after schema validation,
+    # but refined_df had data, write the original refined_df instead
+    if len(validated_df) == 0 and len(refined_df) > 0:
+        logger.error(
+            f"Schema validation resulted in empty output despite {len(refined_df)} input records. "
+            "Writing original data to prevent data loss."
+        )
+        validated_df = refined_df
+        if "CRITICAL: Schema validation resulted in complete data loss" not in schema_errors:
+            schema_errors.append(
+                f"CRITICAL: Schema validation resulted in complete data loss. "
+                f"All {len(refined_df)} records would have been filtered out. "
+                "Writing original data to prevent empty output file."
             )
 
     expectation_start = time.perf_counter()
@@ -1090,11 +1120,20 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
-    quality_distribution = {
-        "mean": float(validated_df["data_quality_score"].mean()),
-        "min": float(validated_df["data_quality_score"].min()),
-        "max": float(validated_df["data_quality_score"].max()),
-    }
+    
+    # Handle empty validated_df gracefully
+    if len(validated_df) > 0:
+        quality_distribution = {
+            "mean": float(validated_df["data_quality_score"].mean()),
+            "min": float(validated_df["data_quality_score"].min()),
+            "max": float(validated_df["data_quality_score"].max()),
+        }
+    else:
+        quality_distribution = {
+            "mean": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+        }
 
     # Generate recommendations if enabled
     recommendations = []
