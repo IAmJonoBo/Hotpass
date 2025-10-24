@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from collections.abc import Iterable
@@ -136,6 +137,138 @@ class QualityReport:
     expectation_failures: list[str]
     source_breakdown: dict[str, int]
     data_quality_distribution: dict[str, float]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "total_records": self.total_records,
+            "invalid_records": self.invalid_records,
+            "schema_validation_errors": list(self.schema_validation_errors),
+            "expectations_passed": self.expectations_passed,
+            "expectation_failures": list(self.expectation_failures),
+            "source_breakdown": dict(self.source_breakdown),
+            "data_quality_distribution": dict(self.data_quality_distribution),
+        }
+
+    def to_markdown(self) -> str:
+        lines = ["# Hotpass Quality Report", ""]
+        lines.extend(
+            [
+                "## Quality Metrics",
+                "",
+                "| Metric | Value |",
+                "| --- | ---: |",
+                f"| Total records | {self.total_records} |",
+                f"| Invalid records | {self.invalid_records} |",
+                f"| Expectations passed | {'Yes' if self.expectations_passed else 'No'} |",
+                f"| Mean quality score | {self.data_quality_distribution.get('mean', 0.0):.2f} |",
+                f"| Min quality score | {self.data_quality_distribution.get('min', 0.0):.2f} |",
+                f"| Max quality score | {self.data_quality_distribution.get('max', 0.0):.2f} |",
+                "",
+            ]
+        )
+
+        lines.append("## Source Breakdown")
+        lines.append("")
+        if self.source_breakdown:
+            lines.extend(["| Source | Records |", "| --- | ---: |"])
+            for source, count in sorted(self.source_breakdown.items()):
+                lines.append(f"| {source} | {count} |")
+        else:
+            lines.append("No source data recorded.")
+        lines.append("")
+
+        lines.append("## Schema Validation Errors")
+        lines.append("")
+        if self.schema_validation_errors:
+            lines.extend(f"- {error}" for error in self.schema_validation_errors)
+        else:
+            lines.append("None")
+        lines.append("")
+
+        lines.append("## Expectation Failures")
+        lines.append("")
+        if self.expectation_failures:
+            lines.extend(f"- {failure}" for failure in self.expectation_failures)
+        else:
+            lines.append("None")
+
+        return "\n".join(lines) + "\n"
+
+    def to_html(self) -> str:
+        def _metrics_row(label: str, value: str) -> str:
+            return (
+                f'<tr><th scope="row">{html.escape(label)}</th><td>{html.escape(value)}</td></tr>'
+            )
+
+        quality_rows = [
+            _metrics_row("Total records", str(self.total_records)),
+            _metrics_row("Invalid records", str(self.invalid_records)),
+            _metrics_row("Expectations passed", "Yes" if self.expectations_passed else "No"),
+            _metrics_row(
+                "Mean quality score",
+                f"{self.data_quality_distribution.get('mean', 0.0):.2f}",
+            ),
+            _metrics_row(
+                "Min quality score",
+                f"{self.data_quality_distribution.get('min', 0.0):.2f}",
+            ),
+            _metrics_row(
+                "Max quality score",
+                f"{self.data_quality_distribution.get('max', 0.0):.2f}",
+            ),
+        ]
+
+        source_rows = "".join(
+            f"<tr><td>{html.escape(source)}</td><td>{count}</td></tr>"
+            for source, count in sorted(self.source_breakdown.items())
+        )
+        if not source_rows:
+            source_rows = '<tr><td colspan="2">No source data recorded.</td></tr>'
+
+        schema_items = (
+            "".join(f"<li>{html.escape(error)}</li>" for error in self.schema_validation_errors)
+            or "<li>None</li>"
+        )
+        expectation_items = (
+            "".join(f"<li>{html.escape(failure)}</li>" for failure in self.expectation_failures)
+            or "<li>None</li>"
+        )
+
+        return (
+            "<!DOCTYPE html>\n"
+            '<html lang="en">\n'
+            "<head>\n"
+            '  <meta charset="utf-8" />\n'
+            "  <title>Hotpass Quality Report</title>\n"
+            "  <style>\n"
+            "    body { font-family: Arial, sans-serif; margin: 2rem; }\n"
+            "    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }\n"
+            "    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }\n"
+            "    th { background: #f7f7f7; }\n"
+            "  </style>\n"
+            "</head>\n"
+            "<body>\n"
+            "  <h1>Hotpass Quality Report</h1>\n"
+            "  <h2>Quality Metrics</h2>\n"
+            "  <table>\n"
+            "    <tbody>\n"
+            f"      {''.join(quality_rows)}\n"
+            "    </tbody>\n"
+            "  </table>\n"
+            "  <h2>Source Breakdown</h2>\n"
+            "  <table>\n"
+            "    <thead><tr><th>Source</th><th>Records</th></tr></thead>\n"
+            "    <tbody>\n"
+            f"      {source_rows}\n"
+            "    </tbody>\n"
+            "  </table>\n"
+            "  <h2>Schema Validation Errors</h2>\n"
+            f"  <ul>{schema_items}</ul>\n"
+            "  <h2>Expectation Failures</h2>\n"
+            f"  <ul>{expectation_items}</ul>\n"
+            "</body>\n"
+            "</html>\n"
+        )
 
 
 @dataclass

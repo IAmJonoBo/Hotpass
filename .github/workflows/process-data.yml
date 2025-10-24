@@ -59,8 +59,8 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt
 
-    - name: Run data processing script
-      run: python scripts/process_data.py --archive --dist-dir dist
+    - name: Run Hotpass CLI
+      run: hotpass --archive --dist-dir dist
 
     - name: Capture packaged archive path
       id: archive

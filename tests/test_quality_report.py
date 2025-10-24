@@ -1,0 +1,43 @@
+from __future__ import annotations
+
+from hotpass.pipeline import QualityReport
+
+
+def _sample_report() -> QualityReport:
+    return QualityReport(
+        total_records=10,
+        invalid_records=2,
+        schema_validation_errors=["organization_name null"],
+        expectations_passed=False,
+        expectation_failures=["contact_primary_email format"],
+        source_breakdown={"SACAA Cleaned": 6, "Reachout Database": 4},
+        data_quality_distribution={"mean": 0.75, "min": 0.5, "max": 0.95},
+    )
+
+
+def test_quality_report_to_dict_roundtrips() -> None:
+    report = _sample_report()
+    payload = report.to_dict()
+
+    assert payload["total_records"] == report.total_records
+    assert payload["expectations_passed"] is report.expectations_passed
+    assert payload["source_breakdown"]["SACAA Cleaned"] == 6
+
+
+def test_quality_report_to_markdown_contains_sections() -> None:
+    report = _sample_report()
+    markdown = report.to_markdown()
+
+    assert "# Hotpass Quality Report" in markdown
+    assert "Total records" in markdown
+    assert "| Source | Records |" in markdown
+    assert "contact_primary_email format" in markdown
+
+
+def test_quality_report_to_html_contains_table() -> None:
+    report = _sample_report()
+    html = report.to_html()
+
+    assert "<table" in html
+    assert "Quality Metrics" in html
+    assert "SACAA Cleaned" in html

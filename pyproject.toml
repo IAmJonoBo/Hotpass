@@ -1,3 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hotpass"
+version = "0.1.0"
+description = "Hotpass data refinement pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "LicenseRef-Proprietary"
+dependencies = [
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "pandera>=0.18.0",
+    "great-expectations>=0.18.0",
+    "phonenumbers>=8.13.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "mypy>=1.12.0",
+    "ruff>=0.6.0",
+    "bandit>=1.7.10",
+]
+
+[project.scripts]
+hotpass = "hotpass.cli:main"
+
 [tool.ruff]
 line-length = 100
 extend-exclude = ["data"]

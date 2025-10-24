@@ -5,7 +5,7 @@
 - [x] Establish reproducible data refinement pipeline architecture (Owner: Agent, Due: 2025-01-31)
 - [ ] Implement comprehensive data quality validation suite (Owner: Agent, Due: 2025-01-31)
 - [x] Harden CI-quality tooling coverage (Owner: Agent, Due: 2025-01-31)
-- [ ] Document SSOT CLI behaviour and validation pipeline (Owner: Agent, Due: 2025-01-31)
+- [x] Document SSOT CLI behaviour and validation pipeline (Owner: Agent, Due: 2025-01-31)
 - [x] Add provenance-aware aggregation for conflicting source data (Owner: Agent, Due: 2025-01-31)
 
 ## Steps
@@ -21,6 +21,7 @@
 - [ ] Monitor override needs for contact expectation thresholds using fresh vendor samples
 - [x] Add checksum-stamped archive packaging and CI publication flow for refined workbook
 - [x] Prioritise aggregation selections using source reliability, recency, and persist provenance trail
+- [x] Replace standalone script with packaged CLI, structured logging, and optional report exports
 
 ## Deliverables
 
@@ -28,7 +29,7 @@
 - [x] `tests/` suite with synthetic fixtures verifying pipeline behaviour
 - [ ] Refined workbook generated on demand via CLI (artifact only, not committed)
 - [x] Tooling configuration files (`pyproject.toml`, expectation suites, etc.)
-- [ ] Documentation describing CLI usage, schema, and validation outputs
+- [x] Documentation describing CLI usage, schema, and validation outputs
 - [x] Workflow publishing of packaged refined workbook archive (artifact + branch)
 
 ## Quality Gates
@@ -56,10 +57,12 @@
 - Security scan: `bandit -r src scripts` (chunk `97ff89`)
 - Workflow packaging update: `.github/workflows/process-data.yml`
 - Latest regression: `pytest` (chunk `6f3f4e`)
-- Latest lint: `ruff check` (chunk `a7d22d`)
-- Latest format check: `ruff format --check` (chunk `5a323f`)
-- Latest type check: `mypy src tests scripts` (chunk `26510a`)
-- Latest security scan: `bandit -r src scripts` (chunk `57bd11`)
+- Most recent pytest run: `pytest` (chunk `938d1a`)
+- Latest lint: `ruff check` (chunk `5f581b`)
+- Latest format check: `ruff format --check` (chunk `03360a`)
+- Latest type check: `mypy src tests scripts` (chunk `fbdc03`)
+- Latest security scan: `bandit -r src scripts` (chunk `863b12`)
+- Latest build: `python -m build` (chunk `8e3543`)
 
 ## Risks / Notes
 
@@ -75,3 +78,4 @@
 - Contact expectation defaults documented: blanks are treated as null-equivalent, and threshold tuning (default 0.85) must be justified when deviating for specific datasets.
 - `DATA_ARTIFACT_PAT` secret must be provisioned for the `publish-artifact` job to succeed on pushes.
 - Source reliability precedence currently assumes SACAA > Reachout > Contact Database; revisit mapping with data governance stakeholders.
+- `hotpass` console script replaces `scripts/process_data.py`; ensure downstream automation (including workflows) depends on the new entry point going forward.
