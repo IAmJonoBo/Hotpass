@@ -168,3 +168,60 @@ def test_build_entity_registry_with_history_file():
     registry = build_entity_registry(df, history_file="/nonexistent/file.json")
 
     assert len(registry) == 1
+
+
+def test_resolve_entities_with_splink_not_available():
+    """Test Splink resolution when Splink is not available."""
+    from unittest.mock import patch
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["ABC Corp", "ABC Corp"],
+            "organization_slug": ["abc-corp", "abc-corp"],
+        }
+    )
+
+    with patch("hotpass.entity_resolution.SPLINK_AVAILABLE", False):
+        from hotpass.entity_resolution import resolve_entities_with_splink
+
+        deduplicated, matches = resolve_entities_with_splink(df)
+
+        # Should fall back to simple deduplication
+        assert len(deduplicated) <= len(df)
+
+
+def test_build_splink_settings():
+    """Test building Splink settings."""
+    from hotpass.entity_resolution import build_splink_settings
+
+    settings = build_splink_settings()
+
+    # Check that settings dictionary is returned
+    assert isinstance(settings, dict)
+    assert "link_type" in settings
+    assert "comparisons" in settings
+
+
+def test_calculate_completeness_score_with_missing_columns():
+    """Test completeness score with missing expected columns."""
+    row = pd.Series({"organization_name": "Test", "some_other_field": "value"})
+
+    # Should handle missing columns gracefully
+    score = calculate_completeness_score(row)
+    assert 0 <= score <= 1
+
+
+def test_add_ml_priority_scores_without_quality_score():
+    """Test adding priority scores when quality score column is missing."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org"],
+            "province": ["Test Province"],
+        }
+    )
+
+    result = add_ml_priority_scores(df)
+
+    # Should add scores even without quality_score column
+    assert "completeness_score" in result.columns
+    assert "priority_score" in result.columns

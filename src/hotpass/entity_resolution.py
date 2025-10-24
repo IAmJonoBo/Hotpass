@@ -307,7 +307,12 @@ def add_ml_priority_scores(df: pd.DataFrame) -> pd.DataFrame:
     df["completeness_score"] = df.apply(calculate_completeness_score, axis=1)
 
     # Priority score combines completeness with quality score
-    df["priority_score"] = df["completeness_score"] * 0.5 + df["data_quality_score"] * 0.5
+    # If quality score doesn't exist, use completeness only
+    if "data_quality_score" in df.columns:
+        df["priority_score"] = df["completeness_score"] * 0.5 + df["data_quality_score"] * 0.5
+    else:
+        df["priority_score"] = df["completeness_score"]
+        logger.warning("data_quality_score column not found, using completeness_score only")
 
     logger.info(f"Added ML priority scores to {len(df)} records")
 
