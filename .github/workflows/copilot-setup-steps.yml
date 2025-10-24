@@ -1,0 +1,32 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up uv and Python 3.13
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies (dev + docs)
+        run: |
+          set -euo pipefail
+          uv sync --extra dev --extra docs --frozen || uv sync --extra dev --extra docs
+
+      - name: Prime pre-commit hooks
+        run: uv run pre-commit install --install-hooks
