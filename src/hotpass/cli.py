@@ -378,6 +378,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     logger = StructuredLogger(options.log_format)
+    console = Console() if options.log_format == "rich" else None
 
     # Pre-flight validation
     if not options.input_dir.exists():
@@ -397,8 +398,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     # Log startup info
-    if options.log_format == "rich":
-        console = Console()
+    if console:
         console.print("[bold cyan]Hotpass Data Refinement Pipeline[/bold cyan]")
         console.print(f"[dim]Input directory:[/dim] {options.input_dir}")
         console.print(f"[dim]Output path:[/dim] {options.output_path}")
@@ -429,8 +429,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = run_pipeline(config)
     except Exception as exc:  # pragma: no cover - surface runtime failures
         logger.log_error(str(exc))
-        if options.log_format == "rich":
-            console = Console()
+        if console:
             console.print("[bold red]Pipeline failed with error:[/bold red]")
             console.print_exception()
         return 1
@@ -439,8 +438,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.log_summary(report)
 
     # Success message
-    if options.log_format == "rich":
-        console = Console()
+    if console:
         console.print()
         console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
         console.print(f"[dim]Refined data written to:[/dim] {options.output_path}")
