@@ -60,11 +60,70 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run data processing script
-      run: python scripts/process_data.py
+      run: python scripts/process_data.py --archive --dist-dir dist
 
-    - name: Upload refined data
+    - name: Capture packaged archive path
+      id: archive
+      shell: bash
+      run: |
+        set -euo pipefail
+        shopt -s nullglob
+        archives=(dist/*.zip)
+        if [ ${#archives[@]} -eq 0 ]; then
+          echo "No packaged archives were generated" >&2
+          exit 1
+        fi
+        echo "archive_path=${archives[0]}" >> "$GITHUB_OUTPUT"
+
+    - name: Upload refined data workbook
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: refined-data
         path: data/refined_data.xlsx
+
+    - name: Upload packaged archive
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: refined-data-archive
+        path: ${{ steps.archive.outputs.archive_path }}
+
+  publish-artifact:
+    runs-on: ubuntu-latest
+    needs: process-data
+    if: github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Download packaged archive
+      uses: actions/download-artifact@v4
+      with:
+        name: refined-data-archive
+        path: dist
+
+    - name: Publish archive to data-artifacts branch
+      env:
+        DATA_ARTIFACT_PAT: ${{ secrets.DATA_ARTIFACT_PAT }}
+        REPO: ${{ github.repository }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -z "${DATA_ARTIFACT_PAT}" ]; then
+          echo "DATA_ARTIFACT_PAT secret is required to publish artifacts" >&2
+          exit 1
+        fi
+
+        git config user.name "hotpass-bot"
+        git config user.email "actions@users.noreply.github.com"
+
+        git checkout --orphan data-artifacts
+        git rm -rf . || true
+
+        cp dist/*.zip .
+        ls -1 *.zip > MANIFEST.txt
+        git add *.zip MANIFEST.txt
+        git commit -m "chore: update refined data archive"
+
+        git push --force "https://${DATA_ARTIFACT_PAT}@github.com/${REPO}.git" HEAD:data-artifacts
+

@@ -18,6 +18,7 @@
 - [x] Gate CI processing behind QA workflow checks (lint, format, tests, types, security)
 - [x] Align fallback expectation thresholds with GE defaults and normalise blank contact values
 - [ ] Monitor override needs for contact expectation thresholds using fresh vendor samples
+- [x] Add checksum-stamped archive packaging and CI publication flow for refined workbook
 
 ## Deliverables
 
@@ -26,6 +27,7 @@
 - [ ] Refined workbook generated on demand via CLI (artifact only, not committed)
 - [x] Tooling configuration files (`pyproject.toml`, expectation suites, etc.)
 - [ ] Documentation describing CLI usage, schema, and validation outputs
+- [x] Workflow publishing of packaged refined workbook archive (artifact + branch)
 
 ## Quality Gates
 
@@ -36,7 +38,7 @@
 - [x] Email/phone/website expectations require ≥85% regex match among non-null/non-blank values (configurable per run)
 - [x] GitHub Actions `qa` job must pass before processing artifacts
 - [x] Data validation schema + Great Expectations suite succeed with zero critical errors
-- [ ] Ensure refined workbook artifacts remain gitignored and reproducible
+- [x] Ensure refined workbook artifacts remain gitignored and reproducible
 
 ## Links
 
@@ -45,6 +47,12 @@
 - Types: `mypy src tests scripts` (see chunk `8af340`)
 - Security: `bandit -r src scripts` (see chunk `8d39c5`)
 - CLI run: `python scripts/process_data.py` (chunk `b62601`)
+- Archive packaging tests: `pytest` (chunk `130a27`)
+- Lint run: `ruff check` (chunk `ff31db`)
+- Format check: `ruff format --check` (chunk `54cd19`)
+- Type check: `mypy src tests scripts` (chunk `903177`)
+- Security scan: `bandit -r src scripts` (chunk `97ff89`)
+- Workflow packaging update: `.github/workflows/process-data.yml`
 
 ## Risks / Notes
 
@@ -58,3 +66,4 @@
 - Pending decision on final SSOT schema fields and deduplication rules.
 - Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.
 - Contact expectation defaults documented: blanks are treated as null-equivalent, and threshold tuning (default 0.85) must be justified when deviating for specific datasets.
+- `DATA_ARTIFACT_PAT` secret must be provisioned for the `publish-artifact` job to succeed on pushes.
