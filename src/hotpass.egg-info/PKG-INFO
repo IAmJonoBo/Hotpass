@@ -27,6 +27,7 @@ Requires-Dist: sphinx>=8.2.3; extra == "docs"
 Requires-Dist: myst-parser>=4.0.1; extra == "docs"
 Requires-Dist: sphinx-autodoc-typehints>=3.5.2; extra == "docs"
 Requires-Dist: furo>=2025.9.25; extra == "docs"
+Requires-Dist: linkify-it-py>=2.0.3; extra == "docs"
 
 # Hotpass Data Refinement Repository
 

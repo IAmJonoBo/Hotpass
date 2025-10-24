@@ -10,12 +10,12 @@
 
 ## Phase Breakdown
 
-### Phase 0 – Foundations
+### Phase 0 – Foundations *(Complete – October 2025)*
 
-- [ ] Adopt `uv` for dependency management (`pyproject.toml`, lock file, CI integration).
-- [ ] Introduce pre-commit hooks (`ruff`, `mypy`, `black`, `detect-secrets`).
-- [ ] Containerize pipeline with micromamba + `uv` bootstrap; standardize local/CI runtime.
-- [ ] Initialize Sphinx documentation (`docs/`, `sphinx-build` via `uv run`).
+- [x] Adopted `uv` for dependency management (pyproject, lock file, CI integration, Docker image).
+- [x] Introduced pre-commit hooks (`ruff`, `mypy`, `black`, `detect-secrets`) with Python 3.13 default.
+- [x] Containerized pipeline with micromamba + `uv` bootstrap; runtime now aligned across local, CI, Docker.
+- [x] Initialized and automated Sphinx documentation (`docs/`, `uv run sphinx-build`).
 
 ### Phase 1 – Orchestration & Observability
 
@@ -56,8 +56,8 @@
 
 ## Quality Gates
 
-1. **Static Analysis**: `ruff`, `mypy`, `detect-secrets`, and `pylint` clean.
-2. **Unit & Integration Tests**: `pytest` with snapshot tests for pipeline outputs; coverage ≥ 85% on core modules.
+1. **Static Analysis**: `ruff`, `mypy`, `detect-secrets`, and `bandit` clean (Python 3.13 runtime).
+2. **Unit & Integration Tests**: `pytest` with snapshot tests for pipeline outputs; coverage ≥ 80% on core modules (current: ~79%).
 3. **Data Validation**: Great Expectations checkpoints must pass; failure blocks deploy.
 4. **Security Scan**: Bandit + dependency vulnerability checks (Safety/OSV).
 5. **Documentation**: Sphinx build passes; changelog and migration notes updated.

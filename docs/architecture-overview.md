@@ -15,12 +15,12 @@ The Hotpass pipeline transforms heterogeneous Excel source workbooks into a gove
 ## Operational Cadence & Research Guidance
 
 - **Source Discovery** – Review new vendor feeds quarterly. Validate each candidate source by running it through the ingestion adapters in a sandbox branch and capturing expectation deltas. Capture decisions and rationale in `docs/source-to-target-mapping.md`.
-- **Schema Drift Watch** – Monitor Great Expectations results in CI for threshold regressions. When match rates drop below configured tolerances, open a `Steps` item in `Next_Steps.md` and schedule schema alignment within the sprint.
-- **Source Validation** – For every new or updated data provider, confirm license terms, run the full QA workflow locally (`ruff`, `pytest`, `mypy`, `bandit`), and document adjustments to normalization or mapping rules in this directory before merging.
+- **Schema Drift Watch** – Monitor Great Expectations results in CI for threshold regressions. When match rates drop below configured tolerances, log the follow-up in `docs/upgrade-roadmap.md` and schedule schema alignment within the sprint.
+- **Source Validation** – For every new or updated data provider, confirm license terms, run the full QA workflow locally (`uv run ruff`, `uv run pytest`, `uv run mypy`, `uv run bandit`), and document adjustments to normalization or mapping rules in this directory before merging.
 
 ## Privacy & Compliance
 
-The pipeline must continue to honour POPIA-aligned privacy controls noted in `Next_Steps.md`. Limit PII exposure by:
+The pipeline must continue to honour POPIA-aligned privacy controls documented in this suite. Limit PII exposure by:
 
 - Redacting optional contact attributes from shared QA reports.
 - Ensuring archives contain only the refined workbook and checksum manifest.

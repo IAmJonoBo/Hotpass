@@ -32,6 +32,8 @@ myst_enable_extensions = [
     "linkify",
 ]
 
+myst_heading_anchors = 2
+
 templates_path = ["_templates"]
 exclude_patterns = ["_build"]
 

@@ -22,3 +22,4 @@ sphinx>=8.2.3
 myst-parser>=4.0.1
 sphinx-autodoc-typehints>=3.5.2
 furo>=2025.9.25
+linkify-it-py>=2.0.3
