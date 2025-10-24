@@ -116,10 +116,10 @@ class Geocoder:
             return None
 
         except (GeocoderTimedOut, GeocoderUnavailable) as e:
-            logger.warning(f"Reverse geocoding failed for ({latitude}, {longitude}): {e}")
+            logger.warning(f"Reverse geocoding failed: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error reverse geocoding ({latitude}, {longitude}): {e}")
+            logger.error(f"Unexpected error during reverse geocoding: {e}")
             return None
 
 
