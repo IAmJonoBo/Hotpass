@@ -22,5 +22,12 @@ COPY scripts ./scripts
 COPY docs ./docs
 COPY README.md ./
 
+# Create a non-root user and switch to it
+RUN useradd --create-home appuser
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl --fail http://localhost:8000/health || exit 1
+
 ENTRYPOINT ["uv", "run", "hotpass"]
 CMD ["--help"]
