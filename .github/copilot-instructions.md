@@ -35,3 +35,4 @@
 ## Networking Notes
 - Copilot relies on outbound HTTPS access to GitHub and PyPI when installing dependencies. If a proxy is required, populate `HTTPS_PROXY`/`HTTP_PROXY` environment variables in the repository’s `copilot` environment to mirror local settings.
 - For private package indexes or additional services, store tokens as Copilot environment secrets and expose them through environment variables in setup steps.
+- Prefect Cloud endpoints are blocked in the agent environment; avoid commands that require `sens-o-matic.prefect.io` or other external Prefect services. Use the local profile configured by setup steps (`PREFECT_API_URL=http://127.0.0.1:4200/api`) and keep orchestration tasks in offline mode.

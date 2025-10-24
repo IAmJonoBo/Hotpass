@@ -30,3 +30,9 @@ jobs:
 
       - name: Prime pre-commit hooks
         run: uv run pre-commit install --install-hooks
+
+      - name: Configure Prefect for offline execution
+        run: |
+          set -euo pipefail
+          uv run prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
+          uv run prefect config set PREFECT_ENABLE_ANALYTICS=false
