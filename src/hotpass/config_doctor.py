@@ -108,7 +108,8 @@ class ConfigDoctor:
                     f"{field}_threshold",
                     True,
                     f"{field.capitalize()} threshold {threshold} is very low (< 50%)",
-                    f"Consider increasing {field}_validation_threshold to at least 0.70 for better quality",
+                    f"Consider increasing {field}_validation_threshold to at least 0.70 "
+                    "for better quality",
                     "warning",
                 )
             elif threshold > 0.95:
@@ -151,7 +152,8 @@ class ConfigDoctor:
                 self._add_diagnostic(
                     "source_priorities",
                     True,
-                    f"Source priorities configured for {len(self.profile.source_priorities)} sources",
+                    f"Source priorities configured for "
+                    f"{len(self.profile.source_priorities)} sources",
                 )
 
     def _check_column_synonyms(self) -> None:

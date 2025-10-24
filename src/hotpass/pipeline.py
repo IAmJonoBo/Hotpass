@@ -235,7 +235,8 @@ class QualityReport:
                 alt_count = len(conflict.get("alternatives", []))
                 lines.append(f"| {field} | {source} | {value} | {alt_count} alternatives |")
             if len(self.conflict_resolutions) > 10:
-                lines.append(f"| ... | ... | ... | {len(self.conflict_resolutions) - 10} more conflicts |")
+                remaining = len(self.conflict_resolutions) - 10
+                lines.append(f"| ... | ... | ... | {remaining} more conflicts |")
             lines.append("")
 
         lines.append("## Performance Metrics")
@@ -684,18 +685,20 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
                 for sel in contributors
             ]
             # Track as conflict for reporting
-            conflicts.append({
-                "field": field,
-                "chosen_source": primary_selection.row_metadata.source_dataset,
-                "value": value,
-                "alternatives": [
-                    {
-                        "source": sel.row_metadata.source_dataset,
-                        "value": sel.value,
-                    }
-                    for sel in contributors
-                ],
-            })
+            conflicts.append(
+                {
+                    "field": field,
+                    "chosen_source": primary_selection.row_metadata.source_dataset,
+                    "value": value,
+                    "alternatives": [
+                        {
+                            "source": sel.row_metadata.source_dataset,
+                            "value": sel.value,
+                        }
+                        for sel in contributors
+                    ],
+                }
+            )
         provenance[field] = entry
         return primary_selection
 
@@ -904,48 +907,59 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     # Initialize profile if not provided
     if config.industry_profile is None:
         config.industry_profile = get_default_profile("generic")
-    
+
     # Initialize output format if not provided
     if config.output_format is None:
         config.output_format = OutputFormat()
 
     pipeline_start = time.perf_counter()
     audit_trail: list[dict[str, Any]] = []
-    
+
     # Log pipeline start
     if config.enable_audit_trail:
-        audit_trail.append({
-            "timestamp": time.time(),
-            "event": "pipeline_start",
-            "details": {
-                "input_dir": str(config.input_dir),
-                "output_path": str(config.output_path),
-                "profile": config.industry_profile.name if config.industry_profile else "default",
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "pipeline_start",
+                "details": {
+                    "input_dir": str(config.input_dir),
+                    "output_path": str(config.output_path),
+                    "profile": config.industry_profile.name
+                    if config.industry_profile
+                    else "default",
+                },
             }
-        })
-    
-    logger.info("Starting pipeline execution", extra={
-        "profile": config.industry_profile.name if config.industry_profile else "default",
-        "input_dir": str(config.input_dir),
-    })
-    
+        )
+
+    logger.info(
+        "Starting pipeline execution",
+        extra={
+            "profile": config.industry_profile.name if config.industry_profile else "default",
+            "input_dir": str(config.input_dir),
+        },
+    )
+
     load_start = time.perf_counter()
     combined, source_timings = _load_sources(config)
     load_seconds = time.perf_counter() - load_start
-    
+
     if config.enable_audit_trail:
-        audit_trail.append({
-            "timestamp": time.time(),
-            "event": "sources_loaded",
-            "details": {
-                "total_rows": len(combined),
-                "load_seconds": load_seconds,
-                "sources": list(source_timings.keys()),
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "sources_loaded",
+                "details": {
+                    "total_rows": len(combined),
+                    "load_seconds": load_seconds,
+                    "sources": list(source_timings.keys()),
+                },
             }
-        })
-    
-    logger.info(f"Loaded {len(combined)} rows from {len(source_timings)} sources in {load_seconds:.2f}s")
-    
+        )
+
+    logger.info(
+        f"Loaded {len(combined)} rows from {len(source_timings)} sources in {load_seconds:.2f}s"
+    )
+
     metrics: dict[str, Any] = {
         "load_seconds": load_seconds,
         "aggregation_seconds": 0.0,
@@ -995,30 +1009,34 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     aggregated_rows = []
     all_conflicts: list[dict[str, Any]] = []
     aggregation_start = time.perf_counter()
-    
+
     for slug, group in combined.groupby("organization_slug", dropna=False):
         row_dict = _aggregate_group(slug, group)
         # Extract and accumulate conflicts
         conflicts = row_dict.pop("_conflicts", [])
         all_conflicts.extend(conflicts)
         aggregated_rows.append(row_dict)
-    
+
     refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
     refined_df = refined_df.sort_values("organization_name").reset_index(drop=True)
     metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
-    
+
     if config.enable_audit_trail:
-        audit_trail.append({
-            "timestamp": time.time(),
-            "event": "aggregation_complete",
-            "details": {
-                "aggregated_records": len(refined_df),
-                "conflicts_resolved": len(all_conflicts),
-                "aggregation_seconds": metrics["aggregation_seconds"],
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "aggregation_complete",
+                "details": {
+                    "aggregated_records": len(refined_df),
+                    "conflicts_resolved": len(all_conflicts),
+                    "aggregation_seconds": metrics["aggregation_seconds"],
+                },
             }
-        })
-    
-    logger.info(f"Aggregated {len(refined_df)} records with {len(all_conflicts)} conflict resolutions")
+        )
+
+    logger.info(
+        f"Aggregated {len(refined_df)} records with {len(all_conflicts)} conflict resolutions"
+    )
 
     schema = build_ssot_schema()
     schema_errors: list[str] = []
@@ -1033,27 +1051,33 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         invalid_indices = exc.failure_cases["index"].unique().tolist()
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
         validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
-        logger.warning(f"Schema validation found {len(schema_errors)} errors", extra={
-            "error_count": len(schema_errors),
-            "invalid_records": len(invalid_indices),
-        })
-        
+        logger.warning(
+            f"Schema validation found {len(schema_errors)} errors",
+            extra={
+                "error_count": len(schema_errors),
+                "invalid_records": len(invalid_indices),
+            },
+        )
+
         if config.enable_audit_trail:
-            audit_trail.append({
-                "timestamp": time.time(),
-                "event": "schema_validation_errors",
-                "details": {
-                    "error_count": len(schema_errors),
-                    "invalid_records": len(invalid_indices),
+            audit_trail.append(
+                {
+                    "timestamp": time.time(),
+                    "event": "schema_validation_errors",
+                    "details": {
+                        "error_count": len(schema_errors),
+                        "invalid_records": len(invalid_indices),
+                    },
                 }
-            })
+            )
 
     expectation_start = time.perf_counter()
     # Use profile thresholds if available
-    email_threshold = config.industry_profile.email_validation_threshold if config.industry_profile else 0.85
-    phone_threshold = config.industry_profile.phone_validation_threshold if config.industry_profile else 0.85
-    website_threshold = config.industry_profile.website_validation_threshold if config.industry_profile else 0.85
-    
+    profile = config.industry_profile
+    email_threshold = profile.email_validation_threshold if profile else 0.85
+    phone_threshold = profile.phone_validation_threshold if profile else 0.85
+    website_threshold = profile.website_validation_threshold if profile else 0.85
+
     expectation_summary: ExpectationSummary = run_expectations(
         validated_df,
         email_mostly=email_threshold,
@@ -1061,7 +1085,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         website_mostly=website_threshold,
     )
     metrics["expectations_seconds"] = time.perf_counter() - expectation_start
-    
+
     logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
@@ -1074,19 +1098,21 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     # Generate recommendations if enabled
     recommendations = []
     if config.enable_recommendations:
-        recommendations = _generate_recommendations(validated_df, expectation_summary, quality_distribution)
+        recommendations = _generate_recommendations(
+            validated_df, expectation_summary, quality_distribution
+        )
         logger.info(f"Generated {len(recommendations)} recommendations")
 
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
     write_start = time.perf_counter()
-    
+
     # Use formatting if enabled
     if config.enable_formatting and config.output_path.suffix.lower() in [".xlsx", ".xls"]:
         logger.info("Writing output with enhanced formatting")
         with pd.ExcelWriter(config.output_path, engine="openpyxl") as writer:
             validated_df.to_excel(writer, sheet_name="Data", index=False)
             apply_excel_formatting(writer, "Data", validated_df, config.output_format)
-            
+
             # Add summary sheet
             quality_report_dict = {
                 "total_records": len(refined_df),
@@ -1097,22 +1123,24 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
     else:
         validated_df.to_excel(config.output_path, index=False)
-    
+
     metrics["write_seconds"] = time.perf_counter() - write_start
     metrics["total_seconds"] = time.perf_counter() - pipeline_start
     if metrics["total_seconds"] > 0:
         metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
-    
+
     if config.enable_audit_trail:
-        audit_trail.append({
-            "timestamp": time.time(),
-            "event": "pipeline_complete",
-            "details": {
-                "total_seconds": metrics["total_seconds"],
-                "output_path": str(config.output_path),
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "pipeline_complete",
+                "details": {
+                    "total_seconds": metrics["total_seconds"],
+                    "output_path": str(config.output_path),
+                },
             }
-        })
-    
+        )
+
     logger.info(f"Pipeline completed in {metrics['total_seconds']:.2f}s")
 
     metrics_copy = dict(metrics)
