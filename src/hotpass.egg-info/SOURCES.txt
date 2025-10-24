@@ -30,5 +30,7 @@ tests/test_contacts.py
 tests/test_data_sources.py
 tests/test_enhancements.py
 tests/test_error_handling.py
+tests/test_formatting.py
 tests/test_pipeline.py
+tests/test_quality.py
 tests/test_quality_report.py
