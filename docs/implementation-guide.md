@@ -4,12 +4,12 @@ This guide explains how to use the new features added in the comprehensive upgra
 
 ## Table of Contents
 
-1. [Industry Profiles](#industry-profiles)
-2. [Intelligent Column Mapping](#intelligent-column-mapping)
-3. [Enhanced Error Handling](#enhanced-error-handling)
-4. [Advanced Contact Management](#advanced-contact-management)
-5. [Data Profiling](#data-profiling)
-6. [Enhanced Output Formatting](#enhanced-output-formatting)
+1. Industry Profiles
+2. Intelligent Column Mapping
+3. Enhanced Error Handling
+4. Advanced Contact Management
+5. Data Profiling
+6. Enhanced Output Formatting
 
 ## Industry Profiles
 
