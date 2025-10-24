@@ -105,9 +105,9 @@ class ColumnMapper:
                     best_target = target_col
 
             # Categorize based on confidence
-            if best_score >= confidence_threshold:
+            if best_score >= confidence_threshold and best_target is not None:
                 mapped[source_col] = best_target
-            elif best_score >= 0.5:  # Medium confidence - suggest to user
+            elif best_score >= 0.5 and best_target is not None:  # Medium confidence - suggest to user
                 if source_col not in suggestions:
                     suggestions[source_col] = []
                 suggestions[source_col].append((best_target, best_score))
