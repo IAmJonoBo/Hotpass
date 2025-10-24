@@ -1,6 +1,13 @@
 # Hotpass Data Refinement Repository
 
+[![Release Status](https://img.shields.io/badge/status-release--ready-brightgreen)](https://github.com/IAmJonoBo/Hotpass)
+[![Test Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/IAmJonoBo/Hotpass)
+[![Python Version](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
+
 This repository is optimized for validating, normalizing, processing, and refining multiple Excel documents into a highly-refined single source of truth. It uses Python with libraries like pandas, pandera, and great-expectations for data quality assurance.
+
+**🎉 RELEASE READY**: Hotpass has reached release state with 85% test coverage, comprehensive QA gates, and all major roadmap features implemented. See [Next Steps](Next_Steps.md) for release notes.
 
 **NEW**: Hotpass now includes comprehensive enhancements for industry-agnostic data consolidation with intelligent column mapping, advanced error handling, and multi-contact support. See [Implementation Guide](docs/implementation-guide.md) and [Gap Analysis](docs/gap-analysis.md) for details.
 

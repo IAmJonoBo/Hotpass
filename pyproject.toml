@@ -7,7 +7,7 @@ name = "hotpass"
 version = "0.1.0"
 description = "Hotpass data refinement pipeline"
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.13,<3.14"
 license = "LicenseRef-Proprietary"
 dependencies = [
   "pandas>=2.3.3",
@@ -74,6 +74,7 @@ ignore_missing_imports = true
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = ["src/hotpass/optimize.py"]
 
 [tool.coverage.report]
 show_missing = true

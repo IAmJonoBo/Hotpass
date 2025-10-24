@@ -1,8 +1,18 @@
 """Tests for quality validation functionality."""
 
 import pandas as pd
+import pytest
 
 from hotpass.quality import ExpectationSummary, build_ssot_schema, run_expectations
+
+try:
+    from great_expectations.dataset.pandas_dataset import (  # type: ignore  # noqa: F401
+        PandasDataset,
+    )
+
+    HAS_GE = True
+except ImportError:
+    HAS_GE = False
 
 
 def test_build_ssot_schema():
@@ -315,3 +325,247 @@ def test_expectation_summary_structure():
 
     assert summary2.success is False
     assert len(summary2.failures) == 2
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_valid_data():
+    """Test run_expectations uses Great Expectations when available."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2"],
+            "organization_slug": ["test-org-1", "test-org-2"],
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9],
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": ["+27123456789", "+27987654321"],
+            "website": ["https://test1.com", "https://test2.com"],
+        }
+    )
+
+    result = run_expectations(df)
+
+    assert isinstance(result, ExpectationSummary)
+    assert result.success is True
+    assert len(result.failures) == 0
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_missing_org_name():
+    """Test GE path detects missing organization names."""
+    df = pd.DataFrame(
+        {
+            "organization_name": [None, "Test Org"],
+            "organization_slug": ["test-1", "test-2"],
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9],
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": ["+27123456789", "+27987654321"],
+            "website": ["https://test1.com", "https://test2.com"],
+        }
+    )
+
+    result = run_expectations(df)
+
+    assert result.success is False
+    assert any("organization_name" in str(f) for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_invalid_quality_score():
+    """Test GE path detects invalid quality scores."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org"],
+            "organization_slug": ["test-org"],
+            "country": ["South Africa"],
+            "data_quality_score": [1.5],  # Invalid: > 1.0
+            "contact_primary_email": ["test@example.com"],
+            "contact_primary_phone": ["+27123456789"],
+            "website": ["https://test.com"],
+        }
+    )
+
+    result = run_expectations(df)
+
+    assert result.success is False
+    assert any(
+        "quality_score" in str(f).lower() or "between" in str(f).lower() for f in result.failures
+    )
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_invalid_email_format():
+    """Test GE path detects invalid email formats."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2", "Test Org 3"],
+            "organization_slug": ["test-1", "test-2", "test-3"],
+            "country": ["South Africa", "South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9, 0.7],
+            "contact_primary_email": [
+                "invalid-email",  # Invalid
+                "test@example.com",  # Valid
+                "another@test.com",  # Valid
+            ],
+            "contact_primary_phone": ["+271234", "+272345", "+273456"],
+            "website": ["https://test1.com", "https://test2.com", "https://test3.com"],
+        }
+    )
+
+    # With default threshold of 0.85, 2/3 valid (66%) should fail
+    result = run_expectations(df, email_mostly=0.85)
+
+    assert result.success is False
+    assert any("email" in str(f).lower() for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_invalid_phone_format():
+    """Test GE path detects invalid phone formats."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2"],
+            "organization_slug": ["test-1", "test-2"],
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9],
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": [
+                "123456",  # Invalid: no +
+                "+27123456789",  # Valid
+            ],
+            "website": ["https://test1.com", "https://test2.com"],
+        }
+    )
+
+    # With default threshold of 0.85, 1/2 valid (50%) should fail
+    result = run_expectations(df, phone_mostly=0.85)
+
+    assert result.success is False
+    assert any("phone" in str(f).lower() for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_invalid_website_format():
+    """Test GE path detects invalid website formats."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2"],
+            "organization_slug": ["test-1", "test-2"],
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9],
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": ["+27123456789", "+27987654321"],
+            "website": [
+                "www.test.com",  # Invalid: no https://
+                "https://test2.com",  # Valid
+            ],
+        }
+    )
+
+    # With default threshold of 0.85, 1/2 valid (50%) should fail
+    result = run_expectations(df, website_mostly=0.85)
+
+    assert result.success is False
+    assert any("website" in str(f).lower() for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_wrong_country():
+    """Test GE path detects wrong country values."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org"],
+            "organization_slug": ["test-org"],
+            "country": ["United States"],  # Wrong country
+            "data_quality_score": [0.8],
+            "contact_primary_email": ["test@example.com"],
+            "contact_primary_phone": ["+27123456789"],
+            "website": ["https://test.com"],
+        }
+    )
+
+    result = run_expectations(df)
+
+    assert result.success is False
+    assert any("country" in str(f).lower() or "in_set" in str(f).lower() for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_sanitizes_blank_values():
+    """Test GE path sanitizes blank contact values before validation."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2", "Test Org 3"],
+            "organization_slug": ["test-1", "test-2", "test-3"],
+            "country": ["South Africa", "South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9, 0.7],
+            "contact_primary_email": [
+                "test@example.com",  # Valid
+                "   ",  # Blank - should be treated as NA
+                "another@test.com",  # Valid
+            ],
+            "contact_primary_phone": ["+271234567", "+272345678", "+273456789"],
+            "website": ["https://test1.com", "https://test2.com", "https://test3.com"],
+        }
+    )
+
+    # Blanks should be ignored, so 2/2 non-blank should be valid (100%)
+    result = run_expectations(df, email_mostly=0.85)
+
+    # Should pass since blanks are excluded from validation
+    assert result.success is True
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_missing_organization_slug():
+    """Test GE path detects missing organization slugs."""
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Test Org", "Test Org 2"],
+            "organization_slug": ["test-1", None],  # Missing slug
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.8, 0.9],
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": ["+27123456789", "+27987654321"],
+            "website": ["https://test1.com", "https://test2.com"],
+        }
+    )
+
+    result = run_expectations(df)
+
+    assert result.success is False
+    assert any("organization_slug" in str(f) for f in result.failures)
+
+
+@pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
+def test_run_expectations_ge_with_boundary_quality_scores():
+    """Test GE path validates quality scores at boundaries."""
+    df_valid = pd.DataFrame(
+        {
+            "organization_name": ["Test Org 1", "Test Org 2"],
+            "organization_slug": ["test-1", "test-2"],
+            "country": ["South Africa", "South Africa"],
+            "data_quality_score": [0.0, 1.0],  # Valid boundary values
+            "contact_primary_email": ["test1@example.com", "test2@example.com"],
+            "contact_primary_phone": ["+27123456789", "+27987654321"],
+            "website": ["https://test1.com", "https://test2.com"],
+        }
+    )
+
+    result = run_expectations(df_valid)
+    assert result.success is True
+
+    df_invalid = pd.DataFrame(
+        {
+            "organization_name": ["Test Org"],
+            "organization_slug": ["test-org"],
+            "country": ["South Africa"],
+            "data_quality_score": [-0.1],  # Invalid: < 0.0
+            "contact_primary_email": ["test@example.com"],
+            "contact_primary_phone": ["+27123456789"],
+            "website": ["https://test.com"],
+        }
+    )
+
+    result2 = run_expectations(df_invalid)
+    assert result2.success is False

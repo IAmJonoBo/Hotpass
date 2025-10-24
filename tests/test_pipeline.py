@@ -17,9 +17,7 @@ from hotpass.pipeline import (
 )
 
 
-def test_pipeline_generates_refined_dataset(
-    tmp_path: Path, sample_data_dir: Path
-) -> None:
+def test_pipeline_generates_refined_dataset(tmp_path: Path, sample_data_dir: Path) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -60,9 +58,7 @@ def test_pipeline_generates_refined_dataset(
     assert report.schema_validation_errors == []
 
 
-def test_pipeline_flags_records_with_missing_contact(
-    sample_data_dir: Path, tmp_path: Path
-) -> None:
+def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_path: Path) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -86,9 +82,7 @@ def test_pipeline_flags_records_with_missing_contact(
     assert provenance["contact_primary_phone"]["source_dataset"] == "SACAA Cleaned"
 
 
-def test_pipeline_exposes_performance_metrics(
-    sample_data_dir: Path, tmp_path: Path
-) -> None:
+def test_pipeline_exposes_performance_metrics(sample_data_dir: Path, tmp_path: Path) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -104,10 +98,7 @@ def test_pipeline_exposes_performance_metrics(
     assert metrics["total_seconds"] >= 0.0
     assert metrics["load_seconds"] >= 0.0
     assert metrics["rows_per_second"] > 0.0
-    assert (
-        result.quality_report.performance_metrics["total_seconds"]
-        == metrics["total_seconds"]
-    )
+    assert result.quality_report.performance_metrics["total_seconds"] == metrics["total_seconds"]
 
 
 def test_aggregate_group_prioritises_reliable_and_recent_values() -> None:
@@ -263,9 +254,7 @@ def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> 
     summary = quality.run_expectations(df, email_mostly=0.9)
 
     assert not summary.success
-    assert any(
-        "contact_primary_email format" in failure for failure in summary.failures
-    )
+    assert any("contact_primary_email format" in failure for failure in summary.failures)
 
 
 def test_pipeline_handles_all_invalid_records(
