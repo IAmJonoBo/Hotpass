@@ -220,7 +220,7 @@ class ConfigDoctor:
         passed = sum(1 for d in self.diagnostics if d.passed)
         failed = total - passed
 
-        by_severity = {}
+        by_severity: dict[str, int] = {}
         for d in self.diagnostics:
             if not d.passed:
                 by_severity[d.severity] = by_severity.get(d.severity, 0) + 1

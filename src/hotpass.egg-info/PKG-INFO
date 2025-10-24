@@ -34,6 +34,11 @@ This repository is optimized for validating, normalizing, processing, and refini
 - ⚠️ **Enhanced Error Handling**: Structured error reporting with recovery suggestions
 - 🎨 **Rich Formatting**: Professional Excel output with conditional formatting
 - 📊 **Multiple Output Formats**: Export to Excel, CSV, Parquet, or JSON
+- ✅ **Configurable Validation**: Industry-specific thresholds and rules
+- 📝 **Comprehensive Logging**: Full audit trail of pipeline execution
+- 💡 **Quality Recommendations**: Actionable insights for data improvement
+- 🔧 **Configuration Doctor**: Auto-diagnose and fix configuration issues
+- 🔀 **Conflict Resolution**: Transparent tracking of data source conflicts
 
 ## Project Structure
 
@@ -60,7 +65,7 @@ This repository is optimized for validating, normalizing, processing, and refini
 The CLI is distributed as a console script (`hotpass`) that exposes the full pipeline with structured logging:
 
 ```bash
-# Run the pipeline with rich terminal output
+# Run the pipeline with rich terminal output and enhanced features
 hotpass --archive
 
 # Emit JSON logs for automation and write the quality report to Markdown
@@ -72,6 +77,18 @@ hotpass \
 # Load defaults from a TOML configuration file and override the output path
 hotpass --config config/pipeline.toml --output-path /tmp/refined.xlsx
 ```
+
+### New Enhancement Features
+
+The pipeline now includes powerful enhancement features:
+
+- **Enhanced Formatting**: Professional Excel output with conditional formatting, auto-sized columns, and summary sheets
+- **Configurable Validation**: Industry-specific validation thresholds based on your profile
+- **Audit Trail**: Complete logging of all pipeline operations
+- **Quality Recommendations**: Actionable suggestions for improving data quality
+- **Conflict Resolution**: Transparent tracking of how data conflicts are resolved
+
+See [Enhancement Guide](docs/enhancement-guide.md) for detailed usage examples.
 
 Supported configuration files are JSON or TOML. CLI flags always take precedence over configuration values. When `--report-path` is provided the tool renders the `QualityReport` to Markdown by default, or HTML when `--report-format html` (or a `.html`/`.htm` extension) is used.
 
@@ -132,6 +149,10 @@ Centralised documentation lives under `docs/`:
 - [SSOT Field Dictionary](docs/ssot-field-dictionary.md) – Canonical schema definitions and stewardship practices.
 - [Source-to-Target Mapping](docs/source-to-target-mapping.md) – Column-level lineage across core data providers.
 - [Expectation Catalogue](docs/expectation-catalogue.md) – Active data quality rules, thresholds, and operational notes.
+- [Enhancement Guide](docs/enhancement-guide.md) – NEW: Comprehensive guide to new features including formatting, validation, logging, and recommendations.
+- [Implementation Guide](docs/implementation-guide.md) – How to use advanced features.
+- [Gap Analysis](docs/gap-analysis.md) – Roadmap for future enhancements.
+- [Quick Start](docs/quick-start.md) – Common usage scenarios.
 
 ## Contributing
 

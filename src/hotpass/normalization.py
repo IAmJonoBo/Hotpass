@@ -33,15 +33,22 @@ def coalesce(*values: str | None) -> str | None:
     return None
 
 
-def clean_string(value: object | None) -> str | None:
+def clean_string(value: object | None, max_length: int = 10000) -> str | None:
+    """Clean and validate string input with optional length limit for security."""
     if value is None:
         return None
     if isinstance(value, float) and value != value:
         return None
     if isinstance(value, str):
         cleaned = value.strip()
+        if len(cleaned) > max_length:
+            # Truncate extremely long strings to prevent memory issues
+            cleaned = cleaned[:max_length]
         return cleaned or None
-    return str(value).strip() or None
+    result = str(value).strip()
+    if len(result) > max_length:
+        result = result[:max_length]
+    return result or None
 
 
 def normalize_email(value: str | None) -> str | None:

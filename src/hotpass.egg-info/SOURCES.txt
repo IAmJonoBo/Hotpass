@@ -6,6 +6,7 @@ src/hotpass/benchmarks.py
 src/hotpass/cli.py
 src/hotpass/column_mapping.py
 src/hotpass/config.py
+src/hotpass/config_doctor.py
 src/hotpass/contacts.py
 src/hotpass/data_sources.py
 src/hotpass/error_handling.py
@@ -24,8 +25,10 @@ tests/test_benchmarks.py
 tests/test_cli.py
 tests/test_column_mapping.py
 tests/test_config.py
+tests/test_config_doctor.py
 tests/test_contacts.py
 tests/test_data_sources.py
+tests/test_enhancements.py
 tests/test_error_handling.py
 tests/test_pipeline.py
 tests/test_quality_report.py
