@@ -14,7 +14,29 @@ This repository is optimized for validating, normalizing, processing, and refini
 1. Clone the repository.
 2. Install dependencies: `pip install -r requirements.txt`
 3. Place your Excel files in the `data/` directory.
-4. Run the processing script to regenerate the refined workbook: `python scripts/process_data.py`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
+4. Run the packaged CLI to regenerate the refined workbook: `hotpass`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
+
+## CLI Usage
+
+The CLI is distributed as a console script (`hotpass`) that exposes the full pipeline with structured logging:
+
+```bash
+# Run the pipeline with rich terminal output
+hotpass --archive
+
+# Emit JSON logs for automation and write the quality report to Markdown
+hotpass \
+  --log-format json \
+  --report-path dist/quality-report.md \
+  --report-format markdown
+
+# Load defaults from a TOML configuration file and override the output path
+hotpass --config config/pipeline.toml --output-path /tmp/refined.xlsx
+```
+
+Supported configuration files are JSON or TOML. CLI flags always take precedence over configuration values. When `--report-path` is provided the tool renders the `QualityReport` to Markdown by default, or HTML when `--report-format html` (or a `.html`/`.htm` extension) is used.
+
+Structured logs can be emitted in JSON (`--log-format json`) for ingestion by automation tooling, or as rich tables (`--log-format rich`, the default) for human-friendly summaries.
 
 ## GitHub Actions
 
@@ -31,7 +53,7 @@ Only after these checks succeed does the `process-data` job execute the refineme
 
 ## Retrieving Packaged Artifacts
 
-- **Local runs**: `python scripts/process_data.py --archive` writes the refined workbook to `data/refined_data.xlsx` and a zip archive named `refined-data-<timestamp>-<checksum>.zip` to `dist/`. The archive contains the workbook and a `SHA256SUMS` manifest so the checksum in the filename can be verified.
+- **Local runs**: `hotpass --archive` writes the refined workbook to `data/refined_data.xlsx` and a zip archive named `refined-data-<timestamp>-<checksum>.zip` to `dist/`. The archive contains the workbook and a `SHA256SUMS` manifest so the checksum in the filename can be verified.
 - **GitHub Actions artifacts**: Successful workflow runs publish two artifacts—`refined-data` (the Excel workbook) and `refined-data-archive` (the packaged zip). Download them directly from the workflow summary page.
 - **Data artifacts branch**: On pushes to `main`, the `publish-artifact` job downloads the packaged zip and force-pushes it to the `data-artifacts` branch using the `DATA_ARTIFACT_PAT` secret. Consumers can fetch the branch to retrieve the latest archive without navigating workflow logs.
 
