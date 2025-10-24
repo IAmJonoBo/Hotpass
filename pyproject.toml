@@ -118,3 +118,8 @@ omit = ["src/hotpass/optimize.py"]
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+
+[dependency-groups]
+dev = [
+    "types-requests>=2.32.4.20250913",
+]
