@@ -2,11 +2,29 @@
 
 This repository is optimized for validating, normalizing, processing, and refining multiple Excel documents into a highly-refined single source of truth. It uses Python with libraries like pandas, pandera, and great-expectations for data quality assurance.
 
+**NEW**: Hotpass now includes comprehensive enhancements for industry-agnostic data consolidation with intelligent column mapping, advanced error handling, and multi-contact support. See [Implementation Guide](docs/implementation-guide.md) and [Gap Analysis](docs/gap-analysis.md) for details.
+
+## Key Features
+
+- 🎯 **Industry-Agnostic**: Configurable profiles for aviation, healthcare, or any business domain
+- 🧠 **Intelligent Column Mapping**: Automatic fuzzy matching and synonym detection
+- 🔍 **Data Profiling**: Comprehensive statistics and quality insights
+- 👥 **Multi-Contact Support**: Advanced contact management per organization
+- ⚠️ **Enhanced Error Handling**: Structured error reporting with recovery suggestions
+- 🎨 **Rich Formatting**: Professional Excel output with conditional formatting
+- 📊 **Multiple Output Formats**: Export to Excel, CSV, Parquet, or JSON
+
 ## Project Structure
 
 - `data/`: Contains input Excel files. Run the pipeline to regenerate the refined workbook (ignored in git).
 - `scripts/`: Python scripts for data processing.
-- `docs/`: Additional documentation (see below).
+- `docs/`: Additional documentation including:
+  - [Implementation Guide](docs/implementation-guide.md) - How to use new features
+  - [Gap Analysis](docs/gap-analysis.md) - Comprehensive enhancement roadmap
+  - [Architecture Overview](docs/architecture-overview.md) - System design
+  - [SSOT Field Dictionary](docs/ssot-field-dictionary.md) - Schema definitions
+  - [Source Mapping](docs/source-to-target-mapping.md) - Column lineage
+  - [Expectation Catalogue](docs/expectation-catalogue.md) - Validation rules
 - `.github/workflows/`: GitHub Actions for automated processing.
 
 ## Setup
