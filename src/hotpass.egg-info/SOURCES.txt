@@ -12,6 +12,7 @@ src/hotpass/data_sources.py
 src/hotpass/error_handling.py
 src/hotpass/formatting.py
 src/hotpass/normalization.py
+src/hotpass/optimize.py
 src/hotpass/pipeline.py
 src/hotpass/quality.py
 src/hotpass.egg-info/PKG-INFO

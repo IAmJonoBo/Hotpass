@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import tomllib
 from rich.console import Console
 from rich.table import Table
 
@@ -189,7 +189,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         output_path = input_dir / "refined_data.xlsx"
     dist_dir = Path(options["dist_dir"])
     report_path = Path(options["report_path"]) if options.get("report_path") else None
-    stage_dir = Path(options["excel_stage_dir"]) if options.get("excel_stage_dir") else None
+    stage_dir = (
+        Path(options["excel_stage_dir"]) if options.get("excel_stage_dir") else None
+    )
 
     chunk_size = options.get("excel_chunk_size")
     if chunk_size is not None:
@@ -226,7 +228,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         report_format=report_format,
         config_paths=list(namespace.config_paths),
         excel_chunk_size=chunk_size,
-        excel_engine=str(options["excel_engine"]) if options.get("excel_engine") else None,
+        excel_engine=(
+            str(options["excel_engine"]) if options.get("excel_engine") else None
+        ),
         excel_stage_dir=stage_dir,
     )
 
@@ -274,12 +278,18 @@ class StructuredLogger:
             return
 
         console = self._get_console()
-        table = Table(title="Hotpass Quality Report", show_header=True, header_style="bold magenta")
+        table = Table(
+            title="Hotpass Quality Report",
+            show_header=True,
+            header_style="bold magenta",
+        )
         table.add_column("Metric", style="cyan")
         table.add_column("Value", justify="right")
         table.add_row("Total records", str(report.total_records))
         table.add_row("Invalid records", str(report.invalid_records))
-        table.add_row("Expectations passed", "Yes" if report.expectations_passed else "No")
+        table.add_row(
+            "Expectations passed", "Yes" if report.expectations_passed else "No"
+        )
         mean_score = f"{report.data_quality_distribution.get('mean', 0.0):.2f}"
         min_score = f"{report.data_quality_distribution.get('min', 0.0):.2f}"
         max_score = f"{report.data_quality_distribution.get('max', 0.0):.2f}"
@@ -383,7 +393,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     # Pre-flight validation
     if not options.input_dir.exists():
         logger.log_error(f"Input directory does not exist: {options.input_dir}")
-        logger.log_error("Please create the directory or specify a different path with --input-dir")
+        logger.log_error(
+            "Please create the directory or specify a different path with --input-dir"
+        )
         return 1
 
     if not options.input_dir.is_dir():
@@ -391,7 +403,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     # Check for Excel files
-    excel_files = list(options.input_dir.glob("*.xlsx")) + list(options.input_dir.glob("*.xls"))
+    excel_files = list(options.input_dir.glob("*.xlsx")) + list(
+        options.input_dir.glob("*.xls")
+    )
     if not excel_files:
         logger.log_error(f"No Excel files found in: {options.input_dir}")
         logger.log_error("Please add Excel files to the input directory")
@@ -408,7 +422,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     excel_options = None
     if any(
         value is not None
-        for value in (options.excel_chunk_size, options.excel_engine, options.excel_stage_dir)
+        for value in (
+            options.excel_chunk_size,
+            options.excel_engine,
+            options.excel_stage_dir,
+        )
     ):
         excel_options = ExcelReadOptions(
             chunk_size=options.excel_chunk_size,

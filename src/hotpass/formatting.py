@@ -83,7 +83,9 @@ def apply_excel_formatting(
     for cell in worksheet[1]:
         cell.fill = header_fill
         cell.font = header_font
-        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.alignment = Alignment(
+            horizontal="center", vertical="center", wrap_text=True
+        )
 
     # Apply data row formatting
     data_font = Font(name=format_config.font_name, size=format_config.font_size)
@@ -119,7 +121,9 @@ def apply_excel_formatting(
                 else:
                     bg_color = format_config.quality_poor_bg
 
-                cell.fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
+                cell.fill = PatternFill(
+                    start_color=bg_color, end_color=bg_color, fill_type="solid"
+                )
             except (ValueError, TypeError):
                 pass
 
@@ -181,7 +185,10 @@ def create_summary_sheet(
             [
                 ["Quality Metrics", ""],
                 ["Invalid Records", quality_report.get("invalid_records", 0)],
-                ["Validation Passed", "Yes" if quality_report.get("expectations_passed") else "No"],
+                [
+                    "Validation Passed",
+                    "Yes" if quality_report.get("expectations_passed") else "No",
+                ],
                 ["", ""],
             ]
         )
@@ -232,7 +239,9 @@ def export_to_multiple_formats(
                 # Add summary sheet if quality report available
                 if quality_report:
                     summary_df = create_summary_sheet(df, quality_report)
-                    summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
+                    summary_df.to_excel(
+                        writer, sheet_name="Summary", index=False, header=False
+                    )
 
             output_paths["excel"] = output_path
 

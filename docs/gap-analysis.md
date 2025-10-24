@@ -7,6 +7,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## Current State Assessment
 
 ### Strengths
+
 - ✅ Solid foundation for data validation using Pandera and Great Expectations
 - ✅ Provenance tracking and conflict resolution based on source priority
 - ✅ Performance instrumentation and benchmarking
@@ -19,6 +20,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 1. Industry-Specific Hardcoding (White-Label Gap)
 
 **Current State:**
+
 - Hard-coded aviation/flight school terminology ("Flight School", "planes", "SACAA")
 - South Africa-specific province normalization
 - Fixed column names like "organization_type" tied to aviation context
@@ -27,6 +29,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Cannot be used for other industries without code modifications
 
 **Required Enhancements:**
+
 - Configurable industry profiles/templates
 - Dynamic field mapping based on industry
 - Pluggable validation rules per industry
@@ -36,6 +39,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 2. Intelligent Column Detection & Mapping
 
 **Current State:**
+
 - Fixed, hard-coded column mappings per data source
 - Requires exact column names from source files
 - No fuzzy matching or intelligent inference
@@ -44,6 +48,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** High maintenance cost, brittle to schema changes
 
 **Required Enhancements:**
+
 - Automatic column detection using similarity matching
 - Machine learning-based column type inference
 - User-friendly column mapping interface
@@ -54,6 +59,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 3. Validation Intelligence
 
 **Current State:**
+
 - Fixed validation rules with hard-coded thresholds (85% mostly threshold)
 - Limited error messages and recovery suggestions
 - Binary pass/fail without graduated quality levels
@@ -62,6 +68,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Inflexible validation, poor user guidance
 
 **Required Enhancements:**
+
 - Configurable validation rules and thresholds per data source
 - Context-aware validation with smart defaults
 - Graduated quality scoring (excellent/good/fair/poor)
@@ -72,6 +79,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 4. Spreadsheet Formatting & Presentation
 
 **Current State:**
+
 - Basic Excel output with no formatting
 - No conditional formatting or visual indicators
 - No summary sheets or pivot tables
@@ -80,6 +88,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Poor user experience, requires manual post-processing
 
 **Required Enhancements:**
+
 - Configurable output formatting (colors, fonts, column widths)
 - Conditional formatting for quality indicators
 - Auto-generated summary/dashboard sheet
@@ -90,6 +99,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 5. Edge Case & Error Handling
 
 **Current State:**
+
 - Basic try-catch blocks
 - Limited handling of malformed data
 - No recovery from partial failures
@@ -98,6 +108,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Pipeline failures on edge cases, difficult troubleshooting
 
 **Required Enhancements:**
+
 - Comprehensive error taxonomy and handling
 - Graceful degradation for partial failures
 - Quarantine mechanism for problematic records
@@ -108,6 +119,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 6. Multi-Person Organization Handling
 
 **Current State:**
+
 - Flattens multiple contacts per organization
 - Primary/secondary contact model is simplistic
 - No relationship tracking between contacts
@@ -116,6 +128,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Loss of organizational structure, incomplete contact information
 
 **Required Enhancements:**
+
 - Full contact hierarchy support
 - Multiple roles per organization
 - Department/team structure
@@ -126,6 +139,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 7. File Consolidation Intelligence
 
 **Current State:**
+
 - Fixed loader functions per source
 - Simple concat-based merging
 - Limited duplicate detection
@@ -134,6 +148,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Manual intervention needed for complex scenarios
 
 **Required Enhancements:**
+
 - Smart duplicate detection with fuzzy matching
 - Configurable deduplication strategies
 - Conflict resolution UI/reporting
@@ -144,6 +159,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 8. Configuration & User Experience
 
 **Current State:**
+
 - CLI-only interface
 - Complex TOML/JSON configuration
 - Limited discoverability
@@ -152,6 +168,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Steep learning curve, error-prone configuration
 
 **Required Enhancements:**
+
 - Interactive configuration wizard
 - Web-based UI for common operations
 - Configuration validation and suggestions
@@ -161,6 +178,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 9. Data Profiling & Schema Inference
 
 **Current State:**
+
 - No automatic data profiling
 - Manual schema definition required
 - No data distribution insights
@@ -169,6 +187,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Manual work for new data sources
 
 **Required Enhancements:**
+
 - Automatic data profiling on ingestion
 - Schema inference from sample data
 - Data distribution visualization
@@ -179,6 +198,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## 10. Logging, Monitoring & Audit Trail
 
 **Current State:**
+
 - Basic structured logging
 - Limited audit trail
 - No persistent historical records
@@ -187,6 +207,7 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 **Impact:** Difficult to troubleshoot and audit
 
 **Required Enhancements:**
+
 - Comprehensive audit logging
 - Change tracking with diffs
 - Pipeline execution history
@@ -197,18 +218,21 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## Implementation Priorities
 
 ### Phase 1: Foundation (High Impact, Lower Complexity)
+
 1. **Configurable Industry Profiles** - Enable white-label use
 2. **Enhanced Error Handling** - Improve robustness
 3. **Validation Enhancement** - Better quality feedback
 4. **Documentation Improvements** - Industry-agnostic examples
 
 ### Phase 2: Intelligence (High Impact, Medium Complexity)
+
 5. **Intelligent Column Detection** - Reduce maintenance
 6. **Data Profiling** - Automated insights
 7. **Advanced Contact Management** - Better organizational modeling
 8. **Spreadsheet Formatting** - Improved output
 
 ### Phase 3: Advanced Features (Medium-High Impact, Higher Complexity)
+
 9. **Smart File Consolidation** - Advanced deduplication
 10. **Configuration Wizard** - Improved UX
 11. **Monitoring Dashboard** - Operational insights
@@ -234,29 +258,34 @@ This document provides a comprehensive gap analysis of the Hotpass data refineme
 ## Appendix: Technical Architecture Recommendations
 
 ### Configuration System
+
 - YAML-based industry profiles
 - Override hierarchy: CLI > config file > industry defaults > system defaults
 - JSON Schema validation for configurations
 
 ### Column Mapping Engine
+
 - Levenstein distance for fuzzy matching
 - Configurable synonym dictionaries
 - Machine learning model for pattern recognition
 - Human-in-the-loop confirmation for low confidence mappings
 
 ### Validation Framework
+
 - Rule DSL for custom validations
 - Pluggable validator architecture
 - Validation result caching
 - Progressive validation levels
 
 ### Error Handling
+
 - Custom exception hierarchy
 - Error codes and severity levels
 - Structured error context
 - Recovery action suggestions
 
 ### Contact Management
+
 - Graph-based relationship model
 - Temporal tracking of contact changes
 - Role-based access patterns

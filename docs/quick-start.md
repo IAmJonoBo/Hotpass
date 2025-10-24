@@ -192,11 +192,11 @@ mapper = ColumnMapper(profile.column_synonyms)
 all_dfs = []
 for file in ["file1.xlsx", "file2.xlsx", "file3.xlsx"]:
     df = pd.read_excel(file)
-    
+
     # Map each file's columns
     mapping = mapper.map_columns(list(df.columns))
     df_mapped = mapper.apply_mapping(df, mapping["mapped"])
-    
+
     all_dfs.append(df_mapped)
 
 # Combine all with consistent columns

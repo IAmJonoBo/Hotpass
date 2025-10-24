@@ -279,6 +279,7 @@ print(f"✓ Quality report saved to {report_path}")
 If you're using the basic pipeline configuration:
 
 **Before:**
+
 ```python
 from hotpass import PipelineConfig, run_pipeline
 from pathlib import Path
@@ -292,6 +293,7 @@ result = run_pipeline(config)
 ```
 
 **After (with new features):**
+
 ```python
 from hotpass import PipelineConfig, OutputFormat, run_pipeline
 from pathlib import Path

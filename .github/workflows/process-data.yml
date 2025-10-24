@@ -12,33 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.14"
-          cache: pip
-          cache-dependency-path: requirements-ci.txt
+          python-version: "3.12"
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install dependencies
-        run: pip install -r requirements-ci.txt
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
 
       - name: Ruff lint
-        run: ruff check
+        run: uv run ruff check
 
       - name: Ruff formatting check
-        run: ruff format --check
+        run: uv run ruff format --check
 
       - name: Pytest
-        run: pytest
+        run: uv run pytest
 
       - name: Mypy
-        run: mypy scripts/
+        run: uv run mypy src scripts
 
       - name: Bandit
-        run: bandit -r scripts/
+        run: uv run bandit -r scripts
 
   process-data:
     runs-on: ubuntu-latest
@@ -46,21 +41,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v2
         with:
-          python-version: "3.14"
-          cache: pip
-          cache-dependency-path: requirements.txt
+          python-version: "3.12"
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Synchronise dependencies
+        run: uv sync --frozen
 
       - name: Run Hotpass CLI
-        run: hotpass --archive --dist-dir dist
+        run: uv run hotpass --archive --dist-dir dist
 
       - name: Capture packaged archive path
         id: archive

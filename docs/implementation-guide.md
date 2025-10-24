@@ -214,6 +214,7 @@ with open("error_report.md", "w") as f:
 ### Error Categories
 
 Available error categories:
+
 - `FILE_NOT_FOUND`: Missing input files
 - `SCHEMA_MISMATCH`: Column structure doesn't match expected
 - `VALIDATION_FAILURE`: Data doesn't meet validation rules

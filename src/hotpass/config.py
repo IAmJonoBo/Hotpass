@@ -49,8 +49,12 @@ class IndustryProfile:
             display_name=data.get("display_name", "Generic"),
             default_country_code=data.get("default_country_code", "ZA"),
             organization_term=data.get("organization_term", "organization"),
-            organization_type_term=data.get("organization_type_term", "organization_type"),
-            organization_category_term=data.get("organization_category_term", "category"),
+            organization_type_term=data.get(
+                "organization_type_term", "organization_type"
+            ),
+            organization_category_term=data.get(
+                "organization_category_term", "category"
+            ),
             email_validation_threshold=data.get("email_validation_threshold", 0.85),
             phone_validation_threshold=data.get("phone_validation_threshold", 0.85),
             website_validation_threshold=data.get("website_validation_threshold", 0.75),
@@ -81,7 +85,9 @@ class IndustryProfile:
         }
 
 
-def load_industry_profile(profile_name: str, config_dir: Path | None = None) -> IndustryProfile:
+def load_industry_profile(
+    profile_name: str, config_dir: Path | None = None
+) -> IndustryProfile:
     """Load an industry profile from configuration directory."""
     if config_dir is None:
         config_dir = Path(__file__).parent / "profiles"
@@ -148,7 +154,14 @@ def get_default_profile(profile_name: str = "generic") -> IndustryProfile:
                     "cell",
                     "cellphone",
                 ],
-                "website": ["url", "website_url", "web_address", "homepage", "site", "web"],
+                "website": [
+                    "url",
+                    "website_url",
+                    "web_address",
+                    "homepage",
+                    "site",
+                    "web",
+                ],
                 "province": ["state", "region", "area", "territory"],
             },
             required_fields=["organization_name"],

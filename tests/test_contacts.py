@@ -2,7 +2,11 @@
 
 import pandas as pd
 
-from hotpass.contacts import Contact, OrganizationContacts, consolidate_contacts_from_rows
+from hotpass.contacts import (
+    Contact,
+    OrganizationContacts,
+    consolidate_contacts_from_rows,
+)
 
 
 def test_contact_calculate_completeness():

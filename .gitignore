@@ -15,6 +15,7 @@ coverage.json
 *.egg-info/
 build/
 dist/*.md
+docs/_build/
 
 # Allow distribution archives to be generated under dist/
 !/dist/

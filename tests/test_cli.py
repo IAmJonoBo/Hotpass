@@ -102,7 +102,9 @@ def test_cli_merges_config_file(
     assert exit_code == 0
     captured = capsys.readouterr()
     log_records = _collect_json_lines(captured.out)
-    archive_event = next(item for item in log_records if item["event"] == "archive.created")
+    archive_event = next(
+        item for item in log_records if item["event"] == "archive.created"
+    )
 
     assert output_path.exists()
     assert Path(archive_event["data"]["path"]).exists()
@@ -152,7 +154,9 @@ def test_cli_accepts_excel_tuning_options(
 
     calls: list[Path] = []
 
-    def _fake_to_parquet(self: pd.DataFrame, path: Path, *, index: bool = False) -> None:
+    def _fake_to_parquet(
+        self: pd.DataFrame, path: Path, *, index: bool = False
+    ) -> None:
         calls.append(Path(path))
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", _fake_to_parquet, raising=False)
@@ -175,10 +179,14 @@ def test_cli_accepts_excel_tuning_options(
     assert exit_code == 0
     captured = capsys.readouterr()
     summary = next(
-        item for item in _collect_json_lines(captured.out) if item["event"] == "pipeline.summary"
+        item
+        for item in _collect_json_lines(captured.out)
+        if item["event"] == "pipeline.summary"
     )
     assert summary["data"]["total_records"] == 2
-    assert calls, "staging to parquet should be attempted when a stage directory is provided"
+    assert (
+        calls
+    ), "staging to parquet should be attempted when a stage directory is provided"
 
 
 def test_cli_parse_args_missing_config(tmp_path: Path) -> None:
@@ -227,7 +235,9 @@ def test_cli_accepts_toml_config(
     assert report_path.exists()
 
 
-def test_structured_logger_rich_error_output(capsys: pytest.CaptureFixture[str]) -> None:
+def test_structured_logger_rich_error_output(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     logger = cli.StructuredLogger("rich")
     logger.log_error("something went wrong")
 

@@ -100,7 +100,9 @@ def run_expectations(
             r"^\+\d{6,}$",
             mostly=phone_mostly,
         )
-        dataset.expect_column_values_to_match_regex("website", r"^https?://", mostly=website_mostly)
+        dataset.expect_column_values_to_match_regex(
+            "website", r"^https?://", mostly=website_mostly
+        )
         dataset.expect_column_values_to_be_in_set("country", {"South Africa"})
 
         validation = dataset.validate()
@@ -124,14 +126,20 @@ def run_expectations(
             success = False
             failures.append(message)
 
-    _record_failure(sanitized["organization_name"].notna().all(), "organization_name nulls")
-    _record_failure(sanitized["organization_slug"].notna().all(), "organization_slug nulls")
+    _record_failure(
+        sanitized["organization_name"].notna().all(), "organization_name nulls"
+    )
+    _record_failure(
+        sanitized["organization_slug"].notna().all(), "organization_slug nulls"
+    )
     _record_failure(
         sanitized["data_quality_score"].between(0.0, 1.0).all(),
         "data_quality_score bounds",
     )
 
-    def _record_mostly(series: pd.Series, pattern: str, mostly: float, message: str) -> None:
+    def _record_mostly(
+        series: pd.Series, pattern: str, mostly: float, message: str
+    ) -> None:
         relevant = series.dropna()
         if relevant.empty:
             return
@@ -156,8 +164,12 @@ def run_expectations(
         phone_mostly,
         "contact_primary_phone format",
     )
-    _record_mostly(sanitized["website"], r"^https?://", website_mostly, "website scheme")
+    _record_mostly(
+        sanitized["website"], r"^https?://", website_mostly, "website scheme"
+    )
 
-    _record_failure((sanitized["country"] == "South Africa").all(), "country constraint")
+    _record_failure(
+        (sanitized["country"] == "South Africa").all(), "country constraint"
+    )
 
     return ExpectationSummary(success=success, failures=failures)

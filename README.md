@@ -34,10 +34,12 @@ This repository is optimized for validating, normalizing, processing, and refini
 
 ## Setup
 
-1. Clone the repository.
-2. Install dependencies: `pip install -r requirements.txt`
-3. Place your Excel files in the `data/` directory.
-4. Run the packaged CLI to regenerate the refined workbook: `hotpass`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
+1. Install [uv](https://github.com/astral-sh/uv) (one-time): `curl -LsSf https://astral.sh/uv/install.sh | sh`.
+2. Clone the repository and create a virtual environment: `uv venv`.
+3. Synchronise dependencies (including dev/doc extras): `uv sync --extra dev --extra docs`.
+4. Install pre-commit hooks: `uv run pre-commit install`.
+5. Place your Excel files in the `data/` directory.
+6. Run the pipeline via uv: `uv run hotpass`. Pass `--archive` to also produce a timestamped, checksum-stamped zip under `dist/` for distribution.
 
 ## CLI Usage
 
@@ -83,16 +85,14 @@ Large Excel inputs can be streamed and optionally staged to parquet for reuse:
 
 ## GitHub Actions
 
-The repository uses ephemeral runners via GitHub Actions to automatically process data on pushes to the main branch. A `qa` job provisions Python 3.13 with cached dependencies and enforces quality controls before any data processing runs:
+The repository uses ephemeral runners via GitHub Actions to automatically lint, test, and package data on pushes and pull requests. The workflow now relies on `astral-sh/setup-uv` to provision Python 3.12 and the `uv` resolver for reproducible installs:
 
-- `pip install -r requirements.txt`
-- `ruff check`
-- `ruff format --check`
-- `pytest`
-- `mypy src tests scripts`
-- `bandit -r src scripts`
+- `uv sync --extra dev --frozen` ensures QA jobs respect the lock file.
+- `uv run ruff check` and `uv run ruff format --check` enforce style and formatting.
+- `uv run pytest`, `uv run mypy src scripts`, and `uv run bandit -r scripts` provide unit, type, and security coverage.
+- The processing job executes `uv run hotpass --archive --dist-dir dist` before collecting artifacts.
 
-Only after these checks succeed does the `process-data` job execute the refinement script, upload the refined workbook, and package the matching archive as artifacts.
+Successful runs upload the refined workbook and zipped archive; pushes to `main` still publish the archive to the `data-artifacts` branch.
 
 ## Retrieving Packaged Artifacts
 
@@ -133,17 +133,27 @@ Centralised documentation lives under `docs/`:
 - [Gap Analysis](docs/gap-analysis.md) – Roadmap for future enhancements.
 - [Quick Start](docs/quick-start.md) – Common usage scenarios.
 
+### Building the documentation site
+
+```bash
+uv run sphinx-build -b html docs/source docs/_build/html
+open docs/_build/html/index.html  # macOS; use xdg-open on Linux
+```
+
+The build consumes Markdown via MyST and auto-generates API documentation from the `src/` package.
+
 ## Contributing
 
 1. Make changes in a branch.
 2. Test locally.
 3. Create a PR; GitHub Actions will run the processing pipeline.
+
 ## Benchmarking and performance monitoring
 
 Use the lightweight benchmarking helper to capture baseline throughput and guard against regressions:
 
 ```bash
-python scripts/benchmark_pipeline.py \
+uv run python scripts/benchmark_pipeline.py \
   --input-dir data \
   --output-path dist/benchmark.xlsx \
   --runs 5 \
@@ -152,4 +162,3 @@ python scripts/benchmark_pipeline.py \
 ```
 
 The command runs the pipeline multiple times, aggregates average stage timings (load, aggregation, expectations, write), and emits both JSON summaries and human-readable output. The data is also available programmatically via `hotpass.benchmarks.run_benchmark` for integration into CI checks or monitoring dashboards.
-

@@ -70,4 +70,3 @@ None
 | load_contact_database | 0.4129 |
 | load_reachout_database | 0.2994 |
 | load_sacaa_cleaned | 0.0435 |
-
