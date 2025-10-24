@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import json
+import logging
 import re
 import time
 from collections.abc import Iterable
@@ -14,14 +15,19 @@ from typing import Any
 import pandas as pd
 from pandera.errors import SchemaErrors
 
+from .config import IndustryProfile, get_default_profile
 from .data_sources import (
     ExcelReadOptions,
     load_contact_database,
     load_reachout_database,
     load_sacaa_cleaned,
 )
+from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from .normalization import clean_string, coalesce, normalize_province, slugify
 from .quality import ExpectationSummary, build_ssot_schema, run_expectations
+
+# Set up module logger
+logger = logging.getLogger(__name__)
 
 SSOT_COLUMNS: list[str] = [
     "organization_name",
@@ -129,6 +135,11 @@ class PipelineConfig:
     expectation_suite_name: str = "default"
     country_code: str = "ZA"
     excel_options: ExcelReadOptions | None = None
+    industry_profile: IndustryProfile | None = None
+    output_format: OutputFormat | None = None
+    enable_formatting: bool = True
+    enable_audit_trail: bool = True
+    enable_recommendations: bool = True
 
 
 @dataclass
@@ -141,6 +152,9 @@ class QualityReport:
     source_breakdown: dict[str, int]
     data_quality_distribution: dict[str, float]
     performance_metrics: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
+    audit_trail: list[dict[str, Any]] = field(default_factory=list)
+    conflict_resolutions: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -152,6 +166,9 @@ class QualityReport:
             "source_breakdown": dict(self.source_breakdown),
             "data_quality_distribution": dict(self.data_quality_distribution),
             "performance_metrics": dict(self.performance_metrics),
+            "recommendations": list(self.recommendations),
+            "audit_trail": list(self.audit_trail),
+            "conflict_resolutions": list(self.conflict_resolutions),
         }
 
     def to_markdown(self) -> str:
@@ -197,6 +214,30 @@ class QualityReport:
         else:
             lines.append("None")
         lines.append("")
+
+        # Add recommendations section
+        if self.recommendations:
+            lines.append("## Recommendations")
+            lines.append("")
+            lines.extend(f"- {rec}" for rec in self.recommendations)
+            lines.append("")
+
+        # Add conflict resolution section
+        if self.conflict_resolutions:
+            lines.append("## Conflict Resolutions")
+            lines.append("")
+            lines.append("| Field | Chosen Source | Value | Alternatives |")
+            lines.append("| --- | --- | --- | --- |")
+            for conflict in self.conflict_resolutions[:10]:  # Limit to first 10
+                field = conflict.get("field", "Unknown")
+                source = conflict.get("chosen_source", "Unknown")
+                value = str(conflict.get("value", ""))[:50]  # Truncate long values
+                alt_count = len(conflict.get("alternatives", []))
+                lines.append(f"| {field} | {source} | {value} | {alt_count} alternatives |")
+            if len(self.conflict_resolutions) > 10:
+                remaining = len(self.conflict_resolutions) - 10
+                lines.append(f"| ... | ... | ... | {remaining} more conflicts |")
+            lines.append("")
 
         lines.append("## Performance Metrics")
         lines.append("")
@@ -384,6 +425,75 @@ def _collect_unique(values: Iterable[str | None]) -> list[str]:
     return unique
 
 
+def _generate_recommendations(
+    validated_df: pd.DataFrame,
+    expectation_summary: ExpectationSummary,
+    quality_distribution: dict[str, float],
+) -> list[str]:
+    """Generate actionable recommendations based on data quality analysis."""
+    recommendations = []
+
+    # Check overall quality scores
+    mean_quality = quality_distribution.get("mean", 0.0)
+    if mean_quality < 0.5:
+        recommendations.append(
+            "CRITICAL: Average data quality score is below 50%. "
+            "Consider reviewing data sources and validation rules."
+        )
+    elif mean_quality < 0.7:
+        recommendations.append(
+            "WARNING: Average data quality score is below 70%. "
+            "Focus on improving contact information completeness."
+        )
+
+    # Check for missing critical fields
+    if "contact_primary_email" in validated_df.columns:
+        email_missing_rate = validated_df["contact_primary_email"].isna().mean()
+        if email_missing_rate > 0.5:
+            recommendations.append(
+                f"Missing primary email in {email_missing_rate:.0%} of records. "
+                "Consider enriching data from additional sources."
+            )
+
+    if "contact_primary_phone" in validated_df.columns:
+        phone_missing_rate = validated_df["contact_primary_phone"].isna().mean()
+        if phone_missing_rate > 0.5:
+            recommendations.append(
+                f"Missing primary phone in {phone_missing_rate:.0%} of records. "
+                "Consider enriching data from additional sources."
+            )
+
+    # Check for validation failures
+    if not expectation_summary.success:
+        recommendations.append(
+            "Some validation expectations failed. Review expectation failures for details."
+        )
+
+    # Check for data quality flags
+    if "data_quality_flags" in validated_df.columns:
+        flagged_records = validated_df[validated_df["data_quality_flags"] != "none"]
+        if len(flagged_records) > 0:
+            flag_rate = len(flagged_records) / len(validated_df)
+            if flag_rate > 0.3:
+                recommendations.append(
+                    f"{flag_rate:.0%} of records have quality flags. "
+                    "Review flagged records to identify systematic issues."
+                )
+
+    # Suggest improving low-quality records
+    low_quality_count = (validated_df["data_quality_score"] < 0.4).sum()
+    if low_quality_count > 0:
+        recommendations.append(
+            f"{low_quality_count} records have quality score below 40%. "
+            "Consider manual review or additional data sources for these records."
+        )
+
+    if not recommendations:
+        recommendations.append("Data quality looks good! No critical issues identified.")
+
+    return recommendations
+
+
 def _flatten_series_of_lists(series: pd.Series) -> list[str]:
     items: list[str] = []
     for value in series.dropna():
@@ -509,6 +619,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     )
 
     provenance: dict[str, dict[str, Any]] = {}
+    conflicts: list[dict[str, Any]] = []  # Track conflicts for reporting
 
     def _normalise_scalar(value: object | None) -> str | None:
         if isinstance(value, str):
@@ -573,6 +684,21 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
                 }
                 for sel in contributors
             ]
+            # Track as conflict for reporting
+            conflicts.append(
+                {
+                    "field": field,
+                    "chosen_source": primary_selection.row_metadata.source_dataset,
+                    "value": value,
+                    "alternatives": [
+                        {
+                            "source": sel.row_metadata.source_dataset,
+                            "value": sel.value,
+                        }
+                        for sel in contributors
+                    ],
+                }
+            )
         provenance[field] = entry
         return primary_selection
 
@@ -696,7 +822,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
 
     selection_provenance = json.dumps(provenance, sort_keys=True)
 
-    return {
+    result = {
         "organization_name": organization_name,
         "organization_slug": slug,
         "province": province,
@@ -724,7 +850,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         "last_interaction_date": last_interaction,
         "priority": priority_value,
         "privacy_basis": "Legitimate Interest",
+        "_conflicts": conflicts,  # Internal field for conflict tracking
     }
+    return result
 
 
 def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float]]:
@@ -776,10 +904,62 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
 
 
 def run_pipeline(config: PipelineConfig) -> PipelineResult:
+    # Initialize profile if not provided
+    if config.industry_profile is None:
+        config.industry_profile = get_default_profile("generic")
+
+    # Initialize output format if not provided
+    if config.output_format is None:
+        config.output_format = OutputFormat()
+
     pipeline_start = time.perf_counter()
+    audit_trail: list[dict[str, Any]] = []
+
+    # Log pipeline start
+    if config.enable_audit_trail:
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "pipeline_start",
+                "details": {
+                    "input_dir": str(config.input_dir),
+                    "output_path": str(config.output_path),
+                    "profile": config.industry_profile.name
+                    if config.industry_profile
+                    else "default",
+                },
+            }
+        )
+
+    logger.info(
+        "Starting pipeline execution",
+        extra={
+            "profile": config.industry_profile.name if config.industry_profile else "default",
+            "input_dir": str(config.input_dir),
+        },
+    )
+
     load_start = time.perf_counter()
     combined, source_timings = _load_sources(config)
     load_seconds = time.perf_counter() - load_start
+
+    if config.enable_audit_trail:
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "sources_loaded",
+                "details": {
+                    "total_rows": len(combined),
+                    "load_seconds": load_seconds,
+                    "sources": list(source_timings.keys()),
+                },
+            }
+        )
+
+    logger.info(
+        f"Loaded {len(combined)} rows from {len(source_timings)} sources in {load_seconds:.2f}s"
+    )
+
     metrics: dict[str, Any] = {
         "load_seconds": load_seconds,
         "aggregation_seconds": 0.0,
@@ -816,6 +996,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             source_breakdown={},
             data_quality_distribution={"mean": 0.0, "min": 0.0, "max": 0.0},
             performance_metrics=metrics_copy,
+            recommendations=["No data loaded. Check input directory and source files."],
+            audit_trail=audit_trail,
+            conflict_resolutions=[],
         )
         return PipelineResult(
             refined=refined,
@@ -824,18 +1007,43 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         )
 
     aggregated_rows = []
+    all_conflicts: list[dict[str, Any]] = []
     aggregation_start = time.perf_counter()
+
     for slug, group in combined.groupby("organization_slug", dropna=False):
-        aggregated_rows.append(_aggregate_group(slug, group))
+        row_dict = _aggregate_group(slug, group)
+        # Extract and accumulate conflicts
+        conflicts = row_dict.pop("_conflicts", [])
+        all_conflicts.extend(conflicts)
+        aggregated_rows.append(row_dict)
+
     refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
     refined_df = refined_df.sort_values("organization_name").reset_index(drop=True)
     metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
+
+    if config.enable_audit_trail:
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "aggregation_complete",
+                "details": {
+                    "aggregated_records": len(refined_df),
+                    "conflicts_resolved": len(all_conflicts),
+                    "aggregation_seconds": metrics["aggregation_seconds"],
+                },
+            }
+        )
+
+    logger.info(
+        f"Aggregated {len(refined_df)} records with {len(all_conflicts)} conflict resolutions"
+    )
 
     schema = build_ssot_schema()
     schema_errors: list[str] = []
     validated_df = refined_df
     try:
         validated_df = schema.validate(refined_df, lazy=True)
+        logger.info("Schema validation passed")
     except SchemaErrors as exc:
         schema_errors = [
             f"{row['column']}: {row['failure_case']}" for _, row in exc.failure_cases.iterrows()
@@ -843,10 +1051,42 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         invalid_indices = exc.failure_cases["index"].unique().tolist()
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
         validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
+        logger.warning(
+            f"Schema validation found {len(schema_errors)} errors",
+            extra={
+                "error_count": len(schema_errors),
+                "invalid_records": len(invalid_indices),
+            },
+        )
+
+        if config.enable_audit_trail:
+            audit_trail.append(
+                {
+                    "timestamp": time.time(),
+                    "event": "schema_validation_errors",
+                    "details": {
+                        "error_count": len(schema_errors),
+                        "invalid_records": len(invalid_indices),
+                    },
+                }
+            )
 
     expectation_start = time.perf_counter()
-    expectation_summary: ExpectationSummary = run_expectations(validated_df)
+    # Use profile thresholds if available
+    profile = config.industry_profile
+    email_threshold = profile.email_validation_threshold if profile else 0.85
+    phone_threshold = profile.phone_validation_threshold if profile else 0.85
+    website_threshold = profile.website_validation_threshold if profile else 0.85
+
+    expectation_summary: ExpectationSummary = run_expectations(
+        validated_df,
+        email_mostly=email_threshold,
+        phone_mostly=phone_threshold,
+        website_mostly=website_threshold,
+    )
     metrics["expectations_seconds"] = time.perf_counter() - expectation_start
+
+    logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
     quality_distribution = {
@@ -855,13 +1095,53 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         "max": float(validated_df["data_quality_score"].max()),
     }
 
+    # Generate recommendations if enabled
+    recommendations = []
+    if config.enable_recommendations:
+        recommendations = _generate_recommendations(
+            validated_df, expectation_summary, quality_distribution
+        )
+        logger.info(f"Generated {len(recommendations)} recommendations")
+
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
     write_start = time.perf_counter()
-    validated_df.to_excel(config.output_path, index=False)
+
+    # Use formatting if enabled
+    if config.enable_formatting and config.output_path.suffix.lower() in [".xlsx", ".xls"]:
+        logger.info("Writing output with enhanced formatting")
+        with pd.ExcelWriter(config.output_path, engine="openpyxl") as writer:
+            validated_df.to_excel(writer, sheet_name="Data", index=False)
+            apply_excel_formatting(writer, "Data", validated_df, config.output_format)
+
+            # Add summary sheet
+            quality_report_dict = {
+                "total_records": len(refined_df),
+                "invalid_records": len(refined_df) - len(validated_df),
+                "expectations_passed": expectation_summary.success,
+            }
+            summary_df = create_summary_sheet(validated_df, quality_report_dict)
+            summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
+    else:
+        validated_df.to_excel(config.output_path, index=False)
+
     metrics["write_seconds"] = time.perf_counter() - write_start
     metrics["total_seconds"] = time.perf_counter() - pipeline_start
     if metrics["total_seconds"] > 0:
         metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
+
+    if config.enable_audit_trail:
+        audit_trail.append(
+            {
+                "timestamp": time.time(),
+                "event": "pipeline_complete",
+                "details": {
+                    "total_seconds": metrics["total_seconds"],
+                    "output_path": str(config.output_path),
+                },
+            }
+        )
+
+    logger.info(f"Pipeline completed in {metrics['total_seconds']:.2f}s")
 
     metrics_copy = dict(metrics)
     report = QualityReport(
@@ -873,6 +1153,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         source_breakdown=source_breakdown,
         data_quality_distribution=quality_distribution,
         performance_metrics=metrics_copy,
+        recommendations=recommendations,
+        audit_trail=audit_trail,
+        conflict_resolutions=all_conflicts,
     )
 
     return PipelineResult(
