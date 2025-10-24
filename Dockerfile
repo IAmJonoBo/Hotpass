@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.19
 FROM mambaorg/micromamba:2.3.2
 
 ARG PYTHON_VERSION=3.13
