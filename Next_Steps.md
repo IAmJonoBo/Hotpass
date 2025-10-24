@@ -22,6 +22,7 @@
 - [x] Add checksum-stamped archive packaging and CI publication flow for refined workbook
 - [x] Prioritise aggregation selections using source reliability, recency, and persist provenance trail
 - [x] Replace standalone script with packaged CLI, structured logging, and optional report exports
+- [x] Publish architecture overview, field dictionary, mapping, and expectation catalogue under `docs/`
 
 ## Deliverables
 
@@ -29,7 +30,7 @@
 - [x] `tests/` suite with synthetic fixtures verifying pipeline behaviour
 - [ ] Refined workbook generated on demand via CLI (artifact only, not committed)
 - [x] Tooling configuration files (`pyproject.toml`, expectation suites, etc.)
-- [x] Documentation describing CLI usage, schema, and validation outputs
+- [x] Documentation covering CLI usage, architecture, schema, and validation outputs
 - [x] Workflow publishing of packaged refined workbook archive (artifact + branch)
 
 ## Quality Gates
@@ -45,24 +46,28 @@
 
 ## Links
 
-- Tests: `pytest` (see chunk `f66374`)
-- Lint: `ruff check` (see chunk `cf1849`)
-- Types: `mypy src tests scripts` (see chunk `8af340`)
-- Security: `bandit -r src scripts` (see chunk `8d39c5`)
+- Tests: `pytest` (see chunk `14a684`)
+- Lint: `ruff check` (see chunk `67aca2`)
+- Types: `mypy src tests scripts` (see chunk `402a31`)
+- Security: `bandit -r src scripts` (see chunk `5535b3`)
 - CLI run: `python scripts/process_data.py` (chunk `b62601`)
 - Archive packaging tests: `pytest` (chunk `130a27`)
-- Lint run: `ruff check` (chunk `ff31db`)
-- Format check: `ruff format --check` (chunk `54cd19`)
-- Type check: `mypy src tests scripts` (chunk `903177`)
-- Security scan: `bandit -r src scripts` (chunk `97ff89`)
+- Lint run: `ruff check` (chunk `67aca2`)
+- Format check: `ruff format --check` (chunk `e3a454`)
+- Type check: `mypy src tests scripts` (chunk `402a31`)
+- Security scan: `bandit -r src scripts` (chunk `5535b3`)
 - Workflow packaging update: `.github/workflows/process-data.yml`
-- Latest regression: `pytest` (chunk `6f3f4e`)
-- Most recent pytest run: `pytest` (chunk `938d1a`)
-- Latest lint: `ruff check` (chunk `5f581b`)
-- Latest format check: `ruff format --check` (chunk `03360a`)
-- Latest type check: `mypy src tests scripts` (chunk `fbdc03`)
-- Latest security scan: `bandit -r src scripts` (chunk `863b12`)
-- Latest build: `python -m build` (chunk `8e3543`)
+- Latest regression: `pytest` (chunk `14a684`)
+- Most recent pytest run: `pytest` (chunk `14a684`)
+- Latest lint: `ruff check` (chunk `67aca2`)
+- Latest format check: `ruff format --check` (chunk `e3a454`)
+- Latest type check: `mypy src tests scripts` (chunk `402a31`)
+- Latest security scan: `bandit -r src scripts` (chunk `5535b3`)
+- Latest build: `python -m build` (chunk `7c3003`)
+- Architecture overview: `docs/architecture-overview.md`
+- Field dictionary: `docs/ssot-field-dictionary.md`
+- Source mapping: `docs/source-to-target-mapping.md`
+- Expectation catalogue: `docs/expectation-catalogue.md`
 
 ## Risks / Notes
 

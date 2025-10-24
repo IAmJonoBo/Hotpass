@@ -6,7 +6,7 @@ This repository is optimized for validating, normalizing, processing, and refini
 
 - `data/`: Contains input Excel files. Run the pipeline to regenerate the refined workbook (ignored in git).
 - `scripts/`: Python scripts for data processing.
-- `docs/`: Additional documentation.
+- `docs/`: Additional documentation (see below).
 - `.github/workflows/`: GitHub Actions for automated processing.
 
 ## Setup
@@ -76,6 +76,15 @@ When using GitHub Copilot for this project:
 - **Optimization**: "Optimize the script for large datasets using chunked reading."
 
 Ensure all code follows best practices for data processing and includes error handling.
+
+## Documentation
+
+Centralised documentation lives under `docs/`:
+
+- [Architecture Overview](docs/architecture-overview.md) – Pipeline flow, operational cadence, and privacy guardrails.
+- [SSOT Field Dictionary](docs/ssot-field-dictionary.md) – Canonical schema definitions and stewardship practices.
+- [Source-to-Target Mapping](docs/source-to-target-mapping.md) – Column-level lineage across core data providers.
+- [Expectation Catalogue](docs/expectation-catalogue.md) – Active data quality rules, thresholds, and operational notes.
 
 ## Contributing
 
