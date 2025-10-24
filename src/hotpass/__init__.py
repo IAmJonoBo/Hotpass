@@ -2,6 +2,11 @@
 
 from . import benchmarks
 from .artifacts import create_refined_archive
+from .column_mapping import ColumnMapper, infer_column_types, profile_dataframe
+from .config import IndustryProfile, get_default_profile, load_industry_profile
+from .contacts import Contact, OrganizationContacts, consolidate_contacts_from_rows
+from .error_handling import ErrorHandler, ErrorReport, ErrorSeverity
+from .formatting import OutputFormat, apply_excel_formatting, export_to_multiple_formats
 from .pipeline import PipelineConfig, PipelineResult, run_pipeline
 
 __all__ = [
@@ -10,4 +15,19 @@ __all__ = [
     "PipelineConfig",
     "PipelineResult",
     "run_pipeline",
+    "ColumnMapper",
+    "infer_column_types",
+    "profile_dataframe",
+    "IndustryProfile",
+    "get_default_profile",
+    "load_industry_profile",
+    "Contact",
+    "OrganizationContacts",
+    "consolidate_contacts_from_rows",
+    "ErrorHandler",
+    "ErrorReport",
+    "ErrorSeverity",
+    "OutputFormat",
+    "apply_excel_formatting",
+    "export_to_multiple_formats",
 ]
