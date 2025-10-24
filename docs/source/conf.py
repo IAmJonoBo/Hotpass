@@ -1,3 +1,9 @@
+"""
+Sphinx configuration file for the Hotpass documentation.
+
+This file sets up paths, project metadata, and Sphinx extensions.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -8,10 +14,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SRC_PATH = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_PATH))
 
-project = "Hotpass"
-author = "Hotpass Team"
-release = "0.1.0"
-copyright_notice = f"{datetime.now():%Y}, {author}"
+PROJECT = "Hotpass"
+AUTHOR = "Hotpass Team"
+RELEASE = "0.1.0"
+copyright_notice = f"{datetime.now():%Y}, {AUTHOR}"
 globals()["copyright"] = copyright_notice
 
 extensions = [
@@ -22,9 +28,9 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
-autosummary_generate = True
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
+AUTOSUMMARY_GENERATE = True
+NAPOLEON_GOOGLE_DOCSTRING = True
+NAPOLEON_NUMPY_DOCSTRING = True
 
 myst_enable_extensions = [
     "colon_fence",
@@ -32,12 +38,12 @@ myst_enable_extensions = [
     "linkify",
 ]
 
-myst_heading_anchors = 2
+MYST_HEADING_ANCHORS = 2
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build"]
 
-html_theme = "furo"
+HTML_THEME = "furo"
 html_static_path = ["_static"]
 
 autodoc_default_options = {
