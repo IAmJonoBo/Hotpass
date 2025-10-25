@@ -220,6 +220,57 @@ def test_build_entity_registry_with_history_file():
     assert len(registry) == 1
 
 
+def test_build_entity_registry_merges_history(tmp_path):
+    """Historical entity data is merged and preserved when provided."""
+
+    history_df = pd.DataFrame(
+        {
+            "entity_id": [7, 8],
+            "organization_name": ["Legacy Org", "Dormant Org"],
+            "organization_slug": ["legacy-org", "dormant-org"],
+            "first_seen": [pd.Timestamp("2024-01-01"), pd.Timestamp("2023-05-01")],
+            "last_updated": [pd.Timestamp("2024-06-01"), pd.Timestamp("2024-06-01")],
+            "name_variants": [["Legacy Org Pty"] for _ in range(2)],
+            "status_history": [
+                [{"status": "Active", "date": "2024-06-01T00:00:00"}],
+                [{"status": "Inactive", "date": "2024-06-01T00:00:00"}],
+            ],
+            "status": ["Active", "Inactive"],
+        }
+    )
+    history_path = tmp_path / "entity_history.json"
+    history_df.to_json(history_path, orient="records", date_format="iso")
+
+    current_df = pd.DataFrame(
+        {
+            "organization_name": ["Legacy Org", "New Org"],
+            "organization_slug": ["legacy-org", "new-org"],
+            "status": ["Dormant", "Active"],
+            "province": ["Gauteng", "Western Cape"],
+        }
+    )
+
+    registry = build_entity_registry(current_df, history_file=str(history_path))
+
+    # History row retained, new row appended, unmatched history preserved
+    assert len(registry) == 3
+
+    legacy = registry.loc[registry["organization_slug"] == "legacy-org"].iloc[0]
+    assert legacy["entity_id"] == 7
+    assert pd.to_datetime(legacy["first_seen"]) == pd.Timestamp("2024-01-01T00:00:00")
+    assert legacy["status_history"][-1]["status"] == "Dormant"
+    assert any(entry["status"] == "Active" for entry in legacy["status_history"])
+    assert "Legacy Org" in legacy["name_variants"]
+
+    new_org = registry.loc[registry["organization_slug"] == "new-org"].iloc[0]
+    assert new_org["entity_id"] > 7
+    assert isinstance(new_org["name_variants"], list)
+    assert new_org["status_history"][-1]["status"] == "Active"
+
+    dormant = registry.loc[registry["organization_slug"] == "dormant-org"].iloc[0]
+    assert dormant["status_history"][0]["status"] == "Inactive"
+
+
 def test_resolve_entities_with_splink_not_available():
     """Test Splink resolution when Splink is not available."""
     from unittest.mock import patch
