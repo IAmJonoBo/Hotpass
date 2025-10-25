@@ -20,6 +20,7 @@
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
 - [x] Implement entity registry history merge flow and regression coverage
 - [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
+- [x] Drafted governance charter and metrics instrumentation plan to guide upcoming telemetry work
 
 ## Deliverables
 
@@ -38,6 +39,7 @@
 - [x] Package build succeeds (`uv run uv build`)【534f9b†L1-L123】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【f63725†L1-L25】
 - [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
+- [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
 
 ## Links
 
@@ -57,3 +59,4 @@
 - Docker build validation remains unverified within current environment—ensure CI pipeline exercises Dockerfile and records results.
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.
 - Docs link checking ignores selected external domains because of certificate issues in the sandbox; confirm connectivity in GitHub-hosted runners.
+- Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.

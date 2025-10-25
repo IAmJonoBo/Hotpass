@@ -14,14 +14,14 @@
 
 ## 1. Project Context Inputs
 
-| Dimension                        | Placeholder                                                                                                                                                            |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Project                          | {project_name}                                                                                                                                                         |
-| Repo or paths to scan            | {repo_urls_or_paths}                                                                                                                                                   |
-| Stack                            | {languages} • {frameworks} • {runtime/platform} • {cloud/IaC} • CI/CD: {provider} • Package manager: {pm}                                                              |
-| Ranked non-functional priorities | {security, reliability, performance, maintainability, usability, privacy}                                                                                              |
-| Compliance / targets             | {NIST SSDF v1.1; OWASP SAMM; OWASP ASVS L2/L3 (if web/API); SLSA {level}; OpenSSF Scorecard; ISO/IEC 25010; WCAG 2.2 AA; ISO/IEC 5055; ISO/IEC 42001 (if AI features)} |
-| Constraints                      | {e.g., no breaking public API for 30 days; multi-tenant; regulated data}                                                                                               |
+| Dimension | Value |
+| --- | --- |
+| Project | Hotpass data refinement platform delivering a governed single source of truth for messy spreadsheets. |
+| Repo or paths to scan | `/workspace/Hotpass` → `src/hotpass`, `tests`, `scripts`, `docs`, `.github/workflows/`, `Dockerfile`, `pyproject.toml`, `requirements*.txt`. |
+| Stack | Python 3.13 • Pandas • Prefect 3 • Great Expectations • Streamlit • OpenTelemetry • CLI/Prefect runtime • Packaging via uv & setuptools • CI/CD: GitHub Actions • Docs: Sphinx (MyST). |
+| Ranked non-functional priorities | 1️⃣ Data quality & compliance (Great Expectations suites, POPIA checks). 2️⃣ Reliability & observability (Prefect orchestration, OpenTelemetry, ≥80% coverage). 3️⃣ Maintainability & automation (uv workflows, docs CI, conventional commits). 4️⃣ Security & privacy (Bandit, detect-secrets, compliance module). 5️⃣ Usability & adoption (CLI ergonomics, Streamlit dashboard). |
+| Compliance / targets | NIST SSDF v1.1 baseline adoption; OWASP SAMM progressing to Managed; OWASP ASVS Level 2 for CLI/API surfaces; SLSA Level 2 provenance; OpenSSF Scorecard ≥7; ISO/IEC 25010 (functionality, reliability, maintainability); POPIA-aligned data handling. |
+| Constraints | Preserve CLI/pipeline contracts; optional extras (enrichment, geospatial, dashboards) may be unavailable in CI; sandbox runners have restricted network access; datasets carry POPIA-sensitive information; Docker image publication workflow pending validation. |
 
 ## 2. Discovery → Objectives → Measures
 

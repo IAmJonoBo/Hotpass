@@ -60,5 +60,6 @@ linkcheck_ignore = [
     r"https://diataxis.fr/",
     r"https://docs.astral.sh/uv/getting-started/installation/",
     r"https://greatexpectations.io/",
+    r"https://github.com/GoogleCloudPlatform/fourkeys",
 ]
 linkcheck_timeout = 10
