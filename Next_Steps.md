@@ -11,6 +11,11 @@
 - [x] Add regression coverage for dashboard persistence helpers (Owner: Engineering, Due: 2025-11-01)
 - [ ] Confirm Streamlit dashboard authentication and hosting controls (Owner: Platform, Due: 2025-11-22)
 - [ ] Decide secrets management approach for registry connectors and telemetry endpoints (Owner: DevOps, Due: 2025-11-22)
+- [ ] Harden Streamlit dashboard authentication and filesystem allowlists (Owner: Platform, Due: 2025-11-22)
+- [ ] Enforce Prefect deployment parameter validation and policies (Owner: Engineering, Due: 2025-11-22)
+- [ ] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
+- [ ] Pin GitHub Actions to commit SHAs and add artifact checksum publication (Owner: DevOps, Due: 2025-11-15)
+- [ ] Implement CLI log redaction strategy for PII-bearing metrics (Owner: Engineering, Due: 2025-11-22)
 
 ## Steps
 
@@ -25,6 +30,7 @@
 - [x] Drafted governance charter and metrics instrumentation plan to guide upcoming telemetry work
 - [x] Authored Structurizr DSL architecture views and documented trust boundaries, attack surfaces, and SPOFs
 - [x] Flagged dashboard auth, secrets management, CI artefact handling, and Docker distribution for follow-up interviews
+- [x] Compiled multi-surface STRIDE/MITRE threat model with mitigation backlog in `docs/security/threat-model.md`
 
 ## Deliverables
 
@@ -45,6 +51,9 @@
 - [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
 - [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
+- [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【150a53†L1-L74】
+- [x] Lint/type/security/build checks re-run (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【6b0e7e†L1-L3】【0632b6†L1-L2】【3f68f9†L1-L24】【f75107†L1-L18】【f75013†L1-L67】【28ec86†L1-L119】
+- [x] Security threat model documented with STRIDE/MITRE mapping (`docs/security/threat-model.md`)
 
 ## Links
 
