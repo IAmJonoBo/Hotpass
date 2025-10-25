@@ -19,6 +19,7 @@
 - [ ] Capture outcomes from docs workflow once it runs on `main`
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
 - [x] Implement entity registry history merge flow and regression coverage
+- [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
 
 ## Deliverables
 
@@ -27,25 +28,26 @@
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
-- [x] Pytest with coverage ≥ 80% (current: 86%)【3a3259†L1-L66】
-- [x] Ruff lint clean (`uv run ruff check`)【0e4123†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【830fa6†L1-L1】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【c2d9a7†L1-L22】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【c15d63†L1-L19】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【67e65d†L1-L63】
-- [x] Package build succeeds (`uv run uv build`)【1340b0†L1-L115】
+- [x] Pytest with coverage ≥ 80% (current: 86%)【af8e0a†L1-L66】
+- [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
+- [x] Ruff lint clean (`uv run ruff check`)【d7c9dc†L1-L3】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【6fc4a2†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【939f6c†L1-L20】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【c1fdca†L1-L19】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【d8a292†L1-L59】
+- [x] Package build succeeds (`uv run uv build`)【534f9b†L1-L123】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【f63725†L1-L25】
 - [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `3a3259`)
-- Lint: `uv run ruff check` (chunk `0e4123`)
-- Format: `uv run ruff format --check` (chunk `830fa6`)
-- Types: `uv run mypy src tests scripts` (chunk `c2d9a7`)
-- Security: `uv run bandit -r src scripts` (chunk `c15d63`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `67e65d`)
-- Build: `uv run uv build` (chunk `1340b0`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `af8e0a`)
+- Lint: `uv run ruff check` (chunk `d7c9dc`)
+- Format: `uv run ruff format --check` (chunk `6fc4a2`)
+- Types: `uv run mypy src tests scripts` (chunk `939f6c`)
+- Security: `uv run bandit -r src scripts` (chunk `c1fdca`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `d8a292`)
+- Build: `uv run uv build` (chunk `534f9b`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `f63725`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `0ad91b`)
 

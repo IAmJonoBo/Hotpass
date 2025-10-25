@@ -9,6 +9,7 @@ from .contacts import Contact, OrganizationContacts, consolidate_contacts_from_r
 from .error_handling import ErrorHandler, ErrorReport, ErrorSeverity
 from .formatting import OutputFormat, apply_excel_formatting, export_to_multiple_formats
 from .pipeline import PipelineConfig, PipelineResult, QualityReport, run_pipeline
+from .pipeline_enhanced import EnhancedPipelineConfig, run_enhanced_pipeline
 
 __all__ = [
     "benchmarks",
@@ -17,6 +18,8 @@ __all__ = [
     "PipelineResult",
     "QualityReport",
     "run_pipeline",
+    "EnhancedPipelineConfig",
+    "run_enhanced_pipeline",
     "ColumnMapper",
     "infer_column_types",
     "profile_dataframe",
