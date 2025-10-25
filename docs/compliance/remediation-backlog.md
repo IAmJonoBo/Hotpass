@@ -15,7 +15,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Product & Engineering
 - **Due**: 2025-11-22
 - **Summary**: Enforce consent status at runtime by extending `hotpass.compliance` checks and emitting audit logs when profiles violate lawful processing requirements.
-- **Evidence**: Updated Prefect run logs, unit tests covering consent blockers, change log entry.
+- **Evidence**: Prefect flow logs under `data/logs/prefect/`, updated unit tests covering consent blockers, change log entry referencing consent validation toggle.
 
 ### POPIA-002 Document enrichment minimisation checklists
 - **Risk**: 🟡 Medium
@@ -29,7 +29,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Support & Engineering
 - **Due**: 2025-12-06
 - **Summary**: Deliver Prefect automation or CLI workflow to log DSAR requests, track SLA clocks, and record completion artefacts.
-- **Evidence**: DSAR runbook, Prefect flow logs, dashboard widget or CSV export.
+- **Evidence**: DSAR runbook, Prefect flow logs exported to `data/compliance/dsar/`, dashboard widget or CSV export.
 
 ### POPIA-004 Extend incident playbook
 - **Risk**: 🟡 Medium
@@ -59,7 +59,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Security & Platform
 - **Due**: 2025-11-29
 - **Summary**: Centralise asset inventory including classification, location, and custodian; integrate with roadmap quality gates.
-- **Evidence**: Asset register spreadsheet or YAML manifest under version control, review sign-off.
+- **Evidence**: Asset register manifest committed under `data/inventory/asset-register.yaml`, review sign-off notes stored in `docs/governance/`.
 
 ### ISO27001-003 Extend ops logging
 - **Risk**: 🟡 Medium
@@ -73,7 +73,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Procurement & Security
 - **Due**: 2025-12-06
 - **Summary**: Document third-party services with risk ratings, contracts, and review cadence; align with POPIA transfer analysis.
-- **Evidence**: Supplier register, review meeting notes.
+- **Evidence**: Supplier register maintained at `docs/governance/supplier-register.md`, review meeting notes appended per quarter.
 
 ### ISO27001-005 Schedule legal reviews
 - **Risk**: 🟡 Medium
@@ -96,7 +96,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Security
 - **Due**: 2025-11-22
 - **Summary**: Convert threat model findings into a living risk register with scoring, mitigation status, and links back to controls.
-- **Evidence**: Risk register artefact, update log, linkage to threat model revisions.
+- **Evidence**: Risk register maintained in `docs/security/risk-register.md`, update log appended per review, linkage to threat model revisions.
 
 ### SOC2-003 Enhance change records
 - **Risk**: 🟡 Medium
@@ -117,6 +117,6 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Owner**: Platform
 - **Due**: 2025-12-13
 - **Summary**: Implement access-controlled storage, encryption at rest, and audit logging for refined data exports.
-- **Evidence**: Storage configuration, access log sample, updated architecture diagram.
+- **Evidence**: Storage configuration captured under `docs/explanations/architecture.md`, access log samples archived in `dist/logs/access/`, updated architecture diagram.
 
 Track progress here and mirror high-risk milestones in `Next_Steps.md` under Quality Gates.
