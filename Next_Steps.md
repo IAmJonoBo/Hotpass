@@ -38,6 +38,7 @@
 - [x] Flagged dashboard auth, secrets management, CI artefact handling, and Docker distribution for follow-up interviews
 - [x] Compiled multi-surface STRIDE/MITRE threat model with mitigation backlog in `docs/security/threat-model.md`
 - [x] Captured compliance baseline matrices, evidence catalog, and verification plan under `docs/compliance/`
+- [x] Highlighted cross-framework high-risk compliance gaps with evidence pointers in `docs/compliance/index.md`
 - [x] Documented SPACE-informed developer experience audit and platform backlog
 
 ## Deliverables
@@ -64,6 +65,7 @@
 - [x] Security threat model documented with STRIDE/MITRE mapping (`docs/security/threat-model.md`)
 - [x] Compliance baseline established with matrices and backlog (`docs/compliance/index.md`, `docs/compliance/remediation-backlog.md`)
 - [x] Verification cadence and evidence catalog recorded (`docs/compliance/verification-plan.md`, `docs/compliance/evidence-catalog.md`)
+- [x] High-risk compliance summary table links backlog items to evidence directories (`docs/compliance/index.md`)
 - [x] Developer experience audit captured (`docs/metrics/devex-audit.md`)
 
 ## Quality Gates
@@ -104,4 +106,5 @@
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
+- New evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) need directory ownership and retention policies before implementation work begins.
 - Pending decision on preferred secrets management platform may affect POPIA cross-border control implementation timeline.
