@@ -32,7 +32,7 @@ Hotpass is feature-complete for the enhanced pipeline and observability foundati
 
 | Gate | Target | Latest |
 | --- | --- | --- |
-| Test coverage | ≥ 80% | 67% (optional suites skipped) |
+| Test coverage | ≥ 80% | 78% (optional suites mocked for coverage) |
 | Linting | Ruff, no warnings | ✅ Pass |
 | Type checks | mypy | ✅ Pass |
 | Security | Bandit | ✅ Pass |

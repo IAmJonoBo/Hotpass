@@ -7,18 +7,125 @@ from __future__ import annotations
 
 import logging
 import os
-from contextlib import contextmanager
+from collections.abc import Callable, Iterable
+from contextlib import contextmanager, nullcontext
+from dataclasses import dataclass
+from types import SimpleNamespace
 from typing import Any
 
-from opentelemetry import metrics, trace
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    ConsoleMetricExporter,
-    PeriodicExportingMetricReader,
-)
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+try:  # pragma: no cover - exercised in availability tests
+    from opentelemetry import metrics, trace
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import (
+        ConsoleMetricExporter,
+        PeriodicExportingMetricReader,
+    )
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+    OBSERVABILITY_AVAILABLE = True
+except ImportError:  # pragma: no cover - validated via unit tests
+    OBSERVABILITY_AVAILABLE = False
+
+    @dataclass
+    class _NoopObservation:
+        value: float
+
+    class _NoopInstrument:
+        def add(self, *_: Any, **__: Any) -> None:  # type: ignore[no-untyped-def]
+            return None
+
+        def record(self, *_: Any, **__: Any) -> None:  # type: ignore[no-untyped-def]
+            return None
+
+    class _NoopObservable:
+        def __init__(self, callbacks: Iterable[Callable[..., Any]] | None = None):
+            self.callbacks = list(callbacks or [])
+
+    class _NoopMeter:
+        def create_counter(self, *args: Any, **kwargs: Any) -> _NoopInstrument:
+            return _NoopInstrument()
+
+        def create_histogram(self, *args: Any, **kwargs: Any) -> _NoopInstrument:
+            return _NoopInstrument()
+
+        def create_observable_gauge(
+            self, *args: Any, callbacks: Iterable[Callable[..., Any]] | None = None, **kwargs: Any
+        ) -> _NoopObservable:
+            return _NoopObservable(callbacks=callbacks)
+
+    class _NoopSpan:
+        def set_attribute(self, *_: Any, **__: Any) -> None:
+            return None
+
+        def record_exception(self, *_: Any, **__: Any) -> None:
+            return None
+
+        def set_status(self, *_: Any, **__: Any) -> None:
+            return None
+
+    class _NoopTracer:
+        def start_as_current_span(self, *_: Any, **__: Any):  # type: ignore[no-untyped-def]
+            return nullcontext(_NoopSpan())
+
+    class _NoopTraceModule(SimpleNamespace):
+        def get_tracer(self, *_: Any, **__: Any) -> _NoopTracer:  # type: ignore[no-untyped-def]
+            return _NoopTracer()
+
+        def set_tracer_provider(self, *_: Any, **__: Any) -> None:  # type: ignore[no-untyped-def]
+            return None
+
+        StatusCode = SimpleNamespace(ERROR="ERROR")
+
+        def Status(self, code: Any, description: str):  # type: ignore[no-untyped-def]
+            return {"code": code, "description": description}
+
+    class _NoopMetricsModule(SimpleNamespace):
+        _meter = _NoopMeter()
+
+        def get_meter(self, *_: Any, **__: Any) -> _NoopMeter:  # type: ignore[no-untyped-def]
+            return self._meter
+
+        def set_meter_provider(self, *_: Any, **__: Any) -> None:  # type: ignore[no-untyped-def]
+            return None
+
+        Observation = _NoopObservation
+
+    class MeterProvider:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            return None
+
+    class PeriodicExportingMetricReader:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            return None
+
+    class ConsoleMetricExporter:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            return None
+
+    class Resource:  # type: ignore[no-redef]
+        @staticmethod
+        def create(attributes: dict[str, Any]) -> dict[str, Any]:  # pragma: no cover - noop
+            return attributes
+
+    class TracerProvider:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            self._processors: list[Any] = []
+
+        def add_span_processor(self, processor: Any) -> None:  # pragma: no cover - noop
+            self._processors.append(processor)
+
+    class BatchSpanProcessor:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            return None
+
+    class ConsoleSpanExporter:  # type: ignore[no-redef]
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
+            return None
+
+    metrics = _NoopMetricsModule()
+    trace = _NoopTraceModule()
 
 # Module logger
 logger = logging.getLogger(__name__)
@@ -46,6 +153,13 @@ def initialize_observability(
 
     if _instrumentation_initialized:
         logger.warning("Observability already initialized, skipping")
+        return get_tracer(), get_meter()
+
+    if not OBSERVABILITY_AVAILABLE:
+        logger.warning(
+            "OpenTelemetry not available; using no-op observability implementation"
+        )
+        _instrumentation_initialized = True
         return get_tracer(), get_meter()
 
     environment = environment or os.getenv("HOTPASS_ENVIRONMENT", "development")

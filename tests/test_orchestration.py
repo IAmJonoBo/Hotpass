@@ -6,15 +6,16 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-pytest.importorskip(
-    "prefect",
-    reason="Prefect orchestration dependencies are required for orchestration tests.",
-)
+import hotpass.orchestration as orchestration
+from hotpass.orchestration import refinement_pipeline_flow, run_pipeline_task
 
-from hotpass.orchestration import (
-    refinement_pipeline_flow,
-    run_pipeline_task,
-)
+
+@pytest.fixture(autouse=True)
+def reset_orchestration(monkeypatch):
+    """Ensure Prefect decorators do not retain state between tests."""
+
+    monkeypatch.setattr(orchestration, "flow", orchestration.flow, raising=False)
+    monkeypatch.setattr(orchestration, "task", orchestration.task, raising=False)
 
 
 @pytest.fixture
