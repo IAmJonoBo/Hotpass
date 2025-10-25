@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: {{ parameters.name }}
+  description: Hotpass Prefect pipeline scaffold.
+  annotations:
+    backstage.io/techdocs-ref: dir:./docs
+spec:
+  type: service
+  owner: {{ parameters.owner }}

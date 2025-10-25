@@ -75,6 +75,9 @@ dev = [
   "pre-commit>=4.3.0",
   "detect-secrets>=1.5.0",
   "types-PyYAML>=6.0.12",
+  "cyclonedx-bom>=4.4.0",
+  "mutmut>=2.4.0",
+  "semgrep>=1.78.0",
 ]
 
 docs = [
@@ -107,6 +110,9 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = "--maxfail=1 --disable-warnings --cov=src --cov-report=term-missing"
 pythonpath = ["src"]
+markers = [
+    "accessibility: accessibility semantics checks",
+]
 
 [tool.mypy]
 python_version = "3.13"
@@ -125,6 +131,21 @@ omit = ["src/hotpass/optimize.py"]
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+
+[tool.mutmut]
+paths_to_mutate = [
+    "src/hotpass/quality.py",
+    "src/hotpass/pipeline_enhanced.py",
+]
+tests_dir = [
+    "tests/test_quality.py",
+    "tests/test_quality_report.py",
+    "tests/test_pipeline_enhanced.py",
+    "tests/contracts",
+]
+also_copy = [
+    "src/hotpass",
+]
 
 [dependency-groups]
 dev = [

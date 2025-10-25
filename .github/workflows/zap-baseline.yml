@@ -1,0 +1,44 @@
+name: zap-baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: URL to scan (defaults to local Streamlit)
+        required: false
+        default: http://127.0.0.1:8501
+
+permissions:
+  contents: read
+
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --extra dev --extra dashboards --frozen || uv sync --extra dev --extra dashboards
+
+      - name: Launch Streamlit (if local)
+        if: inputs.target == 'http://127.0.0.1:8501'
+        run: |
+          nohup uv run streamlit run src/hotpass/dashboard.py --server.headless true --server.port 8501 &
+          sleep 15
+
+      - name: OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.13.0
+        with:
+          target: ${{ inputs.target }}
+          fail_action: false
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v5
+        with:
+          name: zap-report
+          path: zap_report.html

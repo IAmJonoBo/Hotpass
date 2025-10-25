@@ -1,0 +1,44 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: hotpass
+  description: Hotpass data refinement platform with Prefect orchestration and Streamlit observability.
+  tags:
+    - data-pipeline
+    - prefect
+    - streamlit
+  annotations:
+    github.com/project-slug: IAmJonoBo/Hotpass
+    backstage.io/techdocs-ref: dir:./docs
+spec:
+  type: service
+  owner: platform-eng
+  lifecycle: production
+  system: hotpass-platform
+  dependsOn:
+    - component:default/hotpass-dashboard
+    - resource:default/hotpass-devex-governance
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: hotpass-dashboard
+  description: Streamlit dashboard for monitoring Hotpass quality signals and orchestrations.
+  annotations:
+    github.com/project-slug: IAmJonoBo/Hotpass
+    backstage.io/techdocs-ref: dir:./docs
+spec:
+  type: website
+  owner: platform-eng
+  lifecycle: production
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: hotpass-devex-governance
+  description: DevEx governance forum, review cadence, and metrics dashboards.
+  annotations:
+    backstage.io/techdocs-ref: dir:./docs/devex
+spec:
+  type: governance
+  owner: developer-productivity-guild

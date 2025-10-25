@@ -1,0 +1,17 @@
+version: 1
+command: hotpass
+options:
+  - name: --input-dir
+    required: false
+  - name: --output-path
+    required: false
+  - name: --country-code
+    required: false
+  - name: --expectation-suite
+    required: false
+  - name: --config
+    required: false
+  - name: --dist-dir
+    required: false
+  - name: --archive
+    required: false

@@ -35,9 +35,88 @@ jobs:
       - name: Bandit
         run: uv run bandit -r scripts
 
-  process-data:
+      - name: Detect secrets
+        run: uv run detect-secrets scan src tests scripts
+
+      - name: Build package
+        run: uv run uv build
+
+  accessibility:
     runs-on: ubuntu-latest
     needs: qa
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Accessibility tests
+        run: uv run pytest -m accessibility tests/accessibility
+
+  mutation-testing:
+    runs-on: ubuntu-latest
+    needs: qa
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Run mutation tests
+        run: uv run python scripts/qa/run_mutation_tests.py
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    needs: qa
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Run Semgrep
+        run: uv run semgrep --config=auto
+
+  fitness-functions:
+    runs-on: ubuntu-latest
+    needs: qa
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Run fitness functions
+        run: uv run python scripts/quality/fitness_functions.py
+
+  process-data:
+    runs-on: ubuntu-latest
+    needs:
+      - qa
+      - accessibility
+      - mutation-testing
+      - static-analysis
+      - fitness-functions
     steps:
       - uses: actions/checkout@v5
 
@@ -79,9 +158,45 @@ jobs:
           name: refined-data-archive
           path: ${{ steps.archive.outputs.archive_path }}
 
-  publish-artifact:
+  supply-chain:
     runs-on: ubuntu-latest
     needs: process-data
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        run: uv sync --extra dev --frozen
+
+      - name: Build package
+        run: uv run uv build
+
+      - name: Generate SBOM
+        run: uv run python scripts/supply_chain/generate_sbom.py
+
+      - name: Generate provenance
+        run: uv run python scripts/supply_chain/generate_provenance.py
+
+      - name: Evaluate supply-chain policy
+        run: uv run python scripts/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json
+
+      - name: Upload supply-chain artefacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: supply-chain-artifacts
+          path: |
+            dist/sbom
+            dist/provenance
+
+  publish-artifact:
+    runs-on: ubuntu-latest
+    needs:
+      - process-data
+      - supply-chain
     if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v5

@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pandas as pd
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _fail_fast_for_mutmut() -> None:
+    if os.environ.get("MUTANT_UNDER_TEST") == "fail":
+        pytest.fail("mutmut forced failure sentinel", pytrace=False)
 
 
 @pytest.fixture()
