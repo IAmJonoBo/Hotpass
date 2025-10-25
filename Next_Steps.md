@@ -42,6 +42,7 @@
 - [x] Highlighted cross-framework high-risk compliance gaps with evidence pointers in `docs/compliance/index.md`
 - [x] Documented SPACE-informed developer experience audit and platform backlog
 - [x] Stood up developer experience playbooks, Backstage scaffolding, and supply-chain scripts with automation entry points
+- [x] Completed critical reasoning checks and consolidated upgrade handover report in `docs/governance/upgrade-final-report.md`
 
 ## Deliverables
 
@@ -70,6 +71,7 @@
 - [x] High-risk compliance summary table links backlog items to evidence directories (`docs/compliance/index.md`)
 - [x] Developer experience audit captured (`docs/metrics/devex-audit.md`)
 - [x] Supply-chain automation documented with SBOM/provenance tooling and Backstage catalog entries (`scripts/supply_chain/*`, `templates/backstage/`, `catalog-info.yaml`)
+- [x] Final upgrade report published with pre-mortem, FMEA, attacker review, control matrix, and runbook (`docs/governance/upgrade-final-report.md`)
 
 ## Quality Gates
 

@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from hotpass import cli
 

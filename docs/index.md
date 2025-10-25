@@ -52,6 +52,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /roadmap
 /governance/project-charter
 /governance/pr-playbook
+/governance/upgrade-final-report
 /CONTRIBUTING
 /style
 /metrics/metrics-plan
