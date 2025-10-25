@@ -15,10 +15,10 @@ jobs:
   zap:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -32,13 +32,13 @@ jobs:
           sleep 15
 
       - name: OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.15.0
+        uses: zaproxy/action-baseline@6c5a007541891231cd9e0ddec25d4f25c59c9874 # v0.15.0
         with:
           target: ${{ inputs.target }}
           fail_action: false
 
       - name: Upload ZAP report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: zap-report
           path: zap_report.html

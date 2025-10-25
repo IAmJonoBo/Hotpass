@@ -14,7 +14,7 @@
 - [ ] Harden Streamlit dashboard authentication and filesystem allowlists (Owner: Platform, Due: 2025-11-22)
 - [ ] Enforce Prefect deployment parameter validation and policies (Owner: Engineering, Due: 2025-11-22)
 - [x] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
-- [ ] Pin GitHub Actions to commit SHAs and add artifact checksum publication (Owner: DevOps, Due: 2025-11-15)
+- [x] Pin GitHub Actions to commit SHAs and add artifact checksum publication (Owner: DevOps, Due: 2025-11-15)
 - [ ] Implement CLI log redaction strategy for PII-bearing metrics (Owner: Engineering, Due: 2025-11-22)
 - [ ] Improve mutation kill rate for quality/pipeline flows via additional assertions or fixtures (Owner: Engineering, Due: 2025-11-29)
 - [x] Establish compliance baseline matrices and backlog (Owner: Compliance, Due: 2025-10-25)
@@ -31,6 +31,7 @@
 - [x] Refreshed README to act as a lightweight entry point into docs
 - [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
 - [ ] Capture outcomes from docs workflow once it runs on `main`
+- [x] Added CI artifact checksum publication alongside pinned GitHub Actions references
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
 - [x] Implement entity registry history merge flow and regression coverage
 - [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
@@ -72,6 +73,7 @@
 - [x] Developer experience audit captured (`docs/metrics/devex-audit.md`)
 - [x] Supply-chain automation documented with SBOM/provenance tooling and Backstage catalog entries (`scripts/supply_chain/*`, `templates/backstage/`, `catalog-info.yaml`)
 - [x] Final upgrade report published with pre-mortem, FMEA, attacker review, control matrix, and runbook (`docs/governance/upgrade-final-report.md`)
+- [x] GitHub Actions workflows pinned to commit SHAs and publishing checksum manifests for refined data and supply-chain artefacts
 
 ## Quality Gates
 
