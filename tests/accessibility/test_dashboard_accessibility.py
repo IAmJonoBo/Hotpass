@@ -33,7 +33,7 @@ class AccessibilitySidebar:
     def __init__(self) -> None:
         self.calls: list[SidebarCall] = []
 
-    def header(self, *_: Any, **__: Any) -> None:  # noqa: D401 - shim
+    def header(self, *_: Any, **__: Any) -> None:
         return None
 
     def text_input(self, label: str, value: str = "", **kwargs: Any) -> str:
