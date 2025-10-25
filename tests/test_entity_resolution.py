@@ -61,6 +61,56 @@ def test_resolve_entities_fallback(sample_df_with_duplicates):
     assert len(predictions) == 0
 
 
+def test_resolve_entities_fallback_without_slug_column():
+    """Fallback deduplication synthesises slugs from organization names."""
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Alpha Org", "Alpha Org", "Beta Org"],
+            "province": ["WC", "WC", "GP"],
+        }
+    )
+
+    deduplicated, predictions = resolve_entities_fallback(df)
+
+    assert len(deduplicated) == 2
+    assert len(predictions) == 0
+
+
+def test_resolve_entities_fallback_with_sparse_slug_values():
+    """Blank slug fields reuse slugified names to avoid crashes."""
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Gamma Org", "Gamma Org", "Delta Org"],
+            "organization_slug": [None, "", "delta-org"],
+            "province": ["WC", "WC", "GP"],
+        }
+    )
+
+    deduplicated, _ = resolve_entities_fallback(df)
+
+    assert len(deduplicated) == 2
+    assert "organization_slug" in deduplicated.columns
+
+
+def test_resolve_entities_fallback_all_data_missing():
+    """Rows without identifying information are preserved without crashing."""
+
+    df = pd.DataFrame(
+        {
+            "organization_name": [None, None],
+            "organization_slug": [None, None],
+            "province": [None, None],
+        }
+    )
+
+    deduplicated, predictions = resolve_entities_fallback(df)
+
+    assert len(deduplicated) == 2
+    assert len(predictions) == 0
+
+
 def test_calculate_completeness_score_full():
     """Test completeness score calculation with full data."""
     row = pd.Series(

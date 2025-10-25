@@ -7,7 +7,11 @@ This module extends the Hotpass CLI with commands for:
 """
 
 import argparse
+import importlib
+import ipaddress
+import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from rich.console import Console
@@ -318,6 +322,64 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         return 1
 
 
+_SAFE_HOST_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+def _normalise_dashboard_host(host: str) -> str | None:
+    """Validate and normalise dashboard host values.
+
+    The Streamlit runner ultimately binds a socket, so we restrict the host to
+    valid DNS labels or IP literals to prevent shell-style injection when the
+    value is later echoed back to logs.
+    """
+
+    candidate = host.strip()
+    if not candidate:
+        return None
+
+    if candidate == "localhost":
+        return "localhost"
+
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        if _SAFE_HOST_PATTERN.fullmatch(candidate):
+            return candidate
+        return None
+    else:
+        return candidate
+
+
+def _load_streamlit_runner() -> tuple[Callable[[list[str]], object] | None, str | None]:
+    """Return the Streamlit CLI runner when available.
+
+    Returns a tuple of (runner, error_message). When the runner cannot be
+    resolved the error message contains a user-facing explanation.
+    """
+
+    try:
+        streamlit_cli = importlib.import_module("streamlit.web.cli")
+    except ModuleNotFoundError:
+        return None, (
+            "[bold red]✗[/bold red] Streamlit not found. Install with: "
+            "uv sync --extra dashboards"
+        )
+    except Exception as exc:  # pragma: no cover - defensive guard
+        return None, (
+            "[bold red]✗[/bold red] Unable to load Streamlit CLI: "
+            f"{exc}"
+        )
+
+    runner = getattr(streamlit_cli, "main_run", None)
+    if runner is None:
+        return None, (
+            "[bold red]✗[/bold red] Streamlit CLI entrypoint missing. "
+            "Upgrade Streamlit to ≥1.25."
+        )
+
+    return runner, None
+
+
 def cmd_dashboard(args: argparse.Namespace) -> int:
     """Launch the monitoring dashboard.
 
@@ -327,36 +389,59 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success)
     """
-    import subprocess
-    from pathlib import Path
 
     console = Console()
     console.print("[bold blue]Launching Hotpass dashboard...[/bold blue]")
 
     dashboard_path = Path(__file__).parent / "dashboard.py"
+    if not dashboard_path.exists():  # pragma: no cover - defensive guard
+        console.print(
+            "[bold red]✗[/bold red] Dashboard entrypoint missing at "
+            f"{dashboard_path}"
+        )
+        return 1
+
+    if not 0 < args.port < 65536:
+        console.print(
+            "[bold red]✗[/bold red] Invalid port. Provide an integer between 1 and 65535."
+        )
+        return 1
+
+    host = _normalise_dashboard_host(args.host)
+    if host is None:
+        console.print(
+            "[bold red]✗[/bold red] Invalid host. Use localhost or a valid IP/DNS label."
+        )
+        return 1
+
+    runner, error_message = _load_streamlit_runner()
+    if runner is None:
+        console.print(error_message)
+        return 1
+
+    command = [
+        "run",
+        str(dashboard_path),
+        "--server.port",
+        str(args.port),
+        "--server.address",
+        host,
+    ]
 
     try:
-        subprocess.run(
-            [
-                "streamlit",
-                "run",
-                str(dashboard_path),
-                "--server.port",
-                str(args.port),
-                "--server.address",
-                args.host,
-            ],
-            check=True,
-        )
-        return 0
-    except subprocess.CalledProcessError as e:
-        console.print(f"[bold red]✗[/bold red] Dashboard failed to start: {e}")
+        runner(command)
+    except SystemExit as exc:
+        code = exc.code or 0
+        if code != 0:
+            console.print(
+                "[bold red]✗[/bold red] Dashboard exited with non-zero status."
+            )
+        return int(code)
+    except Exception as exc:  # pragma: no cover - defensive guard
+        console.print(f"[bold red]✗[/bold red] Dashboard failed to start: {exc}")
         return 1
-    except FileNotFoundError:
-        console.print(
-            "[bold red]✗[/bold red] Streamlit not found. Install with: uv sync --extra dashboards"
-        )
-        return 1
+
+    return 0
 
 
 def cmd_deploy(args: argparse.Namespace) -> int:
