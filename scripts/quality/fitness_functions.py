@@ -42,7 +42,7 @@ def check_public_api(module: str, symbols: list[str]) -> None:
         for target in node.targets:
             if isinstance(target, ast.Name) and target.id == "__all__":
                 value = node.value
-                if isinstance(value, (ast.List, ast.Tuple)):
+                if isinstance(value, ast.List | ast.Tuple):
                     for element in value.elts:
                         if isinstance(element, ast.Constant) and isinstance(element.value, str):
                             exported.add(element.value)
