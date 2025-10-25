@@ -216,7 +216,7 @@ def test_aggregate_group_prioritises_reliable_and_recent_values() -> None:
 
 
 def test_run_expectations_fallback_pass(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(quality, "PandasDataset", None)
+    monkeypatch.setattr(quality, "_GE_RUNTIME", None)
 
     df = pd.DataFrame(
         {
@@ -237,7 +237,7 @@ def test_run_expectations_fallback_pass(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(quality, "PandasDataset", None)
+    monkeypatch.setattr(quality, "_GE_RUNTIME", None)
 
     df = pd.DataFrame(
         {

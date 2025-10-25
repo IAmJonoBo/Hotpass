@@ -54,10 +54,10 @@ Hotpass has delivered every phase in the modernisation programme. The enhanced p
 
 ## Release checklist
 
-- [ ] Optional dependencies installed in CI to re-enable skipped tests.
+- [x] Optional dependencies installed in CI to re-enable skipped tests.
 - [x] Observability exporters quiet during QA tooling.
-- [ ] Docker image build validated on every PR.
-- [ ] Documentation workflow green (`docs.yml`).
+- [x] Docker image build validated on every PR.
+- [x] Documentation workflow green (`docs.yml`).
 - [x] Coverage restored to ≥ 80%.
 
 Keep this roadmap updated alongside pull requests to maintain a single source of truth for planning.

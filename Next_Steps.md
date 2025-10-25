@@ -4,16 +4,16 @@
 
 - [x] Consolidate planning collateral into `docs/roadmap.md` and simplify top-level release docs (Owner: Product, Due: 2025-10-25)
 - [x] Publish Diátaxis-aligned docs set with style and contributing guidance (Owner: Docs, Due: 2025-10-25)
-- [ ] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
+- [x] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
 - [x] Quieten Prefect/OpenTelemetry console handlers to prevent ValueError on process shutdown during QA tooling (Owner: Engineering, Due: 2025-11-08)
-- [ ] Re-enable skipped integration suites once optional dependencies can be installed in CI without instability (Owner: Engineering, Due: 2025-11-15)
+- [x] Re-enable skipped integration suites once optional dependencies can be installed in CI without instability (Owner: Engineering, Due: 2025-11-15)
 - [x] Merge entity registry history during deduplication to unlock roadmap follow-up (Owner: Engineering, Due: 2025-11-01)
 - [x] Add regression coverage for dashboard persistence helpers (Owner: Engineering, Due: 2025-11-01)
 - [ ] Confirm Streamlit dashboard authentication and hosting controls (Owner: Platform, Due: 2025-11-22)
 - [ ] Decide secrets management approach for registry connectors and telemetry endpoints (Owner: DevOps, Due: 2025-11-22)
 - [ ] Harden Streamlit dashboard authentication and filesystem allowlists (Owner: Platform, Due: 2025-11-22)
 - [ ] Enforce Prefect deployment parameter validation and policies (Owner: Engineering, Due: 2025-11-22)
-- [ ] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
+- [x] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
 - [ ] Pin GitHub Actions to commit SHAs and add artifact checksum publication (Owner: DevOps, Due: 2025-11-15)
 - [ ] Implement CLI log redaction strategy for PII-bearing metrics (Owner: Engineering, Due: 2025-11-22)
 - [ ] Improve mutation kill rate for quality/pipeline flows via additional assertions or fixtures (Owner: Engineering, Due: 2025-11-29)
@@ -51,20 +51,20 @@
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
-- [x] Pytest with coverage ≥ 80% (current: 86%)【41c28f†L1-L73】
+- [x] Pytest with coverage ≥ 80% (current: 88%)【a2633f†L1-L200】
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【316f32†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【6b058c†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【756cc4†L1-L20】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【d96b77†L1-L23】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【2a010b†L1-L58】
-- [x] Package build succeeds (`uv run uv build`)【46d874†L1-L84】
-- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【f63725†L1-L25】
-- [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
+- [x] Ruff lint clean (`uv run ruff check`)【91aebd†L1-L3】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【67f807†L1-L3】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【c2416b†L1-L24】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【20260d†L1-L20】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【48a655†L1-L63】
+- [x] Package build succeeds (`uv run uv build`)【d865a6†L1-L98】
+- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【6beeed†L1-L33】
+- [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【6f7723†L1-L45】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
 - [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
-- [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【150a53†L1-L74】
-- [x] Lint/type/security/build checks re-run (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【6b0e7e†L1-L3】【0632b6†L1-L2】【3f68f9†L1-L24】【f75107†L1-L18】【f75013†L1-L67】【28ec86†L1-L119】
+- [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【a2633f†L1-L200】
+- [x] Lint/type/security/build checks re-run (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【91aebd†L1-L3】【67f807†L1-L3】【c2416b†L1-L24】【20260d†L1-L20】【48a655†L1-L63】【d865a6†L1-L98】
 - [x] Security threat model documented with STRIDE/MITRE mapping (`docs/security/threat-model.md`)
 - [x] Compliance baseline established with matrices and backlog (`docs/compliance/index.md`, `docs/compliance/remediation-backlog.md`)
 - [x] Verification cadence and evidence catalog recorded (`docs/compliance/verification-plan.md`, `docs/compliance/evidence-catalog.md`)
@@ -75,37 +75,39 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (latest run: 86%)【41c28f†L1-L73】
-- [x] Ruff lint clean (`uv run ruff check`)【316f32†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【6b058c†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【756cc4†L1-L20】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【d96b77†L1-L23】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【2a010b†L1-L58】
-- [x] Package build succeeds (`uv run uv build`)【46d874†L1-L84】
+- [x] Pytest with coverage ≥ 80% (latest run: 88%)【a2633f†L1-L200】
+- [x] Ruff lint clean (`uv run ruff check`)【91aebd†L1-L3】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【67f807†L1-L3】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【c2416b†L1-L24】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【20260d†L1-L20】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【48a655†L1-L63】
+- [x] Package build succeeds (`uv run uv build`)【d865a6†L1-L98】
 - [ ] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)
-- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【ba129d†L1-L3】
-- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【3a7400†L1-L2】
-- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【9527b0†L1-L2】
-- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【0c3072†L1-L2】
-- [ ] Semgrep auto configuration scan (`uv run semgrep --config=auto`) — blocked by SSL trust chain in sandbox【fed4f5†L1-L40】
+- [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【970d75†L1-L20】
+- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【6c639f†L1-L2】
+- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【9bbcd6†L1-L2】
+- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【e0241b†L1-L2】
+- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【517e30†L1-L2】
+- [ ] Semgrep auto configuration scan (`uv run semgrep --config=auto`) — blocked by SSL trust chain in sandbox【9fd46f†L1-L57】
 - [ ] Compliance evidence catalog refreshed (due 2025-01-15)
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `41c28f`)
-- Lint: `uv run ruff check` (chunk `316f32`)
-- Format: `uv run ruff format --check` (chunk `6b058c`)
-- Types: `uv run mypy src tests scripts` (chunk `756cc4`)
-- Security: `uv run bandit -r src scripts` (chunk `d96b77`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `2a010b`)
-- Build: `uv run uv build` (chunk `46d874`)
-- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `f63725`)
-- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `0ad91b`)
-- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `ba129d`)
-- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `3a7400`)
-- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `9527b0`)
-- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `0c3072`)
-- Semgrep: `uv run semgrep --config=auto` (chunk `fed4f5`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `a2633f`)
+- Lint: `uv run ruff check` (chunk `91aebd`)
+- Format: `uv run ruff format --check` (chunk `67f807`)
+- Types: `uv run mypy src tests scripts` (chunk `c2416b`)
+- Security: `uv run bandit -r src scripts` (chunk `20260d`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `48a655`)
+- Build: `uv run uv build` (chunk `d865a6`)
+- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `6beeed`)
+- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `6f7723`)
+- Accessibility: `uv run pytest -m accessibility` (chunk `970d75`)
+- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `6c639f`)
+- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `9bbcd6`)
+- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `e0241b`)
+- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `517e30`)
+- Semgrep: `uv run semgrep --config=auto` (chunk `9fd46f`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
 - Verification cadence: `docs/compliance/verification-plan.md`
@@ -115,7 +117,7 @@
 ## Risks / Notes
 
 - Observability exporters now suppress shutdown ValueErrors; monitor CI logs after enabling full telemetry backends.
-- Docker build validation remains unverified within current environment—ensure CI pipeline exercises Dockerfile and records results.
+- Docker build validation now executes in CI via workflow docker build step; monitor runtime and cache behaviour in hosted runners.
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.
 - Docs link checking ignores selected external domains because of certificate issues in the sandbox; confirm connectivity in GitHub-hosted runners.
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
@@ -123,5 +125,5 @@
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
 - New evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) need directory ownership and retention policies before implementation work begins.
 - Pending decision on preferred secrets management platform may affect POPIA cross-border control implementation timeline.
-- Semgrep registry download fails in sandbox because of missing CA chain; rerun in CI with trusted root store or pin to offline config.
+- Semgrep registry download fails in sandbox because of missing CA chain; rerun in CI with trusted root store or pin to offline config.【9fd46f†L1-L57】
 - Mutation suite currently reports zero killed mutants across `quality`/`pipeline_enhanced`; expand assertions or targeted fixtures to increase kill rate.

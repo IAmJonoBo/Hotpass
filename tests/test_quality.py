@@ -6,9 +6,7 @@ import pytest
 from hotpass.quality import ExpectationSummary, build_ssot_schema, run_expectations
 
 try:
-    from great_expectations.dataset.pandas_dataset import (  # type: ignore  # noqa: F401
-        PandasDataset,
-    )
+    from great_expectations.validator.validator import Validator  # type: ignore  # noqa: F401
 
     HAS_GE = True
 except ImportError:

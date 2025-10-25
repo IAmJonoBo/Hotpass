@@ -1,7 +1,7 @@
 ---
 title: Security — threat model
 summary: Multi-surface threat model covering CLI, Prefect flows, and the Streamlit dashboard with STRIDE and MITRE mappings.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Security threat model
@@ -64,7 +64,7 @@ Key safeguards already in place include configuration validation in the CLI, Pre
 | Dashboard lacks authentication and path validation | Remote operators could execute pipeline against arbitrary paths, exfiltrating or corrupting data | Dashboard accepts arbitrary `input_dir`/`output_path` and executes pipeline; tests confirm run without safeguards【F:src/hotpass/dashboard.py†L64-L167】【F:tests/test_dashboard.py†L92-L141】 | Add authentication (e.g., SSO or token header), restrict paths to approved roots, and enforce allowlists via `Path.resolve().is_relative_to()` checks. Reference OWASP ASVS 4.0.3 V2 controls. |
 | Prefect flow skips parameter validation (`validate_parameters=False`) | Malicious deployment updates can supply crafted paths, leading to tampering or lateral movement | Flow decorator disables validation, relying on downstream code; tests show deployment wiring but no parameter guards【F:src/hotpass/orchestration.py†L154-L200】【F:tests/test_orchestration.py†L67-L111】 | Enable `validate_parameters=True`, define Pydantic parameter models, and add Prefect block policies to restrict schedule updates. Align with NIST SP 800-53 CM-7. |
 | CLI structured logger emits full report payloads | Potential PII disclosure in logs shipped to SIEM or stdout | Logger prints report metrics and details without redaction; tests assert presence of detailed metrics in outputs【F:src/hotpass/cli.py†L253-L345】【F:tests/test_cli.py†L60-L140】 | Introduce redaction filters for sensitive columns (PII), provide `--sensitive-fields` mask, and document sanitisation. Map to GDPR Art. 32 data minimisation. |
-| Dockerfile installs tooling via unsigned curl script | Supply-chain compromise risk; attacker-controlled install script can run arbitrary code | `RUN curl -LsSf https://astral.sh/uv/install.sh | sh` executes remote script during build【F:Dockerfile†L9-L18】 | Replace with pinned release tarball + checksum verification (e.g., `curl .../uv.tar.gz` + `sha256sum`), or vendor `uv` via Micromamba/Conda package. Reference SLSA Level 1 requirements. |
+| Dockerfile installs tooling via unsigned curl script | Supply-chain compromise risk; attacker-controlled install script can run arbitrary code | Mitigated: Dockerfile now downloads a pinned release tarball and verifies SHA-256 before installing `uv`, eliminating the curl-pipe risk.【F:Dockerfile†L12-L20】 | Monitor upstream `uv` releases and rotate pinned version and checksum during regular dependency reviews; consider packaging via Micromamba/Conda channels for centralized governance. |
 | GitHub Actions workflows use floating action tags and force-push artifacts | Attacker controlling action tag or PAT could modify pipeline/artifacts | Workflows rely on version tags and push archives with PAT; no checksum recorded【F:.github/workflows/process-data.yml†L13-L118】 | Pin actions to commit SHAs, scope PAT to artifact branch, and publish checksums for archives (supply chain best practices per OWASP CICD-SEC). |
 
 ## Proof-of-value logs and artefacts
@@ -78,7 +78,7 @@ Key safeguards already in place include configuration validation in the CLI, Pre
 1. Harden dashboard authentication and filesystem allowlists.
 2. Enforce Prefect parameter validation and document required deployment policies.
 3. Implement log redaction and document handling of sensitive metrics.
-4. Refactor Dockerfile to eliminate curl-pipe shell and introduce checksum verification.
+4. ✅ Refactor Dockerfile to eliminate curl-pipe shell and introduce checksum verification (pinned `uv` tarball + SHA-256 validation in Dockerfile).【F:Dockerfile†L12-L20】
 5. Pin GitHub Actions and add checksum verification for released artifacts.
 
 Update `Next_Steps.md` with owners and due dates aligned to platform and DevOps teams.
