@@ -1,10 +1,9 @@
-"""Prefect-based orchestration for Hotpass pipeline.
+"""Prefect orchestration for the Hotpass refinement pipeline.
 
-This module provides workflow orchestration using Prefect, enabling:
-- Task-based pipeline execution with automatic retries and error handling
-- Logging and metrics collection via OpenTelemetry
-- Configurable scheduling and monitoring
-- State persistence and recovery
+The flow layer coordinates retries, logging, and archiving behaviour around
+the core pipeline runner. When Prefect is unavailable the module exposes
+lightweight no-op decorators so CLI workflows can continue operating during
+unit tests or constrained deployments.
 """
 
 from __future__ import annotations
@@ -13,37 +12,102 @@ import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
-
-try:  # pragma: no cover - verified via unit tests
-    from prefect import flow, task
-    from prefect.logging import get_run_logger
-
-    PREFECT_AVAILABLE = True
-except ImportError:  # pragma: no cover - exercised in fallback tests
-    PREFECT_AVAILABLE = False
-
-    def _noop_prefect_decorator(
-        *_args: Any, **_kwargs: Any
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            return func
-
-        return decorator
-
-    def flow(*_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:  # type: ignore[override]
-        return _noop_prefect_decorator(*_args, **_kwargs)
-
-    def task(*_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:  # type: ignore[override]
-        return _noop_prefect_decorator(*_args, **_kwargs)
-
-    def get_run_logger() -> logging.Logger:  # type: ignore[override]
-        return logging.getLogger("hotpass.orchestration")
+from typing import Any, TypeVar, cast
 
 from .artifacts import create_refined_archive
 from .config import get_default_profile
 from .data_sources import ExcelReadOptions
 from .pipeline import PipelineConfig, run_pipeline
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+_prefect_flow_decorator: Callable[..., Callable[[F], F]] | None = None
+_prefect_task_decorator: Callable[..., Callable[[F], F]] | None = None
+_prefect_get_run_logger: Callable[..., Any] | None = None
+_prefect_handlers: Any = None
+
+
+def _noop_prefect_decorator(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
+    def decorator(func: F) -> F:
+        return func
+
+    return decorator
+
+
+try:  # pragma: no cover - verified via unit tests
+    from prefect import flow as _prefect_flow_decorator
+    from prefect import task as _prefect_task_decorator
+    from prefect.logging import get_run_logger as _prefect_get_run_logger
+    from prefect.logging import handlers as _prefect_handlers
+except ImportError:  # pragma: no cover - exercised in fallback tests
+    PREFECT_AVAILABLE = False
+else:
+    PREFECT_AVAILABLE = True
+    _console_handler_cls = None
+    if _prefect_handlers is not None:
+        _console_handler_cls = getattr(_prefect_handlers, "ConsoleHandler", None)
+        if _console_handler_cls is None:
+            _console_handler_cls = getattr(_prefect_handlers, "PrefectConsoleHandler", None)
+
+    if _console_handler_cls is not None:
+        _prefect_console_emit = _console_handler_cls.emit
+
+        def _safe_console_emit(self: Any, record: logging.LogRecord) -> None:
+            console = getattr(self, "console", None)
+            file_obj = getattr(console, "file", None)
+            if getattr(file_obj, "closed", False):
+                return None
+
+            try:
+                _prefect_console_emit(self, record)
+            except ValueError:  # pragma: no cover - depends on runtime shutdown
+                return None
+
+        _console_handler_cls.emit = _safe_console_emit  # type: ignore[assignment]
+
+
+if _prefect_flow_decorator is not None:
+    flow: Callable[..., Callable[[F], F]] = cast(
+        Callable[..., Callable[[F], F]], _prefect_flow_decorator
+    )
+else:
+
+    def flow(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
+        return _noop_prefect_decorator(*_args, **_kwargs)
+
+
+if _prefect_task_decorator is not None:
+    task: Callable[..., Callable[[F], F]] = cast(
+        Callable[..., Callable[[F], F]], _prefect_task_decorator
+    )
+else:
+
+    def task(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
+        return _noop_prefect_decorator(*_args, **_kwargs)
+
+
+if _prefect_get_run_logger is not None:
+
+    def get_run_logger(*args: Any, **kwargs: Any) -> logging.Logger:
+        """Proxy Prefect's logger helper while supporting the fallback stub."""
+
+        logger_callable = _prefect_get_run_logger
+        if logger_callable is None:  # pragma: no cover - defensive
+            return logging.getLogger("hotpass.orchestration")
+
+        logger_or_adapter = logger_callable(*args, **kwargs)
+        if isinstance(logger_or_adapter, logging.Logger):
+            return logger_or_adapter
+        adapter_logger = getattr(logger_or_adapter, "logger", None)
+        if isinstance(adapter_logger, logging.Logger):
+            return adapter_logger
+        return logging.getLogger("hotpass.orchestration")
+
+else:
+
+    def get_run_logger(*_args: Any, **_kwargs: Any) -> logging.Logger:
+        return logging.getLogger("hotpass.orchestration")
+
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +234,7 @@ def deploy_pipeline(
     from prefect.deployments import serve
 
     # Note: deployment API may require adjustments based on Prefect version
-    deployment = refinement_pipeline_flow.to_deployment(name=name)
+    deployment = cast(Any, refinement_pipeline_flow).to_deployment(name=name)
     if work_pool:
         deployment.work_pool_name = work_pool  # type: ignore
 
