@@ -1,126 +1,46 @@
 # Next Steps
 
-## Release Notes (October 2025)
-
-### Version 0.1.0 - Release State Achieved
-
-The Hotpass data refinement pipeline has reached release state with all major roadmap items completed:
-
-**✓ Comprehensive Data Quality Validation Suite**
-- Added 10 new tests for Great Expectations validation path (conditionally skipped when GE PandasDataset unavailable)
-- Tests cover all validation rules: null checks, quality scores, email/phone/website formats, country validation
-- Tests verify blank value sanitization and boundary conditions
-- Improved overall test coverage from 79% to 85% (exceeds 80% target)
-- Total of 132 tests (120 passed, 12 conditionally skipped)
-
-**✓ Code Hardening & QA**
-- Fixed Python version requirement (corrected from 3.14 to 3.13)
-- All QA checks passing: ruff lint, ruff format, mypy type checks, bandit security scan
-- Documentation builds successfully without errors
-- Excluded unused optimize.py module from coverage calculation
-- All quality gates met (pytest ≥80%, lint clean, types clean, security clean)
-
-**✓ Release-Ready State**
-- Reproducible data refinement pipeline architecture
-- Modular pipeline implementation with structured logging
-- CLI with rich output and JSON logging support
-- Provenance-aware aggregation with conflict resolution
-- Performance instrumentation and benchmarking harness
-- Comprehensive documentation (architecture, field dictionary, mapping, expectations)
-- CI/CD workflow with QA gates and artifact publishing
-
-**Remaining Work (Ops Team)**
-- Evaluate production data throughput regressions using benchmark harness (Due: 2025-02-15)
-
 ## Tasks
-
-- [x] Establish reproducible data refinement pipeline architecture (Owner: Agent, Due: 2025-01-31)
-- [x] Implement comprehensive data quality validation suite (Owner: Agent, Due: 2025-01-31)
-- [x] Harden CI-quality tooling coverage (Owner: Agent, Due: 2025-01-31)
-- [x] Document SSOT CLI behaviour and validation pipeline (Owner: Agent, Due: 2025-01-31)
-- [x] Add provenance-aware aggregation for conflicting source data (Owner: Agent, Due: 2025-01-31)
-- [x] Add performance instrumentation, chunked ingestion toggles, and benchmark tooling (Owner: Agent, Due: 2025-01-31)
-- [ ] Evaluate production data throughput regressions using benchmark harness (Owner: Ops, Due: 2025-02-15)
+- [ ] Restore ≥85% coverage by expanding integration tests for enhanced CLI, observability, enrichment, and geospatial flows (Owner: Engineering, Due: 2025-11-07)
+- [ ] Refactor `hotpass-enhanced dashboard` subprocess launch to satisfy Bandit B603/B607 (Owner: Engineering, Due: 2025-11-06)
+- [ ] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
+- [ ] Harden Splink fallback path to operate when slug data is missing (Owner: Engineering, Due: 2025-11-07)
+- [ ] Update public docs (README, Implementation Status) to reflect current coverage (64%) and outstanding risk items (Owner: Product, Due: 2025-11-06)
 
 ## Steps
-
-- [x] Document repository context and outstanding assumptions
-- [x] Design target SSOT schema and normalization rules
-- [x] Create automated tests covering ingestion, normalization, and validation
-- [x] Refactor processing script into modular pipeline with reporting
-- [x] Update lint/type/security configurations and ensure green baseline
-- [x] Expand expectation coverage to eliminate contact email format failure
-- [x] Gate CI processing behind QA workflow checks (lint, format, tests, types, security)
-- [x] Align fallback expectation thresholds with GE defaults and normalise blank contact values
-- [x] Monitor override needs for contact expectation thresholds using fresh vendor samples
-- [x] Add checksum-stamped archive packaging and CI publication flow for refined workbook
-- [x] Prioritise aggregation selections using source reliability, recency, and persist provenance trail
-- [x] Replace standalone script with packaged CLI, structured logging, and optional report exports
-- [x] Publish architecture overview, field dictionary, mapping, and expectation catalogue under `docs/`
-- [x] Instrument pipeline stages with runtime metrics and expose results via CLI/report output
-- [x] Provide benchmark script and API for capturing throughput guardrails
+- [x] Added mandatory runtime dependencies (Prefect, OpenTelemetry, Requests, Trafilatura, Detect-Secrets, types-PyYAML) to unblock imports across orchestration/enrichment paths
+- [x] Guarded compliance/enrichment/geospatial tests with `pytest.importorskip` to make optional integrations explicit
+- [x] Patched Presidio fallback to expose stub attributes for mocking when the library is absent
+- [ ] Re-enable skipped integration suites once optional dependencies can be installed in CI without instability
+- [ ] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
 
 ## Deliverables
-
-- [x] `src/hotpass` package with modular pipeline implementation
-- [x] `tests/` suite with synthetic fixtures verifying pipeline behaviour
-- [x] Refined workbook generated on demand via CLI (artifact only, not committed)
-- [x] Tooling configuration files (`pyproject.toml`, expectation suites, etc.)
-- [x] Documentation covering CLI usage, architecture, schema, and validation outputs
-- [x] Workflow publishing of packaged refined workbook archive (artifact + branch)
-- [x] Benchmarking script (`scripts/benchmark_pipeline.py`) and metrics reporting additions
+- [x] Updated `pyproject.toml` and `uv.lock` reflecting required runtime dependencies for observability/orchestration/enrichment
+- [x] Adjusted tests under `tests/test_observability.py`, `tests/test_orchestration.py`, `tests/test_pipeline_enhanced.py`, `tests/test_enrichment.py`, and `tests/test_geospatial.py` to skip gracefully when integrations are missing
+- [x] Enhanced `src/hotpass/compliance.py` to expose stubbed Presidio APIs when unavailable, keeping tests patchable
+- [ ] Add regression tests for Splink fallback covering slug synthesis and empty-column scenarios
+- [ ] Document required extras per CLI command in README/Implementation_Status
 
 ## Quality Gates
-
-- [x] Pytest with coverage ≥ 80%
-- [x] Ruff lint + format clean
-- [x] Mypy type checks scoped to project packages
-- [x] Bandit security scan clean
-- [x] Email/phone/website expectations require ≥85% regex match among non-null/non-blank values (configurable per run)
-- [x] GitHub Actions `qa` job must pass before processing artifacts
-- [x] Data validation schema + Great Expectations suite succeed with zero critical errors
-- [x] Ensure refined workbook artifacts remain gitignored and reproducible
-- [x] Performance metrics emitted for each run and benchmark harness available for regression checks
+- [ ] Pytest with coverage ≥ 80% (current: 64% – optional integration suites skipped)【f3abe4†L12-L30】
+- [x] Ruff lint clean (`uv run ruff check`)【a1e6ce†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【15160f†L1-L2】
+- [ ] Bandit security scan clean (fails due to subprocess usage in dashboard command)【cc28f8†L9-L36】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【f5c0c4†L1-L73】
+- [ ] Docker image build validated (pending CI execution)
+- [ ] Documentation alignment (README/Implementation_Status still reference outdated coverage figures)
 
 ## Links
-
-- Tests: `pytest` (see chunk `9b49c4`)
-- Lint: `ruff check` (see chunk `6bdf1a`)
-- Types: `mypy src tests scripts` (see chunk `20c7f7`)
-- Security: `bandit -r src scripts` (see chunk `0347a7`)
-- CLI run: `python scripts/process_data.py` (chunk `b62601`)
-- Archive packaging tests: `pytest` (chunk `9b49c4`)
-- Lint run: `ruff check` (chunk `6bdf1a`)
-- Format check: `ruff format --check` (chunk `156308`)
-- Type check: `mypy src tests scripts` (chunk `20c7f7`)
-- Security scan: `bandit -r src scripts` (chunk `0347a7`)
-- Workflow packaging update: `.github/workflows/process-data.yml`
-- Latest regression: `pytest` (chunk `9b49c4`)
-- Most recent pytest run: `pytest` (chunk `9b49c4`)
-- Latest lint: `ruff check` (chunk `6bdf1a`)
-- Latest format check: `ruff format --check` (chunk `156308`)
-- Latest type check: `mypy src tests scripts` (chunk `20c7f7`)
-- Latest security scan: `bandit -r src scripts` (chunk `0347a7`)
-- Latest build: `python -m build` (chunk `d2e11d`)
-- Architecture overview: `docs/architecture-overview.md`
-- Field dictionary: `docs/ssot-field-dictionary.md`
-- Source mapping: `docs/source-to-target-mapping.md`
-- Expectation catalogue: `docs/expectation-catalogue.md`
+- Tests: `uv run pytest` (chunk `f3abe4`)
+- Lint: `uv run ruff check` (chunk `a1e6ce`)
+- Types: `uv run mypy src tests scripts` (chunk `15160f`)
+- Security: `uv run bandit -r src scripts` (chunk `cc28f8`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `f5c0c4`)
 
 ## Risks / Notes
-
-- Multi-email contacts now split across primary/secondary fields, resolving the previous `contact_primary_email` expectation failure.
-- Great Expectations still runs via manual fallback because `PandasDataset` is unavailable; revisit once GE dataset API stabilises.
-- Need to ensure POPIA compliance by redacting/limiting PII exposure in outputs and reports.
-- Refined workbook now generated per-run; confirm CI artifact upload remains configured.
-- QA workflow now blocks artifact generation if lint/test/type/security checks fail.
-- Ruff `UP024` warning in `src/hotpass/pipeline.py` resolved by consolidating error handling under `OSError`.
-- `scripts/process_data.py` reformatted with `ruff format` to match repository standards; monitor for future drift.
-- Pending decision on final SSOT schema fields and deduplication rules.
-- Pandera emits deprecation warning on top-level imports; plan migration to `pandera.pandas` namespace.
-- Contact expectation defaults documented: blanks are treated as null-equivalent, and threshold tuning (default 0.85) must be justified when deviating for specific datasets.
-- `DATA_ARTIFACT_PAT` secret must be provisioned for the `publish-artifact` job to succeed on pushes.
-- Source reliability precedence currently assumes SACAA > Reachout > Contact Database; revisit mapping with data governance stakeholders.
-- `hotpass` console script replaces `scripts/process_data.py`; ensure downstream automation (including workflows) depends on the new entry point going forward.
-- Chunked Excel ingestion leverages iterative parsing; consider adding pyarrow if parquet staging becomes mandatory for production workloads.
-- Benchmark harness available under `scripts/benchmark_pipeline.py`; schedule periodic baseline captures to detect performance regressions.
+- Coverage regression to 64% driven by skipped integration suites; enabling dependencies or providing hermetic fakes is required to recover gates.
+- Bandit continues to flag the dashboard subprocess invocation; refactor or justify with safe path resolution before promoting release.
+- Docker build validation remains unverified within current environment—ensure CI pipeline exercises Dockerfile and records results.
+- Splink fallback still assumes slug presence; introduce column guards or generated slugs to stop CLI crashes when Splink extras are absent.
+- Prefect telemetry exporters previously raised SSL errors; verify after dependency alignment.
+- Updated dependency surface increases install footprint—monitor for longer build times in CI and adjust caching strategies accordingly.

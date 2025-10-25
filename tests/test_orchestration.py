@@ -6,6 +6,11 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
+pytest.importorskip(
+    "prefect",
+    reason="Prefect orchestration dependencies are required for orchestration tests.",
+)
+
 from hotpass.orchestration import (
     refinement_pipeline_flow,
     run_pipeline_task,

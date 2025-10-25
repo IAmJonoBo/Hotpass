@@ -22,6 +22,16 @@ try:
 
     PRESIDIO_AVAILABLE = True
 except ImportError:
+    class _OperatorConfigStub:  # pragma: no cover - only used when Presidio missing
+        """Fallback operator config when Presidio is unavailable."""
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            self.args = args
+            self.kwargs = kwargs
+
+    AnalyzerEngine = None  # type: ignore[assignment]
+    AnonymizerEngine = None  # type: ignore[assignment]
+    OperatorConfig = _OperatorConfigStub  # type: ignore[assignment]
     PRESIDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)

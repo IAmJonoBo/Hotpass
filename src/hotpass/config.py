@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-import yaml
+try:
+    import yaml  # type: ignore[import-untyped]
+except ImportError:  # pragma: no cover - fallback when PyYAML missing at runtime
+    yaml = cast("Any", None)
 
 
 @dataclass

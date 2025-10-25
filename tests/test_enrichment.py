@@ -6,6 +6,16 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
+pytest.importorskip(
+    "requests",
+    reason="Requests dependency is required for enrichment tests.",
+)
+
+pytest.importorskip(
+    "trafilatura",
+    reason="Trafilatura dependency is required for enrichment tests.",
+)
+
 from hotpass.enrichment import (
     CacheManager,
     enrich_dataframe_with_registries,
