@@ -53,6 +53,14 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /CONTRIBUTING
 /style
 /metrics/metrics-plan
+/metrics/devex-audit
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Compliance
+
+/compliance/index
 ```
 
 ## Need something else?
