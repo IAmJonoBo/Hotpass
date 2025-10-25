@@ -1,6 +1,9 @@
 """Tests for Prefect orchestration module."""
 
+import sys
+import types
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -105,3 +108,43 @@ def test_refinement_pipeline_flow_with_options(mock_pipeline_result, tmp_path):
         # Verify config was built with correct options
         config_arg = mock_run.call_args[0][0]
         assert config_arg.excel_options.chunk_size == 1000
+
+
+def test_deploy_pipeline_without_prefect(monkeypatch):
+    """Deploying without Prefect installed should raise a runtime error."""
+
+    monkeypatch.setattr(orchestration, "PREFECT_AVAILABLE", False, raising=False)
+
+    with pytest.raises(RuntimeError, match="Prefect is not installed"):
+        orchestration.deploy_pipeline()
+
+
+def test_deploy_pipeline_invokes_prefect_serve(monkeypatch):
+    """Deploy pipeline should call Prefect's serve helper when available."""
+
+    monkeypatch.setattr(orchestration, "PREFECT_AVAILABLE", True, raising=False)
+
+    fake_prefect = types.ModuleType("prefect")
+    fake_deployments = types.ModuleType("prefect.deployments")
+    serve_calls: list[SimpleNamespace] = []
+
+    def fake_serve(deployment: SimpleNamespace) -> None:
+        serve_calls.append(deployment)
+
+    fake_deployments.serve = fake_serve
+
+    monkeypatch.setitem(sys.modules, "prefect", fake_prefect)
+    monkeypatch.setitem(sys.modules, "prefect.deployments", fake_deployments)
+
+    class DummyFlow:
+        def to_deployment(self, name: str) -> SimpleNamespace:
+            return SimpleNamespace(name=name, work_pool_name=None)
+
+    monkeypatch.setattr(orchestration, "refinement_pipeline_flow", DummyFlow(), raising=False)
+
+    orchestration.deploy_pipeline(name="demo", work_pool="inbox")
+
+    assert serve_calls
+    deployment = serve_calls[0]
+    assert deployment.name == "demo"
+    assert deployment.work_pool_name == "inbox"

@@ -1,20 +1,37 @@
-"""OpenTelemetry observability integration for Hotpass.
+"""Metrics, logging, and tracing instrumentation utilities.
 
-This module provides metrics, logging, and tracing instrumentation using OpenTelemetry.
+The module wraps OpenTelemetry initialisation so the broader codebase can rely
+on observability primitives without importing heavy dependencies at import
+time. When OpenTelemetry is unavailable the helpers transparently fall back to
+no-op implementations. A custom console exporter guards against shutdown
+errors that previously surfaced when QA tooling closed stdout before
+background exporter threads flushed their buffers.
 """
 
 from __future__ import annotations
 
+import atexit
 import logging
 import os
 from collections.abc import Callable, Iterable
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from opentelemetry.metrics import Meter
+    from opentelemetry.trace import Tracer
+else:  # pragma: no cover - runtime fallback
+    Meter = Any
+    Tracer = Any
+
+metrics: Any
+trace: Any
 
 try:  # pragma: no cover - exercised in availability tests
-    from opentelemetry import metrics, trace
+    from opentelemetry import metrics as otel_metrics
+    from opentelemetry import trace as otel_trace
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import (
         ConsoleMetricExporter,
@@ -22,8 +39,14 @@ try:  # pragma: no cover - exercised in availability tests
     )
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.sdk.trace.export import (
+        BatchSpanProcessor,
+        ConsoleSpanExporter,
+        SpanExportResult,
+    )
 
+    metrics = otel_metrics
+    trace = otel_trace
     OBSERVABILITY_AVAILABLE = True
 except ImportError:  # pragma: no cover - validated via unit tests
     OBSERVABILITY_AVAILABLE = False
@@ -124,21 +147,56 @@ except ImportError:  # pragma: no cover - validated via unit tests
         def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
+    class SpanExportResult:  # type: ignore[no-redef]
+        SUCCESS = "success"
+
     metrics = _NoopMetricsModule()
     trace = _NoopTraceModule()
+
+
+class _SafeConsoleMetricExporter(ConsoleMetricExporter):
+    """Console exporter that tolerates closed output streams."""
+
+    def export(
+        self, metrics_data: Any, timeout_millis: float = 1000.0, **kwargs: Any
+    ) -> Any:  # pragma: no cover - exercised indirectly
+        try:
+            return super().export(metrics_data, timeout_millis=timeout_millis, **kwargs)
+        except ValueError as exc:  # pragma: no cover - depends on runtime
+            logger.debug(
+                "Suppressed ValueError while exporting console metrics: %s",
+                exc,
+                exc_info=exc,
+            )
+            return None
+
+
+class _SafeConsoleSpanExporter(ConsoleSpanExporter):
+    """Span exporter that tolerates closed streams during shutdown."""
+
+    def export(self, spans: Any) -> Any:  # pragma: no cover - exercised indirectly
+        try:
+            return super().export(spans)
+        except ValueError:  # pragma: no cover - depends on runtime
+            return getattr(SpanExportResult, "SUCCESS", None)
+
 
 # Module logger
 logger = logging.getLogger(__name__)
 
 # Global instrumentation state
 _instrumentation_initialized = False
+_shutdown_registered = False
+_meter_provider: MeterProvider | None = None
+_metric_reader: PeriodicExportingMetricReader | None = None
+_trace_provider: TracerProvider | None = None
 
 
 def initialize_observability(
     service_name: str = "hotpass",
     environment: str | None = None,
     export_to_console: bool = True,
-) -> tuple[trace.Tracer, metrics.Meter]:
+) -> tuple[Tracer, Meter]:
     """Initialize OpenTelemetry instrumentation for the application.
 
     Args:
@@ -149,17 +207,23 @@ def initialize_observability(
     Returns:
         Tuple of (tracer, meter) for instrumentation
     """
-    global _instrumentation_initialized
+    global \
+        _instrumentation_initialized, \
+        _meter_provider, \
+        _metric_reader, \
+        _trace_provider, \
+        _shutdown_registered
 
     if _instrumentation_initialized:
         logger.warning("Observability already initialized, skipping")
         return get_tracer(), get_meter()
 
     if not OBSERVABILITY_AVAILABLE:
-        logger.warning(
-            "OpenTelemetry not available; using no-op observability implementation"
-        )
+        logger.warning("OpenTelemetry not available; using no-op observability implementation")
         _instrumentation_initialized = True
+        if not _shutdown_registered:
+            atexit.register(shutdown_observability)
+            _shutdown_registered = True
         return get_tracer(), get_meter()
 
     environment = environment or os.getenv("HOTPASS_ENVIRONMENT", "development")
@@ -176,18 +240,21 @@ def initialize_observability(
     # Initialize tracing
     trace_provider = TracerProvider(resource=resource)
     if export_to_console:
-        trace_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+        trace_provider.add_span_processor(BatchSpanProcessor(_SafeConsoleSpanExporter()))
     trace.set_tracer_provider(trace_provider)
+    _trace_provider = trace_provider
 
     # Initialize metrics
     if export_to_console:
-        metric_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(), export_interval_millis=60000
-        )
+        exporter: ConsoleMetricExporter | None = _SafeConsoleMetricExporter()
     else:
-        # Would configure OTLP exporter or other backend here
+        exporter = None
+
+    if exporter is not None:
+        metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=60000)
+    else:
         metric_reader = PeriodicExportingMetricReader(
-            ConsoleMetricExporter(), export_interval_millis=60000
+            _SafeConsoleMetricExporter(), export_interval_millis=60000
         )
 
     meter_provider = MeterProvider(
@@ -195,8 +262,13 @@ def initialize_observability(
         metric_readers=[metric_reader],
     )
     metrics.set_meter_provider(meter_provider)
+    _meter_provider = meter_provider
+    _metric_reader = metric_reader
 
     _instrumentation_initialized = True
+    if not _shutdown_registered:
+        atexit.register(shutdown_observability)
+        _shutdown_registered = True
     logger.info(
         f"Observability initialized for service '{service_name}' in environment '{environment}'"
     )
@@ -204,7 +276,36 @@ def initialize_observability(
     return get_tracer(), get_meter()
 
 
-def get_tracer(name: str = "hotpass") -> trace.Tracer:
+def shutdown_observability() -> None:
+    """Tear down configured exporters and providers gracefully."""
+
+    global _instrumentation_initialized, _meter_provider, _metric_reader, _trace_provider
+
+    if not _instrumentation_initialized:
+        return
+
+    for component in (_metric_reader, _meter_provider, _trace_provider):
+        if component is None:
+            continue
+        shutdown = getattr(component, "shutdown", None)
+        if callable(shutdown):  # pragma: no branch - simple guard
+            try:
+                shutdown()  # type: ignore[misc]
+            except Exception as exc:  # pragma: no cover - defensive guard
+                logger.debug(
+                    "Suppressed exception while shutting down observability component %s: %s",
+                    component,
+                    exc,
+                    exc_info=exc,
+                )
+
+    _meter_provider = None
+    _metric_reader = None
+    _trace_provider = None
+    _instrumentation_initialized = False
+
+
+def get_tracer(name: str = "hotpass") -> Tracer:
     """Get the application tracer.
 
     Args:
@@ -216,7 +317,7 @@ def get_tracer(name: str = "hotpass") -> trace.Tracer:
     return trace.get_tracer(name)
 
 
-def get_meter(name: str = "hotpass") -> metrics.Meter:
+def get_meter(name: str = "hotpass") -> Meter:
     """Get the application meter for metrics.
 
     Args:
