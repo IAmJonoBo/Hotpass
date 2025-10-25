@@ -32,7 +32,7 @@ jobs:
           sleep 15
 
       - name: OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.13.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: ${{ inputs.target }}
           fail_action: false
