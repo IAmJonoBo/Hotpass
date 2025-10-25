@@ -9,6 +9,8 @@
 - [ ] Re-enable skipped integration suites once optional dependencies can be installed in CI without instability (Owner: Engineering, Due: 2025-11-15)
 - [x] Merge entity registry history during deduplication to unlock roadmap follow-up (Owner: Engineering, Due: 2025-11-01)
 - [x] Add regression coverage for dashboard persistence helpers (Owner: Engineering, Due: 2025-11-01)
+- [ ] Confirm Streamlit dashboard authentication and hosting controls (Owner: Platform, Due: 2025-11-22)
+- [ ] Decide secrets management approach for registry connectors and telemetry endpoints (Owner: DevOps, Due: 2025-11-22)
 
 ## Steps
 
@@ -21,6 +23,8 @@
 - [x] Implement entity registry history merge flow and regression coverage
 - [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
 - [x] Drafted governance charter and metrics instrumentation plan to guide upcoming telemetry work
+- [x] Authored Structurizr DSL architecture views and documented trust boundaries, attack surfaces, and SPOFs
+- [x] Flagged dashboard auth, secrets management, CI artefact handling, and Docker distribution for follow-up interviews
 
 ## Deliverables
 
@@ -29,27 +33,28 @@
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
-- [x] Pytest with coverage ≥ 80% (current: 86%)【af8e0a†L1-L66】
+- [x] Pytest with coverage ≥ 80% (current: 87%)【fd246f†L1-L73】
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【d7c9dc†L1-L3】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【6fc4a2†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【939f6c†L1-L20】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【c1fdca†L1-L19】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【d8a292†L1-L59】
-- [x] Package build succeeds (`uv run uv build`)【534f9b†L1-L123】
+- [x] Ruff lint clean (`uv run ruff check`)【2938de†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【263f00†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【accad6†L1-L22】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【eba966†L1-L20】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【31297d†L1-L69】
+- [x] Package build succeeds (`uv run uv build`)【89fcc8†L1-L92】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【f63725†L1-L25】
 - [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
+- [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
 - [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `af8e0a`)
-- Lint: `uv run ruff check` (chunk `d7c9dc`)
-- Format: `uv run ruff format --check` (chunk `6fc4a2`)
-- Types: `uv run mypy src tests scripts` (chunk `939f6c`)
-- Security: `uv run bandit -r src scripts` (chunk `c1fdca`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `d8a292`)
-- Build: `uv run uv build` (chunk `534f9b`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `fd246f`)
+- Lint: `uv run ruff check` (chunk `2938de`)
+- Format: `uv run ruff format --check` (chunk `263f00`)
+- Types: `uv run mypy src tests scripts` (chunk `accad6`)
+- Security: `uv run bandit -r src scripts` (chunk `eba966`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `31297d`)
+- Build: `uv run uv build` (chunk `89fcc8`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `f63725`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `0ad91b`)
 
@@ -60,3 +65,4 @@
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.
 - Docs link checking ignores selected external domains because of certificate issues in the sandbox; confirm connectivity in GitHub-hosted runners.
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
+- Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
