@@ -1,24 +1,28 @@
 """Tests for enhanced pipeline integration."""
 
+from unittest.mock import Mock, patch
+
 import pandas as pd
 import pytest
 
-pytest.importorskip(
-    "opentelemetry",
-    reason="OpenTelemetry dependencies are required for enhanced pipeline tests.",
-)
-
-pytest.importorskip(
-    "prefect",
-    reason="Prefect orchestration dependencies are required for enhanced pipeline tests.",
-)
-
+import hotpass.pipeline_enhanced as pipeline_enhanced
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
     EnhancedPipelineConfig,
     _noop,
     run_enhanced_pipeline,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_enhanced_pipeline(monkeypatch):
+    """Ensure observability state resets between tests."""
+
+    import hotpass.observability as observability
+
+    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
+    monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
+    monkeypatch.setattr(pipeline_enhanced, "get_pipeline_metrics", lambda: Mock(), raising=False)
 
 
 @pytest.fixture
@@ -219,8 +223,18 @@ def test_enhanced_pipeline_with_observability(sample_dataframe, mock_pipeline_re
         enable_observability=True,
     )
 
-    result = run_enhanced_pipeline(config, enhanced_config)
+    with (
+        patch.object(pipeline_enhanced, "initialize_observability", autospec=True) as init_obs,
+        patch.object(pipeline_enhanced, "get_pipeline_metrics", autospec=True) as get_metrics,
+    ):
+        metrics_mock = Mock()
+        get_metrics.return_value = metrics_mock
 
+        result = run_enhanced_pipeline(config, enhanced_config)
+
+    init_obs.assert_called_once()
+    metrics_mock.record_records_processed.assert_called()
+    
     assert result is not None
     assert len(result.refined) > 0
 
@@ -265,3 +279,69 @@ def test_enhanced_pipeline_all_features(sample_dataframe, mock_pipeline_result, 
     # Check compliance features
     assert "data_source" in result.refined.columns
     assert "processed_at" in result.refined.columns
+
+
+def test_enhanced_pipeline_with_geospatial_and_enrichment(
+    sample_dataframe, mock_pipeline_result, tmp_path, monkeypatch
+):
+    """Pipeline adds geospatial and enrichment data when enabled."""
+
+    from hotpass.config import get_default_profile
+    from hotpass.data_sources import ExcelReadOptions
+    from hotpass.pipeline import PipelineConfig
+
+    output_path = tmp_path / "output.xlsx"
+
+    profile = get_default_profile("aviation")
+    config = PipelineConfig(
+        input_dir=tmp_path,
+        output_path=output_path,
+        industry_profile=profile,
+        excel_options=ExcelReadOptions(),
+    )
+
+    geocode_calls: list[pd.DataFrame] = []
+    enrich_calls: list[pd.DataFrame] = []
+
+    def fake_geocode_dataframe(df: pd.DataFrame, **_: object) -> pd.DataFrame:
+        geocode_calls.append(df)
+        enriched = df.copy()
+        enriched["latitude"] = 1.0
+        enriched["longitude"] = 2.0
+        enriched["geocoded"] = True
+        return enriched
+
+    def fake_enrich_websites(df: pd.DataFrame, **_: object) -> pd.DataFrame:
+        enrich_calls.append(df)
+        enriched = df.copy()
+        enriched["website_title"] = "Title"
+        enriched["website_enriched"] = True
+        return enriched
+
+    class FakeCache:
+        def __init__(self, *_, **__):
+            self.set_calls = []
+
+        def stats(self) -> dict[str, int]:
+            return {"total_entries": 0, "total_hits": 0}
+
+    monkeypatch.setattr(pipeline_enhanced, "geocode_dataframe", fake_geocode_dataframe)
+    monkeypatch.setattr(pipeline_enhanced, "enrich_dataframe_with_websites", fake_enrich_websites)
+    monkeypatch.setattr(pipeline_enhanced, "CacheManager", FakeCache)
+
+    enhanced_config = EnhancedPipelineConfig(
+        enable_entity_resolution=False,
+        enable_geospatial=True,
+        geocode_addresses=True,
+        enable_enrichment=True,
+        enrich_websites=True,
+        enable_compliance=False,
+        enable_observability=False,
+    )
+
+    result = run_enhanced_pipeline(config, enhanced_config)
+
+    assert geocode_calls, "Geocoding should be invoked"
+    assert enrich_calls, "Website enrichment should be invoked"
+    assert "latitude" in result.refined.columns
+    assert "website_enriched" in result.refined.columns

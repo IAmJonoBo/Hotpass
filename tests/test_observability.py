@@ -2,11 +2,7 @@
 
 import pytest
 
-pytest.importorskip(
-    "opentelemetry",
-    reason="OpenTelemetry dependencies are required for observability instrumentation.",
-)
-
+import hotpass.observability as observability
 from hotpass.observability import (
     PipelineMetrics,
     get_meter,
@@ -15,6 +11,14 @@ from hotpass.observability import (
     initialize_observability,
     trace_operation,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_observability_globals(monkeypatch):
+    """Reset module-level state between tests."""
+
+    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
+    monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
 
 
 def test_initialize_observability():

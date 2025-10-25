@@ -9,17 +9,43 @@ This module provides workflow orchestration using Prefect, enabling:
 
 from __future__ import annotations
 
+import logging
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from prefect import flow, task
-from prefect.logging import get_run_logger
+try:  # pragma: no cover - verified via unit tests
+    from prefect import flow, task
+    from prefect.logging import get_run_logger
+
+    PREFECT_AVAILABLE = True
+except ImportError:  # pragma: no cover - exercised in fallback tests
+    PREFECT_AVAILABLE = False
+
+    def _noop_prefect_decorator(
+        *_args: Any, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            return func
+
+        return decorator
+
+    def flow(*_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:  # type: ignore[override]
+        return _noop_prefect_decorator(*_args, **_kwargs)
+
+    def task(*_args: Any, **_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:  # type: ignore[override]
+        return _noop_prefect_decorator(*_args, **_kwargs)
+
+    def get_run_logger() -> logging.Logger:  # type: ignore[override]
+        return logging.getLogger("hotpass.orchestration")
 
 from .artifacts import create_refined_archive
 from .config import get_default_profile
 from .data_sources import ExcelReadOptions
 from .pipeline import PipelineConfig, run_pipeline
+
+logger = logging.getLogger(__name__)
 
 
 @task(name="run-pipeline", retries=2, retry_delay_seconds=10)
@@ -136,6 +162,11 @@ def deploy_pipeline(
         cron_schedule: Optional cron schedule (e.g., "0 2 * * *" for daily at 2am)
         work_pool: Optional work pool name for execution
     """
+    if not PREFECT_AVAILABLE:
+        msg = "Prefect is not installed; deployment functionality is unavailable"
+        logger.warning(msg)
+        raise RuntimeError(msg)
+
     from prefect.deployments import serve
 
     # Note: deployment API may require adjustments based on Prefect version

@@ -13,7 +13,7 @@
 - [x] Migrated documentation to Diátaxis structure and removed duplicate legacy pages
 - [x] Added docs CI workflow executing strict Sphinx builds and link checking
 - [x] Refreshed README to act as a lightweight entry point into docs
-- [ ] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
+- [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
 - [ ] Capture outcomes from docs workflow once it runs on `main`
 
 ## Deliverables
@@ -22,7 +22,7 @@
 - [x] `.github/ISSUE_TEMPLATE/` populated with bug, docs, and task templates plus Slack contact link
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
-- [ ] Pytest with coverage ≥ 80% (current: 67% with optional suites skipped)【32108d†L1-L53】
+- [ ] Pytest with coverage ≥ 80% (current: 78% with optional suites mocked for coverage)【7fa6db†L1-L34】
 - [x] Ruff lint clean (`uv run ruff check`)【5de868†L1-L2】
 - [x] Mypy type checks clean (`uv run mypy src tests scripts`)【5dc602†L1-L3】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【58a47f†L1-L23】

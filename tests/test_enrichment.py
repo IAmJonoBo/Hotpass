@@ -6,16 +6,7 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-pytest.importorskip(
-    "requests",
-    reason="Requests dependency is required for enrichment tests.",
-)
-
-pytest.importorskip(
-    "trafilatura",
-    reason="Trafilatura dependency is required for enrichment tests.",
-)
-
+import hotpass.enrichment as enrichment
 from hotpass.enrichment import (
     CacheManager,
     enrich_dataframe_with_registries,
@@ -23,6 +14,14 @@ from hotpass.enrichment import (
     enrich_from_registry,
     extract_website_content,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_enrichment_flags(monkeypatch):
+    """Ensure optional dependency flags start from a clean slate."""
+
+    monkeypatch.setattr(enrichment, "REQUESTS_AVAILABLE", True, raising=False)
+    monkeypatch.setattr(enrichment, "TRAFILATURA_AVAILABLE", True, raising=False)
 
 
 @pytest.fixture
@@ -104,8 +103,8 @@ def test_cache_clear_expired(temp_cache):
 
 @patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", True)
 @patch("hotpass.enrichment.REQUESTS_AVAILABLE", True)
-@patch("hotpass.enrichment.requests")
-@patch("hotpass.enrichment.trafilatura")
+@patch("hotpass.enrichment.requests", create=True)
+@patch("hotpass.enrichment.trafilatura", create=True)
 def test_extract_website_content_success(mock_trafilatura, mock_requests, temp_cache):
     """Test successful website content extraction."""
     # Mock response
@@ -133,7 +132,7 @@ def test_extract_website_content_success(mock_trafilatura, mock_requests, temp_c
 
 @patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", True)
 @patch("hotpass.enrichment.REQUESTS_AVAILABLE", True)
-@patch("hotpass.enrichment.requests")
+@patch("hotpass.enrichment.requests", create=True)
 def test_extract_website_content_error(mock_requests, temp_cache):
     """Test website content extraction with error."""
     mock_requests.get.side_effect = Exception("Connection timeout")
@@ -159,8 +158,8 @@ def test_extract_website_content_caching(temp_cache):
     with (
         patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", True),
         patch("hotpass.enrichment.REQUESTS_AVAILABLE", True),
-        patch("hotpass.enrichment.requests") as mock_requests,
-        patch("hotpass.enrichment.trafilatura") as mock_trafilatura,
+        patch("hotpass.enrichment.requests", create=True) as mock_requests,
+        patch("hotpass.enrichment.trafilatura", create=True) as mock_trafilatura,
     ):
         mock_response = Mock()
         mock_response.text = "<html><body>Test</body></html>"

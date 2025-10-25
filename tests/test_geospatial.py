@@ -1,20 +1,13 @@
-"""Tests for geospatial module."""
+"""Tests for geospatial utilities without requiring heavy optional deps."""
+
+from __future__ import annotations
 
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
 
-pytest.importorskip(
-    "geopy",
-    reason="Geopy dependency is required for geospatial tests.",
-)
-
-pytest.importorskip(
-    "geopandas",
-    reason="Geopandas dependency is required for geospatial tests.",
-)
-
+import hotpass.geospatial as geospatial
 from hotpass.geospatial import (
     Geocoder,
     calculate_distance_matrix,
@@ -24,6 +17,17 @@ from hotpass.geospatial import (
     infer_province_from_coordinates,
     normalize_address,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_geospatial_globals(monkeypatch):
+    """Reset optional dependency flags for each test."""
+
+    monkeypatch.setattr(geospatial, "GEOPY_AVAILABLE", False, raising=False)
+    monkeypatch.setattr(geospatial, "GEOPANDAS_AVAILABLE", False, raising=False)
+    monkeypatch.setattr(geospatial, "Nominatim", None, raising=False)
+    monkeypatch.setattr(geospatial, "Point", None, raising=False)
+    monkeypatch.setattr(geospatial, "gpd", None, raising=False)
 
 
 def test_normalize_address_basic():
@@ -47,7 +51,7 @@ def test_normalize_address_empty():
 
 
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
-@patch("hotpass.geospatial.Nominatim")
+@patch("hotpass.geospatial.Nominatim", create=True)
 def test_geocoder_init(mock_nominatim):
     """Test geocoder initialization."""
     geocoder = Geocoder(user_agent="Test/1.0")
@@ -65,7 +69,7 @@ def test_geocoder_init_no_geopy():
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
 def test_geocode_address_success():
     """Test successful address geocoding."""
-    with patch("hotpass.geospatial.Nominatim") as mock_nominatim:
+    with patch("hotpass.geospatial.Nominatim", create=True) as mock_nominatim:
         # Mock location result
         mock_location = Mock()
         mock_location.latitude = -26.2041
@@ -89,7 +93,7 @@ def test_geocode_address_success():
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
 def test_geocode_address_not_found():
     """Test geocoding with no results."""
-    with patch("hotpass.geospatial.Nominatim") as mock_nominatim:
+    with patch("hotpass.geospatial.Nominatim", create=True) as mock_nominatim:
         mock_geolocator = Mock()
         mock_geolocator.geocode.return_value = None
         mock_nominatim.return_value = mock_geolocator
@@ -103,7 +107,7 @@ def test_geocode_address_not_found():
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
 def test_geocode_address_empty():
     """Test geocoding empty address."""
-    with patch("hotpass.geospatial.Nominatim"):
+    with patch("hotpass.geospatial.Nominatim", create=True):
         geocoder = Geocoder()
         assert geocoder.geocode_address("") is None
         assert geocoder.geocode_address(None) is None
@@ -112,7 +116,7 @@ def test_geocode_address_empty():
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
 def test_reverse_geocode_success():
     """Test successful reverse geocoding."""
-    with patch("hotpass.geospatial.Nominatim") as mock_nominatim:
+    with patch("hotpass.geospatial.Nominatim", create=True) as mock_nominatim:
         mock_location = Mock()
         mock_location.address = "123 Main Street, City"
         mock_location.raw = {"place_id": 456}
@@ -131,7 +135,7 @@ def test_reverse_geocode_success():
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
 def test_reverse_geocode_not_found():
     """Test reverse geocoding with no results."""
-    with patch("hotpass.geospatial.Nominatim") as mock_nominatim:
+    with patch("hotpass.geospatial.Nominatim", create=True) as mock_nominatim:
         mock_geolocator = Mock()
         mock_geolocator.reverse.return_value = None
         mock_nominatim.return_value = mock_geolocator
@@ -240,8 +244,8 @@ def test_infer_province_no_result(mock_reverse):
 
 
 @patch("hotpass.geospatial.GEOPANDAS_AVAILABLE", True)
-@patch("hotpass.geospatial.gpd")
-@patch("hotpass.geospatial.Point")
+@patch("hotpass.geospatial.gpd", create=True)
+@patch("hotpass.geospatial.Point", create=True)
 def test_create_geodataframe(mock_point, mock_gpd):
     """Test creating GeoDataFrame."""
     df = pd.DataFrame(
@@ -280,7 +284,10 @@ def test_create_geodataframe_no_geopandas():
         create_geodataframe(df)
 
 
-def test_create_geodataframe_missing_columns():
+@patch("hotpass.geospatial.GEOPANDAS_AVAILABLE", True)
+@patch("hotpass.geospatial.gpd", create=True)
+@patch("hotpass.geospatial.Point", create=True)
+def test_create_geodataframe_missing_columns(mock_point, mock_gpd):
     """Test creating GeoDataFrame with missing columns."""
     df = pd.DataFrame(
         {
