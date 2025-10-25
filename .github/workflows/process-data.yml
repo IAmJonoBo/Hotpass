@@ -67,14 +67,14 @@ jobs:
 
       - name: Upload refined data workbook
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: refined-data
           path: data/refined_data.xlsx
 
       - name: Upload packaged archive
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: refined-data-archive
           path: ${{ steps.archive.outputs.archive_path }}
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download packaged archive
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: refined-data-archive
           path: dist
