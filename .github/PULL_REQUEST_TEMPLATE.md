@@ -1,5 +1,5 @@
 ## Summary
-- [ ] Linked roadmap item / issue: <!-- e.g. closes #123 -->
+- [ ] Linked roadmap item / issue (e.g. closes #123):
 - [ ] Documentation updated (Diátaxis + TechDocs)
 - [ ] `Next_Steps.md` updated
 
