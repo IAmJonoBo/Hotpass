@@ -234,7 +234,7 @@ def test_enhanced_pipeline_with_observability(sample_dataframe, mock_pipeline_re
 
     init_obs.assert_called_once()
     metrics_mock.record_records_processed.assert_called()
-    
+
     assert result is not None
     assert len(result.refined) > 0
 
