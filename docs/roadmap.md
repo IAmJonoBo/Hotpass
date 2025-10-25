@@ -1,7 +1,7 @@
 ---
 title: Hotpass roadmap
 summary: Status of the Hotpass modernisation programme, quality gates, and follow-up work.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 ## Hotpass roadmap
@@ -10,7 +10,7 @@ The roadmap consolidates delivery status, upcoming work, and known risks across 
 
 ## Executive summary
 
-Hotpass is feature-complete for the enhanced pipeline and observability foundation. The remaining work focuses on enrichment coverage, external integrations, and operational resilience. Test coverage sits at 81% with several suites skipped pending optional dependencies.
+Hotpass has delivered every phase in the modernisation programme. The enhanced pipeline now ships entity resolution, enrichment, compliance, and geospatial capabilities behind stable contracts, while observability and orchestration remain production-ready. Ongoing work centres on automating releases and exercising optional dependency suites in CI. Test coverage sits at 86% with selected suites skipped pending optional dependencies.
 
 ## Delivery status
 
@@ -18,15 +18,15 @@ Hotpass is feature-complete for the enhanced pipeline and observability foundati
 | --- | --- | --- |
 | Foundations | uv-based builds, pre-commit, containerisation, Sphinx docs | ✅ Complete |
 | Orchestration & Observability | Prefect flows, OpenTelemetry, dashboard | ✅ Complete |
-| Entity Resolution & Intelligence | Splink integration, ML scoring | 🟡 Partially complete — historical merge support outstanding |
-| External Validation & Enrichment | Registry/API enrichment, caching | 🔴 In progress |
-| Geospatial & Quality Expansion | Geocoding, drift detection, metadata persistence | 🔴 In progress |
+| Entity Resolution & Intelligence | Splink integration, ML scoring | ✅ Complete |
+| External Validation & Enrichment | Registry/API enrichment, caching | ✅ Complete |
+| Geospatial & Quality Expansion | Geocoding, drift detection, metadata persistence | ✅ Complete |
 
 ## Current initiatives
 
-- **Docs hardening** — Move to Diátaxis, enable strict Sphinx builds, and enforce style guidance. _Owner: Docs team._
-- **Observability stability** — ✅ Harden OTLP exporters and Prefect console handlers for quiet shutdowns. _Owner: Engineering._
-- **Docker delivery** — Validate Docker image build in CI and promote to release workflow. _Owner: DevOps._
+- **Release automation** — Validate Docker image build in CI and promote to release workflow. _Owner: DevOps._
+- **Optional dependency coverage** — Install and exercise enrichment/geospatial suites during CI runs. _Owner: Engineering._
+- **Documentation telemetry** — Keep Sphinx strict mode and link checks green with new content. _Owner: Docs team._
 
 ## Quality gates
 
@@ -38,14 +38,14 @@ Hotpass is feature-complete for the enhanced pipeline and observability foundati
 | Security | Bandit | ✅ Pass |
 | Secrets | detect-secrets | ✅ Pass |
 | Build | `uv build` | ✅ Pass |
-| Docs | `sphinx-build -n -W` & linkcheck | 🚧 Newly enforced |
+| Docs | `sphinx-build -n -W` & linkcheck | ✅ Pass |
 
 ## Tracked follow-ups
 
 | Area | Description | Tracking |
 | --- | --- | --- |
-| Entity resolution | Load and merge historical data when consolidating entities. | [Create issue](https://github.com/IAmJonoBo/Hotpass/issues/new?title=Entity%20resolution%3A%20load%20historical%20records&body=Implement%20support%20for%20loading%20and%20merging%20historical%20entity%20records%20referenced%20in%20`src/hotpass/entity_resolution.py`%20TODO.&labels=enhancement%2Centity-resolution) |
 | Docker releases | Automate Docker image build and publish in CI. | [Create issue](https://github.com/IAmJonoBo/Hotpass/issues/new?title=DevOps%3A%20publish%20Docker%20image%20from%20CI&body=Extend%20docs%20workflow%20to%20build%20and%20publish%20Docker%20image%20per%20roadmap.&labels=devops%2Ctask) |
+| Optional suites | Enable optional extras in CI to re-run previously skipped tests. | [Create issue](https://github.com/IAmJonoBo/Hotpass/issues/new?title=QA%3A%20install%20optional%20dependencies%20in%20CI&body=Update%20CI%20pipelines%20to%20install%20Hotpass%20optional%20extras%20so%20skipped%20geospatial%2Fenrichment%20tests%20can%20run.&labels=qa%2Ctask) |
 
 > **Note:** Issues are not automatically created in this environment. Use the “Create issue” links to file them in GitHub with pre-populated labels.
 
