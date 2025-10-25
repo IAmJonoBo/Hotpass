@@ -230,7 +230,7 @@ def test_build_entity_registry_merges_history(tmp_path):
             "organization_slug": ["legacy-org", "dormant-org"],
             "first_seen": [pd.Timestamp("2024-01-01"), pd.Timestamp("2023-05-01")],
             "last_updated": [pd.Timestamp("2024-06-01"), pd.Timestamp("2024-06-01")],
-            "name_variants": [["Legacy Org Pty"] for _ in range(2)],
+            "name_variants": [["Legacy Org Pty"], ["Legacy Org Pty"]],
             "status_history": [
                 [{"status": "Active", "date": "2024-06-01T00:00:00"}],
                 [{"status": "Inactive", "date": "2024-06-01T00:00:00"}],
