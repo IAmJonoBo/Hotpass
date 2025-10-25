@@ -30,6 +30,7 @@ repos:
       - id: mypy
         additional_dependencies:
           - types-PyYAML
+          - types-requests
         args: ["--config-file", "pyproject.toml"]
 
   - repo: https://github.com/Yelp/detect-secrets

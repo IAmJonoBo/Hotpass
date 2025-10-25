@@ -234,15 +234,15 @@ def _derive_slug_keys(df: pd.DataFrame) -> pd.Series:
 
     if missing_mask.any():
         composite_source = (
-            df.get("organization_name", pd.Series("", index=df.index)).fillna("")
+            df.get("organization_name", pd.Series("", index=df.index))
+            .fillna("")
             .astype(str)
             .str.strip()
             + " "
-            + df.get("province", pd.Series("", index=df.index)).fillna("")
-            .astype(str)
-            .str.strip()
+            + df.get("province", pd.Series("", index=df.index)).fillna("").astype(str).str.strip()
             + " "
-            + df.get("address_primary", pd.Series("", index=df.index)).fillna("")
+            + df.get("address_primary", pd.Series("", index=df.index))
+            .fillna("")
             .astype(str)
             .str.strip()
         )

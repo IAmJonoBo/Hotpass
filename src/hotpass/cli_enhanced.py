@@ -361,20 +361,15 @@ def _load_streamlit_runner() -> tuple[Callable[[list[str]], object] | None, str 
         streamlit_cli = importlib.import_module("streamlit.web.cli")
     except ModuleNotFoundError:
         return None, (
-            "[bold red]✗[/bold red] Streamlit not found. Install with: "
-            "uv sync --extra dashboards"
+            "[bold red]✗[/bold red] Streamlit not found. Install with: uv sync --extra dashboards"
         )
     except Exception as exc:  # pragma: no cover - defensive guard
-        return None, (
-            "[bold red]✗[/bold red] Unable to load Streamlit CLI: "
-            f"{exc}"
-        )
+        return None, (f"[bold red]✗[/bold red] Unable to load Streamlit CLI: {exc}")
 
     runner = getattr(streamlit_cli, "main_run", None)
     if runner is None:
         return None, (
-            "[bold red]✗[/bold red] Streamlit CLI entrypoint missing. "
-            "Upgrade Streamlit to ≥1.25."
+            "[bold red]✗[/bold red] Streamlit CLI entrypoint missing. Upgrade Streamlit to ≥1.25."
         )
 
     return runner, None
@@ -395,10 +390,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
     dashboard_path = Path(__file__).parent / "dashboard.py"
     if not dashboard_path.exists():  # pragma: no cover - defensive guard
-        console.print(
-            "[bold red]✗[/bold red] Dashboard entrypoint missing at "
-            f"{dashboard_path}"
-        )
+        console.print(f"[bold red]✗[/bold red] Dashboard entrypoint missing at {dashboard_path}")
         return 1
 
     if not 0 < args.port < 65536:
@@ -409,9 +401,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
     host = _normalise_dashboard_host(args.host)
     if host is None:
-        console.print(
-            "[bold red]✗[/bold red] Invalid host. Use localhost or a valid IP/DNS label."
-        )
+        console.print("[bold red]✗[/bold red] Invalid host. Use localhost or a valid IP/DNS label.")
         return 1
 
     runner, error_message = _load_streamlit_runner()
@@ -420,7 +410,6 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
         return 1
 
     command = [
-        "run",
         str(dashboard_path),
         "--server.port",
         str(args.port),
@@ -433,9 +422,7 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     except SystemExit as exc:
         code = exc.code or 0
         if code != 0:
-            console.print(
-                "[bold red]✗[/bold red] Dashboard exited with non-zero status."
-            )
+            console.print("[bold red]✗[/bold red] Dashboard exited with non-zero status.")
         return int(code)
     except Exception as exc:  # pragma: no cover - defensive guard
         console.print(f"[bold red]✗[/bold red] Dashboard failed to start: {exc}")
