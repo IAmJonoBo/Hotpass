@@ -4,7 +4,7 @@ summary: Status of the Hotpass modernisation programme, quality gates, and follo
 last_updated: 2025-10-25
 ---
 
-# Hotpass roadmap
+## Hotpass roadmap
 
 The roadmap consolidates delivery status, upcoming work, and known risks across the Hotpass initiative. It replaces previous ad-hoc planning files (`IMPLEMENTATION_STATUS.md`, `RELEASE_SUMMARY.md`, and `Next_Steps.md`).
 

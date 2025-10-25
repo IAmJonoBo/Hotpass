@@ -1,6 +1,7 @@
 # Next Steps
 
 ## Tasks
+
 - [x] Consolidate planning collateral into `docs/roadmap.md` and simplify top-level release docs (Owner: Product, Due: 2025-10-25)
 - [x] Publish Diátaxis-aligned docs set with style and contributing guidance (Owner: Docs, Due: 2025-10-25)
 - [ ] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
@@ -8,6 +9,7 @@
 - [ ] Re-enable skipped integration suites once optional dependencies can be installed in CI without instability (Owner: Engineering, Due: 2025-11-15)
 
 ## Steps
+
 - [x] Migrated documentation to Diátaxis structure and removed duplicate legacy pages
 - [x] Added docs CI workflow executing strict Sphinx builds and link checking
 - [x] Refreshed README to act as a lightweight entry point into docs
@@ -15,6 +17,7 @@
 - [ ] Capture outcomes from docs workflow once it runs on `main`
 
 ## Deliverables
+
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
 - [x] `.github/ISSUE_TEMPLATE/` populated with bug, docs, and task templates plus Slack contact link
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
@@ -29,6 +32,7 @@
 - [x] Docs link check passes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【0ad91b†L1-L33】
 
 ## Links
+
 - Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `32108d`)
 - Lint: `uv run ruff check` (chunk `5de868`)
 - Types: `uv run mypy src tests scripts` (chunk `5dc602`)
@@ -39,6 +43,7 @@
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `0ad91b`)
 
 ## Risks / Notes
+
 - Observability console exporter raises `ValueError: I/O operation on closed file` after QA commands due to Prefect handlers flushing to a closed stream; ensure graceful shutdown before enabling in CI.
 - Docker build validation remains unverified within current environment—ensure CI pipeline exercises Dockerfile and records results.
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.

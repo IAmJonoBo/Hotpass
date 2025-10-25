@@ -22,6 +22,7 @@ src/hotpass/observability.py
 src/hotpass/optimize.py
 src/hotpass/orchestration.py
 src/hotpass/pipeline.py
+src/hotpass/pipeline_enhanced.py
 src/hotpass/quality.py
 src/hotpass.egg-info/PKG-INFO
 src/hotpass.egg-info/SOURCES.txt
@@ -48,5 +49,6 @@ tests/test_geospatial.py
 tests/test_observability.py
 tests/test_orchestration.py
 tests/test_pipeline.py
+tests/test_pipeline_enhanced.py
 tests/test_quality.py
 tests/test_quality_report.py
