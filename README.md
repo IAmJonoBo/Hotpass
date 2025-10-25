@@ -7,12 +7,16 @@
 
 This repository is optimized for validating, normalizing, processing, and refining multiple Excel documents into a highly-refined single source of truth. It uses Python with libraries like pandas, pandera, and great-expectations for data quality assurance.
 
-**🎉 RELEASE READY**: Hotpass has reached release state with 87% test coverage (152 tests), comprehensive QA gates, orchestration with Prefect, entity resolution with Splink, and real-time monitoring dashboard. See [Implementation Status](IMPLEMENTATION_STATUS.md) for detailed roadmap progress.
+**🎉 RELEASE READY**: Hotpass has reached release state with 87% test coverage (221 tests), comprehensive QA gates, orchestration with Prefect, entity resolution with Splink, and real-time monitoring dashboard. See [Implementation Status](IMPLEMENTATION_STATUS.md) for detailed roadmap progress.
 
 **NEW FEATURES**:
+- ✨ **Enhanced Pipeline**: Integrated pipeline with entity resolution, geospatial, enrichment, compliance, and observability
 - ✨ **Orchestration**: Prefect-based workflow orchestration with retry logic and scheduling
 - ✨ **Observability**: OpenTelemetry metrics and monitoring
-- ✨ **Entity Resolution**: Probabilistic duplicate detection with Splink
+- ✨ **Entity Resolution**: Probabilistic duplicate detection with Splink and fallback
+- ✨ **Geospatial**: Geocoding, address normalization, and spatial clustering
+- ✨ **Enrichment**: Web scraping, external API integration with caching
+- ✨ **Compliance**: POPIA compliance tracking, PII detection, provenance tracking
 - ✨ **Dashboard**: Real-time Streamlit monitoring dashboard
 - ✨ **Enhanced CLI**: New commands for orchestration, entity resolution, and dashboard
 
@@ -118,6 +122,31 @@ hotpass-enhanced resolve \
 ```bash
 # Launch real-time monitoring dashboard
 hotpass-enhanced dashboard --port 8501
+```
+
+### Enhanced Pipeline with All Features (NEW)
+```bash
+# Run pipeline with all enhanced features enabled
+hotpass-enhanced orchestrate \
+  --profile aviation \
+  --enable-all \
+  --archive
+
+# Or enable specific features
+hotpass-enhanced orchestrate \
+  --profile aviation \
+  --enable-entity-resolution \
+  --enable-compliance \
+  --enable-observability \
+  --archive
+
+# Available enhanced features:
+# --enable-entity-resolution  : Deduplicate records with ML-driven matching
+# --enable-geospatial        : Geocode addresses and add spatial analysis
+# --enable-enrichment        : Enrich data from external sources (websites, APIs)
+# --enable-compliance        : Add POPIA compliance tracking and PII detection
+# --enable-observability     : Enable OpenTelemetry metrics and tracing
+# --enable-all              : Enable all features at once
 ```
 
 ## CLI Usage
