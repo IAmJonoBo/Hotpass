@@ -5,6 +5,16 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
+pytest.importorskip(
+    "geopy",
+    reason="Geopy dependency is required for geospatial tests.",
+)
+
+pytest.importorskip(
+    "geopandas",
+    reason="Geopandas dependency is required for geospatial tests.",
+)
+
 from hotpass.geospatial import (
     Geocoder,
     calculate_distance_matrix,

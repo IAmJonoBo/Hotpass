@@ -17,6 +17,13 @@ dependencies = [
   "phonenumbers>=9.0.17",
   "rich>=14.2.0",
   "pyyaml>=6.0.3",
+  "opentelemetry-api>=1.20.0",
+  "opentelemetry-sdk>=1.20.0",
+  "prefect>=3.0.0",
+  "requests>=2.32.0",
+  "trafilatura>=1.12.0",
+  "types-PyYAML>=6.0.12",
+  "detect-secrets>=1.5.0",
 ]
 
 [project.optional-dependencies]

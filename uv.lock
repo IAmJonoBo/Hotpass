@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = "==3.13.*"
 
 [[package]]
@@ -789,13 +789,20 @@ name = "hotpass"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "detect-secrets" },
     { name = "great-expectations" },
     { name = "openpyxl" },
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-sdk" },
     { name = "pandas" },
     { name = "pandera" },
     { name = "phonenumbers" },
+    { name = "prefect" },
     { name = "pyyaml" },
+    { name = "requests" },
     { name = "rich" },
+    { name = "trafilatura" },
+    { name = "types-pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -858,6 +865,7 @@ dev = [
 requires-dist = [
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.8.6" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=25.9.0" },
+    { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "detect-secrets", marker = "extra == 'dev'", specifier = ">=1.5.0" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2025.9.25" },
     { name = "geopandas", marker = "extra == 'geospatial'", specifier = ">=0.14.0" },
@@ -867,13 +875,16 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18.2" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "opentelemetry-api", specifier = ">=1.20.0" },
     { name = "opentelemetry-api", marker = "extra == 'orchestration'", specifier = ">=1.20.0" },
+    { name = "opentelemetry-sdk", specifier = ">=1.20.0" },
     { name = "opentelemetry-sdk", marker = "extra == 'orchestration'", specifier = ">=1.20.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pandera", specifier = ">=0.26.1" },
     { name = "phonenumbers", specifier = ">=9.0.17" },
     { name = "playwright", marker = "extra == 'enrichment'", specifier = ">=1.47.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.3.0" },
+    { name = "prefect", specifier = ">=3.0.0" },
     { name = "prefect", marker = "extra == 'orchestration'", specifier = ">=3.0.0" },
     { name = "presidio-analyzer", marker = "extra == 'compliance'", specifier = ">=2.2.0" },
     { name = "presidio-anonymizer", marker = "extra == 'compliance'", specifier = ">=2.2.0" },
@@ -881,6 +892,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "redis", marker = "extra == 'caching'", specifier = ">=5.0.0" },
+    { name = "requests", specifier = ">=2.32.0" },
     { name = "requests", marker = "extra == 'enrichment'", specifier = ">=2.32.0" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.2" },
@@ -889,7 +901,9 @@ requires-dist = [
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=3.5.2" },
     { name = "splink", marker = "extra == 'entity-resolution'", specifier = ">=3.9.0" },
     { name = "streamlit", marker = "extra == 'dashboards'", specifier = ">=1.40.0" },
+    { name = "trafilatura", specifier = ">=1.12.0" },
     { name = "trafilatura", marker = "extra == 'enrichment'", specifier = ">=1.12.0" },
+    { name = "types-pyyaml", specifier = ">=6.0.12" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12" },
     { name = "xgboost", marker = "extra == 'ml-scoring'", specifier = ">=2.0.0" },
 ]

@@ -2,6 +2,11 @@
 
 import pytest
 
+pytest.importorskip(
+    "opentelemetry",
+    reason="OpenTelemetry dependencies are required for observability instrumentation.",
+)
+
 from hotpass.observability import (
     PipelineMetrics,
     get_meter,

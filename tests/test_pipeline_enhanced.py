@@ -3,6 +3,16 @@
 import pandas as pd
 import pytest
 
+pytest.importorskip(
+    "opentelemetry",
+    reason="OpenTelemetry dependencies are required for enhanced pipeline tests.",
+)
+
+pytest.importorskip(
+    "prefect",
+    reason="Prefect orchestration dependencies are required for enhanced pipeline tests.",
+)
+
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
     EnhancedPipelineConfig,
