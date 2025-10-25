@@ -422,10 +422,10 @@ def build_entity_registry(
 
     registry_records: list[dict[str, Any]] = []
 
-    for _idx, row in registry_source.iterrows():
-        row_data = row.to_dict()
+    for row in registry_source.itertuples(index=False, name="Row"):
+        row_data = row._asdict()
         match_indices: list[int] = []
-        for key in _row_match_keys(row):
+        for key in _row_match_keys(row_data):
             if key in history_key_index:
                 match_indices = [i for i in history_key_index[key] if i not in used_history_rows]
                 if match_indices:
