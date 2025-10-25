@@ -10,10 +10,10 @@ jobs:
   qa:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -50,10 +50,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: qa
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -67,10 +67,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: qa
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -84,10 +84,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: qa
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -101,10 +101,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: qa
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -123,10 +123,10 @@ jobs:
       - static-analysis
       - fitness-functions
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -149,16 +149,34 @@ jobs:
           fi
           echo "archive_path=${archives[0]}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate artifact checksums
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/checksums
+          archive_path="${{ steps.archive.outputs.archive_path }}"
+          archive_name="$(basename "$archive_path")"
+          sha256sum "data/refined_data.xlsx" > "dist/checksums/refined_data.xlsx.sha256"
+          sha256sum "$archive_path" > "dist/checksums/${archive_name}.sha256"
+
+      - name: Upload artifact checksums
+        if: success()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: refined-data-checksums
+          path: dist/checksums
+
       - name: Upload refined data workbook
         if: success()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: refined-data
           path: data/refined_data.xlsx
 
       - name: Upload packaged archive
         if: success()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: refined-data-archive
           path: ${{ steps.archive.outputs.archive_path }}
@@ -167,10 +185,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: process-data
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up uv and Python
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@5dbc9fba7434435c4cd0268139340fa3696d98f3 # v7
         with:
           python-version: "3.13"
 
@@ -186,16 +204,29 @@ jobs:
       - name: Generate provenance
         run: uv run python scripts/supply_chain/generate_provenance.py
 
+      - name: Generate supply-chain checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/checksums
+          mapfile -t files < <(find dist/sbom dist/provenance -type f -print | sort)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No supply-chain artifacts to checksum" >&2
+            exit 1
+          fi
+          sha256sum "${files[@]}" > dist/checksums/supply-chain.sha256
+
       - name: Evaluate supply-chain policy
         run: uv run python scripts/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json
 
       - name: Upload supply-chain artefacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: supply-chain-artifacts
           path: |
             dist/sbom
             dist/provenance
+            dist/checksums/supply-chain.sha256
 
   publish-artifact:
     runs-on: ubuntu-latest
@@ -204,13 +235,19 @@ jobs:
       - supply-chain
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Download packaged archive
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: refined-data-archive
           path: dist
+
+      - name: Download artifact checksums
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        with:
+          name: refined-data-checksums
+          path: dist/checksums
 
       - name: Publish archive to data-artifacts branch
         env:
@@ -219,6 +256,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          shopt -s nullglob
           if [ -z "${DATA_ARTIFACT_PAT}" ]; then
             echo "DATA_ARTIFACT_PAT secret is required to publish artifacts" >&2
             exit 1
@@ -230,9 +268,22 @@ jobs:
           git checkout --orphan data-artifacts
           git rm -rf . || true
 
-          cp dist/*.zip .
-          ls -1 *.zip > MANIFEST.txt
-          git add *.zip MANIFEST.txt
+          archives=(dist/*.zip)
+          checksums=(dist/checksums/*.sha256)
+          if [ ${#archives[@]} -eq 0 ]; then
+            echo "No packaged archives found to publish" >&2
+            exit 1
+          fi
+          if [ ${#checksums[@]} -eq 0 ]; then
+            echo "No checksum files found to publish" >&2
+            exit 1
+          fi
+
+          cp "${archives[@]}" .
+          cp "${checksums[@]}" .
+
+          ls -1 *.zip *.sha256 > MANIFEST.txt
+          git add *.zip *.sha256 MANIFEST.txt
           git commit -m "chore: update refined data archive"
 
           git push --force "https://${DATA_ARTIFACT_PAT}@github.com/${REPO}.git" HEAD:data-artifacts
