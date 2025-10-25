@@ -15,13 +15,24 @@ from typing import Any
 
 import pandas as pd
 
-try:
-    from presidio_analyzer import AnalyzerEngine
-    from presidio_anonymizer import AnonymizerEngine
-    from presidio_anonymizer.entities import OperatorConfig
+# Runtime references that degrade gracefully when Presidio is unavailable. The
+# explicit annotations avoid mypy "Cannot assign to a type" errors when we
+# replace the imported classes with fallback implementations.
+AnalyzerEngine: type[Any] | None
+AnonymizerEngine: type[Any] | None
+OperatorConfig: type[Any]
 
+try:
+    from presidio_analyzer import AnalyzerEngine as _AnalyzerEngine
+    from presidio_anonymizer import AnonymizerEngine as _AnonymizerEngine
+    from presidio_anonymizer.entities import OperatorConfig as _OperatorConfig
+
+    AnalyzerEngine = _AnalyzerEngine
+    AnonymizerEngine = _AnonymizerEngine
+    OperatorConfig = _OperatorConfig
     PRESIDIO_AVAILABLE = True
 except ImportError:
+
     class _OperatorConfigStub:  # pragma: no cover - only used when Presidio missing
         """Fallback operator config when Presidio is unavailable."""
 
@@ -29,9 +40,9 @@ except ImportError:
             self.args = args
             self.kwargs = kwargs
 
-    AnalyzerEngine = None  # type: ignore[assignment]
-    AnonymizerEngine = None  # type: ignore[assignment]
-    OperatorConfig = _OperatorConfigStub  # type: ignore[assignment]
+    AnalyzerEngine = None
+    AnonymizerEngine = None
+    OperatorConfig = _OperatorConfigStub
     PRESIDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)

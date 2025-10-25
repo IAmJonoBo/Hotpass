@@ -171,9 +171,7 @@ def test_cmd_dashboard_missing_streamlit(monkeypatch):
     def _missing_import(_module: str):
         raise ModuleNotFoundError
 
-    monkeypatch.setattr(
-        "hotpass.cli_enhanced.importlib.import_module", _missing_import
-    )
+    monkeypatch.setattr("hotpass.cli_enhanced.importlib.import_module", _missing_import)
 
     exit_code = cmd_dashboard(args)
 
@@ -222,13 +220,10 @@ def test_cmd_dashboard_valid_invocation(monkeypatch):
     exit_code = cmd_dashboard(args)
 
     assert exit_code == 0
-    expected_path = str(
-        Path(cli_enhanced_module.__file__).resolve().parent / "dashboard.py"
-    )
+    expected_path = str(Path(cli_enhanced_module.__file__).resolve().parent / "dashboard.py")
 
     assert captured == [
         [
-            "run",
             expected_path,
             "--server.port",
             "9000",
