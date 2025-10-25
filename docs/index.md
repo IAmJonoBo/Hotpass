@@ -49,8 +49,10 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 :caption: Roadmap and governance
 
 /roadmap
+/governance/project-charter
 /CONTRIBUTING
 /style
+/metrics/metrics-plan
 ```
 
 ## Need something else?

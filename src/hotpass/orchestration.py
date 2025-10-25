@@ -35,14 +35,18 @@ def _noop_prefect_decorator(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
 
 
 try:  # pragma: no cover - verified via unit tests
-    from prefect import flow as _prefect_flow_decorator
-    from prefect import task as _prefect_task_decorator
-    from prefect.logging import get_run_logger as _prefect_get_run_logger
-    from prefect.logging import handlers as _prefect_handlers
+    from prefect import flow as prefect_flow_decorator
+    from prefect import task as prefect_task_decorator
+    from prefect.logging import get_run_logger as prefect_get_run_logger
+    from prefect.logging import handlers as prefect_handlers
 except ImportError:  # pragma: no cover - exercised in fallback tests
     PREFECT_AVAILABLE = False
 else:
     PREFECT_AVAILABLE = True
+    _prefect_flow_decorator = prefect_flow_decorator
+    _prefect_task_decorator = prefect_task_decorator
+    _prefect_get_run_logger = prefect_get_run_logger
+    _prefect_handlers = prefect_handlers
     _console_handler_cls = None
     if _prefect_handlers is not None:
         _console_handler_cls = getattr(_prefect_handlers, "ConsoleHandler", None)
