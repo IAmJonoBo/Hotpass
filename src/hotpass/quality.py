@@ -3,21 +3,135 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, cast
 
 import pandas as pd
 import pandera as pa
 from pandera import Column, DataFrameSchema
 
-try:
-    from great_expectations.dataset.pandas_dataset import PandasDataset  # type: ignore
-except ImportError:  # pragma: no cover - fallback for trimmed GE installations
-    PandasDataset = None  # type: ignore[assignment]
+try:  # pragma: no cover - import guard exercised via unit tests
+    from great_expectations.core.batch import Batch
+    from great_expectations.core.expectation_suite import ExpectationSuite
+    from great_expectations.data_context.data_context import context_factory as ge_context_factory
+    from great_expectations.data_context.data_context.ephemeral_data_context import (
+        EphemeralDataContext,
+    )
+    from great_expectations.data_context.types.base import DataContextConfig
+    from great_expectations.execution_engine.pandas_execution_engine import (
+        PandasExecutionEngine,
+    )
+    from great_expectations.validator.validator import Validator
+except ImportError:  # pragma: no cover - exercised when GE extras not installed
+    _GE_RUNTIME: dict[str, Any] | None = None
+else:
+    _GE_RUNTIME = {
+        "Batch": Batch,
+        "ExpectationSuite": ExpectationSuite,
+        "EphemeralDataContext": EphemeralDataContext,
+        "DataContextConfig": DataContextConfig,
+        "PandasExecutionEngine": PandasExecutionEngine,
+        "Validator": Validator,
+        "project_manager": ge_context_factory.project_manager,
+    }
 
 
 @dataclass
 class ExpectationSummary:
     success: bool
     failures: list[str]
+
+
+def _run_with_great_expectations(
+    sanitized: pd.DataFrame,
+    *,
+    email_mostly: float,
+    phone_mostly: float,
+    website_mostly: float,
+) -> ExpectationSummary | None:
+    runtime = _GE_RUNTIME
+    if runtime is None:
+        return None
+
+    config = runtime["DataContextConfig"](
+        config_version=4,
+        expectations_store_name="expectations_store",
+        validation_results_store_name="validation_results_store",
+        checkpoint_store_name="checkpoint_store",
+        stores={
+            "expectations_store": {
+                "class_name": "ExpectationsStore",
+                "store_backend": {"class_name": "InMemoryStoreBackend"},
+            },
+            "validation_results_store": {
+                "class_name": "ValidationResultsStore",
+                "store_backend": {"class_name": "InMemoryStoreBackend"},
+            },
+            "checkpoint_store": {
+                "class_name": "CheckpointStore",
+                "store_backend": {"class_name": "InMemoryStoreBackend"},
+            },
+        },
+        data_docs_sites={},
+        analytics_enabled=False,
+    )
+
+    context = runtime["EphemeralDataContext"](project_config=config)
+    project_manager = runtime["project_manager"]
+    previous_project = project_manager.get_project()
+    project_manager.set_project(context)
+
+    try:
+        validator = runtime["Validator"](
+            execution_engine=runtime["PandasExecutionEngine"](),
+            expectation_suite=runtime["ExpectationSuite"](name="hotpass"),
+            batches=[runtime["Batch"](data=sanitized)],
+            data_context=context,
+        )
+        validator.set_default_expectation_argument("catch_exceptions", True)
+
+        validator.expect_column_values_to_not_be_null("organization_name")
+        validator.expect_column_values_to_not_be_null("organization_slug")
+        validator.expect_column_values_to_be_between(
+            "data_quality_score", min_value=0.0, max_value=1.0, mostly=1.0
+        )
+        validator.expect_column_values_to_match_regex(
+            "contact_primary_email",
+            r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            mostly=email_mostly,
+        )
+        validator.expect_column_values_to_match_regex(
+            "contact_primary_phone",
+            r"^\+\d{6,}$",
+            mostly=phone_mostly,
+        )
+        validator.expect_column_values_to_match_regex(
+            "website", r"^https?://", mostly=website_mostly
+        )
+        validator.expect_column_values_to_be_in_set("country", {"South Africa"})
+
+        validation = validator.validate()
+    finally:
+        project_manager.set_project(previous_project)
+
+    failures: list[str] = []
+    for result in validation.results:
+        if result.success:
+            continue
+        expectation_config = cast(dict[str, Any], result.expectation_config)
+        expectation = expectation_config.get("type", "unknown_expectation")
+        kwargs = cast(dict[str, Any], expectation_config.get("kwargs", {}))
+        column = kwargs.get("column")
+        if column:
+            expectation = f"{expectation} ({column})"
+        ge_result = cast(dict[str, Any], result.result)
+        unexpected = ge_result.get("unexpected_list") or ge_result.get("partial_unexpected_list")
+        if unexpected:
+            sample = list(unexpected)[:3]
+            failures.append(f"{expectation}: unexpected {sample}")
+        else:
+            failures.append(str(expectation))
+
+    return ExpectationSummary(success=bool(validation.success), failures=failures)
 
 
 def build_ssot_schema() -> DataFrameSchema:
@@ -80,42 +194,17 @@ def run_expectations(
             .where(sanitized[column].notna(), pd.NA)
         )
 
-    failures: list[str] = []
-    if PandasDataset is not None:
-        dataset = PandasDataset(sanitized)
-        dataset.set_default_expectation_argument("catch_exceptions", True)
-
-        dataset.expect_column_values_to_not_be_null("organization_name")
-        dataset.expect_column_values_to_not_be_null("organization_slug")
-        dataset.expect_column_values_to_be_between(
-            "data_quality_score", min_value=0.0, max_value=1.0, mostly=1.0
-        )
-        dataset.expect_column_values_to_match_regex(
-            "contact_primary_email",
-            r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-            mostly=email_mostly,
-        )
-        dataset.expect_column_values_to_match_regex(
-            "contact_primary_phone",
-            r"^\+\d{6,}$",
-            mostly=phone_mostly,
-        )
-        dataset.expect_column_values_to_match_regex("website", r"^https?://", mostly=website_mostly)
-        dataset.expect_column_values_to_be_in_set("country", {"South Africa"})
-
-        validation = dataset.validate()
-        for result in validation.results:
-            if not result.success:
-                expectation = result.expectation_config.expectation_type
-                unexpected = result.result.get("unexpected_list")
-                if unexpected:
-                    sample = unexpected[:3]
-                    failures.append(f"{expectation}: unexpected {sample}")
-                else:
-                    failures.append(expectation)
-        return ExpectationSummary(success=validation.success, failures=failures)
+    ge_summary = _run_with_great_expectations(
+        sanitized,
+        email_mostly=email_mostly,
+        phone_mostly=phone_mostly,
+        website_mostly=website_mostly,
+    )
+    if ge_summary is not None:
+        return ge_summary
 
     # Manual fallback when lightweight GE dataset API is unavailable.
+    failures: list[str] = []
     success = True
 
     def _record_failure(condition: bool, message: str) -> None:

@@ -66,9 +66,23 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 ```{toctree}
 :maxdepth: 1
+:caption: Architecture artefacts
+
+/architecture/fitness-functions
+/architecture/resilience-plan
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: Compliance
 
 /compliance/index
+/compliance/popia/maturity-matrix
+/compliance/iso-27001/maturity-matrix
+/compliance/soc2/maturity-matrix
+/compliance/verification-plan
+/compliance/remediation-backlog
+/compliance/evidence-catalog
 ```
 
 ```{toctree}

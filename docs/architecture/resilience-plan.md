@@ -31,7 +31,7 @@ last_updated: 2025-10-25
 
 ## Service contracts
 
-- Maintain CLI contract in [`contracts/hotpass-cli-contract.yaml`](../contracts/hotpass-cli-contract.yaml).
+- Maintain CLI contract in [`contracts/hotpass-cli-contract.yaml`](../../contracts/hotpass-cli-contract.yaml).
 - Version Prefect deployment YAML and share across teams via Backstage template.
 - Update ADRs to reference control contracts and associated fitness functions.
 

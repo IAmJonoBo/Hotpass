@@ -41,6 +41,11 @@ jobs:
       - name: Build package
         run: uv run uv build
 
+      - name: Docker build validation
+        env:
+          DOCKER_BUILDKIT: "1"
+        run: docker build --build-arg PYTHON_VERSION=3.13 -t hotpass-ci:pr .
+
   accessibility:
     runs-on: ubuntu-latest
     needs: qa
