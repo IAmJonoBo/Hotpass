@@ -16,6 +16,7 @@
 - [ ] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
 - [ ] Pin GitHub Actions to commit SHAs and add artifact checksum publication (Owner: DevOps, Due: 2025-11-15)
 - [ ] Implement CLI log redaction strategy for PII-bearing metrics (Owner: Engineering, Due: 2025-11-22)
+- [ ] Improve mutation kill rate for quality/pipeline flows via additional assertions or fixtures (Owner: Engineering, Due: 2025-11-29)
 - [x] Establish compliance baseline matrices and backlog (Owner: Compliance, Due: 2025-10-25)
 - [ ] Automate consent validation per POPIA-001 (Owner: Product & Engineering, Due: 2025-11-22)
 - [ ] Build comprehensive asset register per ISO27001-002 (Owner: Security & Platform, Due: 2025-11-29)
@@ -40,6 +41,7 @@
 - [x] Captured compliance baseline matrices, evidence catalog, and verification plan under `docs/compliance/`
 - [x] Highlighted cross-framework high-risk compliance gaps with evidence pointers in `docs/compliance/index.md`
 - [x] Documented SPACE-informed developer experience audit and platform backlog
+- [x] Stood up developer experience playbooks, Backstage scaffolding, and supply-chain scripts with automation entry points
 
 ## Deliverables
 
@@ -67,6 +69,7 @@
 - [x] Verification cadence and evidence catalog recorded (`docs/compliance/verification-plan.md`, `docs/compliance/evidence-catalog.md`)
 - [x] High-risk compliance summary table links backlog items to evidence directories (`docs/compliance/index.md`)
 - [x] Developer experience audit captured (`docs/metrics/devex-audit.md`)
+- [x] Supply-chain automation documented with SBOM/provenance tooling and Backstage catalog entries (`scripts/supply_chain/*`, `templates/backstage/`, `catalog-info.yaml`)
 
 ## Quality Gates
 
@@ -78,6 +81,11 @@
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【2a010b†L1-L58】
 - [x] Package build succeeds (`uv run uv build`)【46d874†L1-L84】
 - [ ] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)
+- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【ba129d†L1-L3】
+- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【3a7400†L1-L2】
+- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【9527b0†L1-L2】
+- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【0c3072†L1-L2】
+- [ ] Semgrep auto configuration scan (`uv run semgrep --config=auto`) — blocked by SSL trust chain in sandbox【fed4f5†L1-L40】
 - [ ] Compliance evidence catalog refreshed (due 2025-01-15)
 
 ## Links
@@ -91,6 +99,11 @@
 - Build: `uv run uv build` (chunk `46d874`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `f63725`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `0ad91b`)
+- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `ba129d`)
+- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `3a7400`)
+- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `9527b0`)
+- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `0c3072`)
+- Semgrep: `uv run semgrep --config=auto` (chunk `fed4f5`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
 - Verification cadence: `docs/compliance/verification-plan.md`
@@ -108,3 +121,5 @@
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
 - New evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) need directory ownership and retention policies before implementation work begins.
 - Pending decision on preferred secrets management platform may affect POPIA cross-border control implementation timeline.
+- Semgrep registry download fails in sandbox because of missing CA chain; rerun in CI with trusted root store or pin to offline config.
+- Mutation suite currently reports zero killed mutants across `quality`/`pipeline_enhanced`; expand assertions or targeted fixtures to increase kill rate.

@@ -33,6 +33,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /reference/data-model
 /reference/expectations
 /reference/source-mapping
+/reference/research-log
 ```
 
 ```{toctree}
@@ -50,10 +51,16 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 /roadmap
 /governance/project-charter
+/governance/pr-playbook
 /CONTRIBUTING
 /style
 /metrics/metrics-plan
 /metrics/devex-audit
+/metrics/forecast
+/roadmap/30-60-90
+/roadmap/dependency-matrix
+/roadmap/deployment-notes
+/platform/tech-radar
 ```
 
 ```{toctree}
@@ -61,6 +68,34 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 :caption: Compliance
 
 /compliance/index
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Developer experience
+
+/devex/baseline
+/devex/experiments
+/devex/review-loop
+/devex/backstage-mvp
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: UX and accessibility
+
+/ux/heuristic-review
+/ux/accessibility-checklist
+/ux/accessibility-testing
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Security and quality
+
+/security/threat-model
+/security/supply-chain-plan
+/security/quality-gates
 ```
 
 ## Need something else?

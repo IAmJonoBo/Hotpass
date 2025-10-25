@@ -17,6 +17,7 @@ build/
 dist/*.md
 dist/*.zip
 docs/_build/
+mutants/
 
 # Allow distribution archives to be generated under dist/
 !/dist/

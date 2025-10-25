@@ -39,6 +39,7 @@ tests/test_compliance.py
 tests/test_config.py
 tests/test_config_doctor.py
 tests/test_contacts.py
+tests/test_dashboard.py
 tests/test_data_sources.py
 tests/test_enhancements.py
 tests/test_enrichment.py
@@ -48,6 +49,7 @@ tests/test_formatting.py
 tests/test_geospatial.py
 tests/test_observability.py
 tests/test_orchestration.py
+tests/test_package_contracts.py
 tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
 tests/test_quality.py

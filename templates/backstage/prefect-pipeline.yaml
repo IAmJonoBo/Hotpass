@@ -1,0 +1,75 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: hotpass-prefect-pipeline
+  title: Hotpass Prefect pipeline
+  description: Scaffold a new Hotpass-compatible Prefect flow with CI/CD, quality gates, and documentation.
+  tags:
+    - prefect
+    - hotpass
+    - data-pipeline
+  annotations:
+    backstage.io/techdocs-ref: dir:../../docs
+spec:
+  owner: platform-eng
+  type: service
+  parameters:
+    - title: Service metadata
+      required:
+        - name
+        - owner
+      properties:
+        name:
+          type: string
+          description: Service slug (lowercase, hyphenated)
+        owner:
+          type: string
+          description: Squad or team owning the new pipeline
+    - title: Quality gates
+      properties:
+        enable_mutation_testing:
+          type: boolean
+          title: Enable mutation testing
+          default: true
+        enable_accessibility_checks:
+          type: boolean
+          title: Enable accessibility smoke checks
+          default: true
+        enable_supply_chain_jobs:
+          type: boolean
+          title: Generate SBOM and provenance artifacts
+          default: true
+  steps:
+    - id: fetch-base
+      name: Fetch base template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: .
+    - id: templating
+      name: Apply templating
+      action: templater:handlebars
+      input:
+        values:
+          name: "{{ parameters.name }}"
+          owner: "{{ parameters.owner }}"
+          enable_mutation_testing: "{{ parameters.enable_mutation_testing }}"
+          enable_accessibility_checks: "{{ parameters.enable_accessibility_checks }}"
+          enable_supply_chain_jobs: "{{ parameters.enable_supply_chain_jobs }}"
+    - id: register
+      name: Register in catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: "{{steps.fetch-base.output.repoContentsUrl}}"
+        catalogInfoPath: "catalog-info.yaml"
+    - id: create-pr
+      name: Create pull request
+      action: github:pull-request
+      input:
+        repoUrl: "github.com?repo={{ parameters.name }}&owner=hotpass"
+        title: "feat: scaffold {{ parameters.name }}"
+        description: |
+          * Generated from Hotpass Prefect pipeline golden path
+          * Includes QA, supply-chain, and accessibility workflows
+          * Owner: {{ parameters.owner }}
+        branchName: "chore/scaffold-{{ parameters.name }}"
