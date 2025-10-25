@@ -7,6 +7,8 @@ capabilities to replace the heuristic deduplication approach.
 from __future__ import annotations
 
 import logging
+import re
+import unicodedata
 from typing import Any
 
 import pandas as pd
@@ -198,6 +200,67 @@ def resolve_entities_with_splink(
     return deduplicated, predictions_df
 
 
+def _slugify(value: Any) -> str:
+    """Generate a deterministic slug for fuzzy keys."""
+
+    if value is None:
+        return ""
+
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return ""
+
+    normalised = unicodedata.normalize("NFKD", text)
+    ascii_text = "".join(ch for ch in normalised if not unicodedata.combining(ch))
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_text.lower())
+    return slug.strip("-")
+
+
+def _derive_slug_keys(df: pd.DataFrame) -> pd.Series:
+    """Return a slug series for deduplication that tolerates missing data."""
+
+    if "organization_slug" in df.columns:
+        slug_series = df["organization_slug"].fillna("").astype(str).str.strip()
+    else:
+        slug_series = pd.Series("", index=df.index, dtype="object")
+
+    slug_series = slug_series.str.lower().replace({"nan": ""})
+    missing_mask = slug_series.eq("")
+
+    if missing_mask.any() and "organization_name" in df.columns:
+        name_slugs = df["organization_name"].apply(_slugify)
+        slug_series = slug_series.mask(missing_mask, name_slugs)
+        missing_mask = slug_series.eq("")
+
+    if missing_mask.any():
+        composite_source = (
+            df.get("organization_name", pd.Series("", index=df.index)).fillna("")
+            .astype(str)
+            .str.strip()
+            + " "
+            + df.get("province", pd.Series("", index=df.index)).fillna("")
+            .astype(str)
+            .str.strip()
+            + " "
+            + df.get("address_primary", pd.Series("", index=df.index)).fillna("")
+            .astype(str)
+            .str.strip()
+        )
+        composite_slugs = composite_source.apply(_slugify)
+        slug_series = slug_series.mask(missing_mask, composite_slugs)
+        missing_mask = slug_series.eq("")
+
+    if missing_mask.any():
+        fallback_series = pd.Series(
+            [f"entity-{i}" for i in range(1, len(df) + 1)],
+            index=df.index,
+            dtype="object",
+        )
+        slug_series = slug_series.mask(missing_mask, fallback_series)
+
+    return slug_series.astype("object")
+
+
 def resolve_entities_fallback(
     df: pd.DataFrame,
     threshold: float = 0.75,
@@ -211,11 +274,14 @@ def resolve_entities_fallback(
     Returns:
         Tuple of (deduplicated DataFrame, empty match pairs DataFrame)
     """
-    logger.info("Using fallback entity resolution (exact matching on slug)")
+    logger.info("Using fallback entity resolution (slug or synthesized keys)")
 
-    # Simple deduplication based on organization slug
-    # Keep the first occurrence of each slug
-    deduplicated = df.drop_duplicates(subset=["organization_slug"], keep="first")
+    if df.empty:
+        logger.info("Fallback resolution received empty dataframe")
+        return df.copy(), pd.DataFrame()
+
+    slug_keys = _derive_slug_keys(df)
+    deduplicated = df.loc[~slug_keys.duplicated(keep="first")].copy()
 
     duplicates_removed = len(df) - len(deduplicated)
     logger.info(

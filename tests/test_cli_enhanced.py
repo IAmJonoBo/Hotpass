@@ -1,8 +1,11 @@
 """Tests for CLI enhanced module."""
 
 import argparse
+from pathlib import Path
+from types import SimpleNamespace
 
-from hotpass.cli_enhanced import build_enhanced_parser
+from hotpass import cli_enhanced as cli_enhanced_module
+from hotpass.cli_enhanced import build_enhanced_parser, cmd_dashboard
 
 
 def test_build_enhanced_parser():
@@ -157,3 +160,98 @@ def test_parser_no_command():
     args = parser.parse_args([])
 
     assert args.command is None
+
+
+def test_cmd_dashboard_missing_streamlit(monkeypatch):
+    """Dashboard command fails gracefully when Streamlit is absent."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(["dashboard"])
+
+    def _missing_import(_module: str):
+        raise ModuleNotFoundError
+
+    monkeypatch.setattr(
+        "hotpass.cli_enhanced.importlib.import_module", _missing_import
+    )
+
+    exit_code = cmd_dashboard(args)
+
+    assert exit_code == 1
+
+
+def test_cmd_dashboard_invalid_host(monkeypatch):
+    """Invalid host values are rejected before attempting to run Streamlit."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(["dashboard", "--host", "bad host"])
+
+    runner_called = False
+
+    def _runner(_command: list[str]) -> None:
+        nonlocal runner_called
+        runner_called = True
+
+    monkeypatch.setattr(
+        "hotpass.cli_enhanced.importlib.import_module",
+        lambda _module: SimpleNamespace(main_run=_runner),
+    )
+
+    exit_code = cmd_dashboard(args)
+
+    assert exit_code == 1
+    assert runner_called is False
+
+
+def test_cmd_dashboard_valid_invocation(monkeypatch):
+    """Valid parameters invoke the Streamlit runner with expected arguments."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(["dashboard", "--port", "9000", "--host", "127.0.0.1"])
+
+    captured: list[list[str]] = []
+
+    def _runner(command: list[str]) -> None:
+        captured.append(command)
+
+    monkeypatch.setattr(
+        "hotpass.cli_enhanced.importlib.import_module",
+        lambda _module: SimpleNamespace(main_run=_runner),
+    )
+
+    exit_code = cmd_dashboard(args)
+
+    assert exit_code == 0
+    expected_path = str(
+        Path(cli_enhanced_module.__file__).resolve().parent / "dashboard.py"
+    )
+
+    assert captured == [
+        [
+            "run",
+            expected_path,
+            "--server.port",
+            "9000",
+            "--server.address",
+            "127.0.0.1",
+        ]
+    ]
+
+
+def test_cmd_dashboard_non_zero_exit(monkeypatch):
+    """Non-zero exits from the Streamlit runner propagate as return codes."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(["dashboard"])
+
+    def _runner(_command: list[str]) -> None:
+        raise SystemExit(2)
+
+    monkeypatch.setattr(
+        "hotpass.cli_enhanced.importlib.import_module",
+        lambda _module: SimpleNamespace(main_run=_runner),
+    )
+
+    exit_code = cmd_dashboard(args)
+
+    assert exit_code == 2

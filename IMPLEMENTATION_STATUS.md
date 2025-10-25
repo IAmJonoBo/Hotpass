@@ -165,12 +165,14 @@ audit_logging:
 
 ## Quality Gates Status
 
-### ✅ All Current Gates Passing
+### Gate Outcomes (Updated)
+
+Recent regression suites highlight reduced coverage (67%) because optional observability, enrichment, and geospatial tests remain skipped pending dependency enablement. Remediation plans are tracked in [Next_Steps.md](Next_Steps.md).
 
 | Gate | Status | Metric | Target | Current |
 |------|--------|--------|--------|---------|
 | Static Analysis | ✅ PASS | Ruff + Mypy + Bandit | Clean | Clean |
-| Unit & Integration Tests | ✅ PASS | pytest coverage | ≥80% | 87% (152 tests) |
+| Unit & Integration Tests | ❌ FAIL | pytest coverage | ≥80% | 67% (167 tests, 17 skipped) |
 | Data Validation | ✅ PASS | GE checkpoints | Pass | Pass |
 | Security Scan | ✅ PASS | Bandit + Advisory DB | Clean | Clean |
 | Documentation | ✅ PASS | Sphinx build | Success | Success |
