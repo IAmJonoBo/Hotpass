@@ -34,6 +34,10 @@
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
 - [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
 - [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
+- [x] Refactor storage transforms to Polars with DuckDB adapters and benchmark guardrails (Owner: Engineering, Due: 2026-02-14)
+- [x] Instrument ingest→publish pipeline stages with OpenTelemetry spans and dashboard surfacing (Owner: Engineering, Due: 2026-02-14)
+- [x] Refresh UV tooling, pre-commit hooks, and observability documentation (Owner: Platform & Docs, Due: 2026-02-14)
+- [x] Expand tests for telemetry hooks, Polars/DuckDB determinism, and performance guardrails (Owner: QA & Engineering, Due: 2026-02-21)
 - [x] Deliver probabilistic entity resolution with review (Owner: Engineering, Due: 2026-01-31)
 - [x] Restore baseline QA suite after introducing Splink linkage dependencies (Owner: QA, Due: 2026-01-07)
 - [x] Enforce governed ingest schemas with Frictionless + Great Expectations validation gates (Owner: Engineering, Due: 2025-12-27)
@@ -83,7 +87,10 @@
 - [x] Baseline QA suite rerun for ingest schema initiative (2025-12-26)【387e77†L1-L84】
 - [x] Baseline QA suite rerun with Splink linkage dependencies enabled (2025-12-27)【e8ff23†L1-L84】
 - [x] Implement canonical Party/Role/Alias store, loader backfill, CLI party-store export, and data dictionary tooling (2025-10-26)【5a2f34†L1-L20】【02a776†L1-L120】
+- [x] Resolved Polars grouping regression, refreshed telemetry adapters, and reran full QA suite (pytest, ruff, format, mypy, bandit, detect-secrets, uv build, uv pip check) (2025-10-26)【095878†L1-L84】【123bd6†L1-L2】【058b8a†L1-L2】【e95512†L1-L19】【8d5e85†L5-L27】【fe1fc0†L1-L57】【8c87c0†L1-L139】【9785b9†L1-L3】
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
+- [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
+- [x] Baseline QA suite executed (pytest 303 passed @ 88% coverage; lint/format/type/secrets/build clean; Bandit reports existing low-risk cleanup guard) (2025-10-26)【cbe9ef†L1-L123】【155bf6†L1-L2】【509179†L1-L2】【c3900e†L1-L20】【a009d0†L1-L27】【59a08e†L1-L58】【f47b44†L1-L120】
 
 ## Deliverables
 
@@ -199,3 +206,4 @@
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
 - Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.
 - Ruff formatter drift resolved via repository-wide sweep; keep formatter gate enforced in CI and rerun after major merges.
+- Bandit baseline flags a low-severity `try/except/pass` in `src/hotpass/linkage/runner.py`; evaluate remediation or justification alongside storage/pipeline refactors.【a009d0†L5-L27】

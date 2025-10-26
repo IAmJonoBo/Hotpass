@@ -39,3 +39,11 @@ repos:
     hooks:
       - id: detect-secrets
         args: [--baseline, .secrets.baseline]
+
+  - repo: local
+    hooks:
+      - id: uv-pip-check
+        name: uv pip check
+        entry: uv pip check
+        language: system
+        pass_filenames: false

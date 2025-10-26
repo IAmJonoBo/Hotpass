@@ -70,6 +70,12 @@ def mock_pipeline_result(sample_dataframe, monkeypatch):
                 performance_metrics={
                     "load_seconds": 0.1,
                     "aggregation_seconds": 0.1,
+                    "polars_transform_seconds": 0.05,
+                    "polars_materialize_seconds": 0.02,
+                    "pandas_sort_seconds": 0.04,
+                    "polars_sort_speedup": 1.8,
+                    "duckdb_sort_seconds": 0.03,
+                    "polars_write_seconds": 0.02,
                     "expectations_seconds": 0.1,
                     "write_seconds": 0.1,
                     "total_seconds": 0.4,
