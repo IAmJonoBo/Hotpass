@@ -140,30 +140,22 @@ def validate_with_expectations(
         store_backend_defaults=InMemoryStoreBackendDefaults(init_temp_docs_sites=False),
     )
 
-    context = EphemeralDataContext(project_config=config)
-    project_manager = ge_context_factory.project_manager
-    previous_project = project_manager.get_project()
-    project_manager.set_project(context)
+    with EphemeralDataContext(project_config=config) as context:
+        project_manager = ge_context_factory.project_manager
+        previous_project = project_manager.get_project()
+        project_manager.set_project(context)
 
-    try:
-        validator = Validator(
-            execution_engine=PandasExecutionEngine(),
-            expectation_suite=suite,
-            batches=[Batch(data=df)],
-            data_context=context,
-        )
-        validator.set_default_expectation_argument("catch_exceptions", True)
-        results = cast(ExpectationSuiteValidationResult, validator.validate())
-    finally:
-        project_manager.set_project(previous_project)
-        cleanup_manager = getattr(context, "_temp_dir_manager", None)
-        if cleanup_manager is not None:
-            exit_method = getattr(cleanup_manager, "__exit__", None)
-            if callable(exit_method):
-                exit_method(None, None, None)
-            elif hasattr(cleanup_manager, "cleanup"):
-                cleanup_manager.cleanup()
-
+        try:
+            validator = Validator(
+                execution_engine=PandasExecutionEngine(),
+                expectation_suite=suite,
+                batches=[Batch(data=df)],
+                data_context=context,
+            )
+            validator.set_default_expectation_argument("catch_exceptions", True)
+            results = cast(ExpectationSuiteValidationResult, validator.validate())
+        finally:
+            project_manager.set_project(previous_project)
     if results.success:
         return
 
