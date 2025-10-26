@@ -286,7 +286,7 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
     tokens: list[str] = []
     if raw_sensitive is None:
         tokens = list(DEFAULT_SENSITIVE_FIELD_TOKENS)
-    elif isinstance(raw_sensitive, list | tuple | set):
+    elif isinstance(raw_sensitive, (list, tuple, set)):
         for value in raw_sensitive:
             if isinstance(value, str):
                 cleaned = value.strip()
