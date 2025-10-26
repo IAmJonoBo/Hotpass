@@ -79,7 +79,7 @@ def _provenance_from(selection: dict[str, object]) -> Provenance | None:
     priority = selection.get("source_priority")
     if isinstance(priority, str) and priority.isdigit():
         priority_value = int(priority)
-    elif isinstance(priority, (int, float)):
+    elif isinstance(priority, int | float):
         priority_value = int(priority)
     else:
         priority_value = 0
@@ -89,7 +89,7 @@ def _provenance_from(selection: dict[str, object]) -> Provenance | None:
             quality_score_value = float(quality_score)
         except ValueError:
             quality_score_value = None
-    elif isinstance(quality_score, (int, float)):
+    elif isinstance(quality_score, int | float):
         quality_score_value = float(quality_score)
     else:
         quality_score_value = None

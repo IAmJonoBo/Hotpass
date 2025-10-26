@@ -5,8 +5,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from hotpass import cli_enhanced as cli_enhanced_module
-from hotpass.cli_enhanced import (
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass import cli_enhanced as cli_enhanced_module  # noqa: E402
+from hotpass.cli_enhanced import (  # noqa: E402
     PipelineOrchestrationError,
     build_enhanced_parser,
     cmd_dashboard,

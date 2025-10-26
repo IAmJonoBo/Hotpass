@@ -8,10 +8,29 @@ from dataclasses import dataclass
 from urllib.parse import urlparse, urlunparse
 
 import phonenumbers
-from nameparser import HumanName
-from stdnum import numdb
-from stdnum.exceptions import InvalidFormat
-from stdnum.util import clean as stdnum_clean
+
+try:
+    from stdnum import numdb
+    from stdnum.exceptions import InvalidFormat
+    from stdnum.util import clean as stdnum_clean
+except ImportError:  # pragma: no cover - optional dependency fallback
+    numdb = None
+
+    class _InvalidFormatFallback(Exception):
+        """Fallback exception mirroring python-stdnum's InvalidFormat."""
+
+    InvalidFormat = _InvalidFormatFallback
+
+    def stdnum_clean(value: str, delete_chars: str) -> str:
+        """Basic character stripping fallback when python-stdnum is unavailable."""
+
+        result = value
+        for character in delete_chars:
+            result = result.replace(character, "")
+        return result
+
+
+from .._compat_nameparser import HumanName
 
 try:  # pragma: no cover - optional modules for locale-specific numbers
     from stdnum.za import postcode as za_postcode  # type: ignore[attr-defined]
@@ -161,6 +180,6 @@ def normalise_identifier(value: object | None) -> str | None:
         return None
     cleaned = stdnum_clean(text, " -/").upper()
     # fall back to python-stdnum database for known patterns when available
-    if numdb.get(cleaned):  # pragma: no cover - depends on optional datasets
+    if numdb is not None and numdb.get(cleaned):  # pragma: no cover - optional datasets
         return cleaned
     return cleaned or None

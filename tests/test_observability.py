@@ -7,7 +7,9 @@ from typing import Literal
 
 import pytest
 
-import hotpass.observability as observability
+pytest.importorskip("frictionless")
+
+import hotpass.observability as observability  # noqa: E402
 from hotpass.observability import (
     PipelineMetrics,
     get_meter,

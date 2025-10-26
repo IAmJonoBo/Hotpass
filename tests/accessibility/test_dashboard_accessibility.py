@@ -15,6 +15,8 @@ import pytest
 if "streamlit" not in sys.modules:
     sys.modules["streamlit"] = types.ModuleType("streamlit")
 
+pytest.importorskip("nameparser")
+
 import hotpass.dashboard as dashboard
 
 

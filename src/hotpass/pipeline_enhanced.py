@@ -39,6 +39,9 @@ def run_enhanced_pipeline(
     if enhanced_config is None:
         enhanced_config = EnhancedPipelineConfig()
 
+    if enhanced_config.linkage_output_dir is None:
+        enhanced_config.linkage_output_dir = str(config.output_path.parent / "linkage")
+
     metrics = _initialize_observability(enhanced_config)
     trace_factory = _build_trace_factory(enhanced_config.enable_observability)
 
@@ -49,12 +52,15 @@ def run_enhanced_pipeline(
             metrics.record_records_processed(len(result.refined), source="base_pipeline")
 
     df = result.refined
-    df = apply_entity_resolution(df, enhanced_config, trace_factory)
+    df, linkage_result = apply_entity_resolution(df, enhanced_config, trace_factory)
     df = apply_geospatial(df, enhanced_config, trace_factory)
     df = apply_enrichment(df, enhanced_config, trace_factory)
     df, compliance_report = apply_compliance(df, enhanced_config, trace_factory)
     if compliance_report is not None:
         result.compliance_report = compliance_report
+
+    if linkage_result is not None:
+        result.linkage = linkage_result
 
     # Update result with enhanced dataframe
     result.refined = df

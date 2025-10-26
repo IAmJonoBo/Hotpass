@@ -2,7 +2,11 @@
 
 import importlib
 
-import hotpass
+import pytest
+
+pytest.importorskip("frictionless")
+
+import hotpass  # noqa: E402
 
 
 def test_enhanced_pipeline_exports_available() -> None:

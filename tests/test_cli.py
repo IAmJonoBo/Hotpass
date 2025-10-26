@@ -9,8 +9,10 @@ import pandas as pd
 import pytest
 from rich.console import Console
 
-import hotpass.cli as cli
-from hotpass.pipeline import PipelineConfig, QualityReport
+pytest.importorskip("frictionless")
+
+import hotpass.cli as cli  # noqa: E402
+from hotpass.pipeline import PipelineConfig, QualityReport  # noqa: E402
 
 
 def _collect_json_lines(output: str) -> list[dict[str, Any]]:

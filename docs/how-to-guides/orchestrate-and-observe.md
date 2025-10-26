@@ -44,6 +44,36 @@ datasources:
 uv run prefect deployment run hotpass-prod --params '{"refresh_contacts": true}'
 ```
 
+## Review probabilistic linkage
+
+Hotpass now persists probabilistic linkage scores and review queues when you
+enable entity resolution. Configure thresholds and the review location when
+invoking the enhanced orchestrator:
+
+```bash
+uv run hotpass-enhanced orchestrate \
+  --profile aviation \
+  --enable-entity-resolution \
+  --linkage-use-splink \
+  --linkage-match-threshold 0.92 \
+  --linkage-review-threshold 0.7 \
+  --linkage-output-dir dist/linkage \
+  --label-studio-url https://labelstudio.example \
+  --label-studio-token $LABEL_STUDIO_TOKEN \
+  --label-studio-project 12
+```
+
+Each run writes the following artefacts under the configured output directory
+(default: `dist/linkage/`):
+
+- `linkage_matches.parquet` — scored pairs above the reject threshold.
+- `linkage_review_queue.parquet` — pairs routed to clerical review.
+- `linkage_metadata.json` — thresholds and record counts for retraining.
+- `linkage_reviewer_decisions.jsonl` — reviewer feedback synced from Label Studio.
+
+Label Studio tasks include both the match probability and the configured
+thresholds so reviewers understand why a pair requires attention.
+
 ## Toggle Prefect runtime decorators
 
 During unit tests Hotpass disables Prefect's runtime decorators to avoid starting ephemeral

@@ -1,6 +1,10 @@
 """Tests for configuration and industry profiles."""
 
-from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile  # noqa: E402
 
 
 def test_industry_profile_to_dict_roundtrip():

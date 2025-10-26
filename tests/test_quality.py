@@ -3,7 +3,9 @@
 import pandas as pd
 import pytest
 
-from hotpass.quality import (
+pytest.importorskip("frictionless")
+
+from hotpass.quality import (  # noqa: E402
     ExpectationSummary,
     _run_with_great_expectations,
     build_ssot_schema,

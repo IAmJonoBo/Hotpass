@@ -16,6 +16,7 @@ from pathlib import Path
 
 from rich.console import Console
 
+from hotpass.linkage import LabelStudioConfig, LinkageConfig, LinkageThresholds, link_entities
 from hotpass.orchestration import (
     PipelineOrchestrationError,
     PipelineRunOptions,
@@ -99,6 +100,41 @@ def build_enhanced_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable all enhanced features",
     )
+    orchestrate.add_argument(
+        "--linkage-match-threshold",
+        type=float,
+        default=0.9,
+        help="Probability threshold treated as an automatic match",
+    )
+    orchestrate.add_argument(
+        "--linkage-review-threshold",
+        type=float,
+        default=0.7,
+        help="Probability threshold that routes pairs to human review",
+    )
+    orchestrate.add_argument(
+        "--linkage-output-dir",
+        type=Path,
+        help="Directory for persisted linkage artefacts",
+    )
+    orchestrate.add_argument(
+        "--linkage-use-splink",
+        action="store_true",
+        help="Use Splink for probabilistic linkage (default: rule-based)",
+    )
+    orchestrate.add_argument(
+        "--label-studio-url",
+        help="Label Studio base URL for review tasks",
+    )
+    orchestrate.add_argument(
+        "--label-studio-token",
+        help="Label Studio API token for task submission",
+    )
+    orchestrate.add_argument(
+        "--label-studio-project",
+        type=int,
+        help="Label Studio project identifier",
+    )
 
     # Entity resolution command
     resolve = subparsers.add_parser(
@@ -127,6 +163,31 @@ def build_enhanced_parser() -> argparse.ArgumentParser:
         "--use-splink",
         action="store_true",
         help="Use Splink for probabilistic matching (default: fallback)",
+    )
+    resolve.add_argument(
+        "--match-threshold",
+        type=float,
+        default=0.9,
+        help="Probability considered a confirmed match",
+    )
+    resolve.add_argument(
+        "--review-threshold",
+        type=float,
+        default=0.7,
+        help="Probability routed to Label Studio review",
+    )
+    resolve.add_argument(
+        "--label-studio-url",
+        help="Label Studio base URL for review tasks",
+    )
+    resolve.add_argument(
+        "--label-studio-token",
+        help="Label Studio API token",
+    )
+    resolve.add_argument(
+        "--label-studio-project",
+        type=int,
+        help="Label Studio project identifier",
     )
 
     # Dashboard command
@@ -200,7 +261,37 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
         runner = None
         runner_kwargs: dict[str, object] | None = None
 
+        match_threshold = max(args.linkage_match_threshold, args.linkage_review_threshold)
+        review_threshold = args.linkage_review_threshold
+        label_studio_config = None
+        label_studio_args = (
+            args.label_studio_url,
+            args.label_studio_token,
+            args.label_studio_project,
+        )
+        if any(value is not None for value in label_studio_args):
+            if not (
+                args.label_studio_url and args.label_studio_token and args.label_studio_project
+            ):
+                warning = (
+                    "[bold yellow]⚠[/bold yellow] Label Studio options require URL, token, "
+                    "and project ID"
+                )
+                console.print(warning)
+            else:
+                label_studio_config = LabelStudioConfig(
+                    api_url=args.label_studio_url,
+                    api_token=args.label_studio_token,
+                    project_id=args.label_studio_project,
+                )
+
         if enable_enhanced:
+            linkage_thresholds = LinkageThresholds(high=match_threshold, review=review_threshold)
+            linkage_config = LinkageConfig(
+                use_splink=args.linkage_use_splink or args.enable_all,
+                thresholds=linkage_thresholds,
+                label_studio=label_studio_config,
+            )
             enhanced_config = EnhancedPipelineConfig(
                 enable_entity_resolution=args.enable_all or args.enable_entity_resolution,
                 enable_geospatial=args.enable_all or args.enable_geospatial,
@@ -210,6 +301,13 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
                 geocode_addresses=args.enable_all or args.enable_geospatial,
                 enrich_websites=args.enable_all or args.enable_enrichment,
                 detect_pii=args.enable_all or args.enable_compliance,
+                entity_resolution_threshold=review_threshold,
+                use_splink=args.linkage_use_splink or args.enable_all,
+                linkage_config=linkage_config,
+                linkage_output_dir=str(args.linkage_output_dir)
+                if args.linkage_output_dir
+                else None,
+                linkage_match_threshold=match_threshold,
             )
             runner = run_enhanced_pipeline
             runner_kwargs = {"enhanced_config": enhanced_config}
@@ -253,11 +351,6 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     """
     import pandas as pd
 
-    from hotpass.entity_resolution import (
-        resolve_entities_fallback,
-        resolve_entities_with_splink,
-    )
-
     console = Console()
     console.print("[bold blue]Running entity resolution...[/bold blue]")
 
@@ -270,11 +363,40 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 
         console.print(f"Loaded {len(df)} records from {args.input_file}")
 
-        # Resolve entities
-        if args.use_splink:
-            deduplicated, predictions = resolve_entities_with_splink(df, args.threshold)
-        else:
-            deduplicated, predictions = resolve_entities_fallback(df, args.threshold)
+        review_threshold = args.review_threshold or args.threshold
+        match_threshold = max(args.match_threshold, review_threshold)
+        label_studio_config = None
+        label_studio_args = (
+            args.label_studio_url,
+            args.label_studio_token,
+            args.label_studio_project,
+        )
+        if any(value is not None for value in label_studio_args):
+            if not (
+                args.label_studio_url and args.label_studio_token and args.label_studio_project
+            ):
+                warning = (
+                    "[bold yellow]⚠[/bold yellow] Label Studio options require URL, token, "
+                    "and project ID"
+                )
+                console.print(warning)
+            else:
+                label_studio_config = LabelStudioConfig(
+                    api_url=args.label_studio_url,
+                    api_token=args.label_studio_token,
+                    project_id=args.label_studio_project,
+                )
+
+        thresholds = LinkageThresholds(high=match_threshold, review=review_threshold)
+        linkage_config = LinkageConfig(
+            use_splink=args.use_splink,
+            thresholds=thresholds,
+            label_studio=label_studio_config,
+        ).with_output_root(args.output_file.parent / "linkage")
+
+        linkage_result = link_entities(df, linkage_config)
+        deduplicated = linkage_result.deduplicated
+        predictions = linkage_result.matches
 
         # Save output
         if args.output_file.suffix == ".csv":
@@ -288,6 +410,11 @@ def cmd_resolve(args: argparse.Namespace) -> int:
         console.print(f"  Deduplicated records: {len(deduplicated)}")
         console.print(f"  Duplicates removed: {duplicates_removed}")
         console.print(f"  Output saved to: {args.output_file}")
+        match_count = int((predictions["classification"] == "match").sum())
+        console.print(f"  High-confidence matches: {match_count}")
+        review_count = len(linkage_result.review_queue)
+        review_path = linkage_config.persistence.review_path()
+        console.print(f"  Review queue: {review_count} pairs written to {review_path}")
 
         return 0
 

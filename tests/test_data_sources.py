@@ -3,7 +3,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from hotpass.data_sources import ExcelReadOptions, load_reachout_database
+pytest.importorskip("frictionless")
+
+from hotpass.data_sources import ExcelReadOptions, load_reachout_database  # noqa: E402
 
 
 @pytest.mark.usefixtures("sample_data_dir")

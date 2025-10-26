@@ -3,8 +3,11 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
-from hotpass.config import get_default_profile
+pytest.importorskip("frictionless")
+
+from hotpass.config import get_default_profile  # noqa: E402
 from hotpass.formatting import OutputFormat
 from hotpass.pipeline import PipelineConfig, run_pipeline
 from hotpass.pipeline_reporting import generate_recommendations

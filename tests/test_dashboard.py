@@ -11,10 +11,12 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+pytest.importorskip("frictionless")
+
 if "streamlit" not in sys.modules:
     sys.modules["streamlit"] = types.ModuleType("streamlit")
 
-import hotpass.dashboard as dashboard
+import hotpass.dashboard as dashboard  # noqa: E402
 from hotpass.dashboard import (
     PASSWORD_INPUT_LABEL,
     RUN_BUTTON_LABEL,

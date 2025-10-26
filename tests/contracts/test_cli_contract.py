@@ -6,7 +6,10 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml  # type: ignore[import-untyped]
+
+pytest.importorskip("stdnum")
 
 from hotpass import cli
 

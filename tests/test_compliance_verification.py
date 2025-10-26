@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from hotpass.compliance_verification import (
+pytest.importorskip("frictionless")
+
+from hotpass.compliance_verification import (  # noqa: E402
     DEFAULT_FRAMEWORKS,
     frameworks_due,
     generate_summary,

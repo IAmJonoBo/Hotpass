@@ -1,8 +1,4 @@
-"""Entity resolution using Splink for probabilistic matching.
-
-This module provides fuzzy duplicate detection and entity resolution
-capabilities to replace the heuristic deduplication approach.
-"""
+"""Entity resolution helpers bridging legacy APIs with the linkage package."""
 
 from __future__ import annotations
 
@@ -15,191 +11,42 @@ from typing import Any
 
 import pandas as pd
 
+from .linkage import LinkageConfig, LinkageThresholds, link_entities
+from .linkage.settings import build_splink_settings as _build_linkage_settings
+
 logger = logging.getLogger(__name__)
 
-# Try to import splink, but make it optional
-try:
-    from splink import DuckDBAPI, Linker
+try:  # pragma: no cover - import guard mirrors previous behaviour
+    import splink  # type: ignore  # noqa: F401
 
     SPLINK_AVAILABLE = True
-except ImportError:
-    logger.warning("Splink not available - entity resolution will use fallback method")
+except ImportError:  # pragma: no cover - exercised in environments without extras
     SPLINK_AVAILABLE = False
 
 
 def build_splink_settings() -> dict[str, Any]:
-    """Build Splink settings for organization matching.
+    """Expose the new linkage settings for compatibility with legacy imports."""
 
-    Returns:
-        Splink settings dictionary
-    """
-    return {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [
-            "l.organization_slug = r.organization_slug",
-            "substr(l.organization_name, 1, 3) = substr(r.organization_name, 1, 3)",
-        ],
-        "comparisons": [
-            {
-                "output_column_name": "organization_name",
-                "comparison_levels": [
-                    {
-                        "sql_condition": (
-                            "organization_name_l IS NULL OR organization_name_r IS NULL"
-                        ),
-                        "label_for_charts": "Null",
-                        "is_null_level": True,
-                    },
-                    {
-                        "sql_condition": "organization_name_l = organization_name_r",
-                        "label_for_charts": "Exact match",
-                        "m_probability": 0.9,
-                    },
-                    {
-                        "sql_condition": (
-                            "levenshtein(organization_name_l, organization_name_r) <= 3"
-                        ),
-                        "label_for_charts": "Levenshtein <= 3",
-                        "m_probability": 0.7,
-                    },
-                    {
-                        "sql_condition": "ELSE",
-                        "label_for_charts": "All other comparisons",
-                        "m_probability": 0.1,
-                    },
-                ],
-            },
-            {
-                "output_column_name": "province",
-                "comparison_levels": [
-                    {
-                        "sql_condition": "province_l IS NULL OR province_r IS NULL",
-                        "label_for_charts": "Null",
-                        "is_null_level": True,
-                    },
-                    {
-                        "sql_condition": "province_l = province_r",
-                        "label_for_charts": "Exact match",
-                        "m_probability": 0.8,
-                    },
-                    {
-                        "sql_condition": "ELSE",
-                        "label_for_charts": "All other comparisons",
-                        "m_probability": 0.2,
-                    },
-                ],
-            },
-            {
-                "output_column_name": "website",
-                "comparison_levels": [
-                    {
-                        "sql_condition": "website_l IS NULL OR website_r IS NULL",
-                        "label_for_charts": "Null",
-                        "is_null_level": True,
-                    },
-                    {
-                        "sql_condition": "website_l = website_r",
-                        "label_for_charts": "Exact match",
-                        "m_probability": 0.95,
-                    },
-                    {
-                        "sql_condition": "ELSE",
-                        "label_for_charts": "All other comparisons",
-                        "m_probability": 0.05,
-                    },
-                ],
-            },
-            {
-                "output_column_name": "contact_primary_email",
-                "comparison_levels": [
-                    {
-                        "sql_condition": (
-                            "contact_primary_email_l IS NULL OR contact_primary_email_r IS NULL"
-                        ),
-                        "label_for_charts": "Null",
-                        "is_null_level": True,
-                    },
-                    {
-                        "sql_condition": "contact_primary_email_l = contact_primary_email_r",
-                        "label_for_charts": "Exact match",
-                        "m_probability": 0.95,
-                    },
-                    {
-                        "sql_condition": "ELSE",
-                        "label_for_charts": "All other comparisons",
-                        "m_probability": 0.05,
-                    },
-                ],
-            },
-        ],
-        "retain_matching_columns": True,
-        "retain_intermediate_calculation_columns": True,
-    }
+    return _build_linkage_settings()
 
 
 def resolve_entities_with_splink(
     df: pd.DataFrame,
     threshold: float = 0.75,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Resolve duplicate entities using Splink probabilistic matching.
+    """Resolve duplicate entities using the linkage module configured for Splink."""
 
-    Args:
-        df: DataFrame with potential duplicates
-        threshold: Match probability threshold (0.0 to 1.0)
-
-    Returns:
-        Tuple of (deduplicated DataFrame, match pairs DataFrame)
-    """
     if not SPLINK_AVAILABLE:
         logger.warning("Splink not available, using fallback deduplication")
         return resolve_entities_fallback(df, threshold)
 
-    logger.info(f"Resolving entities with Splink (threshold={threshold})")
-
-    # Initialize Splink
-    db_api = DuckDBAPI()
-    settings = build_splink_settings()
-
-    # Create linker
-    linker = Linker(df, settings, db_api)
-
-    # Predict matches
-    predictions = linker.predict(threshold_match_probability=threshold)
-    predictions_df = predictions.as_pandas_dataframe()
-
-    # Build clusters of matched records
-    clusters = linker.cluster_pairwise_predictions_at_threshold(
-        predictions, threshold_match_probability=threshold
+    high_threshold = max(0.9, threshold)
+    config = LinkageConfig(
+        use_splink=True,
+        thresholds=LinkageThresholds(high=high_threshold, review=threshold),
     )
-    clusters_df = clusters.as_pandas_dataframe()
-
-    # Merge cluster information back to original dataframe
-    df_with_clusters = df.merge(
-        clusters_df[["unique_id", "cluster_id"]],
-        left_index=True,
-        right_on="unique_id",
-        how="left",
-    )
-
-    # For records without a cluster, assign individual cluster IDs
-    max_cluster_id = df_with_clusters["cluster_id"].max()
-    if pd.isna(max_cluster_id):
-        max_cluster_id = 0
-
-    null_mask = df_with_clusters["cluster_id"].isna()
-    df_with_clusters.loc[null_mask, "cluster_id"] = range(
-        int(max_cluster_id) + 1, int(max_cluster_id) + 1 + null_mask.sum()
-    )
-
-    # Take the first record from each cluster as the canonical record
-    deduplicated = df_with_clusters.groupby("cluster_id").first().reset_index(drop=True)
-
-    logger.info(
-        f"Entity resolution complete: {len(df)} → {len(deduplicated)} records "
-        f"({len(df) - len(deduplicated)} duplicates removed)"
-    )
-
-    return deduplicated, predictions_df
+    result = link_entities(df, config)
+    return result.deduplicated, result.matches
 
 
 def _slugify(value: Any) -> str:

@@ -9,7 +9,9 @@ from typing import Any
 
 import pytest
 
-from hotpass import secrets
+pytest.importorskip("frictionless")
+
+from hotpass import secrets  # noqa: E402
 from hotpass.secrets import VaultResponse
 
 
