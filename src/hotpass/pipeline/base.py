@@ -17,30 +17,30 @@ import pandas as pd
 import polars as pl
 from pandera.errors import SchemaErrors
 
-from .compliance import PIIRedactionConfig, redact_dataframe
-from .config import IndustryProfile, get_default_profile
-from .data_sources import (
+from ..compliance import PIIRedactionConfig, redact_dataframe
+from ..config import IndustryProfile, get_default_profile
+from ..data_sources import (
     ExcelReadOptions,
     load_contact_database,
     load_reachout_database,
     load_sacaa_cleaned,
 )
-from .domain.party import PartyStore, build_party_store_from_refined
-from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
-from .normalization import clean_string, coalesce, normalize_province, slugify
-from .storage import DuckDBAdapter, PolarsDataset
-from .telemetry import pipeline_stage
+from ..domain.party import PartyStore, build_party_store_from_refined
+from ..formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
+from ..normalization import clean_string, coalesce, normalize_province, slugify
+from ..storage import DuckDBAdapter, PolarsDataset
+from ..telemetry import pipeline_stage
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
-    from .linkage import LinkageResult
-from .pipeline_reporting import (
+    from ..linkage import LinkageResult
+from ..pipeline_reporting import (
     collect_unique,
     generate_recommendations,
     html_performance_rows,
     html_source_performance,
 )
-from .quality import build_ssot_schema, run_expectations
-from .validation import load_schema_descriptor
+from ..quality import run_expectations
+from ..validation import load_schema_descriptor
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -92,6 +92,14 @@ SSOT_COLUMNS: list[str] = [
     "priority",
     "privacy_basis",
 ]
+
+
+def _get_ssot_schema():
+    """Resolve the SSOT schema builder from the public pipeline API."""
+
+    from . import build_ssot_schema  # Local import to avoid circular dependency
+
+    return build_ssot_schema()
 
 
 SOURCE_PRIORITY: dict[str, int] = {
@@ -864,7 +872,7 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
     return combined, timings
 
 
-def run_pipeline(config: PipelineConfig) -> PipelineResult:
+def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     # Initialize profile if not provided
     if config.industry_profile is None:
         config.industry_profile = get_default_profile("generic")
@@ -1135,7 +1143,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     )
 
     with pipeline_stage("validate", {"records": len(refined_df)}):
-        schema = build_ssot_schema()
+        schema = _get_ssot_schema()
         schema_errors = []
         validated_df = refined_df
         _notify_progress(
@@ -1406,3 +1414,10 @@ def _notify_progress(config: PipelineConfig, event: str, **payload: Any) -> None
     listener = config.progress_listener
     if listener is not None:
         listener(event, payload)
+
+
+class BasePipelineExecutor:
+    """Adapter that executes the base Hotpass pipeline."""
+
+    def run(self, config: PipelineConfig) -> PipelineResult:
+        return execute_pipeline(config)
