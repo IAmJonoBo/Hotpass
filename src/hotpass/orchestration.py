@@ -11,8 +11,9 @@ from __future__ import annotations
 import logging
 import os
 import time
-from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, MutableSequence
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -104,6 +105,10 @@ class PipelineOrchestrationError(RuntimeError):
     """Raised when orchestration helpers encounter unrecoverable errors."""
 
 
+class AgentApprovalError(PipelineOrchestrationError):
+    """Raised when agent requests fail policy or approval checks."""
+
+
 @dataclass(frozen=True, slots=True)
 class PipelineRunOptions:
     """Configuration required to execute the pipeline once."""
@@ -143,6 +148,249 @@ class PipelineRunSummary:
         if self.archive_path is not None:
             payload["archive_path"] = str(self.archive_path)
         return payload
+
+
+@dataclass(frozen=True, slots=True)
+class AgenticRequest:
+    """Model a brokered MCP request handed to Prefect."""
+
+    request_id: str
+    agent_name: str
+    role: str
+    tool: str
+    action: str
+    parameters: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class AgentToolPolicy:
+    """Allowed tools per role and auto-approval rules."""
+
+    allowed_tools_by_role: Mapping[str, frozenset[str]]
+    auto_approved_roles: frozenset[str] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        normalised = {role: frozenset(tools) for role, tools in self.allowed_tools_by_role.items()}
+        object.__setattr__(self, "allowed_tools_by_role", normalised)
+        object.__setattr__(self, "auto_approved_roles", frozenset(self.auto_approved_roles))
+
+    def is_tool_allowed(self, role: str, tool: str) -> bool:
+        allowed = self.allowed_tools_by_role.get(role)
+        if not allowed:
+            return False
+        return "*" in allowed or tool in allowed
+
+    def requires_manual_approval(self, role: str) -> bool:
+        return role not in self.auto_approved_roles
+
+
+@dataclass(frozen=True, slots=True)
+class AgentApprovalDecision:
+    """Outcome of a manual review for an agent request."""
+
+    approved: bool
+    approver: str
+    notes: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AgentAuditRecord:
+    """Audit trail entry produced for each agent action."""
+
+    request_id: str
+    agent_name: str
+    role: str
+    tool: str
+    action: str
+    status: str
+    approved: bool
+    approver: str
+    timestamp: datetime
+    notes: str | None = None
+    result: Mapping[str, Any] | None = None
+
+
+def _normalise_parameters(parameters: Mapping[str, Any]) -> dict[str, Any]:
+    if isinstance(parameters, dict):
+        return parameters
+    return {key: parameters[key] for key in parameters}
+
+
+def _pipeline_options_from_request(request: AgenticRequest) -> PipelineRunOptions:
+    parameters = _normalise_parameters(request.parameters)
+    pipeline_payload = parameters.get("pipeline")
+    if not isinstance(pipeline_payload, Mapping):
+        raise AgentApprovalError("Agent request missing pipeline configuration payload")
+
+    payload = _normalise_parameters(pipeline_payload)
+    try:
+        input_dir = Path(str(payload["input_dir"]))
+        output_path = Path(str(payload["output_path"]))
+        profile_name = str(payload.get("profile_name", "aviation"))
+    except KeyError as exc:  # pragma: no cover - defensive, asserted via tests
+        raise AgentApprovalError(f"Missing pipeline parameter: {exc.args[0]}") from exc
+
+    excel_chunk_size_value = payload.get("excel_chunk_size")
+    excel_chunk_size = int(excel_chunk_size_value) if excel_chunk_size_value is not None else None
+
+    archive = bool(payload.get("archive", False))
+    archive_dir_value = payload.get("archive_dir")
+    archive_dir = Path(str(archive_dir_value)) if archive and archive_dir_value else None
+
+    return PipelineRunOptions(
+        input_dir=input_dir,
+        output_path=output_path,
+        profile_name=profile_name,
+        excel_chunk_size=excel_chunk_size,
+        archive=archive,
+        archive_dir=archive_dir,
+    )
+
+
+@task(name="evaluate-agent-request", retries=0)
+def evaluate_agent_request(
+    request: AgenticRequest,
+    policy: AgentToolPolicy,
+    approval: AgentApprovalDecision | None = None,
+) -> AgentApprovalDecision:
+    """Validate the agent request against the policy and manual approvals."""
+
+    logger = get_run_logger()
+    if not policy.is_tool_allowed(request.role, request.tool):
+        reason = f"Role '{request.role}' is not permitted to use tool '{request.tool}'"
+        _safe_log(logger, logging.WARNING, reason)
+        raise AgentApprovalError(reason)
+
+    if policy.requires_manual_approval(request.role):
+        if approval is None or not approval.approved:
+            reason = "Manual approval required for role"
+            _safe_log(logger, logging.WARNING, reason)
+            raise AgentApprovalError(reason)
+        return approval
+
+    if approval is not None:
+        if not approval.approved:
+            reason = approval.notes or "Manual approval denied"
+            _safe_log(logger, logging.WARNING, reason)
+            raise AgentApprovalError(reason)
+        return approval
+
+    auto_approver = f"policy:{request.role}"
+    _safe_log(logger, logging.INFO, "Auto-approving agent request %s", request.request_id)
+    return AgentApprovalDecision(
+        approved=True,
+        approver=auto_approver,
+        notes="Auto-approved by policy",
+    )
+
+
+@task(name="log-agent-action", retries=0)
+def log_agent_action(
+    record: AgentAuditRecord,
+    log_sink: MutableSequence[AgentAuditRecord] | None = None,
+) -> AgentAuditRecord:
+    """Persist agent audit records to a sink and Prefect logs."""
+
+    logger = get_run_logger()
+    _safe_log(
+        logger,
+        logging.INFO,
+        "Agent %s performed %s (status=%s, approved=%s)",
+        record.agent_name,
+        record.action,
+        record.status,
+        record.approved,
+    )
+    if log_sink is not None:
+        log_sink.append(record)
+    return record
+
+
+def broker_agent_run(
+    request: AgenticRequest,
+    policy: AgentToolPolicy,
+    *,
+    approval: AgentApprovalDecision | None = None,
+    log_sink: MutableSequence[AgentAuditRecord] | None = None,
+) -> PipelineRunSummary:
+    """Broker an agent-triggered pipeline execution with approvals and logging."""
+
+    timestamp = datetime.now(tz=UTC)
+    try:
+        decision = evaluate_agent_request(request=request, policy=policy, approval=approval)
+    except AgentApprovalError as exc:
+        log_agent_action(
+            AgentAuditRecord(
+                request_id=request.request_id,
+                agent_name=request.agent_name,
+                role=request.role,
+                tool=request.tool,
+                action=request.action,
+                status="denied",
+                approved=False,
+                approver="manual" if policy.requires_manual_approval(request.role) else "policy",
+                timestamp=timestamp,
+                notes=str(exc),
+            ),
+            log_sink,
+        )
+        raise
+
+    log_agent_action(
+        AgentAuditRecord(
+            request_id=request.request_id,
+            agent_name=request.agent_name,
+            role=request.role,
+            tool=request.tool,
+            action=request.action,
+            status="approved",
+            approved=True,
+            approver=decision.approver,
+            timestamp=timestamp,
+            notes=decision.notes,
+        ),
+        log_sink,
+    )
+
+    options = _pipeline_options_from_request(request)
+
+    try:
+        summary = run_pipeline_once(options)
+    except Exception as exc:  # pragma: no cover - exercised via unit tests
+        log_agent_action(
+            AgentAuditRecord(
+                request_id=request.request_id,
+                agent_name=request.agent_name,
+                role=request.role,
+                tool=request.tool,
+                action=request.action,
+                status="failed",
+                approved=True,
+                approver=decision.approver,
+                timestamp=datetime.now(tz=UTC),
+                notes=str(exc),
+            ),
+            log_sink,
+        )
+        raise
+
+    log_agent_action(
+        AgentAuditRecord(
+            request_id=request.request_id,
+            agent_name=request.agent_name,
+            role=request.role,
+            tool=request.tool,
+            action=request.action,
+            status="executed",
+            approved=True,
+            approver=decision.approver,
+            timestamp=datetime.now(tz=UTC),
+            result=summary.to_payload(),
+        ),
+        log_sink,
+    )
+
+    return summary
 
 
 def _safe_log(logger_: logging.Logger, level: int, message: str, *args: Any) -> None:

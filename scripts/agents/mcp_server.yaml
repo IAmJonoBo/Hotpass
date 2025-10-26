@@ -1,0 +1,50 @@
+# Prototype MCP server configuration for Hotpass Prefect orchestration
+version: 1
+server:
+  id: hotpass-prefect-broker
+  description: Prefect-hosted broker that authorises agent-triggered pipeline runs
+  transport: prefect
+
+approvals:
+  roles:
+    operator:
+      require_manual: true
+      approvers:
+        - ops-leads@hotpass.example
+    analyst:
+      require_manual: false
+    reviewer:
+      require_manual: true
+      approvers:
+        - compliance@hotpass.example
+
+tools:
+  - name: github
+    permissions:
+      - pull_requests.read
+      - issues.comment
+    constraints:
+      repositories:
+        - hotpass/hotpass
+        - hotpass/pipeline-governance
+  - name: prefect
+    permissions:
+      - deployments.run
+      - deployments.inspect
+    constraints:
+      work_pools:
+        - hotpass-agent-pool
+      deployments:
+        - hotpass-refinement
+  - name: google_drive
+    permissions:
+      - files.read
+    constraints:
+      shared_drives:
+        - compliance-evidence
+
+audit:
+  log_path: ./dist/agent_actions.log
+  redact_fields:
+    - token
+    - secret
