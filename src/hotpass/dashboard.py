@@ -20,12 +20,12 @@ from hotpass.config import get_default_profile
 from hotpass.data_sources import ExcelReadOptions
 from hotpass.pipeline import PipelineConfig, run_pipeline
 
-# nosec B105 - environment variable name
-AUTH_PASSWORD_ENV = "HOTPASS_DASHBOARD_PASSWORD"  # pragma: allowlist secret
+# Environment variable names reference secrets intentionally.
+AUTH_PASSWORD_ENV = "HOTPASS_DASHBOARD_PASSWORD"  # nosec B105  # pragma: allowlist secret
 ALLOWED_ROOTS_ENV = "HOTPASS_DASHBOARD_ALLOWED_ROOTS"
 AUTH_STATE_KEY = "hotpass_dashboard_authenticated"
-# nosec B105 - UI label only
-PASSWORD_INPUT_LABEL = "Dashboard Password"  # pragma: allowlist secret
+# UI labels include the word "password" by design.
+PASSWORD_INPUT_LABEL = "Dashboard Password"  # nosec B105  # pragma: allowlist secret
 UNLOCK_BUTTON_LABEL = "Unlock dashboard"
 RUN_BUTTON_LABEL = "▶️ Run Pipeline"
 

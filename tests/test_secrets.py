@@ -115,7 +115,8 @@ def test_vault_manager_oidc_login(monkeypatch: pytest.MonkeyPatch) -> None:
                 {
                     "data": {
                         "data": {
-                            "prefect_api_key": "vault-key",  # pragma: allowlist secret - fixture value
+                            # Fixture uses placeholder secret; allowlist for scanners.
+                            "prefect_api_key": "vault-key",  # pragma: allowlist secret
                         }
                     }
                 }
@@ -127,7 +128,8 @@ def test_vault_manager_oidc_login(monkeypatch: pytest.MonkeyPatch) -> None:
     assert manager is not None
 
     payload = manager.read_kv_secret("hotpass/prefect")
-    assert payload["prefect_api_key"] == "vault-key"  # pragma: allowlist secret - fixture value
+    # Fixture uses placeholder secret; allowlist for scanners.
+    assert payload["prefect_api_key"] == "vault-key"  # pragma: allowlist secret
 
     # Ensure login payload used OIDC JWT
     _, _, login_kwargs = session.requests[1]
@@ -151,7 +153,8 @@ def test_load_prefect_environment_secrets(monkeypatch: pytest.MonkeyPatch) -> No
                 {
                     "data": {
                         "data": {
-                            "prefect_api_key": "vault-key",  # pragma: allowlist secret - fixture value
+                            # Fixture uses placeholder secret; allowlist for scanners.
+                            "prefect_api_key": "vault-key",  # pragma: allowlist secret
                             "prefect_api_url": "https://prefect.example/api",
                         }
                     }
@@ -162,5 +165,6 @@ def test_load_prefect_environment_secrets(monkeypatch: pytest.MonkeyPatch) -> No
 
     secrets.load_prefect_environment_secrets(session=session)
 
-    assert os.environ["PREFECT_API_KEY"] == "vault-key"  # pragma: allowlist secret - fixture value
+    # Fixture uses placeholder secret; allowlist for scanners.
+    assert os.environ["PREFECT_API_KEY"] == "vault-key"  # pragma: allowlist secret
     assert os.environ["PREFECT_API_URL"] == "https://prefect.example/api"
