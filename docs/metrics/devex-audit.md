@@ -1,7 +1,7 @@
 ---
 title: Metrics — developer experience audit
 summary: SPACE-aligned assessment of Hotpass developer workflows, tooling friction, and improvement backlog hooks.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Metrics — developer experience audit
@@ -14,14 +14,14 @@ last_updated: 2025-10-27
 | Performance | QA suite passes locally but adds ~28s per run; optional extras skipped in CI. | Waiting on enrichment/geospatial dependency installs blocks enabling full coverage. | Track dependency enablement under existing QA initiative; explore caching layers for CI. |
 | Activity | Prefect runs and docs updates tracked, but remediation tasks lacked single backlog. | Compliance tasks fell through cracks without dedicated register. | `docs/compliance/remediation-backlog.md` now records owners and due dates. |
 | Communication | Roadmap captures initiatives; DSAR and incident comms undefined. | Support lacks visibility into regulatory workflows and escalation contacts. | Upcoming POPIA backlog items will add DSAR automation and incident playbook updates. |
-| Efficiency | Environment setup relies on manual `uv sync` commands; Prefect credentials vary across environments. | Engineers repeat setup steps and manage secrets locally. | Evaluate internal developer platform enhancements (automation, secret management) as tracked below. |
+| Efficiency | Environment setup relies on manual `uv sync` commands; Prefect credentials vary across environments. | Engineers repeat setup steps and manage secrets locally. | Vault-backed secrets platform selected (see [governance strategy](../governance/secrets-management.md)); next focus is automating developer bootstrap around it. |
 
 ## Platform enhancement backlog
 
 | Initiative | Description | Owner | Link |
 | --- | --- | --- | --- |
 | Automated environment bootstrap | Provide script or make target to configure uv, Prefect, and telemetry defaults. | Platform Engineering | `Next_Steps.md` (Tasks: DevEx automation) |
-| Secrets management standard | Decide approach for registry connectors and telemetry secrets. | DevOps | `Next_Steps.md` (Tasks: Secrets management) |
+| Secrets management standard | Adopt Vault for registry connectors, Prefect tokens, and telemetry secrets with GitHub OIDC auth. | DevOps | [Governance — secrets management](../governance/secrets-management.md) |
 | Dashboard hardening | Auth + filesystem allowlists implemented; migrate to SSO and audit logging next. | Platform | `Next_Steps.md` (Tasks: Dashboard controls) |
 | Compliance telemetry integration | Feed POPIA/ISO/SOC evidence into metrics dashboards for visibility. | Observability | [Remediation backlog](../compliance/remediation-backlog.md) |
 

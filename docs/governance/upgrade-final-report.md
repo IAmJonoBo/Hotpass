@@ -1,7 +1,7 @@
 ---
 title: Hotpass upgrade final report
 summary: Consolidated critical-reasoning checks and delivery package for the Hotpass frontier upgrade initiative.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Hotpass upgrade final report
@@ -16,7 +16,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 
 | Failure mode | Effect | Severity (1-10) | Occurrence (1-10) | Detection (1-10) | RPN | Mitigations |
 | --- | --- | --- | --- | --- | --- | --- |
-| Secrets platform decision stalls | Manual credential handling persists, increasing leak risk | 9 | 6 | 6 | 324 | Secure owner decision by sprint end, prototype Vault vs SOPS, enforce interim detect-secrets and rotation playbook |
+| Secrets platform decision stalls | Manual credential handling persists, increasing leak risk | 9 | 3 | 3 | 81 | Vault strategy published; track migration via Vault rollout plan and enforce interim rotation policy |
 | Dashboard auth uplift pending | Shared-secret gate live, but lack of SSO/auditing risks credential reuse | 6 | 4 | 5 | 120 | Maintain secret rotation, add access logging, and scope SSO rollout via reverse proxy |
 | Supply-chain gates drift | Provenance/SBOM scripts unused, blocking SLSA uplift | 7 | 4 | 6 | 168 | Automate in CI, publish attestation storage policy, rotate signing keys |
 | Prefect policy enforcement delayed | Misconfigured flows bypass validation causing runtime failures | 6 | 5 | 4 | 120 | Add policy-as-code checks, integrate with deployment templates, simulate failure |
@@ -34,7 +34,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 
 | Unknown | Evidence required | Owner | Due | Status |
 | --- | --- | --- | --- | --- |
-| Preferred secrets management stack | Comparative analysis of Vault, AWS Secrets Manager, SOPS; cost and compliance review | DevOps | 2025-11-22 | Open |
+| Preferred secrets management stack | Comparative analysis of Vault, AWS Secrets Manager, SOPS; cost and compliance review | DevOps | 2025-11-22 | Closed — Vault selected (see [governance strategy](secrets-management.md)) |
 | Dashboard hosting constraints | Platform decision on internal vs external exposure, TLS termination details | Platform | 2025-11-22 | Open |
 | Prefect policy enforcement scope | Confirmation of parameters requiring validation, mapping to compliance controls | Engineering | 2025-11-22 | Open |
 | Provenance storage location | Decision on artifact repository with immutability and access auditing | Security | 2025-11-29 | Open |
@@ -44,7 +44,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 
 ### 2.1 Top risks, impacts, quick wins
 
-1. **Secrets fragmentation** → POPIA breach potential → Accelerate platform decision, publish interim rotation SOP.
+1. **Secrets migration execution** → POPIA breach potential → Deliver Vault rollout plan, migrate credentials, and monitor audit trail per governance strategy.
 2. **Dashboard auth uplift** → Shared secret may leak without rotation/logging → Add access logging and move to SSO-backed proxy.
 3. **Supply-chain drift** → Attestation gaps undermine SLSA targets → Wire SBOM/provenance scripts into CI with policy enforcement.
 4. **Prefect policy lag** → Runtime instabilities → Implement validation hooks and dry-run suite before promotion.
@@ -66,7 +66,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 
 Each finding lists **Title • Severity • Confidence • Evidence • Affected assets** followed by remediation guidance.
 
-1. **Secrets management undecided • High • Medium • evidence: roadmap and Next_Steps owner backlog • Assets: Prefect deployments, connectors**. *Residual risk*: exposure of regulated data. *Standards*: {SSDF: PO.3, PW.4 | SAMM: S3-B | ASVS: 2.1.1 | ISO 25010: Security}. *Actions*: finalize platform selection, implement rotation policy, integrate with deployment templates. *Trade-offs*: additional infra overhead vs compliance readiness. *Exposure*: reduced once platform live and audit logging enabled.
+1. **Secrets platform selected • Medium • High • evidence: governance strategy, roadmap updates • Assets: Prefect deployments, connectors**. *Residual risk*: migration delays keep legacy secrets around. *Standards*: {SSDF: PO.3, PW.4 | SAMM: S3-B | ASVS: 2.1.1 | ISO 25010: Security}. *Actions*: execute Vault migration plan, rotate credentials, integrate policies. *Trade-offs*: operational overhead vs compliance readiness. *Exposure*: drops as rotations complete and audit logging verified.
 2. **Dashboard auth uplift • Medium • Medium • evidence: shared-secret gate shipped; `Next_Steps.md` backlog • Assets: Streamlit dashboard**. *Standards*: {SSDF: PW.8 | SAMM: OE2 | ASVS: 2.1.2, 4.1.3 | ISO 25010: Security, Usability}. *Actions*: rotate shared secret, add access logging, implement SSO-backed proxy. *Residual risk*: reduced but present until SSO live.
 3. **Supply-chain automation manual • Medium • Medium • evidence: SBOM/provenance scripts require CI wiring • Assets: build pipeline, artifacts**. *Standards*: {SSDF: PS.3, PO.5 | SLSA: 2 | Scorecard: SAST, Signed Releases | ISO 5055: Reliability}. *Actions*: integrate scripts, add policy gate, publish attestation storage location. *Exposure*: tampering risk until automation complete.
 4. **Prefect policy enforcement pending • Medium • Medium • evidence: Next_Steps tasks • Assets: Orchestration runtime**. *Standards*: {SSDF: PW.1, PW.9 | SAMM: OE1 | ASVS: 1.9.1}. *Actions*: define validation rules, implement tests, tie to deployment CLI. *Residual risk*: misconfigured flows causing outages.
@@ -98,7 +98,7 @@ hotpass/
 
 | Horizon | Item | Owner role | Effort | Risk reduction | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- | --- |
-| 30 | Choose secrets platform and pilot integration | DevOps + Security | M | High (breach prevention) | Infra budget, compliance review | Successful pilot in staging, audit log sample |
+| 30 | Pilot Vault integration for CI and Prefect | DevOps + Security | M | High (breach prevention) | Vault cluster provisioned, GitHub OIDC roles | Successful pilot in staging, audit log sample |
 | 30 | Add dashboard access logging & scope SSO rollout | Platform | S | High (access control) | Secrets platform decision | Shared-secret rotation runbook, proxy plan approved |
 | 60 | Automate SBOM & provenance in CI | DevOps | M | Medium (supply-chain) | Secrets platform, artifact repo | Signed attestation in CI run |
 | 60 | Prefect deployment policy checks | Engineering | M | Medium (reliability) | Config schema update | QA suite run with failing policies |
@@ -127,7 +127,7 @@ hotpass/
 
 | Recommendation | Dependencies | Tooling | Target versions | Ownership | Integration points | Lifecycle health | References |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Secrets platform rollout | Prefect, Streamlit, CI | HashiCorp Vault or AWS Secrets Manager | n/a | DevOps/Security | Deployment templates, env loaders | Active release cadence, enterprise support | Vendor docs (to be captured post decision) |
+| Secrets platform rollout | Prefect, Streamlit, CI | HashiCorp Vault | n/a | DevOps/Security | Deployment templates, env loaders | Active release cadence, enterprise support | [Governance — secrets management](secrets-management.md) |
 | Dashboard auth | Streamlit, Reverse proxy | Traefik/NGINX + OIDC | Latest LTS | Platform | Deployment helm/docker configs | Wide community support | Streamlit auth guides |
 | Supply-chain automation | GitHub Actions, uv | `scripts/supply_chain/*` | Python 3.13 | DevOps | CI workflows | Maintained (weekly commits) | CycloneDX, Sigstore docs |
 | Prefect policy enforcement | Prefect CLI, Config doctor | Custom validation scripts | n/a | Engineering | Prefect deployment definitions | Prefect 3 active | Prefect deployment policy API |

@@ -1,7 +1,7 @@
 ---
 title: Compliance — framework baseline
 summary: Overview of Hotpass compliance frameworks, maturity scoring, evidence mapping, and remediation approach.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — framework baseline
@@ -27,11 +27,11 @@ The Hotpass governance programme spans POPIA, ISO 27001, and SOC 2. This index t
 
 | Gap ID | Framework | Control focus | Current blockers | Target outcome | Evidence pointers | Backlog reference |
 | --- | --- | --- | --- | --- | --- | --- |
-| POPIA-001 | POPIA | Lawful processing enforcement | Consent metadata stored but not enforced programmatically across Prefect runs. | Runtime consent validation with auditable decision logs. | [`src/hotpass/compliance.py`](../../src/hotpass/compliance.py); Prefect flow logs under `data/logs/prefect/`. | [Remediation backlog](./remediation-backlog.md#popia-001-automate-consent-validation) |
+| POPIA-001 | POPIA | Lawful processing enforcement | Resolved 2025-10-26 — consent validation enforced in pipeline with audit logs. | Maintain runtime consent validation with auditable decision logs. | [`src/hotpass/compliance.py`](../../src/hotpass/compliance.py); Prefect flow logs under `data/logs/prefect/`. | [Remediation backlog](./remediation-backlog.md#popia-001-automate-consent-validation) |
 | POPIA-003 | POPIA | Data subject rights | DSAR exports lack SLA tracking and completion evidence. | Automated DSAR workflow with SLA metrics and retention log. | [`docs/reference/cli.md`](../reference/cli.md); upcoming DSAR register location (`data/compliance/dsar/`). | [Remediation backlog](./remediation-backlog.md#popia-003-implement-dsar-tracking) |
-| ISO27001-002 | ISO 27001 | Asset management | Architecture lists assets but no centralised, classified inventory exists. | Version-controlled asset register with custodianship metadata. | [`docs/explanations/architecture.md`](../explanations/architecture.md); provisional asset extracts in `data/inventory/`. | [Remediation backlog](./remediation-backlog.md#iso27001-002-build-asset-register) |
+| ISO27001-002 | ISO 27001 | Asset management | Resolved 2025-10-26 — asset register catalogued with custodians and classifications. | Keep version-controlled asset register current with quarterly reviews. | [`data/inventory/asset-register.yaml`](../../data/inventory/asset-register.yaml); [`docs/governance/secrets-management.md`](../governance/secrets-management.md). | [Remediation backlog](./remediation-backlog.md#iso27001-002-build-asset-register) |
 | ISO27001-004 | ISO 27001 | Supplier relationships | Third-party services lack risk scoring and review cadence. | Supplier register covering risk ratings, contracts, review dates. | [`docs/metrics/metrics-plan.md`](../metrics/metrics-plan.md); procurement interviews notes in `docs/governance/`. | [Remediation backlog](./remediation-backlog.md#iso27001-004-define-supplier-risk-register) |
-| SOC2-002 | SOC 2 | Risk assessment | Threat model gaps not translated into an actionable risk register. | Living risk register with scoring, owners, quarterly updates. | [`docs/security/threat-model.md`](../security/threat-model.md); future register path `docs/security/risk-register.md`. | [Remediation backlog](./remediation-backlog.md#soc2-002-maintain-risk-register) |
+| SOC2-002 | SOC 2 | Risk assessment | Resolved 2025-10-26 — baseline risk register created with scoring and owners. | Maintain living risk register with quarterly updates tied to threat model revisions. | [`docs/security/risk-register.md`](../security/risk-register.md); [`docs/security/threat-model.md`](../security/threat-model.md). | [Remediation backlog](./remediation-backlog.md#soc2-002-maintain-risk-register) |
 | SOC2-005 | SOC 2 | Confidentiality controls | Export storage relies on manual controls without logging or encryption posture. | Hardened storage with access logs and encryption configuration evidence. | [`docs/explanations/architecture.md`](../explanations/architecture.md); export job logs under `dist/logs/`. | [Remediation backlog](./remediation-backlog.md#soc2-005-harden-confidentiality-controls) |
 
 ## Supporting artefacts

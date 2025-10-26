@@ -3,8 +3,10 @@
 from unittest.mock import Mock, patch
 
 import pandas as pd
+import pytest
 
 from hotpass.compliance import (
+    ConsentValidationError,
     DataClassification,
     LawfulBasis,
     PIIDetector,
@@ -288,17 +290,22 @@ def test_popia_policy_generate_report():
             "email": ["test@example.com"],
             "name": ["John Doe"],
             "city": ["New York"],
+            "consent_status": ["granted"],
         }
     )
 
     policy = POPIAPolicy(config)
     report = policy.generate_compliance_report(df)
 
-    assert report["total_fields"] == 3
+    assert report["total_fields"] == 4
     assert report["total_records"] == 1
     assert "email" in report["pii_fields"]
     assert "email" in report["consent_required_fields"]
     assert report["retention_policies"]["email"] == 730
+    assert report["consent_status_summary"]["granted"] == 1
+    assert report["consent_violations"] == []
+
+    policy.enforce_consent(report)
 
 
 def test_popia_policy_report_compliance_issues():
@@ -322,6 +329,37 @@ def test_popia_policy_report_compliance_issues():
     assert len(report["compliance_issues"]) > 0
 
 
+def test_popia_policy_reports_consent_violation():
+    """Consent enforcement should flag rows without granted status."""
+    config = {
+        "consent_requirements": {"email": True},
+    }
+
+    df = pd.DataFrame({"email": ["test@example.com"], "consent_status": ["pending"]})
+
+    policy = POPIAPolicy(config)
+    report = policy.generate_compliance_report(df)
+
+    assert report["consent_violations"]
+    with pytest.raises(ConsentValidationError):
+        policy.enforce_consent(report)
+
+
+def test_popia_policy_enforce_consent_allows_granted_status():
+    """Consent enforcement should allow granted statuses."""
+    config = {
+        "consent_requirements": {"email": True},
+    }
+
+    df = pd.DataFrame({"email": ["test@example.com"], "consent_status": ["granted"]})
+
+    policy = POPIAPolicy(config)
+    report = policy.generate_compliance_report(df)
+
+    assert report["consent_violations"] == []
+    policy.enforce_consent(report)
+
+
 def test_add_provenance_columns():
     """Test adding provenance columns."""
     df = pd.DataFrame(
@@ -337,6 +375,22 @@ def test_add_provenance_columns():
     assert "processed_at" in result_df.columns
     assert "consent_status" in result_df.columns
     assert result_df.loc[0, "data_source"] == "Test Source"
+
+
+def test_add_provenance_columns_preserves_existing_consent():
+    """Existing consent fields remain intact when provenance is added."""
+    df = pd.DataFrame(
+        {
+            "name": ["Jane"],
+            "consent_status": ["granted"],
+            "consent_date": ["2025-10-01"],
+        }
+    )
+
+    result_df = add_provenance_columns(df, source_name="Test Source")
+
+    assert result_df.loc[0, "consent_status"] == "granted"
+    assert result_df.loc[0, "consent_date"] == "2025-10-01"
 
 
 def test_add_provenance_columns_with_timestamp():

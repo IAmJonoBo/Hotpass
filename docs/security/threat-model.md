@@ -1,7 +1,7 @@
 ---
 title: Security — threat model
 summary: Multi-surface threat model covering CLI, Prefect flows, and the Streamlit dashboard with STRIDE and MITRE mappings.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Security threat model
@@ -25,6 +25,7 @@ Key safeguards already in place include configuration validation in the CLI, Pre
 - **Dashboard authentication:** Shared-secret password protects access today; migrate to SSO-backed auth and session auditing for multi-tenant deployments.
 - **Prefect parameter validation:** `validate_parameters=False` permits arbitrary string arguments, enabling tampering/EoP if deployment is exposed.
 - **CLI log redaction:** Structured logger emits raw report content, risking accidental disclosure of PII in logs.
+- **Secrets platform rollout:** Vault selected for centralised secrets; wire CI, Prefect, and dashboard workloads into Vault and verify audit log coverage.
 
 ## MITRE ATT&CK cross-reference and control status
 

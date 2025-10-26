@@ -1,7 +1,7 @@
 ---
 title: Compliance — remediation backlog
 summary: Prioritised tasks to close compliance gaps across POPIA, ISO 27001, and SOC 2.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — remediation backlog
@@ -16,6 +16,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Due**: 2025-11-22
 - **Summary**: Enforce consent status at runtime by extending `hotpass.compliance` checks and emitting audit logs when profiles violate lawful processing requirements.
 - **Evidence**: Prefect flow logs under `data/logs/prefect/`, updated unit tests covering consent blockers, change log entry referencing consent validation toggle.
+- **Status**: ✅ Completed 2025-10-26 — consent enforcement shipped in `hotpass.compliance` with regression tests and documentation updates.
 
 ### POPIA-002 Document enrichment minimisation checklists
 - **Risk**: 🟡 Medium
@@ -60,6 +61,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Due**: 2025-11-29
 - **Summary**: Centralise asset inventory including classification, location, and custodian; integrate with roadmap quality gates.
 - **Evidence**: Asset register manifest committed under `data/inventory/asset-register.yaml`, review sign-off notes stored in `docs/governance/`.
+- **Status**: ✅ Completed 2025-10-26 — initial asset register published at `data/inventory/asset-register.yaml` with custodians and classifications.
 
 ### ISO27001-003 Extend ops logging
 - **Risk**: 🟡 Medium
@@ -97,6 +99,7 @@ Each backlog item aligns to a control gap in the framework matrices and records 
 - **Due**: 2025-11-22
 - **Summary**: Convert threat model findings into a living risk register with scoring, mitigation status, and links back to controls.
 - **Evidence**: Risk register maintained in `docs/security/risk-register.md`, update log appended per review, linkage to threat model revisions.
+- **Status**: ✅ Completed 2025-10-26 — baseline SOC 2 risk register created in `docs/security/risk-register.md` with scoring and mitigation owners.
 
 ### SOC2-003 Enhance change records
 - **Risk**: 🟡 Medium

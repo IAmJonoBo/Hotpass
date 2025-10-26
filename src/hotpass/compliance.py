@@ -9,6 +9,7 @@ This module provides functionality for:
 """
 
 import logging
+from collections import Counter
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -46,6 +47,14 @@ except ImportError:
     PRESIDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+class ConsentValidationError(RuntimeError):
+    """Raised when consent validation fails for regulated fields."""
+
+    def __init__(self, message: str, violations: list[dict[str, Any]] | None = None):
+        super().__init__(message)
+        self.violations = violations or []
 
 
 class DataClassification(Enum):
@@ -266,6 +275,34 @@ class POPIAPolicy:
         self.field_classifications = self.config.get("field_classifications", {})
         self.retention_policies = self.config.get("retention_policies", {})
         self.consent_requirements = self.config.get("consent_requirements", {})
+        if not self.consent_requirements:
+            self.consent_requirements = {
+                "contact_primary_email": True,
+                "contact_primary_phone": True,
+                "contact_primary_name": True,
+            }
+        self.consent_status_field = self.config.get("consent_status_field", "consent_status")
+        self.consent_granted_statuses = {
+            status.lower()
+            for status in self.config.get(
+                "consent_granted_statuses",
+                ["granted", "approved", "allowed"],
+            )
+        }
+        self.consent_pending_statuses = {
+            status.lower()
+            for status in self.config.get(
+                "consent_pending_statuses",
+                ["pending", "unknown", "review"],
+            )
+        }
+        self.consent_denied_statuses = {
+            status.lower()
+            for status in self.config.get(
+                "consent_denied_statuses",
+                ["revoked", "denied", "withdrawn", "expired"],
+            )
+        }
 
     def classify_field(self, field_name: str) -> DataClassification:
         """Get classification for a field.
@@ -329,6 +366,8 @@ class POPIAPolicy:
         retention_policies: dict[str, int] = {}
         compliance_issues: list[str] = []
         field_classifications: dict[str, str] = {}
+        consent_status_summary: Counter[str] = Counter()
+        consent_violations: list[dict[str, Any]] = []
 
         # Analyze each field
         for col in df.columns:
@@ -355,6 +394,51 @@ class POPIAPolicy:
         if not retention_policies:
             compliance_issues.append("No retention policies configured for any fields")
 
+        consent_status_field = self.consent_status_field
+        if consent_required_fields:
+            if consent_status_field not in df.columns:
+                compliance_issues.append(
+                    f"Consent status field '{consent_status_field}' missing from dataset"
+                )
+                logger.error(
+                    "Consent status column '%s' missing while consent is required",
+                    consent_status_field,
+                )
+            else:
+                for index, row in df.iterrows():
+                    applicable_fields = [
+                        field
+                        for field in consent_required_fields
+                        if field in df.columns and self._value_requires_consent(row.get(field))
+                    ]
+
+                    if not applicable_fields:
+                        continue
+
+                    status_value = row.get(consent_status_field)
+                    status = self._normalise_consent_status(status_value)
+                    if status:
+                        consent_status_summary[status] += 1
+                    else:
+                        consent_status_summary["untracked"] += 1
+
+                    violation_reason = self._classify_consent_status(status)
+                    if violation_reason:
+                        consent_violations.append(
+                            {
+                                "row_index": int(index),
+                                "fields": applicable_fields,
+                                "status": status or None,
+                                "reason": violation_reason,
+                            }
+                        )
+
+        if consent_violations:
+            compliance_issues.append(
+                f"{len(consent_violations)} records require consent without a granted status"
+            )
+            logger.error("Detected %s consent validation violations", len(consent_violations))
+
         return {
             "generated_at": datetime.now().isoformat(),
             "total_fields": len(df.columns),
@@ -364,7 +448,46 @@ class POPIAPolicy:
             "consent_required_fields": consent_required_fields,
             "retention_policies": retention_policies,
             "compliance_issues": compliance_issues,
+            "consent_status_field": consent_status_field,
+            "consent_status_summary": dict(consent_status_summary),
+            "consent_violations": consent_violations,
         }
+
+    def enforce_consent(self, report: dict[str, Any]) -> None:
+        """Raise an error when consent violations are present."""
+
+        violations = report.get("consent_violations", [])
+        if violations:
+            raise ConsentValidationError(
+                f"{len(violations)} records require consent but consent is not granted",
+                violations=violations,
+            )
+
+    @staticmethod
+    def _value_requires_consent(value: Any) -> bool:
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return False
+        if isinstance(value, str):
+            return bool(value.strip())
+        return True
+
+    @staticmethod
+    def _normalise_consent_status(status: Any) -> str | None:
+        if status is None or (isinstance(status, float) and pd.isna(status)):
+            return None
+        text = str(status).strip().lower()
+        return text or None
+
+    def _classify_consent_status(self, status: str | None) -> str | None:
+        if status is None:
+            return "missing"
+        if status in self.consent_granted_statuses:
+            return None
+        if status in self.consent_pending_statuses:
+            return "pending"
+        if status in self.consent_denied_statuses:
+            return "denied"
+        return "unknown"
 
 
 def add_provenance_columns(
@@ -385,8 +508,14 @@ def add_provenance_columns(
     # Add provenance columns
     enriched_df["data_source"] = source_name
     enriched_df["processed_at"] = processing_timestamp or datetime.now().isoformat()
-    enriched_df["consent_status"] = "pending"  # Default status
-    enriched_df["consent_date"] = None
+    if "consent_status" in enriched_df.columns:
+        enriched_df["consent_status"] = (
+            enriched_df["consent_status"].fillna("pending").replace("", "pending")
+        )
+    else:
+        enriched_df["consent_status"] = "pending"  # Default status
+    if "consent_date" not in enriched_df.columns:
+        enriched_df["consent_date"] = None
     enriched_df["retention_until"] = None  # To be calculated based on policy
 
     logger.info(f"Added provenance columns for source: {source_name}")

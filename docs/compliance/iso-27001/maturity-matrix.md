@@ -1,7 +1,7 @@
 ---
 title: Compliance — ISO 27001 maturity matrix
 summary: Baseline ISO 27001 control implementation status with evidence links, owners, and remediation hooks.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — ISO 27001 maturity matrix
@@ -9,7 +9,7 @@ last_updated: 2025-10-25
 | Control (Annex A) | Current maturity | Target state | Gap & risk | Risk severity | Evidence | Control owner | Remediation |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A.5 Information security policies | Governance charter defines scope and responsibilities, but no formal approval cycle. | Policy reviewed and approved quarterly with version history and sign-off log. | Without approval trail, auditors cannot confirm leadership endorsement. | Medium | [`docs/governance/project-charter.md`](../../governance/project-charter.md). | Leadership | [Backlog: ISO27001-001](../remediation-backlog.md#iso27001-001-establish-policy-approval-cycle) |
-| A.8 Asset management | Architecture doc lists critical assets; asset inventory not centralised nor classified. | Config-managed asset register with classification and owners. | Missing inventory may hide unmanaged PII stores. | High | [`docs/explanations/architecture.md`](../../explanations/architecture.md); asset register to live under `data/inventory/asset-register.yaml`. | Security & Platform | [Backlog: ISO27001-002](../remediation-backlog.md#iso27001-002-build-asset-register) |
+| A.8 Asset management | Architecture doc lists critical assets; asset inventory now centralised with classifications and custodians. | Config-managed asset register with classification and owners. | Keep register current and align with quarterly reviews. | Medium | [`docs/explanations/architecture.md`](../../explanations/architecture.md); `data/inventory/asset-register.yaml`. | Security & Platform | [Backlog: ISO27001-002](../remediation-backlog.md#iso27001-002-build-asset-register) |
 | A.12 Operations security | CI workflow runs QA suite, but change logging for config doctor decisions not recorded. | Immutable audit log for operational changes and Prefect configuration adjustments. | Lack of logging weakens change traceability for security-critical tuning. | Medium | [`.github/workflows/process-data.yml`](../../../.github/workflows/process-data.yml); [`src/hotpass/config_doctor.py`](../../../src/hotpass/config_doctor.py). | Engineering | [Backlog: ISO27001-003](../remediation-backlog.md#iso27001-003-extend-ops-logging) |
 | A.15 Supplier relationships | No supplier risk assessment recorded for Prefect Cloud, Slack, or survey tools. | Approved supplier list with risk ratings and review cadence. | Unassessed suppliers can introduce compliance gaps and data residency issues. | High | [`docs/metrics/metrics-plan.md`](../../metrics/metrics-plan.md) assumptions; supplier register to be documented at `docs/governance/supplier-register.md`. | Procurement & Security | [Backlog: ISO27001-004](../remediation-backlog.md#iso27001-004-define-supplier-risk-register) |
 | A.18 Compliance | Detect-secrets and Bandit run, but legal/regulatory compliance matrix absent pre-this work. | Integrated compliance mapping with periodic legal review and evidence refresh. | Without consolidated compliance matrix, obligations may be missed. | Medium | This document set; QA command history in `Next_Steps.md`. | Compliance | [Backlog: ISO27001-005](../remediation-backlog.md#iso27001-005-schedule-legal-reviews) |
