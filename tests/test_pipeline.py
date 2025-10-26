@@ -262,8 +262,8 @@ def test_pipeline_handles_all_invalid_records(
 ) -> None:
     """Test pipeline handles gracefully when all records fail schema validation."""
     # Patch the schema to reject ALL records
-    import pandera as pa
-    from pandera import Check, Column, DataFrameSchema
+    import pandera.pandas as pa
+    from pandera.pandas import Check, Column, DataFrameSchema
 
     import hotpass.pipeline as pipeline_module
 

@@ -1,11 +1,13 @@
 """Tests for enhanced pipeline integration."""
 
+import logging
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
 
 import hotpass.pipeline_enhanced as pipeline_enhanced
+import hotpass.pipeline_enhancements as pipeline_stages
 from hotpass.compliance import ConsentValidationError
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
@@ -239,6 +241,56 @@ def test_enhanced_pipeline_missing_consent_raises(sample_dataframe, mock_pipelin
         run_enhanced_pipeline(config, enhanced_config)
 
 
+def test_entity_resolution_uses_fallback_when_splink_missing(
+    sample_dataframe, mock_pipeline_result, tmp_path, monkeypatch, caplog
+):
+    """Entity resolution falls back to rule-based matching if Splink import fails."""
+
+    from hotpass.config import get_default_profile
+    from hotpass.data_sources import ExcelReadOptions
+    from hotpass.pipeline import PipelineConfig
+
+    output_path = tmp_path / "output.xlsx"
+
+    profile = get_default_profile("aviation")
+    config = PipelineConfig(
+        input_dir=tmp_path,
+        output_path=output_path,
+        industry_profile=profile,
+        excel_options=ExcelReadOptions(),
+    )
+
+    fallback_thresholds: list[float] = []
+
+    def fake_fallback(df: pd.DataFrame, threshold: float):
+        fallback_thresholds.append(threshold)
+        return df.assign(fallback_used=True), []
+
+    def fake_add_scores(df: pd.DataFrame) -> pd.DataFrame:
+        return df.assign(priority_applied=True)
+
+    import hotpass.entity_resolution
+    monkeypatch.delattr(hotpass.entity_resolution, "resolve_entities_with_splink", raising=False)
+    monkeypatch.setattr(pipeline_stages, "resolve_entities_fallback", fake_fallback)
+    monkeypatch.setattr(pipeline_stages, "add_ml_priority_scores", fake_add_scores)
+
+    enhanced_config = EnhancedPipelineConfig(
+        enable_entity_resolution=True,
+        enable_geospatial=False,
+        enable_enrichment=False,
+        enable_compliance=False,
+        enable_observability=False,
+        use_splink=True,
+    )
+
+    with caplog.at_level(logging.WARNING):
+        result = run_enhanced_pipeline(config, enhanced_config)
+
+    assert fallback_thresholds, "Fallback resolver should be invoked when Splink is unavailable"
+    assert "falling back" in caplog.text.lower()
+    assert "priority_applied" in result.refined.columns
+
+
 def test_enhanced_pipeline_with_observability(sample_dataframe, mock_pipeline_result, tmp_path):
     """Test enhanced pipeline with observability."""
     from hotpass.config import get_default_profile
@@ -369,9 +421,9 @@ def test_enhanced_pipeline_with_geospatial_and_enrichment(
         def stats(self) -> dict[str, int]:
             return {"total_entries": 0, "total_hits": 0}
 
-    monkeypatch.setattr(pipeline_enhanced, "geocode_dataframe", fake_geocode_dataframe)
-    monkeypatch.setattr(pipeline_enhanced, "enrich_dataframe_with_websites", fake_enrich_websites)
-    monkeypatch.setattr(pipeline_enhanced, "CacheManager", FakeCache)
+    monkeypatch.setattr(pipeline_stages, "geocode_dataframe", fake_geocode_dataframe)
+    monkeypatch.setattr(pipeline_stages, "enrich_dataframe_with_websites", fake_enrich_websites)
+    monkeypatch.setattr(pipeline_stages, "CacheManager", FakeCache)
 
     enhanced_config = EnhancedPipelineConfig(
         enable_entity_resolution=False,

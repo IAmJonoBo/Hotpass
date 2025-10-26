@@ -1,5 +1,6 @@
 """Hotpass data refinement pipeline."""
 
+from . import _warning_filters as _warning_filters  # noqa: F401
 from . import benchmarks
 from .artifacts import create_refined_archive
 from .column_mapping import ColumnMapper, infer_column_types, profile_dataframe
@@ -10,6 +11,8 @@ from .error_handling import ErrorHandler, ErrorReport, ErrorSeverity
 from .formatting import OutputFormat, apply_excel_formatting, export_to_multiple_formats
 from .pipeline import PipelineConfig, PipelineResult, QualityReport, run_pipeline
 from .pipeline_enhanced import EnhancedPipelineConfig, run_enhanced_pipeline
+
+del _warning_filters
 
 __all__ = [
     "benchmarks",

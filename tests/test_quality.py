@@ -3,7 +3,12 @@
 import pandas as pd
 import pytest
 
-from hotpass.quality import ExpectationSummary, build_ssot_schema, run_expectations
+from hotpass.quality import (
+    ExpectationSummary,
+    _run_with_great_expectations,
+    build_ssot_schema,
+    run_expectations,
+)
 
 try:
     from great_expectations.validator.validator import (  # type: ignore  # noqa: F401
@@ -325,6 +330,197 @@ def test_expectation_summary_structure():
 
     assert summary2.success is False
     assert len(summary2.failures) == 2
+
+
+class _StubProjectManager:
+    def __init__(self) -> None:
+        self.current_project: object = "previous_project"
+        self.set_history: list[object] = []
+
+    def get_project(self) -> object:
+        return self.current_project
+
+    def set_project(self, project: object) -> None:
+        self.set_history.append(project)
+        self.current_project = project
+
+
+def _make_stub_ge_runtime(
+    *,
+    fail_on_validate: bool = False,
+) -> tuple[dict[str, object], _StubProjectManager]:
+    class _StubStoreDefaults:
+        def __init__(self, *, init_temp_docs_sites: bool) -> None:
+            self.init_temp_docs_sites = init_temp_docs_sites
+
+    class _StubDataContextConfig:
+        def __init__(self, **kwargs: object) -> None:
+            self.kwargs = kwargs
+
+    class _StubDataContext:
+        def __init__(self, project_config: object) -> None:
+            self.project_config = project_config
+
+    class _StubBatch:
+        def __init__(self, data: pd.DataFrame) -> None:
+            self.data = data
+
+    class _StubExpectationSuite:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+    class _StubExecutionEngine:
+        pass
+
+    class _StubExpectationResult:
+        def __init__(
+            self,
+            success: bool,
+            expectation_config: dict[str, object],
+            result: dict[str, object],
+        ) -> None:
+            self.success = success
+            self.expectation_config = expectation_config
+            self.result = result
+
+    class _StubValidation:
+        def __init__(self, results: list[_StubExpectationResult], success: bool) -> None:
+            self.results = results
+            self.success = success
+
+    project_manager = _StubProjectManager()
+
+    class _StubValidator:
+        def __init__(
+            self,
+            *,
+            execution_engine: object,
+            expectation_suite: _StubExpectationSuite,
+            batches: list[_StubBatch],
+            data_context: _StubDataContext,
+        ) -> None:
+            self.execution_engine = execution_engine
+            self.expectation_suite = expectation_suite
+            self.batches = batches
+            self.data_context = data_context
+            self.default_expectation_arguments: dict[str, object] = {}
+            self.expectation_calls: list[object] = []
+
+        def set_default_expectation_argument(self, name: str, value: object) -> None:
+            self.default_expectation_arguments[name] = value
+
+        def expect_column_values_to_not_be_null(self, column: str) -> None:
+            self.expectation_calls.append(("not_null", column))
+
+        def expect_column_values_to_be_between(self, column: str, **kwargs: object) -> None:
+            self.expectation_calls.append(("between", column, kwargs))
+
+        def expect_column_values_to_match_regex(
+            self,
+            column: str,
+            pattern: str,
+            *,
+            mostly: float,
+        ) -> None:
+            self.expectation_calls.append(("match_regex", column, pattern, mostly))
+
+        def expect_column_values_to_be_in_set(self, column: str, values: set[str]) -> None:
+            self.expectation_calls.append(("in_set", column, values))
+
+        def validate(self) -> _StubValidation:
+            if fail_on_validate:
+                raise RuntimeError("validation boom")
+
+            results = [
+                _StubExpectationResult(
+                    success=False,
+                    expectation_config={
+                        "type": "expect_column_values_to_match_regex",
+                        "kwargs": {"column": "contact_primary_email"},
+                    },
+                    result={"unexpected_list": ["bad1", "bad2", "bad3", "bad4"]},
+                ),
+                _StubExpectationResult(
+                    success=False,
+                    expectation_config={
+                        "type": "expect_column_values_to_be_between",
+                        "kwargs": {"column": "data_quality_score"},
+                    },
+                    result={"partial_unexpected_list": ["too-low"]},
+                ),
+                _StubExpectationResult(success=True, expectation_config={}, result={}),
+            ]
+            return _StubValidation(results=results, success=False)
+
+    runtime = {
+        "Batch": _StubBatch,
+        "ExpectationSuite": _StubExpectationSuite,
+        "EphemeralDataContext": _StubDataContext,
+        "DataContextConfig": _StubDataContextConfig,
+        "InMemoryStoreBackendDefaults": _StubStoreDefaults,
+        "PandasExecutionEngine": _StubExecutionEngine,
+        "Validator": _StubValidator,
+        "project_manager": project_manager,
+    }
+    return runtime, project_manager
+
+
+def test_run_with_great_expectations_collects_failures_and_restores_context():
+    runtime, manager = _make_stub_ge_runtime()
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Org"],
+            "organization_slug": ["org"],
+            "data_quality_score": [0.2],
+            "contact_primary_email": ["bad"],
+            "contact_primary_phone": ["+27123456789"],
+            "website": ["https://example.com"],
+            "country": ["South Africa"],
+        }
+    )
+
+    summary = _run_with_great_expectations(
+        df,
+        email_mostly=0.9,
+        phone_mostly=0.9,
+        website_mostly=0.9,
+        runtime_override=runtime,
+    )
+
+    assert summary is not None
+    assert summary.success is False
+    assert "unexpected ['bad1', 'bad2', 'bad3']" in summary.failures[0]
+    assert any("data_quality_score" in failure for failure in summary.failures)
+    assert manager.current_project == "previous_project"
+    assert len(manager.set_history) == 2
+    assert manager.set_history[-1] == "previous_project"
+
+
+def test_run_with_great_expectations_restores_context_on_error():
+    runtime, manager = _make_stub_ge_runtime(fail_on_validate=True)
+    df = pd.DataFrame(
+        {
+            "organization_name": ["Org"],
+            "organization_slug": ["org"],
+            "data_quality_score": [0.2],
+            "contact_primary_email": ["bad"],
+            "contact_primary_phone": ["+27123456789"],
+            "website": ["https://example.com"],
+            "country": ["South Africa"],
+        }
+    )
+
+    with pytest.raises(RuntimeError):
+        _run_with_great_expectations(
+            df,
+            email_mostly=0.9,
+            phone_mostly=0.9,
+            website_mostly=0.9,
+            runtime_override=runtime,
+        )
+
+    assert manager.current_project == "previous_project"
+    assert manager.set_history[-1] == "previous_project"
 
 
 @pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")
