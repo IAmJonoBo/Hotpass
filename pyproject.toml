@@ -33,38 +33,19 @@ orchestration = [
   "opentelemetry-sdk>=1.20.0",
 ]
 
-entity_resolution = [
-  "splink>=3.9.0",
-]
+entity_resolution = ["splink>=3.9.0"]
 
-ml_scoring = [
-  "scikit-learn>=1.5.0",
-  "xgboost>=2.0.0",
-]
+ml_scoring = ["scikit-learn>=1.5.0", "xgboost>=2.0.0"]
 
-enrichment = [
-  "trafilatura>=1.12.0",
-  "playwright>=1.47.0",
-  "requests>=2.32.0",
-]
+enrichment = ["trafilatura>=1.12.0", "playwright>=1.47.0", "requests>=2.32.0"]
 
-geospatial = [
-  "geopy>=2.4.0",
-  "geopandas>=0.14.0",
-]
+geospatial = ["geopy>=2.4.0", "geopandas>=0.14.0"]
 
-compliance = [
-  "presidio-analyzer>=2.2.0",
-  "presidio-anonymizer>=2.2.0",
-]
+compliance = ["presidio-analyzer>=2.2.0", "presidio-anonymizer>=2.2.0"]
 
-dashboards = [
-  "streamlit>=1.40.0",
-]
+dashboards = ["streamlit>=1.40.0"]
 
-caching = [
-  "redis>=5.0.0",
-]
+caching = ["redis>=5.0.0"]
 dev = [
   "pytest>=8.4.2",
   "pytest-cov>=7.0.0",
@@ -110,9 +91,7 @@ minversion = "8.0"
 testpaths = ["tests"]
 addopts = "--maxfail=1 --disable-warnings --cov=src --cov-report=term-missing"
 pythonpath = ["src"]
-markers = [
-    "accessibility: accessibility semantics checks",
-]
+markers = ["accessibility: accessibility semantics checks"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -133,21 +112,14 @@ show_missing = true
 skip_empty = true
 
 [tool.mutmut]
-paths_to_mutate = [
-    "src/hotpass/quality.py",
-    "src/hotpass/pipeline_enhanced.py",
-]
+paths_to_mutate = ["src/hotpass/quality.py", "src/hotpass/pipeline_enhanced.py"]
 tests_dir = [
-    "tests/test_quality.py",
-    "tests/test_quality_report.py",
-    "tests/test_pipeline_enhanced.py",
-    "tests/contracts",
+  "tests/test_quality.py",
+  "tests/test_quality_report.py",
+  "tests/test_pipeline_enhanced.py",
+  "tests/contracts",
 ]
-also_copy = [
-    "src/hotpass",
-]
+also_copy = ["src/hotpass"]
 
 [dependency-groups]
-dev = [
-    "types-requests>=2.32.4.20250913",
-]
+dev = ["types-requests>=2.32.4.20250913"]

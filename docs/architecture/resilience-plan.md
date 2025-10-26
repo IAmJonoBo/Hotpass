@@ -8,11 +8,11 @@ last_updated: 2025-10-27
 
 ## SLOs and error budgets
 
-| Service | SLI | Target | Error budget | Measurement |
-| --- | --- | --- | --- | --- |
-| Pipeline execution | P95 completion time | ≤ 120s | 5% of monthly runs | Prefect metrics exported via OTLP |
-| Quality accuracy | Valid records / total | ≥ 95% | 5% | Quality report metrics |
-| Dashboard availability | Uptime | ≥ 99.5% | 0.5% | Uptime robot / synthetic checks |
+| Service                | SLI                   | Target  | Error budget       | Measurement                       |
+| ---------------------- | --------------------- | ------- | ------------------ | --------------------------------- |
+| Pipeline execution     | P95 completion time   | ≤ 120s  | 5% of monthly runs | Prefect metrics exported via OTLP |
+| Quality accuracy       | Valid records / total | ≥ 95%   | 5%                 | Quality report metrics            |
+| Dashboard availability | Uptime                | ≥ 99.5% | 0.5%               | Uptime robot / synthetic checks   |
 
 ## Observability roadmap
 

@@ -17,7 +17,11 @@ from .compliance import POPIAPolicy, add_provenance_columns, detect_pii_in_dataf
 from .enrichment import CacheManager, enrich_dataframe_with_websites
 from .entity_resolution import add_ml_priority_scores, resolve_entities_fallback
 from .geospatial import geocode_dataframe, normalize_address
-from .observability import get_pipeline_metrics, initialize_observability, trace_operation
+from .observability import (
+    get_pipeline_metrics,
+    initialize_observability,
+    trace_operation,
+)
 from .pipeline import PipelineConfig, PipelineResult, run_pipeline
 
 logger = logging.getLogger(__name__)
@@ -65,10 +69,16 @@ def run_enhanced_pipeline(
         metrics = None
 
     # Run base pipeline
-    with trace_operation("base_pipeline") if enhanced_config.enable_observability else _noop():
+    with (
+        trace_operation("base_pipeline")
+        if enhanced_config.enable_observability
+        else _noop()
+    ):
         result = run_pipeline(config)
         if metrics:
-            metrics.record_records_processed(len(result.refined), source="base_pipeline")
+            metrics.record_records_processed(
+                len(result.refined), source="base_pipeline"
+            )
 
     df = result.refined
 
@@ -108,12 +118,18 @@ def run_enhanced_pipeline(
 
     # Geospatial Enrichment
     if enhanced_config.enable_geospatial and enhanced_config.geocode_addresses:
-        with trace_operation("geospatial") if enhanced_config.enable_observability else _noop():
+        with (
+            trace_operation("geospatial")
+            if enhanced_config.enable_observability
+            else _noop()
+        ):
             logger.info("Running geospatial enrichment...")
             try:
                 # Normalize addresses first
                 if "address_primary" in df.columns:
-                    df["address_primary"] = df["address_primary"].apply(normalize_address)
+                    df["address_primary"] = df["address_primary"].apply(
+                        normalize_address
+                    )
 
                 # Geocode addresses
                 df = geocode_dataframe(
@@ -125,14 +141,20 @@ def run_enhanced_pipeline(
 
     # External Data Enrichment
     if enhanced_config.enable_enrichment and enhanced_config.enrich_websites:
-        with trace_operation("enrichment") if enhanced_config.enable_observability else _noop():
+        with (
+            trace_operation("enrichment")
+            if enhanced_config.enable_observability
+            else _noop()
+        ):
             logger.info("Running external data enrichment...")
             try:
                 cache = CacheManager(db_path=enhanced_config.cache_path)
 
                 # Enrich from websites
                 if "website" in df.columns:
-                    df = enrich_dataframe_with_websites(df, website_column="website", cache=cache)
+                    df = enrich_dataframe_with_websites(
+                        df, website_column="website", cache=cache
+                    )
                 logger.info("External enrichment complete")
 
                 # Log cache stats
@@ -143,7 +165,11 @@ def run_enhanced_pipeline(
 
     # Compliance and PII Detection
     if enhanced_config.enable_compliance:
-        with trace_operation("compliance") if enhanced_config.enable_observability else _noop():
+        with (
+            trace_operation("compliance")
+            if enhanced_config.enable_observability
+            else _noop()
+        ):
             logger.info("Running compliance checks...")
             try:
                 # Add provenance tracking
@@ -173,7 +199,9 @@ def run_enhanced_pipeline(
         metrics.record_records_processed(len(df), source="enhanced_pipeline")
         if result.quality_report and result.quality_report.total_records > 0:
             # Calculate quality score from data quality distribution
-            quality_score = result.quality_report.data_quality_distribution.get("mean", 0.0)
+            quality_score = result.quality_report.data_quality_distribution.get(
+                "mean", 0.0
+            )
             metrics.update_quality_score(quality_score)
 
     return result

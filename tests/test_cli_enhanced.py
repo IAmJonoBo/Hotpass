@@ -220,7 +220,9 @@ def test_cmd_dashboard_valid_invocation(monkeypatch):
     exit_code = cmd_dashboard(args)
 
     assert exit_code == 0
-    expected_path = str(Path(cli_enhanced_module.__file__).resolve().parent / "dashboard.py")
+    expected_path = str(
+        Path(cli_enhanced_module.__file__).resolve().parent / "dashboard.py"
+    )
 
     assert captured == [
         [

@@ -8,8 +8,8 @@ last_updated: 2025-10-25
 
 ## Quarterly governance forum
 
-| Cadence | Participants | Agenda | Inputs | Outputs |
-| --- | --- | --- | --- | --- |
+| Cadence                                                 | Participants                                              | Agenda                                                                                   | Inputs                                                                                       | Outputs                                                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Quarterly (aligned with compliance verification window) | Platform Engineering, QA, Compliance, Product, DX sponsor | SPACE/DORA metrics review, experiment status, backlog reprioritisation, risk assessment. | Metrics dashboard, experiment retros, Next_Steps quality gates, compliance evidence refresh. | Updated experiment backlog, action items with owners/dates, roadmap adjustments, risk register updates. |
 
 ## Monthly sync

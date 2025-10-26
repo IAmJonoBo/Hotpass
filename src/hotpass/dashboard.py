@@ -81,7 +81,9 @@ def _validate_output_path(path: Path, allowlist: Iterable[Path]) -> Path:
     """Validate output path selection against allowlist."""
 
     resolved = path.expanduser().resolve()
-    _ensure_path_within_allowlist(resolved.parent, allowlist, description="Output directory")
+    _ensure_path_within_allowlist(
+        resolved.parent, allowlist, description="Output directory"
+    )
     return resolved
 
 
@@ -188,7 +190,9 @@ def main():
     )
 
     # Main tabs
-    tab1, tab2, tab3 = st.tabs(["Pipeline Control", "Execution History", "Quality Metrics"])
+    tab1, tab2, tab3 = st.tabs(
+        ["Pipeline Control", "Execution History", "Quality Metrics"]
+    )
 
     with tab1:
         st.header("Pipeline Execution")
@@ -196,16 +200,24 @@ def main():
         col1, col2 = st.columns([3, 1])
 
         with col1:
-            st.info("Configure settings in the sidebar, then click 'Run Pipeline' to execute")
+            st.info(
+                "Configure settings in the sidebar, then click 'Run Pipeline' to execute"
+            )
 
         with col2:
-            run_button = st.button(RUN_BUTTON_LABEL, type="primary", use_container_width=True)
+            run_button = st.button(
+                RUN_BUTTON_LABEL, type="primary", use_container_width=True
+            )
 
         if run_button:
             with st.spinner("Running pipeline..."):
                 try:
-                    input_dir_path = _validate_input_directory(Path(input_dir), allowlist)
-                    output_path_obj = _validate_output_path(Path(output_path), allowlist)
+                    input_dir_path = _validate_input_directory(
+                        Path(input_dir), allowlist
+                    )
+                    output_path_obj = _validate_output_path(
+                        Path(output_path), allowlist
+                    )
 
                     # Build configuration
                     profile = get_default_profile(profile_name)
@@ -214,7 +226,9 @@ def main():
                         output_path=output_path_obj,
                         industry_profile=profile,
                         excel_options=ExcelReadOptions(
-                            chunk_size=excel_chunk_size if excel_chunk_size > 0 else None
+                            chunk_size=(
+                                excel_chunk_size if excel_chunk_size > 0 else None
+                            )
                         ),
                     )
 
@@ -248,7 +262,10 @@ def main():
                         st.metric("Total Records", len(result.refined))
 
                     with col2:
-                        st.metric("Duration", f"{(end_time - start_time).total_seconds():.1f}s")
+                        st.metric(
+                            "Duration",
+                            f"{(end_time - start_time).total_seconds():.1f}s",
+                        )
 
                     with col3:
                         mean_quality = result.refined["data_quality_score"].mean()
@@ -301,9 +318,21 @@ def main():
             # Recent runs table
             st.subheader("Recent Runs")
             display_df = df[
-                ["timestamp", "total_records", "expectations_passed", "duration_seconds", "profile"]
+                [
+                    "timestamp",
+                    "total_records",
+                    "expectations_passed",
+                    "duration_seconds",
+                    "profile",
+                ]
             ].head(20)
-            display_df.columns = ["Timestamp", "Records", "Passed", "Duration (s)", "Profile"]
+            display_df.columns = [
+                "Timestamp",
+                "Records",
+                "Passed",
+                "Duration (s)",
+                "Profile",
+            ]
             st.dataframe(display_df, use_container_width=True)
 
             # Trend chart
@@ -312,7 +341,9 @@ def main():
                 chart_data = df[["timestamp", "total_records"]].set_index("timestamp")
                 st.line_chart(chart_data)
         else:
-            st.info("No execution history available. Run the pipeline to see results here.")
+            st.info(
+                "No execution history available. Run the pipeline to see results here."
+            )
 
     with tab3:
         st.header("Quality Metrics")
@@ -348,7 +379,9 @@ def main():
                 ).round(2)
                 st.dataframe(perf_stats, use_container_width=True)
         else:
-            st.info("No quality metrics available yet. Run the pipeline to collect metrics.")
+            st.info(
+                "No quality metrics available yet. Run the pipeline to collect metrics."
+            )
 
     # Footer
     st.markdown("---")

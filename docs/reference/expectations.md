@@ -10,33 +10,33 @@ Hotpass uses [Great Expectations](https://greatexpectations.io/) to protect down
 
 ## Core dataset checks
 
-| Expectation | Description |
-| --- | --- |
-| `expect_table_row_count_to_be_between` | Validates overall row counts per source workbook. |
-| `expect_table_columns_to_match_ordered_list` | Ensures the canonical SSOT schema is intact. |
-| `expect_table_columns_to_not_be_null` | Asserts that required fields are populated. |
+| Expectation                                  | Description                                       |
+| -------------------------------------------- | ------------------------------------------------- |
+| `expect_table_row_count_to_be_between`       | Validates overall row counts per source workbook. |
+| `expect_table_columns_to_match_ordered_list` | Ensures the canonical SSOT schema is intact.      |
+| `expect_table_columns_to_not_be_null`        | Asserts that required fields are populated.       |
 
 ## Contact quality
 
-| Expectation | Description |
-| --- | --- |
-| `expect_column_values_to_match_regex` | Validates email, phone, and URL formats. |
-| `expect_column_values_to_be_unique` | Prevents duplicate contact identifiers within a dataset. |
-| `expect_column_values_to_not_match_regex` | Blocks placeholder values such as `test@example.com`. |
+| Expectation                               | Description                                              |
+| ----------------------------------------- | -------------------------------------------------------- |
+| `expect_column_values_to_match_regex`     | Validates email, phone, and URL formats.                 |
+| `expect_column_values_to_be_unique`       | Prevents duplicate contact identifiers within a dataset. |
+| `expect_column_values_to_not_match_regex` | Blocks placeholder values such as `test@example.com`.    |
 
 ## Compliance and PII
 
-| Expectation | Description |
-| --- | --- |
-| `expect_column_values_to_not_contain_pii` | Flags sensitive personal information detected by Presidio. |
-| `expect_column_values_to_be_in_set` | Restricts status values to the approved list (`active`, `inactive`, etc.). |
+| Expectation                               | Description                                                                |
+| ----------------------------------------- | -------------------------------------------------------------------------- |
+| `expect_column_values_to_not_contain_pii` | Flags sensitive personal information detected by Presidio.                 |
+| `expect_column_values_to_be_in_set`       | Restricts status values to the approved list (`active`, `inactive`, etc.). |
 
 ## Enrichment coverage
 
-| Expectation | Description |
-| --- | --- |
-| `expect_column_values_to_not_be_null` | Verifies that enrichment fields (geocodes, registry IDs) are populated for critical records. |
-| `expect_select_column_values_to_be_unique_within_record` | Ensures enrichment sources do not emit duplicate identifiers for the same record. |
+| Expectation                                              | Description                                                                                  |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `expect_column_values_to_not_be_null`                    | Verifies that enrichment fields (geocodes, registry IDs) are populated for critical records. |
+| `expect_select_column_values_to_be_unique_within_record` | Ensures enrichment sources do not emit duplicate identifiers for the same record.            |
 
 ## Observability metrics
 

@@ -3,8 +3,8 @@
 ## Supported versions
 
 | Version | Supported |
-| --- | --- |
-| main | ✅ |
+| ------- | --------- |
+| main    | ✅        |
 
 ## Reporting a vulnerability
 

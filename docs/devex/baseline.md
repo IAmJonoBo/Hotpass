@@ -8,12 +8,12 @@ last_updated: 2025-10-25
 
 ## Personas and context
 
-| Persona | Team | Motivations | Friction points | Critical workflows |
-| --- | --- | --- | --- | --- |
-| Data reliability engineer | Platform | Ensure refined datasets land in downstream analytics systems with verified provenance. | Manual Prefect credential bootstrapping, uncertainty around SBOM availability during incident reviews. | Hotpass CLI orchestration, Prefect deployment promotion, compliance evidence export. |
-| Compliance analyst | Security & Compliance | Prove POPIA/ISO adherence with auditable artefacts. | Evidence scattered across notebooks and ad-hoc folders, no automated reminder for quarterly verification cadence. | Reviewing remediation backlog, exporting audit trails, compiling DSAR responses. |
-| Insights developer | Data & Analytics | Prototype enrichments and measure data quality improvements. | Local setup requires repeated `uv sync` runs and manual feature flagging, lack of self-service Backstage templates. | Creating new enrichment flows, adding expectations, iterating on dashboard visualisations. |
-| Product manager | Product | Communicate delivery health and risk posture to leadership. | No single source for SPACE metrics or DevEx experiment status, limited visibility into supply-chain guardrails. | Reviewing roadmap, preparing quarterly business reviews, triaging backlog trade-offs. |
+| Persona                   | Team                  | Motivations                                                                            | Friction points                                                                                                     | Critical workflows                                                                         |
+| ------------------------- | --------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Data reliability engineer | Platform              | Ensure refined datasets land in downstream analytics systems with verified provenance. | Manual Prefect credential bootstrapping, uncertainty around SBOM availability during incident reviews.              | Hotpass CLI orchestration, Prefect deployment promotion, compliance evidence export.       |
+| Compliance analyst        | Security & Compliance | Prove POPIA/ISO adherence with auditable artefacts.                                    | Evidence scattered across notebooks and ad-hoc folders, no automated reminder for quarterly verification cadence.   | Reviewing remediation backlog, exporting audit trails, compiling DSAR responses.           |
+| Insights developer        | Data & Analytics      | Prototype enrichments and measure data quality improvements.                           | Local setup requires repeated `uv sync` runs and manual feature flagging, lack of self-service Backstage templates. | Creating new enrichment flows, adding expectations, iterating on dashboard visualisations. |
+| Product manager           | Product               | Communicate delivery health and risk posture to leadership.                            | No single source for SPACE metrics or DevEx experiment status, limited visibility into supply-chain guardrails.     | Reviewing roadmap, preparing quarterly business reviews, triaging backlog trade-offs.      |
 
 ## Current developer journey
 

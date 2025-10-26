@@ -15,12 +15,12 @@ last_updated: 2025-10-25
 
 ## Pipeline additions
 
-| Stage | Tool | Command | Artefact |
-| --- | --- | --- | --- |
-| SBOM | CycloneDX | `uv run python scripts/supply_chain/generate_sbom.py` | `dist/sbom/hotpass-sbom.json` |
-| Provenance | In-toto | `uv run python scripts/supply_chain/generate_provenance.py` | `dist/provenance/provenance.json` |
-| Checksums | Python stdlib | `python scripts/supply_chain/generate_provenance.py` (sha256) | Embedded in provenance |
-| Policy gate | Python rego shim | `uv run python scripts/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json` | Pass/fail |
+| Stage       | Tool             | Command                                                                             | Artefact                          |
+| ----------- | ---------------- | ----------------------------------------------------------------------------------- | --------------------------------- |
+| SBOM        | CycloneDX        | `uv run python scripts/supply_chain/generate_sbom.py`                               | `dist/sbom/hotpass-sbom.json`     |
+| Provenance  | In-toto          | `uv run python scripts/supply_chain/generate_provenance.py`                         | `dist/provenance/provenance.json` |
+| Checksums   | Python stdlib    | `python scripts/supply_chain/generate_provenance.py` (sha256)                       | Embedded in provenance            |
+| Policy gate | Python rego shim | `uv run python scripts/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json` | Pass/fail                         |
 
 ## Signing strategy
 

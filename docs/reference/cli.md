@@ -14,22 +14,22 @@ Hotpass exposes two console scripts. Use `hotpass` for the base pipeline and `ho
 uv run hotpass [OPTIONS]
 ```
 
-| Option | Description |
-| --- | --- |
-| `--input-dir PATH` | Directory containing raw spreadsheets (default: `./data`). |
-| `--output-path PATH` | Destination path for the refined Excel workbook (default: `<input-dir>/refined_data.xlsx`). |
-| `--config FILE` | TOML or JSON configuration file applied before CLI flags. Repeat the flag to merge multiple files. |
-| `--country-code TEXT` | ISO country code used when normalising phone numbers (default: `ZA`). |
-| `--expectation-suite TEXT` | Great Expectations suite to execute (default: `default`). |
-| `--archive / --no-archive` | Enable or disable creation of a timestamped `.zip` archive that bundles the refined workbook. |
-| `--dist-dir PATH` | Directory used for archive output when `--archive` is enabled (default: `./dist`). |
-| `--log-format [rich|json]` | Structured log format for pipeline output (default: `rich`). |
-| `--sensitive-field FIELD` | Field name to redact from structured logs. Repeat the flag to mask multiple fields. Default redactions cover `email`, `phone`, `contact`, `cell`, `mobile`, and `whatsapp`. |
-| `--report-path PATH` | Optional path to write the quality report (Markdown or HTML). |
-| `--report-format [markdown|html]` | Explicit report format override. When omitted the format is inferred from `--report-path`. |
-| `--excel-chunk-size INTEGER` | Chunk size for streaming Excel sheets; must be greater than zero when provided. |
-| `--excel-engine TEXT` | Explicit pandas Excel engine (for example `openpyxl`). |
-| `--excel-stage-dir PATH` | Directory for staging chunked Excel reads to parquet for reuse. |
+| Option                       | Description                                                                                                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `--input-dir PATH`           | Directory containing raw spreadsheets (default: `./data`).                                                                                                                  |
+| `--output-path PATH`         | Destination path for the refined Excel workbook (default: `<input-dir>/refined_data.xlsx`).                                                                                 |
+| `--config FILE`              | TOML or JSON configuration file applied before CLI flags. Repeat the flag to merge multiple files.                                                                          |
+| `--country-code TEXT`        | ISO country code used when normalising phone numbers (default: `ZA`).                                                                                                       |
+| `--expectation-suite TEXT`   | Great Expectations suite to execute (default: `default`).                                                                                                                   |
+| `--archive / --no-archive`   | Enable or disable creation of a timestamped `.zip` archive that bundles the refined workbook.                                                                               |
+| `--dist-dir PATH`            | Directory used for archive output when `--archive` is enabled (default: `./dist`).                                                                                          |
+| `--log-format [rich          | json]`                                                                                                                                                                      | Structured log format for pipeline output (default: `rich`).                               |
+| `--sensitive-field FIELD`    | Field name to redact from structured logs. Repeat the flag to mask multiple fields. Default redactions cover `email`, `phone`, `contact`, `cell`, `mobile`, and `whatsapp`. |
+| `--report-path PATH`         | Optional path to write the quality report (Markdown or HTML).                                                                                                               |
+| `--report-format [markdown   | html]`                                                                                                                                                                      | Explicit report format override. When omitted the format is inferred from `--report-path`. |
+| `--excel-chunk-size INTEGER` | Chunk size for streaming Excel sheets; must be greater than zero when provided.                                                                                             |
+| `--excel-engine TEXT`        | Explicit pandas Excel engine (for example `openpyxl`).                                                                                                                      |
+| `--excel-stage-dir PATH`     | Directory for staging chunked Excel reads to parquet for reuse.                                                                                                             |
 
 Structured JSON logs redact the default sensitive fields listed above. Add additional masks by repeating `--sensitive-field` or
 set the list in a configuration file (`sensitive_fields = ["passport", "id_number"]`). When the list is empty the CLI emits full

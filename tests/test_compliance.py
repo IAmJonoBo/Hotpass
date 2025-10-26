@@ -62,7 +62,10 @@ def test_detect_pii_success():
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
 def test_detect_pii_empty_text():
     """Test PII detection with empty text."""
-    with patch("hotpass.compliance.AnalyzerEngine"), patch("hotpass.compliance.AnonymizerEngine"):
+    with (
+        patch("hotpass.compliance.AnalyzerEngine"),
+        patch("hotpass.compliance.AnonymizerEngine"),
+    ):
         detector = PIIDetector()
         assert detector.detect_pii("") == []
         assert detector.detect_pii(None) == []
@@ -348,6 +351,8 @@ def test_add_provenance_columns_with_timestamp():
     )
 
     timestamp = "2025-01-01T00:00:00"
-    result_df = add_provenance_columns(df, source_name="Test", processing_timestamp=timestamp)
+    result_df = add_provenance_columns(
+        df, source_name="Test", processing_timestamp=timestamp
+    )
 
     assert result_df.loc[0, "processed_at"] == timestamp

@@ -8,11 +8,11 @@ last_updated: 2025-10-25
 
 ## Automated checks
 
-| Layer | Tooling | Command | Output |
-| --- | --- | --- | --- |
-| Component semantics | Pytest + Streamlit shim verifying labels/help text. | `uv run pytest -m accessibility tests/accessibility` | Pass/fail, pytest report. |
-| Browser automation (phase 2) | Playwright + axe-core via `axe-playwright-python`. | `uv run python scripts/accessibility/run_browser_checks.py --url http://localhost:8501` | JSON axe violations uploaded as artifact. |
-| Documentation accessibility | `pa11y-ci` against TechDocs output. | `pa11y-ci --config pa11y.config.json` (planned) | HTML/CSV violation summary. |
+| Layer                        | Tooling                                             | Command                                                                                 | Output                                    |
+| ---------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Component semantics          | Pytest + Streamlit shim verifying labels/help text. | `uv run pytest -m accessibility tests/accessibility`                                    | Pass/fail, pytest report.                 |
+| Browser automation (phase 2) | Playwright + axe-core via `axe-playwright-python`.  | `uv run python scripts/accessibility/run_browser_checks.py --url http://localhost:8501` | JSON axe violations uploaded as artifact. |
+| Documentation accessibility  | `pa11y-ci` against TechDocs output.                 | `pa11y-ci --config pa11y.config.json` (planned)                                         | HTML/CSV violation summary.               |
 
 The repository currently ships semantic checks via pytest (see [`tests/accessibility/test_dashboard_accessibility.py`](../../tests/accessibility/test_dashboard_accessibility.py)). Browser-based axe scans are staged for enablement after Streamlit hosting pipeline is automated.
 

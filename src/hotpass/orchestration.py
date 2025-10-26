@@ -51,7 +51,9 @@ else:
     if _prefect_handlers is not None:
         _console_handler_cls = getattr(_prefect_handlers, "ConsoleHandler", None)
         if _console_handler_cls is None:
-            _console_handler_cls = getattr(_prefect_handlers, "PrefectConsoleHandler", None)
+            _console_handler_cls = getattr(
+                _prefect_handlers, "PrefectConsoleHandler", None
+            )
 
     if _console_handler_cls is not None:
         _prefect_console_emit = _console_handler_cls.emit
