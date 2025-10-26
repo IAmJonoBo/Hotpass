@@ -25,7 +25,7 @@ AUTH_PASSWORD_ENV = "HOTPASS_DASHBOARD_PASSWORD"  # pragma: allowlist secret
 ALLOWED_ROOTS_ENV = "HOTPASS_DASHBOARD_ALLOWED_ROOTS"
 AUTH_STATE_KEY = "hotpass_dashboard_authenticated"
 # nosec B105 - UI label only
-PASSWORD_INPUT_LABEL = "Dashboard password"  # pragma: allowlist secret
+PASSWORD_INPUT_LABEL = "Dashboard Password"  # pragma: allowlist secret
 UNLOCK_BUTTON_LABEL = "Unlock dashboard"
 RUN_BUTTON_LABEL = "▶️ Run Pipeline"
 
