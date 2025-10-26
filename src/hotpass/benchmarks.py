@@ -35,6 +35,12 @@ def _average(values: list[float]) -> float:
 _BENCHMARK_FIELDS: list[tuple[str, str]] = [
     ("Load seconds", "load_seconds"),
     ("Aggregation seconds", "aggregation_seconds"),
+    ("Polars transform seconds", "polars_transform_seconds"),
+    ("Polars materialize seconds", "polars_materialize_seconds"),
+    ("Pandas sort seconds", "pandas_sort_seconds"),
+    ("Polars sort speedup", "polars_sort_speedup"),
+    ("DuckDB sort seconds", "duckdb_sort_seconds"),
+    ("Polars write seconds", "polars_write_seconds"),
     ("Expectations seconds", "expectations_seconds"),
     ("Write seconds", "write_seconds"),
     ("Total seconds", "total_seconds"),

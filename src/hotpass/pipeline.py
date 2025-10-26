@@ -7,13 +7,12 @@ import json
 import logging
 import re
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import duckdb
 import pandas as pd
 import polars as pl
 from pandera.errors import SchemaErrors
@@ -28,6 +27,8 @@ from .data_sources import (
 from .domain.party import PartyStore, build_party_store_from_refined
 from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from .normalization import clean_string, coalesce, normalize_province, slugify
+from .storage import DuckDBAdapter, PolarsDataset
+from .telemetry import pipeline_stage
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from .linkage import LinkageResult
@@ -37,7 +38,7 @@ from .pipeline_reporting import (
     html_performance_rows,
     html_source_performance,
 )
-from .quality import ExpectationSummary, build_ssot_schema, run_expectations
+from .quality import build_ssot_schema, run_expectations
 from .validation import load_schema_descriptor
 
 # Set up module logger
@@ -162,7 +163,7 @@ def _value_present(value: object | None) -> bool:
     return bool(clean_string(value))
 
 
-def _row_quality_score(row: pd.Series) -> int:
+def _row_quality_score(row: Mapping[str, object | None]) -> int:
     checks = [
         _value_present(row.get("contact_emails")),
         _value_present(row.get("contact_phones")),
@@ -441,7 +442,7 @@ def _flatten_series_of_lists(series: pd.Series) -> list[str]:
     return collect_unique(items)
 
 
-def _latest_iso_date(values: Iterable[str | None]) -> str | None:
+def _latest_iso_date(values: Iterable[object | None]) -> str | None:
     candidates: list[object] = []
     for value in values:
         if value is None or (isinstance(value, float) and pd.isna(value)):
@@ -505,20 +506,25 @@ def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:
     }
 
 
-def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]:
-    organization_name = coalesce(*group["organization_name"].tolist())
-    group = group.reset_index(drop=True)
+def _aggregate_group(
+    slug: str | None, rows: Sequence[Mapping[str, Any]]
+) -> dict[str, object | None]:
+    if not rows:
+        raise ValueError("Cannot aggregate empty group")
+
+    entries = [dict(row) for row in rows]
+    organization_name = coalesce(*(entry.get("organization_name") for entry in entries))
 
     row_metadata: list[RowMetadata] = []
-    for idx, row in group.iterrows():
-        raw_dataset = row.get("source_dataset")
+    for idx, entry in enumerate(entries):
+        raw_dataset = entry.get("source_dataset")
         dataset = clean_string(raw_dataset)
         if not dataset:
             dataset = str(raw_dataset).strip() if raw_dataset else "Unknown"
-        record_id = clean_string(row.get("source_record_id"))
+        record_id = clean_string(entry.get("source_record_id"))
         priority = SOURCE_PRIORITY.get(dataset, 0)
-        last_interaction = _parse_last_interaction(row.get("last_interaction_date"))
-        quality_score = _row_quality_score(row)
+        last_interaction = _parse_last_interaction(entry.get("last_interaction_date"))
+        quality_score = _row_quality_score(entry)
         row_metadata.append(
             RowMetadata(
                 index=idx,
@@ -556,7 +562,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     def _normalise_scalar(value: object | None) -> str | None:
         if isinstance(value, str):
             return clean_string(value)
-        if value is None or (isinstance(value, float) and pd.isna(value)):
+        if value is None:
+            return None
+        if isinstance(value, float) and pd.isna(value):
             return None
         return clean_string(str(value))
 
@@ -564,7 +572,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         selections: list[ValueSelection] = []
         seen: set[str] = set()
         for idx in sorted_indices:
-            row = group.iloc[idx]
+            row = entries[idx]
             raw_value = row.get(column)
             values: Iterable[object | None]
             if treat_list and isinstance(raw_value, list):
@@ -573,9 +581,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
                 values = [raw_value]
             for raw in values:
                 normalised = _normalise_scalar(raw)
-                if not normalised:
-                    continue
-                if normalised in seen:
+                if not normalised or normalised in seen:
                     continue
                 seen.add(normalised)
                 selections.append(ValueSelection(normalised, row_metadata[idx]))
@@ -616,7 +622,6 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
                 }
                 for sel in contributors
             ]
-            # Track as conflict for reporting
             conflicts.append(
                 {
                     "field": field,
@@ -633,6 +638,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
             )
         provenance[field] = entry
         return primary_selection
+
+    def _column_values(column: str) -> list[object | None]:
+        return [entry.get(column) for entry in entries]
 
     provinces = _iter_values("province")
     areas = _iter_values("area")
@@ -651,8 +659,19 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     name_values = _iter_values("contact_names", treat_list=True)
     role_values = _iter_values("contact_roles", treat_list=True)
 
-    source_datasets = "; ".join(sorted(collect_unique(group["source_dataset"].tolist())))
-    source_record_ids = "; ".join(sorted(collect_unique(group["source_record_id"].tolist())))
+    dataset_labels = [
+        clean_string(value) or (str(value).strip() if value else None)
+        for value in _column_values("source_dataset")
+    ]
+    dataset_labels = [label for label in dataset_labels if label]
+    source_datasets = "; ".join(sorted(collect_unique(dataset_labels)))
+
+    record_ids = [
+        clean_string(value) or (str(value).strip() if value else None)
+        for value in _column_values("source_record_id")
+    ]
+    record_ids = [value for value in record_ids if value]
+    source_record_ids = "; ".join(sorted(collect_unique(record_ids)))
 
     province = provinces[0].value if provinces else None
     _record_provenance("province", provinces, province)
@@ -717,7 +736,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     def _first_value_from_row(selection: ValueSelection | None, column: str) -> str | None:
         if selection is None:
             return None
-        row = group.iloc[selection.row_metadata.index]
+        row = entries[selection.row_metadata.index]
         raw_value = row.get(column)
         if isinstance(raw_value, list):
             for item in raw_value:
@@ -744,7 +763,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         if primary_role:
             _record_provenance("contact_primary_role", role_values, primary_role)
 
-    last_interaction = _latest_iso_date(group["last_interaction_date"].tolist())
+    last_interaction = _latest_iso_date(_column_values("last_interaction_date"))
 
     quality = _summarise_quality(
         {
@@ -786,7 +805,7 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
         "last_interaction_date": last_interaction,
         "priority": priority_value,
         "privacy_basis": "Legitimate Interest",
-        "_conflicts": conflicts,  # Internal field for conflict tracking
+        "_conflicts": conflicts,
     }
     return result
 
@@ -887,7 +906,8 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
 
     _notify_progress(config, PIPELINE_EVENT_LOAD_STARTED)
     load_start = time.perf_counter()
-    combined, source_timings = _load_sources(config)
+    with pipeline_stage("ingest", {"input_dir": str(config.input_dir)}):
+        combined, source_timings = _load_sources(config)
     load_seconds = time.perf_counter() - load_start
 
     _notify_progress(
@@ -985,34 +1005,89 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             party_store=PartyStore(),
         )
 
-    aggregated_rows = []
-    all_conflicts: list[dict[str, Any]] = []
+    combined_polars = pl.from_pandas(combined, include_index=False)
+    indexed_polars = combined_polars.with_row_count("_row_index")
+    _NULL_SLUG_SENTINEL = "__HOTPASS_NULL_SLUG__"
+    group_table = (
+        indexed_polars.with_columns(
+            pl.when(pl.col("organization_slug").is_null())
+            .then(pl.lit(_NULL_SLUG_SENTINEL))
+            .otherwise(pl.col("organization_slug"))
+            .alias("_slug_group_key")
+        )
+        .group_by("_slug_group_key", maintain_order=True)
+        .agg(pl.col("_row_index"))
+        .with_columns(
+            pl.when(pl.col("_slug_group_key") == _NULL_SLUG_SENTINEL)
+            .then(pl.lit(None, dtype=pl.Utf8))
+            .otherwise(pl.col("_slug_group_key"))
+            .alias("organization_slug")
+        )
+        .select(["organization_slug", "_row_index"])
+        .rename({"_row_index": "groups"})
+    )
+
     aggregation_start = time.perf_counter()
-    group_total = int(combined["organization_slug"].nunique(dropna=False))
+    group_total = int(group_table.height)
     _notify_progress(config, PIPELINE_EVENT_AGGREGATE_STARTED, total=group_total)
 
-    for index, (slug, group) in enumerate(
-        combined.groupby("organization_slug", dropna=False),
-        start=1,
+    with pipeline_stage(
+        "canonicalise",
+        {
+            "groups": group_total,
+            "records": int(combined_polars.height),
+        },
     ):
-        row_dict = _aggregate_group(slug, group)
-        # Extract and accumulate conflicts
-        conflicts_obj = row_dict.pop("_conflicts", [])
-        if isinstance(conflicts_obj, list):
-            all_conflicts.extend(conflicts_obj)
-        aggregated_rows.append(row_dict)
-        if group_total > 0:
-            if index == group_total or index % max(group_total // 10, 1) == 0:
-                _notify_progress(
-                    config,
-                    PIPELINE_EVENT_AGGREGATE_PROGRESS,
-                    completed=index,
-                    total=group_total,
-                    slug=str(slug),
-                )
+        aggregated_rows = []
+        all_conflicts = []
+        slug_series = group_table.get_column("organization_slug") if group_total else None
+        index_series = group_table.get_column("groups") if group_total else None
 
-    refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
-    refined_df = refined_df.sort_values("organization_name").reset_index(drop=True)
+        for index in range(group_total):
+            slug = slug_series[index] if slug_series is not None else None
+            indices = index_series[index] if index_series is not None else []
+            group_frame = combined_polars[indices]
+            row_dict = _aggregate_group(slug, group_frame.to_dicts())
+            conflicts_obj = row_dict.pop("_conflicts", [])
+            if isinstance(conflicts_obj, list):
+                all_conflicts.extend(conflicts_obj)
+            aggregated_rows.append(row_dict)
+            if group_total > 0:
+                completed = index + 1
+                if completed == group_total or completed % max(group_total // 10, 1) == 0:
+                    _notify_progress(
+                        config,
+                        PIPELINE_EVENT_AGGREGATE_PROGRESS,
+                        completed=completed,
+                        total=group_total,
+                        slug=str(slug),
+                    )
+
+        aggregated_dataset = PolarsDataset.from_rows(aggregated_rows, SSOT_COLUMNS)
+        aggregated_dataset.sort("organization_name")
+        pandas_sort_start = time.perf_counter()
+        _pandas_sorted = (
+            pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
+            .sort_values("organization_name")
+            .reset_index(drop=True)
+        )
+        pandas_sort_seconds = time.perf_counter() - pandas_sort_start
+        metrics["pandas_sort_seconds"] = pandas_sort_seconds
+        metrics["polars_transform_seconds"] = (
+            aggregated_dataset.timings.construction_seconds
+            + aggregated_dataset.timings.sort_seconds
+        )
+        if aggregated_dataset.timings.sort_seconds > 0:
+            metrics["polars_sort_speedup"] = (
+                pandas_sort_seconds / aggregated_dataset.timings.sort_seconds
+            )
+        else:
+            metrics["polars_sort_speedup"] = float("inf") if pandas_sort_seconds > 0 else 0.0
+
+        materialize_start = time.perf_counter()
+        refined_df = aggregated_dataset.to_pandas().reset_index(drop=True)
+        metrics["polars_materialize_seconds"] = time.perf_counter() - materialize_start
+
     metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
     _notify_progress(
         config,
@@ -1039,100 +1114,100 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         f"Aggregated {len(refined_df)} records with {len(all_conflicts)} conflict resolutions"
     )
 
-    schema = build_ssot_schema()
-    schema_errors: list[str] = []
-    validated_df = refined_df
-    _notify_progress(
-        config,
-        PIPELINE_EVENT_SCHEMA_STARTED,
-        total_records=len(refined_df),
-    )
-    try:
-        validated_df = schema.validate(refined_df, lazy=True)
-        logger.info("Schema validation passed")
-    except SchemaErrors as exc:
-        schema_errors = [
-            f"{row['column']}: {row['failure_case']}" for _, row in exc.failure_cases.iterrows()
-        ]
-        invalid_indices = exc.failure_cases["index"].unique().tolist()
-        valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
+    with pipeline_stage("validate", {"records": len(refined_df)}):
+        schema = build_ssot_schema()
+        schema_errors = []
+        validated_df = refined_df
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_SCHEMA_STARTED,
+            total_records=len(refined_df),
+        )
+        try:
+            validated_df = schema.validate(refined_df, lazy=True)
+            logger.info("Schema validation passed")
+        except SchemaErrors as exc:
+            schema_errors = [
+                f"{row['column']}: {row['failure_case']}" for _, row in exc.failure_cases.iterrows()
+            ]
+            invalid_indices = exc.failure_cases["index"].unique().tolist()
+            valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
 
-        # Check if all records failed validation
-        if not valid_indices:
-            logger.error(
-                f"All {len(refined_df)} records failed schema validation. "
-                "Writing unvalidated data with quality flags."
-            )
-            # Use the original refined_df instead of an empty dataframe
-            validated_df = refined_df
-            schema_errors.append(
-                f"CRITICAL: All {len(refined_df)} records failed schema validation. "
-                "Output contains unvalidated data."
-            )
-        else:
-            validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
-            logger.warning(
-                f"Schema validation found {len(schema_errors)} errors",
-                extra={
-                    "error_count": len(schema_errors),
-                    "invalid_records": len(invalid_indices),
-                },
-            )
-
-        if config.enable_audit_trail:
-            audit_trail.append(
-                {
-                    "timestamp": time.time(),
-                    "event": "schema_validation_errors",
-                    "details": {
+            if not valid_indices:
+                logger.error(
+                    f"All {len(refined_df)} records failed schema validation. "
+                    "Writing unvalidated data with quality flags."
+                )
+                validated_df = refined_df
+                schema_errors.append(
+                    f"CRITICAL: All {len(refined_df)} records failed schema validation. "
+                    "Output contains unvalidated data."
+                )
+            else:
+                validated_df = schema.validate(refined_df.loc[valid_indices], lazy=False)
+                logger.warning(
+                    f"Schema validation found {len(schema_errors)} errors",
+                    extra={
                         "error_count": len(schema_errors),
                         "invalid_records": len(invalid_indices),
-                        "all_records_invalid": not bool(valid_indices),
                     },
-                }
-            )
+                )
 
-    # Additional safeguard: if validated_df is empty after schema validation,
-    # but refined_df had data, write the original refined_df instead
-    if len(validated_df) == 0 and len(refined_df) > 0:
-        logger.error(
-            f"Schema validation resulted in empty output despite {len(refined_df)} input records. "
-            "Writing original data to prevent data loss."
+            if config.enable_audit_trail:
+                audit_trail.append(
+                    {
+                        "timestamp": time.time(),
+                        "event": "schema_validation_errors",
+                        "details": {
+                            "error_count": len(schema_errors),
+                            "invalid_records": len(invalid_indices),
+                            "all_records_invalid": not bool(valid_indices),
+                        },
+                    }
+                )
+
+        if len(validated_df) == 0 and len(refined_df) > 0:
+            refined_count = len(refined_df)
+            logger.error(
+                (
+                    "Schema validation resulted in empty output despite %d input records. "
+                    "Writing original data to prevent data loss."
+                ),
+                refined_count,
+            )
+            validated_df = refined_df
+            if "CRITICAL: Schema validation resulted in complete data loss" not in schema_errors:
+                schema_errors.append(
+                    f"CRITICAL: Schema validation resulted in complete data loss. "
+                    f"All {len(refined_df)} records would have been filtered out. "
+                    "Writing original data to prevent empty output file."
+                )
+
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_SCHEMA_COMPLETED,
+            errors=len(schema_errors),
         )
-        validated_df = refined_df
-        if "CRITICAL: Schema validation resulted in complete data loss" not in schema_errors:
-            schema_errors.append(
-                f"CRITICAL: Schema validation resulted in complete data loss. "
-                f"All {len(refined_df)} records would have been filtered out. "
-                "Writing original data to prevent empty output file."
-            )
 
-    _notify_progress(
-        config,
-        PIPELINE_EVENT_SCHEMA_COMPLETED,
-        errors=len(schema_errors),
-    )
+        expectation_start = time.perf_counter()
+        profile = config.industry_profile
+        email_threshold = profile.email_validation_threshold if profile else 0.85
+        phone_threshold = profile.phone_validation_threshold if profile else 0.85
+        website_threshold = profile.website_validation_threshold if profile else 0.85
 
-    expectation_start = time.perf_counter()
-    # Use profile thresholds if available
-    profile = config.industry_profile
-    email_threshold = profile.email_validation_threshold if profile else 0.85
-    phone_threshold = profile.phone_validation_threshold if profile else 0.85
-    website_threshold = profile.website_validation_threshold if profile else 0.85
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_EXPECTATIONS_STARTED,
+            total_records=len(validated_df),
+        )
 
-    _notify_progress(
-        config,
-        PIPELINE_EVENT_EXPECTATIONS_STARTED,
-        total_records=len(validated_df),
-    )
-
-    expectation_summary: ExpectationSummary = run_expectations(
-        validated_df,
-        email_mostly=email_threshold,
-        phone_mostly=phone_threshold,
-        website_mostly=website_threshold,
-    )
-    metrics["expectations_seconds"] = time.perf_counter() - expectation_start
+        expectation_summary = run_expectations(
+            validated_df,
+            email_mostly=email_threshold,
+            phone_mostly=phone_threshold,
+            website_mostly=website_threshold,
+        )
+        metrics["expectations_seconds"] = time.perf_counter() - expectation_start
 
     logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
 
@@ -1143,31 +1218,32 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         failure_count=len(expectation_summary.failures),
     )
 
-    source_breakdown = combined["source_dataset"].value_counts().to_dict()
+    source_counts = (
+        combined_polars.select(pl.col("source_dataset"))
+        .drop_nulls()
+        .group_by("source_dataset")
+        .len()
+    )
+    source_breakdown = {
+        str(row["source_dataset"]): int(row["len"]) for row in source_counts.to_dicts()
+    }
 
-    polars_validated = pl.from_pandas(validated_df, include_index=False)
+    validated_dataset = PolarsDataset.from_pandas(validated_df)
     parquet_path = config.output_path.with_suffix(".parquet")
-    parquet_path.parent.mkdir(parents=True, exist_ok=True)
-    polars_validated.write_parquet(parquet_path)
+    validated_dataset.write_parquet(parquet_path)
     metrics["parquet_path"] = str(parquet_path)
+    metrics["polars_write_seconds"] = validated_dataset.timings.parquet_seconds
 
-    if polars_validated.height > 0:
-        stats = polars_validated.select(
-            pl.col("data_quality_score").mean().alias("mean"),
-            pl.col("data_quality_score").min().alias("min"),
-            pl.col("data_quality_score").max().alias("max"),
-        ).to_dicts()[0]
-        quality_distribution = {key: float(value) for key, value in stats.items()}
-    else:
-        quality_distribution = {"mean": 0.0, "min": 0.0, "max": 0.0}
+    quality_distribution = validated_dataset.column_stats("data_quality_score")
 
-    with duckdb.connect() as conn:
-        ordered_df = conn.execute(
-            "SELECT * FROM read_parquet(?) ORDER BY organization_name",
-            [str(parquet_path)],
-        ).fetch_df()
-    validated_df = ordered_df
-    pl.from_pandas(validated_df, include_index=False).write_parquet(parquet_path)
+    ordered_frame = validated_dataset.query(
+        DuckDBAdapter(),
+        "SELECT * FROM dataset ORDER BY organization_name",
+    )
+    validated_dataset.replace(ordered_frame)
+    metrics["duckdb_sort_seconds"] = validated_dataset.timings.query_seconds
+    validated_dataset.write_parquet(parquet_path)
+    validated_df = validated_dataset.to_pandas().reset_index(drop=True)
 
     # Generate recommendations if enabled
     recommendations = []
@@ -1183,47 +1259,58 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         execution_time=datetime.now(tz=UTC),
     )
 
-    config.output_path.parent.mkdir(parents=True, exist_ok=True)
-    _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
-    write_start = time.perf_counter()
-
-    # Use formatting if enabled
     suffix = config.output_path.suffix.lower()
+    write_start = time.perf_counter()
+    with pipeline_stage(
+        "publish",
+        {
+            "output_path": str(config.output_path),
+            "format": suffix or "unknown",
+            "records": len(validated_df),
+        },
+    ):
+        config.output_path.parent.mkdir(parents=True, exist_ok=True)
+        _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
 
-    if config.enable_formatting and suffix in [".xlsx", ".xls"]:
-        logger.info("Writing output with enhanced formatting")
-        with pd.ExcelWriter(config.output_path, engine="openpyxl") as writer:
-            validated_df.to_excel(writer, sheet_name="Data", index=False)
-            apply_excel_formatting(writer, "Data", validated_df, config.output_format)
+        if config.enable_formatting and suffix in [".xlsx", ".xls"]:
+            logger.info("Writing output with enhanced formatting")
+            with pd.ExcelWriter(config.output_path, engine="openpyxl") as writer:
+                validated_df.to_excel(writer, sheet_name="Data", index=False)
+                apply_excel_formatting(writer, "Data", validated_df, config.output_format)
 
-            # Add summary sheet
-            quality_report_dict = {
-                "total_records": len(refined_df),
-                "invalid_records": len(refined_df) - len(validated_df),
-                "expectations_passed": expectation_summary.success,
-            }
-            summary_df = create_summary_sheet(validated_df, quality_report_dict)
-            summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
-    elif suffix == ".csv":
-        validated_df.to_csv(config.output_path, index=False)
-        _write_csvw_metadata(config.output_path)
-    elif suffix == ".parquet":
-        # Snapshot already written via Polars, ensure DuckDB ordering persisted.
-        pl.from_pandas(validated_df, include_index=False).write_parquet(config.output_path)
-    else:
-        validated_df.to_excel(config.output_path, index=False)
+                quality_report_dict = {
+                    "total_records": len(refined_df),
+                    "invalid_records": len(refined_df) - len(validated_df),
+                    "expectations_passed": expectation_summary.success,
+                }
+                summary_df = create_summary_sheet(validated_df, quality_report_dict)
+                summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
+        elif suffix == ".csv":
+            validated_df.to_csv(config.output_path, index=False)
+            _write_csvw_metadata(config.output_path)
+        elif suffix == ".parquet":
+            pl.from_pandas(validated_df, include_index=False).write_parquet(config.output_path)
+        else:
+            validated_df.to_excel(config.output_path, index=False)
 
-    metrics["write_seconds"] = time.perf_counter() - write_start
-    metrics["total_seconds"] = time.perf_counter() - pipeline_start
-    if metrics["total_seconds"] > 0:
+        metrics["write_seconds"] = time.perf_counter() - write_start
+        metrics["total_seconds"] = time.perf_counter() - pipeline_start
+        if metrics["total_seconds"] > 0:
+            metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
+
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_WRITE_COMPLETED,
+            path=str(config.output_path),
+            write_seconds=metrics["write_seconds"],
+        )
+
+    if "write_seconds" not in metrics:
+        metrics["write_seconds"] = time.perf_counter() - write_start
+    if "total_seconds" not in metrics:
+        metrics["total_seconds"] = time.perf_counter() - pipeline_start
+    if metrics["total_seconds"] > 0 and "rows_per_second" not in metrics:
         metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
-
-    _notify_progress(
-        config,
-        PIPELINE_EVENT_WRITE_COMPLETED,
-        path=str(config.output_path),
-        write_seconds=metrics["write_seconds"],
-    )
 
     if config.enable_audit_trail:
         audit_trail.append(

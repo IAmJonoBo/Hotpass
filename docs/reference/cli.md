@@ -38,6 +38,16 @@ Structured JSON logs replace masked fields with `***redacted***` using the defau
 
 When running with rich output the CLI streams stage-aware progress updates covering load, aggregation, validation, and write phases. Interactive sessions prompt operators to review the top recommendations inline once the run completes.
 
+### Performance and telemetry metrics
+
+Every pipeline execution now emits granular performance timings alongside the existing summary metrics. The CLI prints the additional keys in the quality report and JSON logs:
+
+- `polars_transform_seconds` and `polars_materialize_seconds` capture time spent constructing and materialising Polars DataFrames that back the refined dataset.
+- `pandas_sort_seconds` records the legacy Pandas sort duration so you can compare against `polars_sort_speedup` to quantify the Polars uplift.
+- `duckdb_sort_seconds` reflects the time DuckDB spent ordering the final parquet snapshot, while `polars_write_seconds` captures parquet persistence from Polars.
+
+OpenTelemetry spans for `ingest`, `canonicalise`, `validate`, `link`, and `publish` stages are emitted automatically when observability is enabled (see `--enable-observability` or the Prefect deployment flags). Spans inherit CLI attributes such as input directory, output path, and record counts so dashboards can surface end-to-end timings without bespoke configuration.
+
 When `--party-store-path` is provided the CLI serialises the canonical Party/Role/Alias/Contact store as JSON. Pair this artefact with the generated data dictionary (see below) to hand off structured metadata to downstream teams.
 
 ## `hotpass-enhanced`

@@ -107,6 +107,10 @@ def test_pipeline_exposes_performance_metrics(sample_data_dir: Path, tmp_path: P
     assert metrics["total_seconds"] >= 0.0
     assert metrics["load_seconds"] >= 0.0
     assert metrics["rows_per_second"] > 0.0
+    assert metrics["polars_transform_seconds"] >= 0.0
+    assert metrics["pandas_sort_seconds"] >= 0.0
+    assert metrics["duckdb_sort_seconds"] >= 0.0
+    assert metrics["polars_sort_speedup"] >= 0.0
     assert result.quality_report.performance_metrics["total_seconds"] == metrics["total_seconds"]
 
 
@@ -227,7 +231,7 @@ def test_aggregate_group_prioritises_reliable_and_recent_values() -> None:
         ]
     )
 
-    aggregated = _aggregate_group(slug, group)
+    aggregated = _aggregate_group(slug, group.to_dict(orient="records"))
 
     assert aggregated["website"] == "https://sacaa.example"
     assert aggregated["province"] == "Gauteng"

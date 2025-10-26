@@ -39,9 +39,9 @@ Then open `http://localhost:8080` and load `hotpass-architecture.dsl`.
 
 ## 3. Output
 
-- **Formatter**: Produces Excel workbooks with consistent styling, plus CSV and Parquet exports.
+- **Formatter**: Produces Excel workbooks with consistent styling, plus CSV and Parquet exports. The storage layer now relies on `hotpass.storage.PolarsDataset` backed by DuckDB adapters so parquet snapshots remain Arrow-native while serving DuckDB SQL queries for deterministic ordering.
 - **Quality report**: Generates JSON and Markdown reports summarising validation outcomes.
-- **Observability**: Emits Prefect task logs and OpenTelemetry metrics for pipeline health monitoring.
+- **Observability**: Emits Prefect task logs and OpenTelemetry metrics for pipeline health monitoring. Each run wraps the ingest, canonicalise, validate, link, and publish stages in OpenTelemetry spans so Prefect and Streamlit dashboards surface end-to-end timings without bespoke instrumentation.
 
 ## 4. Supporting services
 

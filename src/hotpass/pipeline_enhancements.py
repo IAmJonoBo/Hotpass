@@ -24,6 +24,7 @@ from .enrichment import (
 )
 from .entity_resolution import add_ml_priority_scores, resolve_entities_fallback
 from .linkage import LinkageConfig, LinkageThresholds, link_entities
+from .telemetry import pipeline_stage
 
 if TYPE_CHECKING:  # pragma: no cover - type hints only
     from .linkage import LinkageResult
@@ -66,39 +67,40 @@ def apply_entity_resolution(
 
     linkage_result = None
     with trace_factory("entity_resolution"):
-        logger.info("Running entity resolution...")
-        try:
-            match_threshold = config.linkage_match_threshold or max(
-                0.9, config.entity_resolution_threshold
-            )
-            high_value = max(match_threshold, config.entity_resolution_threshold)
-            thresholds = LinkageThresholds(
-                high=high_value,
-                review=config.entity_resolution_threshold,
-            )
-            base_linkage_config = config.linkage_config or LinkageConfig()
-            root_dir = (
-                Path(config.linkage_output_dir)
-                if config.linkage_output_dir
-                else base_linkage_config.persistence.root_dir
-            )
-            configured = base_linkage_config.with_output_root(root_dir)
-            configured.use_splink = config.use_splink
-            configured.thresholds = thresholds
+        with pipeline_stage("link", {"records": len(df)}):
+            logger.info("Running entity resolution...")
+            try:
+                match_threshold = config.linkage_match_threshold or max(
+                    0.9, config.entity_resolution_threshold
+                )
+                high_value = max(match_threshold, config.entity_resolution_threshold)
+                thresholds = LinkageThresholds(
+                    high=high_value,
+                    review=config.entity_resolution_threshold,
+                )
+                base_linkage_config = config.linkage_config or LinkageConfig()
+                root_dir = (
+                    Path(config.linkage_output_dir)
+                    if config.linkage_output_dir
+                    else base_linkage_config.persistence.root_dir
+                )
+                configured = base_linkage_config.with_output_root(root_dir)
+                configured.use_splink = config.use_splink
+                configured.thresholds = thresholds
 
-            linkage_result = link_entities(df, configured)
-            df = linkage_result.deduplicated
-        except Exception as exc:  # pragma: no cover - defensive logging
-            logger.error("Entity resolution failed: %s", exc)
-            logger.warning(
-                "Falling back to rule-based entity resolution using threshold %.2f",
-                config.entity_resolution_threshold,
-            )
-            df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
-            linkage_result = None
+                linkage_result = link_entities(df, configured)
+                df = linkage_result.deduplicated
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.error("Entity resolution failed: %s", exc)
+                logger.warning(
+                    "Falling back to rule-based entity resolution using threshold %.2f",
+                    config.entity_resolution_threshold,
+                )
+                df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
+                linkage_result = None
 
-        df = add_ml_priority_scores(df)
-        logger.info("Entity resolution complete: %s unique entities", len(df))
+            df = add_ml_priority_scores(df)
+            logger.info("Entity resolution complete: %s unique entities", len(df))
 
     return df, linkage_result
 

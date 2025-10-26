@@ -19,6 +19,7 @@ from hotpass.observability import (
     shutdown_observability,
     trace_operation,
 )
+from hotpass.telemetry import pipeline_stage
 
 
 @pytest.fixture(autouse=True)
@@ -367,6 +368,30 @@ def test_trace_operation_with_exception():
     with pytest.raises(ValueError):
         with trace_operation("failing-operation"):
             raise ValueError("Test error")
+
+
+def test_pipeline_stage_records_metrics_and_attributes(instrumentation_stubs):
+    """Pipeline stage helper should emit spans and histogram samples."""
+
+    initialize_observability()
+    metrics = get_pipeline_metrics()
+
+    with pipeline_stage("ingest", {"input_dir": "./data"}):
+        pass
+
+    tracer = instrumentation_stubs.trace_module.tracer
+    span = tracer.spans[-1]
+    assert span.name == "pipeline.ingest"
+    assert span.attributes["hotpass.pipeline.stage"] == "ingest"
+    assert span.attributes["hotpass.pipeline.input_dir"] == "./data"
+    assert "hotpass.pipeline.duration_seconds" in span.attributes
+
+    load_calls = metrics.load_duration.calls
+    assert load_calls, "expected load duration histogram to record a sample"
+    method, value, attributes = load_calls[-1]
+    assert method == "record"
+    assert value >= 0.0
+    assert attributes == {"source": "unknown"}
 
 
 def test_safe_console_exporter_swallows_value_error(monkeypatch):
