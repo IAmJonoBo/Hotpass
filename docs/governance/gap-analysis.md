@@ -10,7 +10,7 @@ This report captures repository context, current QA posture, and critical gaps t
 
 ## Repository context snapshot
 
-- **Mission**: Hotpass converts messy spreadsheets into a governed single source of truth with Prefect orchestration, enrichment, and compliance features. (See [README.md](../../README.md))
+- **Mission**: Hotpass converts messy spreadsheets into a governed single source of truth with Prefect orchestration, enrichment, and compliance features. (See the [project charter](project-charter.md) for programme context.)
 - **Documentation system**: The docs follow the Diátaxis framework with detailed architecture, governance, security, and roadmap content under `docs/` (see [architecture overview](../explanations/architecture.md)).
 - **Contribution workflow**: Contributors are expected to run the full QA suite (pytest + coverage, Ruff lint/format, mypy, Bandit, detect-secrets, build) and keep `Next_Steps.md` up to date before raising PRs.【F:README.md†L18-L37】
 
@@ -84,3 +84,13 @@ Skips: Parquet-related tests remain skipped when `pyarrow` is unavailable, so co
 7. Create dependency-light fixtures or feature flags so that enhanced CLI/geospatial/entity resolution code paths can be exercised in CI.
 
 Document owners should track progress in `Next_Steps.md` and update roadmap items accordingly.
+
+## Remediation status (2025-10-26)
+
+- ✅ Consolidated CLI orchestration with Prefect helpers and removed blanket exception handling. The enhanced CLI now delegates to shared `PipelineRunOptions` logic and surfaces structured errors while preserving success/validation exit codes.
+- ✅ Removed the Prefect console-handler monkey patch in favour of scoped logging guards inside `run_pipeline_task` and `refinement_pipeline_flow`.
+- ✅ `deploy_pipeline` now applies cron schedules and work pools directly to Prefect deployment objects, ensuring automation metadata is honoured.
+- ✅ Entity history parsing swaps `ast.literal_eval` for JSON-aware parsing with deterministic safeguards; regression tests cover malicious-string handling.
+- ✅ Geospatial distance calculations use a vectorised haversine implementation without requiring GeoPandas and raise actionable `GeospatialError` instances.
+- ✅ Evidence logging accepts deterministic clocks so audit artefacts are reproducible, with fixtures covering consent and export helpers.
+- ✅ Added dependency-light orchestration, geospatial, and entity-resolution tests to raise coverage without optional extras.

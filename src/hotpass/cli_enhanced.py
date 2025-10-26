@@ -16,6 +16,12 @@ from pathlib import Path
 
 from rich.console import Console
 
+from hotpass.orchestration import (
+    PipelineOrchestrationError,
+    PipelineRunOptions,
+    run_pipeline_once,
+)
+
 
 def build_enhanced_parser() -> argparse.ArgumentParser:
     """Build parser for enhanced CLI commands.
@@ -171,9 +177,6 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success)
     """
-    from hotpass.config import get_default_profile
-    from hotpass.data_sources import ExcelReadOptions
-    from hotpass.pipeline import PipelineConfig
     from hotpass.pipeline_enhanced import EnhancedPipelineConfig, run_enhanced_pipeline
 
     console = Console()
@@ -194,17 +197,10 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
         console.print("[bold blue]Running orchestrated pipeline with Prefect...[/bold blue]")
 
     try:
-        # Load profile and create config
-        profile = get_default_profile(args.profile)
-        config = PipelineConfig(
-            input_dir=args.input_dir,
-            output_path=args.output_path,
-            industry_profile=profile,
-            excel_options=ExcelReadOptions(chunk_size=args.chunk_size),
-        )
+        runner = None
+        runner_kwargs: dict[str, object] | None = None
 
         if enable_enhanced:
-            # Use enhanced pipeline
             enhanced_config = EnhancedPipelineConfig(
                 enable_entity_resolution=args.enable_all or args.enable_entity_resolution,
                 enable_geospatial=args.enable_all or args.enable_geospatial,
@@ -215,60 +211,35 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
                 enrich_websites=args.enable_all or args.enable_enrichment,
                 detect_pii=args.enable_all or args.enable_compliance,
             )
+            runner = run_enhanced_pipeline
+            runner_kwargs = {"enhanced_config": enhanced_config}
 
-            result = run_enhanced_pipeline(config, enhanced_config)
-
-            # Handle archiving if requested
-            if args.archive:
-                from hotpass.artifacts import create_refined_archive
-
-                console.print("[blue]Creating archive...[/blue]")
-                archive_path = create_refined_archive(
-                    excel_path=config.output_path,
-                    archive_dir=Path("./dist"),
-                )
-                console.print(f"Archive created: {archive_path}")
-
-            if result.quality_report.expectations_passed:
-                console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
-                console.print(f"  Records processed: {len(result.refined)}")
-                if "total_seconds" in result.performance_metrics:
-                    console.print(f"  Duration: {result.performance_metrics['total_seconds']:.2f}s")
-                return 0
-            else:
-                console.print(
-                    "[bold yellow]⚠[/bold yellow] Pipeline completed with validation warnings"
-                )
-                return 1
-        else:
-            # Use original Prefect orchestration
-            from hotpass.orchestration import refinement_pipeline_flow
-
-            flow_result = refinement_pipeline_flow(
-                input_dir=str(args.input_dir),
-                output_path=str(args.output_path),
+        summary = run_pipeline_once(
+            PipelineRunOptions(
+                input_dir=args.input_dir,
+                output_path=args.output_path,
                 profile_name=args.profile,
                 excel_chunk_size=args.chunk_size,
                 archive=args.archive,
+                archive_dir=Path("./dist") if args.archive else None,
+                runner=runner,
+                runner_kwargs=runner_kwargs,
             )
-
-            if flow_result["success"]:
-                console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
-                console.print(f"  Records processed: {flow_result['total_records']}")
-                console.print(f"  Duration: {flow_result['elapsed_seconds']:.2f}s")
-                return 0
-            else:
-                console.print(
-                    "[bold yellow]⚠[/bold yellow] Pipeline completed with validation warnings"
-                )
-                return 1
-
-    except Exception as e:
-        console.print(f"[bold red]✗[/bold red] Pipeline failed: {e}")
-        import traceback
-
-        traceback.print_exc()
+        )
+    except PipelineOrchestrationError as exc:
+        console.print(f"[bold red]✗[/bold red] Pipeline failed: {exc}")
         return 1
+
+    if summary.success:
+        console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
+        console.print(f"  Records processed: {summary.total_records}")
+        console.print(f"  Duration: {summary.elapsed_seconds:.2f}s")
+        if summary.archive_path:
+            console.print(f"  Archive: {summary.archive_path}")
+        return 0
+
+    console.print("[bold yellow]⚠[/bold yellow] Pipeline completed with validation warnings")
+    return 1
 
 
 def cmd_resolve(args: argparse.Namespace) -> int:
@@ -320,8 +291,14 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 
         return 0
 
-    except Exception as e:
-        console.print(f"[bold red]✗[/bold red] Entity resolution failed: {e}")
+    except (
+        FileNotFoundError,
+        OSError,
+        ValueError,
+        pd.errors.ParserError,
+        ImportError,
+    ) as exc:
+        console.print(f"[bold red]✗[/bold red] Entity resolution failed: {exc}")
         return 1
 
 

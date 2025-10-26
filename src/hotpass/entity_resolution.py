@@ -6,7 +6,7 @@ capabilities to replace the heuristic deduplication approach.
 
 from __future__ import annotations
 
-import ast
+import json
 import logging
 import re
 import unicodedata
@@ -302,12 +302,17 @@ def _load_entity_history(history_file: str) -> pd.DataFrame:
         if value is None or (isinstance(value, float) and pd.isna(value)):
             return []
         if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return []
             try:
-                parsed = ast.literal_eval(value)
-            except (ValueError, SyntaxError):
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
                 return [value]
             if isinstance(parsed, list):
                 return parsed
+            if parsed is None:
+                return []
             return [parsed]
         return [value]
 
@@ -320,7 +325,9 @@ def _load_entity_history(history_file: str) -> pd.DataFrame:
         entries: list[dict[str, Any]] = []
         for item in _ensure_list(value):
             if isinstance(item, dict):
-                entries.append(item)
+                status_value = item.get("status")
+                status = str(status_value) if status_value is not None else ""
+                entries.append({"status": status, "date": item.get("date")})
             elif item is None or (isinstance(item, float) and pd.isna(item)):
                 continue
             else:

@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -24,7 +25,6 @@ F = TypeVar("F", bound=Callable[..., Any])
 _prefect_flow_decorator: Callable[..., Callable[[F], F]] | None = None
 _prefect_task_decorator: Callable[..., Callable[[F], F]] | None = None
 _prefect_get_run_logger: Callable[..., Any] | None = None
-_prefect_handlers: Any = None
 
 
 def _noop_prefect_decorator(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
@@ -38,7 +38,6 @@ try:  # pragma: no cover - verified via unit tests
     from prefect import flow as prefect_flow_decorator
     from prefect import task as prefect_task_decorator
     from prefect.logging import get_run_logger as prefect_get_run_logger
-    from prefect.logging import handlers as prefect_handlers
 except ImportError:  # pragma: no cover - exercised in fallback tests
     PREFECT_AVAILABLE = False
 else:
@@ -46,28 +45,6 @@ else:
     _prefect_flow_decorator = prefect_flow_decorator
     _prefect_task_decorator = prefect_task_decorator
     _prefect_get_run_logger = prefect_get_run_logger
-    _prefect_handlers = prefect_handlers
-    _console_handler_cls = None
-    if _prefect_handlers is not None:
-        _console_handler_cls = getattr(_prefect_handlers, "ConsoleHandler", None)
-        if _console_handler_cls is None:
-            _console_handler_cls = getattr(_prefect_handlers, "PrefectConsoleHandler", None)
-
-    if _console_handler_cls is not None:
-        _prefect_console_emit = _console_handler_cls.emit
-
-        def _safe_console_emit(self: Any, record: logging.LogRecord) -> None:
-            console = getattr(self, "console", None)
-            file_obj = getattr(console, "file", None)
-            if getattr(file_obj, "closed", False):
-                return None
-
-            try:
-                _prefect_console_emit(self, record)
-            except ValueError:  # pragma: no cover - depends on runtime shutdown
-                return None
-
-        _console_handler_cls.emit = _safe_console_emit  # type: ignore[assignment]
 
 
 if _prefect_flow_decorator is not None:
@@ -116,6 +93,132 @@ else:
 logger = logging.getLogger(__name__)
 
 
+class PipelineOrchestrationError(RuntimeError):
+    """Raised when orchestration helpers encounter unrecoverable errors."""
+
+
+@dataclass(frozen=True, slots=True)
+class PipelineRunOptions:
+    """Configuration required to execute the pipeline once."""
+
+    input_dir: Path
+    output_path: Path
+    profile_name: str
+    excel_chunk_size: int | None = None
+    archive: bool = False
+    archive_dir: Path | None = None
+    runner: Callable[..., Any] | None = None
+    runner_kwargs: Mapping[str, Any] | None = None
+    profile_loader: Callable[[str], Any] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PipelineRunSummary:
+    """Structured payload describing a pipeline execution."""
+
+    success: bool
+    total_records: int
+    elapsed_seconds: float
+    output_path: Path
+    quality_report: Mapping[str, Any]
+    archive_path: Path | None = None
+
+    def to_payload(self) -> dict[str, Any]:
+        """Serialise the summary for CLI and Prefect consumers."""
+
+        payload: dict[str, Any] = {
+            "success": self.success,
+            "total_records": self.total_records,
+            "elapsed_seconds": self.elapsed_seconds,
+            "quality_report": dict(self.quality_report),
+            "output_path": str(self.output_path),
+        }
+        if self.archive_path is not None:
+            payload["archive_path"] = str(self.archive_path)
+        return payload
+
+
+def _safe_log(logger_: logging.Logger, level: int, message: str, *args: Any) -> None:
+    """Log a message while suppressing ValueErrors raised by closed handlers."""
+
+    try:
+        logger_.log(level, message, *args)
+    except ValueError:  # pragma: no cover - depends on interpreter shutdown timing
+        return None
+
+
+def _execute_pipeline(
+    config: PipelineConfig,
+    *,
+    runner: Callable[..., Any],
+    runner_kwargs: Mapping[str, Any] | None,
+    archive: bool,
+    archive_dir: Path | None,
+) -> PipelineRunSummary:
+    """Execute the pipeline runner and return a structured summary."""
+
+    start_time = time.time()
+    result = runner(config, **(runner_kwargs or {}))
+    elapsed = time.time() - start_time
+
+    quality_report_dict: dict[str, Any] = {}
+    success = True
+    quality_report = getattr(result, "quality_report", None)
+    if quality_report is not None:
+        to_dict = getattr(quality_report, "to_dict", None)
+        if callable(to_dict):
+            quality_report_dict = cast(dict[str, Any], to_dict())
+        success = bool(getattr(quality_report, "expectations_passed", True))
+
+    archive_path: Path | None = None
+    if archive:
+        archive_root = archive_dir or config.output_path.parent
+        try:
+            archive_root = Path(archive_root)
+            archive_root.mkdir(parents=True, exist_ok=True)
+            archive_path = create_refined_archive(
+                excel_path=config.output_path,
+                archive_dir=archive_root,
+            )
+        except Exception as exc:  # pragma: no cover - exercised via unit tests
+            raise PipelineOrchestrationError(f"Failed to create archive: {exc}") from exc
+
+    total_records = len(getattr(result, "refined", []))
+
+    return PipelineRunSummary(
+        success=success,
+        total_records=total_records,
+        elapsed_seconds=elapsed,
+        output_path=config.output_path,
+        quality_report=quality_report_dict,
+        archive_path=archive_path,
+    )
+
+
+def run_pipeline_once(options: PipelineRunOptions) -> PipelineRunSummary:
+    """Execute the pipeline once using shared orchestration helpers."""
+
+    profile_loader = options.profile_loader or get_default_profile
+    profile = profile_loader(options.profile_name)
+
+    config = PipelineConfig(
+        input_dir=Path(options.input_dir),
+        output_path=Path(options.output_path),
+        industry_profile=profile,
+        excel_options=ExcelReadOptions(chunk_size=options.excel_chunk_size),
+    )
+
+    runner = options.runner or run_pipeline
+
+    return _execute_pipeline(
+        config,
+        runner=runner,
+        runner_kwargs=options.runner_kwargs,
+        archive=options.archive,
+        archive_dir=options.archive_dir,
+    )
+
+
 @task(name="run-pipeline", retries=2, retry_delay_seconds=10)
 def run_pipeline_task(
     config: PipelineConfig,
@@ -129,26 +232,25 @@ def run_pipeline_task(
         Pipeline execution results
     """
     logger = get_run_logger()
-    logger.info(f"Running pipeline with input_dir={config.input_dir}")
+    _safe_log(logger, logging.INFO, "Running pipeline with input_dir=%s", config.input_dir)
 
-    start_time = time.time()
-
-    result = run_pipeline(config)
-
-    elapsed = time.time() - start_time
-
-    logger.info(
-        f"Pipeline completed in {elapsed:.2f} seconds - "
-        f"{len(result.refined)} organizations processed"
+    summary = _execute_pipeline(
+        config,
+        runner=run_pipeline,
+        runner_kwargs=None,
+        archive=False,
+        archive_dir=None,
     )
 
-    return {
-        "success": result.quality_report.expectations_passed,
-        "total_records": len(result.refined),
-        "elapsed_seconds": elapsed,
-        "quality_report": result.quality_report.to_dict(),
-        "output_path": str(config.output_path),
-    }
+    _safe_log(
+        logger,
+        logging.INFO,
+        "Pipeline completed in %.2f seconds - %d organizations processed",
+        summary.elapsed_seconds,
+        summary.total_records,
+    )
+
+    return summary.to_payload()
 
 
 @flow(name="hotpass-refinement-pipeline", log_prints=True, validate_parameters=False)
@@ -174,48 +276,32 @@ def refinement_pipeline_flow(
         Pipeline execution results dictionary
     """
     logger = get_run_logger()
-    logger.info(f"Starting Hotpass refinement pipeline (profile: {profile_name})")
-
-    # Load the profile
-    profile = get_default_profile(profile_name)
-
-    # Build configuration
-    config = PipelineConfig(
-        input_dir=Path(input_dir),
-        output_path=Path(output_path),
-        industry_profile=profile,
-        excel_options=ExcelReadOptions(chunk_size=excel_chunk_size),
+    _safe_log(
+        logger,
+        logging.INFO,
+        "Starting Hotpass refinement pipeline (profile: %s)",
+        profile_name,
     )
 
-    # Handle archive settings manually since PipelineConfig doesn't have these fields
-    # We'll need to call archiving separately if needed
-
-    # Execute pipeline
-    result = run_pipeline_task(config)
-
-    # Handle archiving if requested
-    if archive:
-        logger.info("Creating archive from output file...")
-        try:
-            archive_dir = Path(dist_dir)
-            archive_dir.mkdir(parents=True, exist_ok=True)
-            archive_path = create_refined_archive(
-                excel_path=Path(result["output_path"]),
-                archive_dir=archive_dir,
-            )
-            logger.info(f"Archive created: {archive_path}")
-            result["archive_path"] = str(archive_path)
-        except Exception as e:
-            logger.error(f"Failed to create archive: {e}")
-            # Don't fail the entire flow for archiving errors
-            result["archive_error"] = str(e)
-
-    logger.info(
-        f"Pipeline flow completed - "
-        f"Status: {'SUCCESS' if result['success'] else 'VALIDATION_FAILED'}"
+    summary = run_pipeline_once(
+        PipelineRunOptions(
+            input_dir=Path(input_dir),
+            output_path=Path(output_path),
+            profile_name=profile_name,
+            excel_chunk_size=excel_chunk_size,
+            archive=archive,
+            archive_dir=Path(dist_dir) if archive else None,
+        )
     )
 
-    return result
+    _safe_log(
+        logger,
+        logging.INFO,
+        "Pipeline flow completed - Status: %s",
+        "SUCCESS" if summary.success else "VALIDATION_FAILED",
+    )
+
+    return summary.to_payload()
 
 
 def deploy_pipeline(
@@ -241,6 +327,14 @@ def deploy_pipeline(
     deployment = cast(Any, refinement_pipeline_flow).to_deployment(name=name)
     if work_pool:
         deployment.work_pool_name = work_pool  # type: ignore
+
+    if cron_schedule:
+        try:
+            from prefect.server.schemas.schedules import CronSchedule
+        except ImportError as exc:  # pragma: no cover - depends on Prefect extras
+            raise RuntimeError("Prefect scheduling components are unavailable") from exc
+
+        deployment.schedule = CronSchedule(cron=cron_schedule, timezone="UTC")  # type: ignore[attr-defined]
 
     serve(deployment)  # type: ignore
 

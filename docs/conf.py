@@ -61,5 +61,12 @@ linkcheck_ignore = [
     r"https://docs.astral.sh/uv/getting-started/installation/",
     r"https://greatexpectations.io/",
     r"https://github.com/GoogleCloudPlatform/fourkeys",
+    r"https://docs.sigstore.dev/.*",
+    r"https://cyclonedx.org/.*",
+    r"https://docs.structurizr.com/.*",
+    r"https://mutmut.readthedocs.io/.*",
+    r"https://www.w3.org/.*",
+    r"https://docs.streamlit.io/.*",
+    r"https://queue.acm.org/.*",
 ]
 linkcheck_timeout = 10
