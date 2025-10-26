@@ -140,9 +140,7 @@ def test_deploy_pipeline_invokes_prefect_serve(monkeypatch):
         def to_deployment(self, name: str) -> SimpleNamespace:
             return SimpleNamespace(name=name, work_pool_name=None)
 
-    monkeypatch.setattr(
-        orchestration, "refinement_pipeline_flow", DummyFlow(), raising=False
-    )
+    monkeypatch.setattr(orchestration, "refinement_pipeline_flow", DummyFlow(), raising=False)
 
     orchestration.deploy_pipeline(name="demo", work_pool="inbox")
 

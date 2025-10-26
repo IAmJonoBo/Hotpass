@@ -389,8 +389,7 @@ def test_run_expectations_ge_with_invalid_quality_score():
 
     assert result.success is False
     assert any(
-        "quality_score" in str(f).lower() or "between" in str(f).lower()
-        for f in result.failures
+        "quality_score" in str(f).lower() or "between" in str(f).lower() for f in result.failures
     )
 
 
@@ -488,10 +487,7 @@ def test_run_expectations_ge_with_wrong_country():
     result = run_expectations(df)
 
     assert result.success is False
-    assert any(
-        "country" in str(f).lower() or "in_set" in str(f).lower()
-        for f in result.failures
-    )
+    assert any("country" in str(f).lower() or "in_set" in str(f).lower() for f in result.failures)
 
 
 @pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")

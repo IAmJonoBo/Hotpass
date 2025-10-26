@@ -136,9 +136,7 @@ class OrganizationContacts:
             source_score = 0.0
             if contact.source_dataset:
                 max_priority = max(source_priority.values()) if source_priority else 1
-                source_score = (
-                    source_priority.get(contact.source_dataset, 0) / max_priority
-                )
+                source_score = source_priority.get(contact.source_dataset, 0) / max_priority
 
             # Completeness score
             completeness = contact.calculate_completeness()
@@ -179,18 +177,10 @@ class OrganizationContacts:
         secondary = [c for c in self.contacts if c != primary]
 
         if secondary:
-            result["contact_secondary_emails"] = ";".join(
-                [c.email for c in secondary if c.email]
-            )
-            result["contact_secondary_phones"] = ";".join(
-                [c.phone for c in secondary if c.phone]
-            )
-            result["contact_secondary_names"] = ";".join(
-                [c.name for c in secondary if c.name]
-            )
-            result["contact_secondary_roles"] = ";".join(
-                [c.role for c in secondary if c.role]
-            )
+            result["contact_secondary_emails"] = ";".join([c.email for c in secondary if c.email])
+            result["contact_secondary_phones"] = ";".join([c.phone for c in secondary if c.phone])
+            result["contact_secondary_names"] = ";".join([c.name for c in secondary if c.name])
+            result["contact_secondary_roles"] = ";".join([c.role for c in secondary if c.role])
         else:
             result["contact_secondary_emails"] = None
             result["contact_secondary_phones"] = None

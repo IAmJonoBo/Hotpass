@@ -183,9 +183,7 @@ def test_extract_website_content_caching(temp_cache):
 
 def test_enrich_from_registry_stub(temp_cache):
     """Test registry enrichment stub."""
-    result = enrich_from_registry(
-        "Test Company", registry_type="cipc", cache=temp_cache
-    )
+    result = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
 
     assert result["org_name"] == "Test Company"
     assert result["registry_type"] == "cipc"
@@ -196,14 +194,10 @@ def test_enrich_from_registry_stub(temp_cache):
 def test_enrich_from_registry_caching(temp_cache):
     """Test that registry lookups are cached."""
     # First call
-    result1 = enrich_from_registry(
-        "Test Company", registry_type="cipc", cache=temp_cache
-    )
+    result1 = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
 
     # Second call should use cache
-    result2 = enrich_from_registry(
-        "Test Company", registry_type="cipc", cache=temp_cache
-    )
+    result2 = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
 
     # Both should return same data
     assert result1 == result2
@@ -311,9 +305,7 @@ def test_enrich_dataframe_with_registries(mock_enrich_registry, temp_cache):
         },
     ]
 
-    result_df = enrich_dataframe_with_registries(
-        df, registry_type="cipc", cache=temp_cache
-    )
+    result_df = enrich_dataframe_with_registries(df, registry_type="cipc", cache=temp_cache)
 
     assert "registry_type" in result_df.columns
     assert "registry_status" in result_df.columns

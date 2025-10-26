@@ -119,21 +119,15 @@ except ImportError:  # pragma: no cover - validated via unit tests
         Observation = _NoopObservation
 
     class MeterProvider:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
     class PeriodicExportingMetricReader:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
     class ConsoleMetricExporter:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
     class Resource:  # type: ignore[no-redef]
@@ -144,24 +138,18 @@ except ImportError:  # pragma: no cover - validated via unit tests
             return attributes
 
     class TracerProvider:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             self._processors: list[Any] = []
 
         def add_span_processor(self, processor: Any) -> None:  # pragma: no cover - noop
             self._processors.append(processor)
 
     class BatchSpanProcessor:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
     class ConsoleSpanExporter:  # type: ignore[no-redef]
-        def __init__(
-            self, *args: Any, **kwargs: Any
-        ) -> None:  # pragma: no cover - noop
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - noop
             return None
 
     class SpanExportResult:  # type: ignore[no-redef]
@@ -224,16 +212,19 @@ def initialize_observability(
     Returns:
         Tuple of (tracer, meter) for instrumentation
     """
-    global _instrumentation_initialized, _meter_provider, _metric_reader, _trace_provider, _shutdown_registered
+    global \
+        _instrumentation_initialized, \
+        _meter_provider, \
+        _metric_reader, \
+        _trace_provider, \
+        _shutdown_registered
 
     if _instrumentation_initialized:
         logger.warning("Observability already initialized, skipping")
         return get_tracer(), get_meter()
 
     if not OBSERVABILITY_AVAILABLE:
-        logger.warning(
-            "OpenTelemetry not available; using no-op observability implementation"
-        )
+        logger.warning("OpenTelemetry not available; using no-op observability implementation")
         _instrumentation_initialized = True
         if not _shutdown_registered:
             atexit.register(shutdown_observability)
@@ -254,9 +245,7 @@ def initialize_observability(
     # Initialize tracing
     trace_provider = TracerProvider(resource=resource)
     if export_to_console:
-        trace_provider.add_span_processor(
-            BatchSpanProcessor(_SafeConsoleSpanExporter())
-        )
+        trace_provider.add_span_processor(BatchSpanProcessor(_SafeConsoleSpanExporter()))
     trace.set_tracer_provider(trace_provider)
     _trace_provider = trace_provider
 
@@ -267,9 +256,7 @@ def initialize_observability(
         exporter = None
 
     if exporter is not None:
-        metric_reader = PeriodicExportingMetricReader(
-            exporter, export_interval_millis=60000
-        )
+        metric_reader = PeriodicExportingMetricReader(exporter, export_interval_millis=60000)
     else:
         metric_reader = PeriodicExportingMetricReader(
             _SafeConsoleMetricExporter(), export_interval_millis=60000

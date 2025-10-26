@@ -112,9 +112,7 @@ class PIIDetector:
             return []
 
         try:
-            results = self.analyzer.analyze(
-                text=text, language=language, score_threshold=threshold
-            )
+            results = self.analyzer.analyze(text=text, language=language, score_threshold=threshold)
 
             return [
                 {
@@ -131,9 +129,7 @@ class PIIDetector:
             logger.error(f"Error detecting PII: {e}")
             return []
 
-    def anonymize_text(
-        self, text: str, operation: str = "replace", language: str = "en"
-    ) -> str:
+    def anonymize_text(self, text: str, operation: str = "replace", language: str = "en") -> str:
         """Anonymize PII in text.
 
         Args:
@@ -393,9 +389,7 @@ class POPIAPolicy:
 
         # Check for compliance issues
         if pii_fields and not consent_required_fields:
-            compliance_issues.append(
-                "PII fields present but no consent requirements configured"
-            )
+            compliance_issues.append("PII fields present but no consent requirements configured")
 
         if not retention_policies:
             compliance_issues.append("No retention policies configured for any fields")

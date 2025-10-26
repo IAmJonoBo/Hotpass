@@ -405,8 +405,6 @@ def test_add_provenance_columns_with_timestamp():
     )
 
     timestamp = "2025-01-01T00:00:00"
-    result_df = add_provenance_columns(
-        df, source_name="Test", processing_timestamp=timestamp
-    )
+    result_df = add_provenance_columns(df, source_name="Test", processing_timestamp=timestamp)
 
     assert result_df.loc[0, "processed_at"] == timestamp

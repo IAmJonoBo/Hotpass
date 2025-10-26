@@ -22,13 +22,9 @@ def reset_enhanced_pipeline(monkeypatch):
 
     import hotpass.observability as observability
 
-    monkeypatch.setattr(
-        observability, "_instrumentation_initialized", False, raising=False
-    )
+    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
     monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
-    monkeypatch.setattr(
-        pipeline_enhanced, "get_pipeline_metrics", lambda: Mock(), raising=False
-    )
+    monkeypatch.setattr(pipeline_enhanced, "get_pipeline_metrics", lambda: Mock(), raising=False)
 
 
 @pytest.fixture
@@ -138,9 +134,7 @@ def test_enhanced_pipeline_basic(sample_dataframe, mock_pipeline_result, tmp_pat
     assert result.quality_report is not None
 
 
-def test_enhanced_pipeline_with_entity_resolution(
-    sample_dataframe, mock_pipeline_result, tmp_path
-):
+def test_enhanced_pipeline_with_entity_resolution(sample_dataframe, mock_pipeline_result, tmp_path):
     """Test enhanced pipeline with entity resolution."""
     from hotpass.config import get_default_profile
     from hotpass.data_sources import ExcelReadOptions
@@ -175,9 +169,7 @@ def test_enhanced_pipeline_with_entity_resolution(
     assert "priority_score" in result.refined.columns
 
 
-def test_enhanced_pipeline_with_compliance(
-    sample_dataframe, mock_pipeline_result, tmp_path
-):
+def test_enhanced_pipeline_with_compliance(sample_dataframe, mock_pipeline_result, tmp_path):
     """Test enhanced pipeline with compliance features."""
     from hotpass.config import get_default_profile
     from hotpass.data_sources import ExcelReadOptions
@@ -248,9 +240,7 @@ def test_enhanced_pipeline_missing_consent_raises(sample_dataframe, mock_pipelin
         run_enhanced_pipeline(config, enhanced_config)
 
 
-def test_enhanced_pipeline_with_observability(
-    sample_dataframe, mock_pipeline_result, tmp_path
-):
+def test_enhanced_pipeline_with_observability(sample_dataframe, mock_pipeline_result, tmp_path):
     """Test enhanced pipeline with observability."""
     from hotpass.config import get_default_profile
     from hotpass.data_sources import ExcelReadOptions
@@ -275,12 +265,8 @@ def test_enhanced_pipeline_with_observability(
     )
 
     with (
-        patch.object(
-            pipeline_enhanced, "initialize_observability", autospec=True
-        ) as init_obs,
-        patch.object(
-            pipeline_enhanced, "get_pipeline_metrics", autospec=True
-        ) as get_metrics,
+        patch.object(pipeline_enhanced, "initialize_observability", autospec=True) as init_obs,
+        patch.object(pipeline_enhanced, "get_pipeline_metrics", autospec=True) as get_metrics,
     ):
         metrics_mock = Mock()
         get_metrics.return_value = metrics_mock
@@ -294,9 +280,7 @@ def test_enhanced_pipeline_with_observability(
     assert len(result.refined) > 0
 
 
-def test_enhanced_pipeline_all_features(
-    sample_dataframe, mock_pipeline_result, tmp_path
-):
+def test_enhanced_pipeline_all_features(sample_dataframe, mock_pipeline_result, tmp_path):
     """Test enhanced pipeline with all features enabled."""
     from hotpass.config import get_default_profile
     from hotpass.data_sources import ExcelReadOptions
@@ -387,9 +371,7 @@ def test_enhanced_pipeline_with_geospatial_and_enrichment(
             return {"total_entries": 0, "total_hits": 0}
 
     monkeypatch.setattr(pipeline_enhanced, "geocode_dataframe", fake_geocode_dataframe)
-    monkeypatch.setattr(
-        pipeline_enhanced, "enrich_dataframe_with_websites", fake_enrich_websites
-    )
+    monkeypatch.setattr(pipeline_enhanced, "enrich_dataframe_with_websites", fake_enrich_websites)
     monkeypatch.setattr(pipeline_enhanced, "CacheManager", FakeCache)
 
     enhanced_config = EnhancedPipelineConfig(

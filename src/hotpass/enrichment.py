@@ -35,9 +35,7 @@ logger = logging.getLogger(__name__)
 class CacheManager:
     """Simple SQLite-based cache for API responses and web content."""
 
-    def __init__(
-        self, db_path: str = "data/.cache/enrichment.db", ttl_hours: int = 168
-    ):
+    def __init__(self, db_path: str = "data/.cache/enrichment.db", ttl_hours: int = 168):
         """Initialize cache manager.
 
         Args:
@@ -80,9 +78,7 @@ class CacheManager:
             Cached value if found and not expired, None otherwise
         """
         with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.execute(
-                "SELECT value, created_at FROM cache WHERE key = ?", (key,)
-            )
+            cursor = conn.execute("SELECT value, created_at FROM cache WHERE key = ?", (key,))
             row = cursor.fetchone()
 
             if row is None:
@@ -176,9 +172,7 @@ class CacheManager:
             }
 
 
-def extract_website_content(
-    url: str, cache: CacheManager | None = None
-) -> dict[str, Any]:
+def extract_website_content(url: str, cache: CacheManager | None = None) -> dict[str, Any]:
     """Extract structured content from a website.
 
     Args:
@@ -352,9 +346,7 @@ def enrich_dataframe_with_websites(
             enriched_df.at[idx, "website_enriched"] = True
 
     enriched_count = enriched_df["website_enriched"].sum()
-    logger.info(
-        f"Enriched {enriched_count}/{len(df)} organizations with website content"
-    )
+    logger.info(f"Enriched {enriched_count}/{len(df)} organizations with website content")
 
     return enriched_df
 
@@ -399,12 +391,8 @@ def enrich_dataframe_with_registries(
 
         enriched_df.at[idx, "registry_type"] = registry_type
         enriched_df.at[idx, "registry_status"] = registry_data.get("status")
-        enriched_df.at[idx, "registry_number"] = registry_data.get(
-            "registration_number"
-        )
-        enriched_df.at[idx, "registry_enriched"] = (
-            registry_data.get("status") != "not_implemented"
-        )
+        enriched_df.at[idx, "registry_number"] = registry_data.get("registration_number")
+        enriched_df.at[idx, "registry_enriched"] = registry_data.get("status") != "not_implemented"
 
     enriched_count = enriched_df["registry_enriched"].sum()
     logger.info(

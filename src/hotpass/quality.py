@@ -126,9 +126,7 @@ def _run_with_great_expectations(
         if column:
             expectation = f"{expectation} ({column})"
         ge_result = cast(dict[str, Any], result.result)
-        unexpected = ge_result.get("unexpected_list") or ge_result.get(
-            "partial_unexpected_list"
-        )
+        unexpected = ge_result.get("unexpected_list") or ge_result.get("partial_unexpected_list")
         if unexpected:
             sample = list(unexpected)[:3]
             failures.append(f"{expectation}: unexpected {sample}")
@@ -217,20 +215,14 @@ def run_expectations(
             success = False
             failures.append(message)
 
-    _record_failure(
-        sanitized["organization_name"].notna().all(), "organization_name nulls"
-    )
-    _record_failure(
-        sanitized["organization_slug"].notna().all(), "organization_slug nulls"
-    )
+    _record_failure(sanitized["organization_name"].notna().all(), "organization_name nulls")
+    _record_failure(sanitized["organization_slug"].notna().all(), "organization_slug nulls")
     _record_failure(
         sanitized["data_quality_score"].between(0.0, 1.0).all(),
         "data_quality_score bounds",
     )
 
-    def _record_mostly(
-        series: pd.Series, pattern: str, mostly: float, message: str
-    ) -> None:
+    def _record_mostly(series: pd.Series, pattern: str, mostly: float, message: str) -> None:
         relevant = series.dropna()
         if relevant.empty:
             return
@@ -255,12 +247,8 @@ def run_expectations(
         phone_mostly,
         "contact_primary_phone format",
     )
-    _record_mostly(
-        sanitized["website"], r"^https?://", website_mostly, "website scheme"
-    )
+    _record_mostly(sanitized["website"], r"^https?://", website_mostly, "website scheme")
 
-    _record_failure(
-        (sanitized["country"] == "South Africa").all(), "country constraint"
-    )
+    _record_failure((sanitized["country"] == "South Africa").all(), "country constraint")
 
     return ExpectationSummary(success=success, failures=failures)
