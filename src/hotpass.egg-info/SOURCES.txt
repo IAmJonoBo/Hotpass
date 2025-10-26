@@ -1,12 +1,14 @@
 README.md
 pyproject.toml
 src/hotpass/__init__.py
+src/hotpass/_warning_filters.py
 src/hotpass/artifacts.py
 src/hotpass/benchmarks.py
 src/hotpass/cli.py
 src/hotpass/cli_enhanced.py
 src/hotpass/column_mapping.py
 src/hotpass/compliance.py
+src/hotpass/compliance_verification.py
 src/hotpass/config.py
 src/hotpass/config_doctor.py
 src/hotpass/contacts.py
@@ -15,6 +17,7 @@ src/hotpass/data_sources.py
 src/hotpass/enrichment.py
 src/hotpass/entity_resolution.py
 src/hotpass/error_handling.py
+src/hotpass/evidence.py
 src/hotpass/formatting.py
 src/hotpass/geospatial.py
 src/hotpass/normalization.py
@@ -23,7 +26,10 @@ src/hotpass/optimize.py
 src/hotpass/orchestration.py
 src/hotpass/pipeline.py
 src/hotpass/pipeline_enhanced.py
+src/hotpass/pipeline_enhancements.py
+src/hotpass/pipeline_reporting.py
 src/hotpass/quality.py
+src/hotpass/secrets.py
 src/hotpass.egg-info/PKG-INFO
 src/hotpass.egg-info/SOURCES.txt
 src/hotpass.egg-info/dependency_links.txt
@@ -32,10 +38,12 @@ src/hotpass.egg-info/requires.txt
 src/hotpass.egg-info/top_level.txt
 tests/test_artifacts.py
 tests/test_benchmarks.py
+tests/test_bootstrap.py
 tests/test_cli.py
 tests/test_cli_enhanced.py
 tests/test_column_mapping.py
 tests/test_compliance.py
+tests/test_compliance_verification.py
 tests/test_config.py
 tests/test_config_doctor.py
 tests/test_contacts.py
@@ -45,6 +53,7 @@ tests/test_enhancements.py
 tests/test_enrichment.py
 tests/test_entity_resolution.py
 tests/test_error_handling.py
+tests/test_evidence.py
 tests/test_formatting.py
 tests/test_geospatial.py
 tests/test_observability.py
@@ -54,3 +63,4 @@ tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
 tests/test_quality.py
 tests/test_quality_report.py
+tests/test_secrets.py

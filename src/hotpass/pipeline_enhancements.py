@@ -16,7 +16,11 @@ from .compliance import (
     add_provenance_columns,
     detect_pii_in_dataframe,
 )
-from .enrichment import CacheManager, enrich_dataframe_with_websites
+from .enrichment import (
+    CacheManager,
+    enrich_dataframe_with_websites,
+    enrich_dataframe_with_websites_concurrent,
+)
 from .entity_resolution import add_ml_priority_scores, resolve_entities_fallback
 from .geospatial import geocode_dataframe, normalize_address
 
@@ -41,6 +45,7 @@ class EnhancedPipelineConfig:
     detect_pii: bool = False
     cache_path: str = "data/.cache/enrichment.db"
     consent_overrides: Mapping[str, str] | None = None
+    enrichment_concurrency: int = 8
 
 
 def apply_entity_resolution(
@@ -109,7 +114,20 @@ def apply_enrichment(
         try:
             cache = CacheManager(db_path=config.cache_path)
             if "website" in df.columns:
-                df = enrich_dataframe_with_websites(df, website_column="website", cache=cache)
+                concurrency = max(1, config.enrichment_concurrency)
+                if concurrency > 1 and len(df) > 1:
+                    df = enrich_dataframe_with_websites_concurrent(
+                        df,
+                        website_column="website",
+                        cache=cache,
+                        concurrency=concurrency,
+                    )
+                else:
+                    df = enrich_dataframe_with_websites(
+                        df,
+                        website_column="website",
+                        cache=cache,
+                    )
             logger.info("External enrichment complete")
             stats = cache.stats()
             logger.info("Cache stats: %s", stats)

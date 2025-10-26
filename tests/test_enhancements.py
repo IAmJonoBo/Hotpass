@@ -6,7 +6,8 @@ import pandas as pd
 
 from hotpass.config import get_default_profile
 from hotpass.formatting import OutputFormat
-from hotpass.pipeline import PipelineConfig, _generate_recommendations, run_pipeline
+from hotpass.pipeline import PipelineConfig, run_pipeline
+from hotpass.pipeline_reporting import generate_recommendations
 from hotpass.quality import ExpectationSummary
 
 
@@ -24,7 +25,7 @@ def test_generate_recommendations_good_quality():
     expectation_summary = ExpectationSummary(success=True, failures=[])
     quality_dist = {"mean": 0.85, "min": 0.8, "max": 0.9}
 
-    recommendations = _generate_recommendations(df, expectation_summary, quality_dist)
+    recommendations = generate_recommendations(df, expectation_summary, quality_dist)
 
     assert len(recommendations) > 0
     assert any("looks good" in rec.lower() for rec in recommendations)
@@ -44,7 +45,7 @@ def test_generate_recommendations_poor_quality():
     expectation_summary = ExpectationSummary(success=False, failures=["Some failure"])
     quality_dist = {"mean": 0.3, "min": 0.2, "max": 0.4}
 
-    recommendations = _generate_recommendations(df, expectation_summary, quality_dist)
+    recommendations = generate_recommendations(df, expectation_summary, quality_dist)
 
     assert len(recommendations) > 0
     # Should have critical or warning recommendations

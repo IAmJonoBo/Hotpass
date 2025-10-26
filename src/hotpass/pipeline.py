@@ -24,6 +24,12 @@ from .data_sources import (
 )
 from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from .normalization import clean_string, coalesce, normalize_province, slugify
+from .pipeline_reporting import (
+    collect_unique,
+    generate_recommendations,
+    html_performance_rows,
+    html_source_performance,
+)
 from .quality import ExpectationSummary, build_ssot_schema, run_expectations
 
 # Set up module logger
@@ -378,60 +384,12 @@ class QualityReport:
             f"  <ul>{expectation_items}</ul>\n"
             "  <h2>Performance Metrics</h2>\n"
             "  <table>\n"
-            f"    <tbody>{_html_performance_rows(self.performance_metrics)}</tbody>\n"
+            f"    <tbody>{html_performance_rows(self.performance_metrics)}</tbody>\n"
             "  </table>\n"
-            f"  {_html_source_performance(self.performance_metrics)}"
+            f"  {html_source_performance(self.performance_metrics)}"
             "</body>\n"
             "</html>\n"
         )
-
-
-def _html_performance_rows(metrics: dict[str, Any]) -> str:
-    if not metrics:
-        return '<tr><td colspan="2">No performance metrics recorded.</td></tr>'
-    rows: list[str] = []
-    mapping = [
-        ("Load seconds", metrics.get("load_seconds")),
-        ("Aggregation seconds", metrics.get("aggregation_seconds")),
-        ("Expectations seconds", metrics.get("expectations_seconds")),
-        ("Write seconds", metrics.get("write_seconds")),
-        ("Total seconds", metrics.get("total_seconds")),
-        ("Rows per second", metrics.get("rows_per_second")),
-        ("Load rows per second", metrics.get("load_rows_per_second")),
-    ]
-    for label, raw in mapping:
-        if raw is None:
-            continue
-        if isinstance(raw, int | float):
-            value = f"{float(raw):.4f}"
-        else:
-            value = str(raw)
-        rows.append(f"<tr><td>{html.escape(label)}</td><td>{html.escape(value)}</td></tr>")
-    if not rows:
-        return '<tr><td colspan="2">No performance metrics recorded.</td></tr>'
-    return "".join(rows)
-
-
-def _html_source_performance(metrics: dict[str, Any]) -> str:
-    if not metrics:
-        return ""
-    sources = metrics.get("source_load_seconds", {})
-    if not sources:
-        return ""
-    rows = "".join(
-        "<tr><td>{}</td><td>{}</td></tr>".format(
-            html.escape(loader),
-            html.escape(f"{float(seconds):.4f}"),
-        )
-        for loader, seconds in sorted(sources.items())
-    )
-    return (
-        "  <h3>Source Load Durations</h3>\n"
-        "  <table>\n"
-        "    <thead><tr><th>Loader</th><th>Seconds</th></tr></thead>\n"
-        f"    <tbody>{rows}</tbody>\n"
-        "  </table>\n"
-    )
 
 
 @dataclass
@@ -443,84 +401,6 @@ class PipelineResult:
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
-
-
-def _collect_unique(values: Iterable[str | None]) -> list[str]:
-    unique: list[str] = []
-    for value in values:
-        cleaned = clean_string(value)
-        if cleaned and cleaned not in unique:
-            unique.append(cleaned)
-    return unique
-
-
-def _generate_recommendations(
-    validated_df: pd.DataFrame,
-    expectation_summary: ExpectationSummary,
-    quality_distribution: dict[str, float],
-) -> list[str]:
-    """Generate actionable recommendations based on data quality analysis."""
-    recommendations = []
-
-    # Check overall quality scores
-    mean_quality = quality_distribution.get("mean", 0.0)
-    if mean_quality < 0.5:
-        recommendations.append(
-            "CRITICAL: Average data quality score is below 50%. "
-            "Consider reviewing data sources and validation rules."
-        )
-    elif mean_quality < 0.7:
-        recommendations.append(
-            "WARNING: Average data quality score is below 70%. "
-            "Focus on improving contact information completeness."
-        )
-
-    # Check for missing critical fields
-    if "contact_primary_email" in validated_df.columns:
-        email_missing_rate = validated_df["contact_primary_email"].isna().mean()
-        if email_missing_rate > 0.5:
-            recommendations.append(
-                f"Missing primary email in {email_missing_rate:.0%} of records. "
-                "Consider enriching data from additional sources."
-            )
-
-    if "contact_primary_phone" in validated_df.columns:
-        phone_missing_rate = validated_df["contact_primary_phone"].isna().mean()
-        if phone_missing_rate > 0.5:
-            recommendations.append(
-                f"Missing primary phone in {phone_missing_rate:.0%} of records. "
-                "Consider enriching data from additional sources."
-            )
-
-    # Check for validation failures
-    if not expectation_summary.success:
-        recommendations.append(
-            "Some validation expectations failed. Review expectation failures for details."
-        )
-
-    # Check for data quality flags
-    if "data_quality_flags" in validated_df.columns:
-        flagged_records = validated_df[validated_df["data_quality_flags"] != "none"]
-        if len(flagged_records) > 0:
-            flag_rate = len(flagged_records) / len(validated_df)
-            if flag_rate > 0.3:
-                recommendations.append(
-                    f"{flag_rate:.0%} of records have quality flags. "
-                    "Review flagged records to identify systematic issues."
-                )
-
-    # Suggest improving low-quality records
-    low_quality_count = (validated_df["data_quality_score"] < 0.4).sum()
-    if low_quality_count > 0:
-        recommendations.append(
-            f"{low_quality_count} records have quality score below 40%. "
-            "Consider manual review or additional data sources for these records."
-        )
-
-    if not recommendations:
-        recommendations.append("Data quality looks good! No critical issues identified.")
-
-    return recommendations
 
 
 def _flatten_series_of_lists(series: pd.Series) -> list[str]:
@@ -535,7 +415,7 @@ def _flatten_series_of_lists(series: pd.Series) -> list[str]:
             cleaned = clean_string(value)
             if cleaned:
                 items.append(cleaned)
-    return _collect_unique(items)
+    return collect_unique(items)
 
 
 def _latest_iso_date(values: Iterable[str | None]) -> str | None:
@@ -748,8 +628,8 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     name_values = _iter_values("contact_names", treat_list=True)
     role_values = _iter_values("contact_roles", treat_list=True)
 
-    source_datasets = "; ".join(sorted(_collect_unique(group["source_dataset"].tolist())))
-    source_record_ids = "; ".join(sorted(_collect_unique(group["source_record_id"].tolist())))
+    source_datasets = "; ".join(sorted(collect_unique(group["source_dataset"].tolist())))
+    source_record_ids = "; ".join(sorted(collect_unique(group["source_record_id"].tolist())))
 
     province = provinces[0].value if provinces else None
     _record_provenance("province", provinces, province)
@@ -1257,7 +1137,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     # Generate recommendations if enabled
     recommendations = []
     if config.enable_recommendations:
-        recommendations = _generate_recommendations(
+        recommendations = generate_recommendations(
             validated_df, expectation_summary, quality_distribution
         )
         logger.info(f"Generated {len(recommendations)} recommendations")
