@@ -57,6 +57,28 @@ def _run_with_great_expectations(
     website_mostly: float,
     runtime_override: Mapping[str, Any] | None = None,
 ) -> ExpectationSummary | None:
+    """
+    Validate a sanitized DataFrame using Great Expectations.
+
+    Parameters
+    ----------
+    sanitized : pd.DataFrame
+        The DataFrame to validate.
+    email_mostly : float
+        The minimum fraction of valid emails required to pass the expectation.
+    phone_mostly : float
+        The minimum fraction of valid phone numbers required to pass the expectation.
+    website_mostly : float
+        The minimum fraction of valid website URLs required to pass the expectation.
+    runtime_override : Mapping[str, Any] or None, optional
+        Optional runtime components override for testing. Used internally to inject stub
+        implementations or mock Great Expectations components.
+
+    Returns
+    -------
+    ExpectationSummary or None
+        The summary of validation results, or None if Great Expectations is unavailable.
+    """
     runtime = runtime_override if runtime_override is not None else _GE_RUNTIME
     if runtime is None:
         return None
