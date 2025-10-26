@@ -2,6 +2,8 @@
 
 ## Tasks
 
+- [ ] Restore Semgrep static analysis by vendoring rules or trusting sandbox CA (Owner: QA, Due: 2025-11-15)
+- [ ] Review mutation testing configuration to raise kill rate above current baseline (Owner: QA, Due: 2025-11-29)
 - [x] Consolidate planning collateral into `docs/roadmap.md` and simplify top-level release docs (Owner: Product, Due: 2025-10-25)
 - [x] Publish Diátaxis-aligned docs set with style and contributing guidance (Owner: Docs, Due: 2025-10-25)
 - [x] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
@@ -32,8 +34,8 @@
 - [x] Optimise geospatial distance calculations and expose actionable errors (Owner: Data, Due: 2025-12-20)
 - [x] Add deterministic evidence logging tests covering consent/export helpers (Owner: Compliance & QA, Due: 2025-12-06)
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
-- [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
-- [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
+- [x] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
+- [x] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
 
 ## Steps
 
@@ -75,6 +77,10 @@
 - [x] Embedded dashboard remediation guidance with glossary and operations links (2025-10-26)
 - [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
 - [x] Cleared CLI/pipeline lint, type, and security findings and reran the full QA suite after progress instrumentation landed (2025-10-26)
+- [x] Throttled CLI progress updates and validated responsiveness with high-volume fixtures (2025-10-26)
+- [x] Parallelised website enrichment via asynchronous workers with configurable concurrency (2025-10-26)
+- [x] Authored bootstrap execute-mode guardrails and rollback guidance in Diátaxis how-to guides (2025-10-26)
+- [x] Finalised pipeline reporting extraction, wired helpers into `pipeline_reporting.py`, and reran QA gates (pytest `c0cc84`, ruff `2265fd`, ruff format `adb92b`, mypy `caf6d1`, bandit `d489e9`, detect-secrets `1fe040`, build `8c3a29`; Semgrep blocked by SSL `ea97d4`) (2025-10-26)
 ## Deliverables
 
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
@@ -115,6 +121,9 @@
 - [x] Enhanced pipeline enforces consent validation with overrides and compliance reporting updates
 - [x] Enhanced pipeline feature orchestration extracted into helper module to satisfy fitness function limits
 - [x] Consent validation audit logs persisted to `data/logs/prefect/` alongside documentation updates
+- [x] Asynchronous website enrichment concurrency with regression coverage in `tests/test_enrichment.py` (2025-10-26)
+- [x] CLI progress throttling validated with high-volume fixtures in `tests/test_cli.py` (2025-10-26)
+- [x] Bootstrap execute-mode guardrails documented in `docs/how-to-guides/bootstrap-execute-mode.md` (2025-10-26)
 - [x] Export access logs captured under `dist/logs/access/` with hashing metadata for SOC 2 evidence
 - [x] Vault integration shipped for Prefect flows and CI via `hotpass.secrets` utilities and `scripts/secrets/pull_vault_secrets.py`
 - [x] Quarterly verification automation script writes ledger and JSON summary (`scripts/compliance/run_verification.py`, `data/compliance/verification-log.json`)
@@ -125,32 +134,32 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 89%)【d6c49f†L1-L80】
-- [x] Ruff lint clean (`uv run ruff check`)【789518†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【dbdfc8†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【a54a0a†L1-L23】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
-- [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
+- [x] Pytest with coverage ≥ 80% (current: 89%)【c0cc84†L1-L80】
+- [x] Ruff lint clean (`uv run ruff check`)【2265fd†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【adb92b†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【caf6d1†L1-L23】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【d489e9†L1-L19】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【1fe040†L1-L60】
+- [x] Package build succeeds (`uv run uv build`)【8c3a29†L1-L120】
 - [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
 - [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【8eab1a†L1-L2】
 - [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【8b644b†L1-L2】
 - [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【efd15c†L1-L2】
-- [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
+- [ ] Semgrep static analysis (`uv run semgrep --config=auto`) blocked by SSL validation【ea97d4†L1-L73】
 - [x] Compliance evidence catalog refreshed (due 2025-01-15)【F:docs/compliance/evidence-catalog.md†L13-L20】
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d6c49f`)
-- Lint: `uv run ruff check` (chunk `ca34ba`)
-- Format: `uv run ruff format --check` (chunk `78ba8a`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `c0cc84`)
+- Lint: `uv run ruff check` (chunk `2265fd`)
+- Format: `uv run ruff format --check` (chunk `adb92b`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `uv run mypy src tests scripts` (chunk `a54a0a`)
-- Security: `uv run bandit -r src scripts` (chunk `bc752c`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `a40074`)
-- Build: `uv run uv build` (chunk `5e74d7`)
+- Types: `uv run mypy src tests scripts` (chunk `caf6d1`)
+- Security: `uv run bandit -r src scripts` (chunk `d489e9`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `1fe040`)
+- Build: `uv run uv build` (chunk `8c3a29`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)
@@ -158,7 +167,7 @@
 - Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `8eab1a`)
 - SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `8b644b`)
 - Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `efd15c`)
-- Semgrep: `uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off` (chunk `467a00`)
+- Semgrep: `uv run semgrep --config=auto` (chunk `ea97d4`)
 - Compliance cadence: `uv run python scripts/compliance/run_verification.py --reviewer "Compliance Bot" --notes "Initial automation baseline"` (chunk `65fb01`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
@@ -179,8 +188,10 @@
 - Evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) now ship with READMEs; confirm retention SLAs with Compliance and Platform owners.
 - Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Local Semgrep ruleset focuses on high-risk patterns (eval, shell=True); expand coverage with additional rules as the backlog evolves.
+- Semgrep auto-configuration fetch currently fails under sandbox SSL policies; vendor rules or trust store update required before gate can pass (`ea97d4†L1-L73`).
 - Mutation suite now exercises observability toggles in `pipeline_enhanced`; rerun kill rate report after next mutation sweep.
-- CLI progress instrumentation still requires high-volume stress verification to validate operator feedback loops (tracked above).
+- CLI progress instrumentation now throttles high-volume updates; monitor console output for suppressed update messages when scaling beyond default concurrency.
+- Asynchronous website enrichment increases outbound concurrency—coordinate rate limits with upstream providers before raising the worker count.
 - Shared-secret dashboard password still requires rotation and monitoring until SSO-backed auth replaces it; integrate Vault-issued credentials during rollout.
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
 - Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.

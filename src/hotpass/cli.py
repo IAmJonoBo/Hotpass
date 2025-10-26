@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 import tomllib
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import nullcontext
@@ -286,7 +287,7 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
     tokens: list[str] = []
     if raw_sensitive is None:
         tokens = list(DEFAULT_SENSITIVE_FIELD_TOKENS)
-    elif isinstance(raw_sensitive, (list, tuple, set)):
+    elif isinstance(raw_sensitive, list | tuple | set):
         for value in raw_sensitive:
             if isinstance(value, str):
                 cleaned = value.strip()
@@ -344,8 +345,14 @@ def _infer_report_format(report_path: Path) -> str | None:
 
 
 class PipelineProgress:
-    def __init__(self, console: Console) -> None:
-        self._progress = Progress(
+    def __init__(
+        self,
+        console: Console,
+        *,
+        progress_factory: Callable[..., Any] = Progress,
+        throttle_seconds: float = 0.05,
+    ) -> None:
+        self._progress = progress_factory(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(bar_width=None),
@@ -357,6 +364,10 @@ class PipelineProgress:
         self._tasks: dict[str, TaskID] = {}
         self._aggregate_total = 0
         self._aggregate_progress_total = 1
+        self._aggregate_last_completed = 0
+        self._aggregate_last_update_time = 0.0
+        self._aggregate_throttled_updates = 0
+        self._throttle_seconds = max(0.0, throttle_seconds)
 
     def __enter__(self) -> PipelineProgress:
         self._progress.__enter__()
@@ -379,6 +390,9 @@ class PipelineProgress:
             total = int(payload.get("total", 0))
             self._aggregate_total = total if total > 0 else 0
             self._aggregate_progress_total = self._aggregate_total or 1
+            self._aggregate_last_completed = 0
+            self._aggregate_last_update_time = 0.0
+            self._aggregate_throttled_updates = 0
             self._start_task(
                 "aggregate",
                 "Aggregating organisations",
@@ -388,10 +402,25 @@ class PipelineProgress:
             task_id = self._tasks.get("aggregate")
             if task_id is not None:
                 if self._aggregate_total <= 0:
+                    self._aggregate_last_completed = self._aggregate_progress_total
+                    self._aggregate_last_update_time = time.perf_counter()
                     self._progress.update(task_id, completed=self._aggregate_progress_total)
                 else:
                     completed = int(payload.get("completed", 0))
                     completed = max(0, min(completed, self._aggregate_progress_total))
+                    now = time.perf_counter()
+                    final_update = completed >= self._aggregate_progress_total
+                    if not final_update and completed == self._aggregate_last_completed:
+                        return
+                    if (
+                        not final_update
+                        and self._throttle_seconds > 0.0
+                        and now - self._aggregate_last_update_time < self._throttle_seconds
+                    ):
+                        self._aggregate_throttled_updates += 1
+                        return
+                    self._aggregate_last_update_time = now
+                    self._aggregate_last_completed = completed
                     self._progress.update(task_id, completed=completed)
         elif event == PIPELINE_EVENT_AGGREGATE_COMPLETED:
             aggregated = int(payload.get("aggregated_records", 0))
@@ -400,6 +429,7 @@ class PipelineProgress:
             if conflicts:
                 message += f" with [yellow]{conflicts}[/yellow] conflict(s) resolved"
             self._complete_task("aggregate", message)
+            self._emit_throttle_summary()
         elif event == PIPELINE_EVENT_SCHEMA_STARTED:
             self._start_task("schema", "Validating schema")
         elif event == PIPELINE_EVENT_SCHEMA_COMPLETED:
@@ -449,6 +479,12 @@ class PipelineProgress:
             self._progress.update(task_id, total=total, completed=total)
         if message:
             self._progress.log(message)
+
+    def _emit_throttle_summary(self) -> None:
+        if self._aggregate_throttled_updates:
+            suppressed = self._aggregate_throttled_updates
+            self._aggregate_throttled_updates = 0
+            self._progress.log(f"[dim]Suppressed {suppressed} aggregate progress update(s)[/dim]")
 
 
 class StructuredLogger:

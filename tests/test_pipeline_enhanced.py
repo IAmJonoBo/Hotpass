@@ -97,6 +97,7 @@ def test_enhanced_pipeline_config_defaults():
     assert config.enable_observability is False
     assert config.entity_resolution_threshold == 0.75
     assert config.use_splink is False
+    assert config.enrichment_concurrency == 8
 
 
 def test_noop_context_manager():
@@ -482,12 +483,23 @@ def test_enhanced_pipeline_with_geospatial_and_enrichment(
         def __init__(self, *_, **__):
             self.set_calls = []
 
+        def get(self, *_: object, **__: object) -> None:
+            return None
+
+        def set(self, *args: object, **__: object) -> None:
+            self.set_calls.append(args)
+
         def stats(self) -> dict[str, int]:
             return {"total_entries": 0, "total_hits": 0}
 
     monkeypatch.setattr(pipeline_stages, "geocode_dataframe", fake_geocode_dataframe)
     monkeypatch.setattr(pipeline_stages, "enrich_dataframe_with_websites", fake_enrich_websites)
     monkeypatch.setattr(pipeline_stages, "CacheManager", FakeCache)
+    monkeypatch.setattr(
+        pipeline_stages,
+        "enrich_dataframe_with_websites_concurrent",
+        fake_enrich_websites,
+    )
 
     enhanced_config = EnhancedPipelineConfig(
         enable_entity_resolution=False,
@@ -497,6 +509,7 @@ def test_enhanced_pipeline_with_geospatial_and_enrichment(
         enrich_websites=True,
         enable_compliance=False,
         enable_observability=False,
+        enrichment_concurrency=1,
     )
 
     result = run_enhanced_pipeline(config, enhanced_config)

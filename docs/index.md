@@ -23,6 +23,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /how-to-guides/configure-pipeline
 /how-to-guides/format-and-validate
 /how-to-guides/orchestrate-and-observe
+/how-to-guides/bootstrap-execute-mode
 ```
 
 ```{toctree}

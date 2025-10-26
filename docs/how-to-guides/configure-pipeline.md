@@ -57,6 +57,26 @@ Run the pipeline with the custom config:
 uv run hotpass --config config/pipeline.healthcare.yaml
 ```
 
+### Enable asynchronous website enrichment
+
+When you enrich records with external website content, enable the enhanced pipeline with
+concurrency to speed up network-bound fetches:
+
+```python
+from hotpass.pipeline_enhanced import EnhancedPipelineConfig
+
+config = EnhancedPipelineConfig(
+    enable_enrichment=True,
+    enrich_websites=True,
+    enrichment_concurrency=8,
+)
+```
+
+Set `enrichment_concurrency` to the number of parallel fetches you are comfortable running
+against upstream sites. The default (`8`) uses asynchronous workers to download multiple
+pages at once while respecting cache guardrails. Lower the value if an API enforces strict
+rate limits.
+
 ## 3. Extend column mapping
 
 Add business-specific column names directly in the profile or register them at runtime:

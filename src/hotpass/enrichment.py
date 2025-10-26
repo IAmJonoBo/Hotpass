@@ -7,6 +7,7 @@ This module provides functionality for:
 - Data enrichment workflows
 """
 
+import asyncio
 import logging
 import sqlite3
 import warnings
@@ -33,6 +34,30 @@ except ImportError:
     TRAFILATURA_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+def _initialise_website_enrichment(df: pd.DataFrame, website_column: str) -> pd.DataFrame | None:
+    if website_column not in df.columns:
+        logger.warning("Column %s not found in dataframe", website_column)
+        return None
+
+    enriched_df = df.copy()
+    enriched_df["website_title"] = None
+    enriched_df["website_description"] = None
+    enriched_df["website_text_length"] = None
+    enriched_df["website_enriched"] = False
+    return enriched_df
+
+
+def _apply_website_content(df: pd.DataFrame, idx: int, content: dict[str, Any]) -> None:
+    if not content.get("success"):
+        return
+
+    df.at[idx, "website_title"] = content.get("title")
+    df.at[idx, "website_description"] = content.get("description")
+    text = content.get("text")
+    df.at[idx, "website_text_length"] = len(text) if isinstance(text, str) else 0
+    df.at[idx, "website_enriched"] = True
 
 
 class CacheManager:
@@ -333,17 +358,9 @@ def enrich_dataframe_with_websites(
     Returns:
         Dataframe with additional enrichment columns
     """
-    if website_column not in df.columns:
-        logger.warning(f"Column {website_column} not found in dataframe")
+    enriched_df = _initialise_website_enrichment(df, website_column)
+    if enriched_df is None:
         return df
-
-    enriched_df = df.copy()
-
-    # Initialize new columns
-    enriched_df["website_title"] = None
-    enriched_df["website_description"] = None
-    enriched_df["website_text_length"] = None
-    enriched_df["website_enriched"] = False
 
     # Extract content for each website
     for idx, row in enriched_df.iterrows():
@@ -353,19 +370,92 @@ def enrich_dataframe_with_websites(
             continue
 
         content = extract_website_content(website, cache=cache)
-
-        if content.get("success"):
-            enriched_df.at[idx, "website_title"] = content.get("title")
-            enriched_df.at[idx, "website_description"] = content.get("description")
-            enriched_df.at[idx, "website_text_length"] = (
-                len(content.get("text", "")) if content.get("text") else 0
-            )
-            enriched_df.at[idx, "website_enriched"] = True
+        _apply_website_content(enriched_df, idx, content)
 
     enriched_count = enriched_df["website_enriched"].sum()
     logger.info(f"Enriched {enriched_count}/{len(df)} organizations with website content")
 
     return enriched_df
+
+
+async def enrich_dataframe_with_websites_async(
+    df: pd.DataFrame,
+    website_column: str = "organization_website",
+    cache: CacheManager | None = None,
+    *,
+    concurrency: int = 8,
+) -> pd.DataFrame:
+    """Asynchronously enrich organisation websites using a worker pool."""
+
+    enriched_df = _initialise_website_enrichment(df, website_column)
+    if enriched_df is None:
+        return df
+
+    urls: list[tuple[int, Any]] = []
+    for idx, website in enriched_df[website_column].items():
+        if pd.isna(website) or not website:
+            continue
+        urls.append((idx, website))
+
+    if not urls:
+        return enriched_df
+
+    concurrency = max(1, concurrency)
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def _enrich(idx: int, url: Any) -> tuple[int, dict[str, Any]]:
+        async with semaphore:
+            content = await asyncio.to_thread(extract_website_content, url, cache)
+        return idx, content
+
+    tasks = [_enrich(idx, url) for idx, url in urls]
+    results: list[tuple[int, dict[str, Any]] | BaseException] = await asyncio.gather(
+        *tasks, return_exceptions=True
+    )
+
+    for result in results:
+        if isinstance(result, BaseException):
+            logger.error("Website enrichment task failed: %s", result)
+            continue
+        idx, content = result
+        _apply_website_content(enriched_df, idx, content)
+
+    enriched_count = enriched_df["website_enriched"].sum()
+    logger.info(
+        "Enriched %s/%s organizations with website content (concurrency=%s)",
+        enriched_count,
+        len(df),
+        concurrency,
+    )
+    return enriched_df
+
+
+def enrich_dataframe_with_websites_concurrent(
+    df: pd.DataFrame,
+    website_column: str = "organization_website",
+    cache: CacheManager | None = None,
+    *,
+    concurrency: int = 8,
+) -> pd.DataFrame:
+    """Convenience wrapper around the async enrichment helper."""
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(
+            enrich_dataframe_with_websites_async(
+                df,
+                website_column=website_column,
+                cache=cache,
+                concurrency=concurrency,
+            )
+        )
+
+    msg = (
+        "enrich_dataframe_with_websites_concurrent() must not be invoked from an active "
+        "event loop. Await enrich_dataframe_with_websites_async() instead."
+    )
+    raise RuntimeError(msg)
 
 
 def enrich_dataframe_with_registries(

@@ -1,6 +1,8 @@
 """Tests for enrichment module."""
 
 import tempfile
+import threading
+import time
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -11,6 +13,7 @@ from hotpass.enrichment import (
     CacheManager,
     enrich_dataframe_with_registries,
     enrich_dataframe_with_websites,
+    enrich_dataframe_with_websites_concurrent,
     enrich_from_registry,
     extract_website_content,
 )
@@ -281,6 +284,57 @@ def test_enrich_dataframe_with_websites_null_urls(mock_extract, temp_cache):
     # Only one should be enriched
     assert result_df["website_enriched"].sum() == 1
     assert mock_extract.call_count == 1
+
+
+def test_enrich_dataframe_with_websites_concurrent_runs_tasks_in_parallel(monkeypatch):
+    """Ensure the concurrent enrichment path executes website fetches in parallel."""
+
+    df = pd.DataFrame(
+        {
+            "organization_name": ["A", "B", "C", "D"],
+            "website": [
+                "https://a.example",
+                "https://b.example",
+                "https://c.example",
+                "https://d.example",
+            ],
+        }
+    )
+
+    active = 0
+    peak_active = 0
+    lock = threading.Lock()
+
+    def fake_extract(url: str, cache=None):  # type: ignore[unused-argument]
+        nonlocal active, peak_active
+        with lock:
+            active += 1
+            peak_active = max(peak_active, active)
+        time.sleep(0.01)
+        with lock:
+            active -= 1
+        return {
+            "success": True,
+            "title": f"Title for {url}",
+            "description": "",
+            "text": "content",
+        }
+
+    monkeypatch.setattr(enrichment, "extract_website_content", fake_extract)
+
+    result = enrich_dataframe_with_websites_concurrent(df, website_column="website", concurrency=4)
+
+    assert peak_active >= 2, "Expected concurrent execution for website enrichment"
+    assert result["website_enriched"].sum() == 4
+    assert (
+        result["website_title"]
+        == [
+            "Title for https://a.example",
+            "Title for https://b.example",
+            "Title for https://c.example",
+            "Title for https://d.example",
+        ]
+    ).all()
 
 
 @patch("hotpass.enrichment.enrich_from_registry")
