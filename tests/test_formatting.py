@@ -3,7 +3,9 @@
 import pandas as pd
 import pytest
 
-from hotpass.formatting import (
+pytest.importorskip("frictionless")
+
+from hotpass.formatting import (  # noqa: E402
     OutputFormat,
     apply_excel_formatting,
     create_summary_sheet,

@@ -1,8 +1,11 @@
 """Tests for intelligent column mapping."""
 
 import pandas as pd
+import pytest
 
-from hotpass.column_mapping import ColumnMapper, infer_column_types, profile_dataframe
+pytest.importorskip("frictionless")
+
+from hotpass.column_mapping import ColumnMapper, infer_column_types, profile_dataframe  # noqa: E402
 
 
 def test_column_mapper_exact_match():

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from hotpass.pipeline import QualityReport
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass.pipeline import QualityReport  # noqa: E402
 
 
 def _sample_report() -> QualityReport:

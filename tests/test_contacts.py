@@ -1,8 +1,11 @@
 """Tests for enhanced contact management."""
 
 import pandas as pd
+import pytest
 
-from hotpass.contacts import (
+pytest.importorskip("frictionless")
+
+from hotpass.contacts import (  # noqa: E402
     Contact,
     OrganizationContacts,
     consolidate_contacts_from_rows,

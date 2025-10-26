@@ -2,7 +2,9 @@
 
 import pytest
 
-from hotpass.error_handling import (
+pytest.importorskip("frictionless")
+
+from hotpass.error_handling import (  # noqa: E402
     ErrorCategory,
     ErrorContext,
     ErrorHandler,

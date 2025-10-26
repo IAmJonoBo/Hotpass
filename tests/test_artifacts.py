@@ -8,8 +8,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import hotpass.artifacts as artifacts
-from hotpass.artifacts import create_refined_archive
+pytest.importorskip("frictionless")
+
+import hotpass.artifacts as artifacts  # noqa: E402
+from hotpass.artifacts import create_refined_archive  # noqa: E402
 
 
 def test_create_refined_archive_embeds_checksum(tmp_path: Path) -> None:

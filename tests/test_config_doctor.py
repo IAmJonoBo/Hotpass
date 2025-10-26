@@ -1,7 +1,11 @@
 """Tests for configuration doctor functionality."""
 
-from hotpass.config import get_default_profile
-from hotpass.config_doctor import ConfigDoctor, DiagnosticResult
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass.config import get_default_profile  # noqa: E402
+from hotpass.config_doctor import ConfigDoctor, DiagnosticResult  # noqa: E402
 
 
 def test_config_doctor_diagnose_default_profile():

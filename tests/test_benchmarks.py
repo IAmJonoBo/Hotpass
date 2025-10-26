@@ -1,7 +1,11 @@
 from pathlib import Path
 
-from hotpass import benchmarks
-from hotpass.data_sources import ExcelReadOptions
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass import benchmarks  # noqa: E402
+from hotpass.data_sources import ExcelReadOptions  # noqa: E402
 
 
 def test_run_benchmark_returns_metrics(sample_data_dir: Path, tmp_path: Path) -> None:

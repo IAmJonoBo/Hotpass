@@ -16,6 +16,7 @@ schemas/reachout_organisation.schema.json
 schemas/sacaa_cleaned.schema.json
 schemas/ssot.schema.json
 src/hotpass/__init__.py
+src/hotpass/_compat_nameparser.py
 src/hotpass/_warning_filters.py
 src/hotpass/artifacts.py
 src/hotpass/benchmarks.py
@@ -58,6 +59,13 @@ src/hotpass/domain/party/dictionary.py
 src/hotpass/domain/party/loader.py
 src/hotpass/domain/party/models.py
 src/hotpass/domain/party/schemas.py
+src/hotpass/linkage/__init__.py
+src/hotpass/linkage/blocking.py
+src/hotpass/linkage/comparators.py
+src/hotpass/linkage/config.py
+src/hotpass/linkage/review.py
+src/hotpass/linkage/runner.py
+src/hotpass/linkage/settings.py
 src/hotpass/transform/__init__.py
 src/hotpass/transform/normalize.py
 tests/test_artifacts.py
@@ -80,6 +88,7 @@ tests/test_error_handling.py
 tests/test_evidence.py
 tests/test_formatting.py
 tests/test_geospatial.py
+tests/test_linkage.py
 tests/test_observability.py
 tests/test_orchestration.py
 tests/test_package_contracts.py

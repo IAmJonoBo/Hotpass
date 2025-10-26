@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import duckdb
 import pandas as pd
 import pytest
 
-from hotpass.error_handling import HotpassError
-from hotpass.pipeline import PipelineConfig, run_pipeline
+duckdb = pytest.importorskip("duckdb")
+pytest.importorskip("frictionless")
+
+from hotpass.error_handling import HotpassError  # noqa: E402
+from hotpass.pipeline import PipelineConfig, run_pipeline  # noqa: E402
 
 
 @pytest.fixture()

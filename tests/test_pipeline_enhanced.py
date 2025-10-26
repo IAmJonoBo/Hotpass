@@ -6,11 +6,13 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-import hotpass.pipeline_enhanced as pipeline_enhanced
-import hotpass.pipeline_enhancements as pipeline_stages
-from hotpass.compliance import ConsentValidationError
-from hotpass.pipeline import PipelineResult, QualityReport
-from hotpass.pipeline_enhanced import (
+pytest.importorskip("frictionless")
+
+import hotpass.pipeline_enhanced as pipeline_enhanced  # noqa: E402
+import hotpass.pipeline_enhancements as pipeline_stages  # noqa: E402
+from hotpass.compliance import ConsentValidationError  # noqa: E402
+from hotpass.pipeline import PipelineResult, QualityReport  # noqa: E402
+from hotpass.pipeline_enhanced import (  # noqa: E402
     EnhancedPipelineConfig,
     _build_trace_factory,
     _initialize_observability,
@@ -333,9 +335,10 @@ def test_entity_resolution_uses_fallback_when_splink_missing(
     def fake_add_scores(df: pd.DataFrame) -> pd.DataFrame:
         return df.assign(priority_applied=True)
 
-    import hotpass.entity_resolution
+    def fake_link_entities(df: pd.DataFrame, _config: object):
+        raise RuntimeError("splink missing")
 
-    monkeypatch.delattr(hotpass.entity_resolution, "resolve_entities_with_splink", raising=False)
+    monkeypatch.setattr(pipeline_stages, "link_entities", fake_link_entities)
     monkeypatch.setattr(pipeline_stages, "resolve_entities_fallback", fake_fallback)
     monkeypatch.setattr(pipeline_stages, "add_ml_priority_scores", fake_add_scores)
 
@@ -346,6 +349,7 @@ def test_entity_resolution_uses_fallback_when_splink_missing(
         enable_compliance=False,
         enable_observability=False,
         use_splink=True,
+        linkage_output_dir=str(tmp_path / "linkage"),
     )
 
     with caplog.at_level(logging.WARNING):

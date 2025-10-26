@@ -5,7 +5,9 @@ import json
 import pandas as pd
 import pytest
 
-import hotpass.entity_resolution as entity_resolution
+pytest.importorskip("frictionless")
+
+import hotpass.entity_resolution as entity_resolution  # noqa: E402
 from hotpass.entity_resolution import (
     add_ml_priority_scores,
     build_entity_registry,

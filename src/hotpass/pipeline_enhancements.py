@@ -6,7 +6,8 @@ import logging
 from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from pandas import DataFrame
 
@@ -22,6 +23,10 @@ from .enrichment import (
     enrich_dataframe_with_websites_concurrent,
 )
 from .entity_resolution import add_ml_priority_scores, resolve_entities_fallback
+from .linkage import LinkageConfig, LinkageThresholds, link_entities
+
+if TYPE_CHECKING:  # pragma: no cover - type hints only
+    from .linkage import LinkageResult
 from .geospatial import geocode_dataframe, normalize_address
 
 logger = logging.getLogger(__name__)
@@ -46,38 +51,52 @@ class EnhancedPipelineConfig:
     cache_path: str = "data/.cache/enrichment.db"
     consent_overrides: Mapping[str, str] | None = None
     enrichment_concurrency: int = 8
+    linkage_config: LinkageConfig | None = None
+    linkage_output_dir: str | None = None
+    linkage_match_threshold: float | None = None
 
 
 def apply_entity_resolution(
     df: DataFrame, config: EnhancedPipelineConfig, trace_factory: TraceFactory
-) -> DataFrame:
+) -> tuple[DataFrame, LinkageResult | None]:
     """Resolve duplicate entities and add ML priority scores when enabled."""
 
     if not config.enable_entity_resolution:
-        return df
+        return df, None
 
+    linkage_result = None
     with trace_factory("entity_resolution"):
         logger.info("Running entity resolution...")
         try:
-            if config.use_splink:
-                try:
-                    from .entity_resolution import resolve_entities_with_splink
-                except ImportError as import_err:  # pragma: no cover - optional dependency
-                    logger.warning(
-                        "Splink import failed, falling back to rule-based: %s",
-                        import_err,
-                    )
-                    df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
-                else:  # pragma: no branch - executed when Splink is available
-                    df, _ = resolve_entities_with_splink(df, config.entity_resolution_threshold)
-            else:
-                df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
+            match_threshold = config.linkage_match_threshold or max(
+                0.9, config.entity_resolution_threshold
+            )
+            high_value = max(match_threshold, config.entity_resolution_threshold)
+            thresholds = LinkageThresholds(
+                high=high_value,
+                review=config.entity_resolution_threshold,
+            )
+            base_linkage_config = config.linkage_config or LinkageConfig()
+            root_dir = (
+                Path(config.linkage_output_dir)
+                if config.linkage_output_dir
+                else base_linkage_config.persistence.root_dir
+            )
+            configured = base_linkage_config.with_output_root(root_dir)
+            configured.use_splink = config.use_splink
+            configured.thresholds = thresholds
 
-            df = add_ml_priority_scores(df)
-            logger.info("Entity resolution complete: %s unique entities", len(df))
+            linkage_result = link_entities(df, configured)
+            df = linkage_result.deduplicated
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.error("Entity resolution failed: %s", exc)
-    return df
+            df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
+            linkage_result = None
+
+        df = add_ml_priority_scores(df)
+        logger.info("Entity resolution complete: %s unique entities", len(df))
+
+    return df, linkage_result
 
 
 def apply_geospatial(

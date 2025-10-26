@@ -5,7 +5,9 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-from hotpass.compliance import (
+pytest.importorskip("frictionless")
+
+from hotpass.compliance import (  # noqa: E402
     ConsentValidationError,
     DataClassification,
     LawfulBasis,

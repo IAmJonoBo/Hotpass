@@ -18,6 +18,7 @@ detect-secrets>=1.5.0
 nameparser>=1.1.3
 python-stdnum>=1.19
 pyarrow>=17.0.0
+rapidfuzz>=3.9.2
 
 [caching]
 redis>=5.0.0
@@ -57,6 +58,7 @@ requests>=2.32.0
 
 [entity_resolution]
 splink>=3.9.0
+rapidfuzz>=3.9.2
 
 [geospatial]
 geopy>=2.4.0

@@ -7,9 +7,11 @@ from typing import Any
 import pandas as pd
 import pytest
 
-import hotpass.quality as quality
+pytest.importorskip("frictionless")
+
+import hotpass.quality as quality  # noqa: E402
 from hotpass.data_sources import ExcelReadOptions
-from hotpass.pipeline import (
+from hotpass.pipeline import (  # noqa: E402
     PIPELINE_EVENT_AGGREGATE_COMPLETED,
     PIPELINE_EVENT_AGGREGATE_PROGRESS,
     PIPELINE_EVENT_COMPLETED,

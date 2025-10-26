@@ -1,5 +1,8 @@
 """Tests for Prefect orchestration module."""
 
+# ruff: noqa: E402
+
+import importlib
 import sys
 import types
 from pathlib import Path
@@ -9,14 +12,15 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-import hotpass.orchestration as orchestration
-from hotpass.orchestration import (
-    PipelineOrchestrationError,
-    PipelineRunOptions,
-    refinement_pipeline_flow,
-    run_pipeline_once,
-    run_pipeline_task,
-)
+pytest.importorskip("frictionless")
+
+orchestration = importlib.import_module("hotpass.orchestration")
+
+PipelineOrchestrationError = orchestration.PipelineOrchestrationError
+PipelineRunOptions = orchestration.PipelineRunOptions
+refinement_pipeline_flow = orchestration.refinement_pipeline_flow
+run_pipeline_once = orchestration.run_pipeline_once
+run_pipeline_task = orchestration.run_pipeline_task
 
 
 @pytest.fixture(autouse=True)

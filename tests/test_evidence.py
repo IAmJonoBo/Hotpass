@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 
-from hotpass.evidence import record_consent_audit_log, record_export_access_event
+import pytest
+
+pytest.importorskip("frictionless")
+
+from hotpass.evidence import record_consent_audit_log, record_export_access_event  # noqa: E402
 
 
 def test_record_consent_audit_log_deterministic(tmp_path):

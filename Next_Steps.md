@@ -34,6 +34,8 @@
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
 - [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
 - [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
+- [ ] Deliver probabilistic entity resolution with review (Owner: Engineering, Due: 2026-01-31)
+- [ ] Restore baseline QA suite after introducing Splink linkage dependencies (Owner: QA, Due: 2026-01-07)
 - [x] Enforce governed ingest schemas with Frictionless + Great Expectations validation gates (Owner: Engineering, Due: 2025-12-27)
 - [x] Introduce shared data normalisers with Polars/DuckDB persistence for refined outputs (Owner: Engineering, Due: 2026-01-10)
 - [x] Expand regression coverage and documentation for input formatting and validation flows (Owner: QA & Docs, Due: 2025-12-27)
@@ -79,6 +81,7 @@
 - [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
 - [x] Cleared CLI/pipeline lint, type, and security findings and reran the full QA suite after progress instrumentation landed (2025-10-26)
 - [x] Baseline QA suite rerun for ingest schema initiative (2025-12-26)【387e77†L1-L84】
+- [ ] Baseline QA suite rerun blocked by missing optional dependency (`nameparser`) required for normalization (2025-10-26)【6d7bde†L1-L27】
 - [x] Implement canonical Party/Role/Alias store, loader backfill, CLI party-store export, and data dictionary tooling (2025-10-26)【5a2f34†L1-L20】【02a776†L1-L120】
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 
@@ -90,12 +93,12 @@
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
-- [x] Pytest with coverage ≥ 80% (current: 89%)【d6c49f†L1-L80】
+- [ ] Pytest with coverage ≥ 80% (current: 0%; optional deps skipped)【eb4232†L1-L49】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
 - [x] Ruff lint clean (`uv run ruff check`)【ca34ba†L1-L2】
 - [x] Ruff formatting clean (`uv run ruff format --check`)【78ba8a†L1-L1】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【a54a0a†L1-L23】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【6fd282†L1-L22】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
 - [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
@@ -132,10 +135,11 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 89%)【387e77†L1-L84】
+- [ ] Pytest with coverage ≥ 80% (current: 0%; optional deps skipped)【eb4232†L1-L49】
 - [x] Ruff lint clean (`uv run ruff check`)【253270†L1-L2】
+- [ ] Ruff lint currently failing UP038 suggestion in `domain/party/loader.py`; convert tuple isinstance checks to pipe syntax post-upgrade【5542c1†L1-L21】
 - [x] Ruff formatting clean (`uv run ruff format --check`)【443f6f†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【001966†L1-L21】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【6fd282†L1-L22】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【ecaef5†L1-L20】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【1484ff†L1-L65】
 - [x] Package build succeeds (`uv run uv build`)【da2407†L1-L120】
@@ -155,7 +159,7 @@
 - Lint: `uv run ruff check` (chunk `31f921`)
 - Format: `uv run ruff format --check` (chunk `7b02fd`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `uv run mypy src tests scripts` (chunk `21d9e9`)
+- Types: `uv run mypy src tests scripts` (chunk `6fd282`)
 - Security: `uv run bandit -r src scripts` (chunk `602aef`)
 - Secrets: `uv run detect-secrets scan src tests scripts` (chunk `653187`)
 - Build: `uv run uv build` (chunk `f995b1`)
@@ -179,6 +183,9 @@
 - Observability exporters now suppress shutdown ValueErrors; monitor CI logs after enabling full telemetry backends.
 - Docker build validation now executes in CI via workflow docker build step; monitor runtime and cache behaviour in hosted runners.
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.
+- Baseline QA run in sandbox highlights missing `nameparser` dependency; ensure extras/install docs cover requirement or vendor fallback before shipping probabilistic linkage.
+- Pytest now executes with `pytest.importorskip("frictionless")` guards; until the dependency is restored only bootstrap smoke tests run and coverage remains at 0%.【eb4232†L1-L49】
+- Ruff lint flagged UP038 tuple `isinstance` usage; resolve alongside upcoming linkage module refactor to keep CI green.
 - Docs link checking ignores selected external domains because of certificate issues in the sandbox; confirm connectivity in GitHub-hosted runners.
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.

@@ -5,7 +5,9 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-import hotpass.geospatial as geospatial
+pytest.importorskip("frictionless")
+
+import hotpass.geospatial as geospatial  # noqa: E402
 from hotpass.geospatial import (
     Geocoder,
     GeospatialError,

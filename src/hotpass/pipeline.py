@@ -11,7 +11,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import duckdb
 import pandas as pd
@@ -28,6 +28,9 @@ from .data_sources import (
 from .domain.party import PartyStore, build_party_store_from_refined
 from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from .normalization import clean_string, coalesce, normalize_province, slugify
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from .linkage import LinkageResult
 from .pipeline_reporting import (
     collect_unique,
     generate_recommendations,
@@ -417,6 +420,7 @@ class PipelineResult:
     performance_metrics: dict[str, Any]
     compliance_report: dict[str, Any] | None = None
     party_store: PartyStore | None = None
+    linkage: LinkageResult | None = None
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")

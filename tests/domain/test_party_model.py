@@ -4,6 +4,9 @@ import json
 from datetime import UTC, datetime
 
 import pandas as pd
+import pytest
+
+pytest.importorskip("stdnum")
 
 from hotpass.domain.party import (
     AliasType,

@@ -8,7 +8,9 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
-import hotpass.enrichment as enrichment
+pytest.importorskip("frictionless")
+
+import hotpass.enrichment as enrichment  # noqa: E402
 from hotpass.enrichment import (
     CacheManager,
     enrich_dataframe_with_registries,
