@@ -139,6 +139,7 @@
 - [x] Shared orchestration helpers expose `PipelineRunOptions` for CLI and Prefect flows with regression coverage
 - [x] Geospatial distance matrix vectorised with deterministic `GeospatialError` signalling
 - [x] Evidence logging accepts deterministic clocks with dedicated tests for consent/export paths
+- [x] Added telemetry attribute regression coverage and resolved Ruff UP038 lint failure for pipeline spans (2025-10-26)
 
 ## Quality Gates
 

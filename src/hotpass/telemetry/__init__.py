@@ -31,9 +31,9 @@ def pipeline_stage(stage: str, attributes: Mapping[str, object] | None = None) -
         if attributes:
             for key, value in attributes.items():
                 attr_key = f"hotpass.pipeline.{key}"
-                if isinstance(value, (str, bool, int, float)):
+                if isinstance(value, str | bool | int | float):
                     span.set_attribute(attr_key, value)
-                elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+                elif isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
                     serialised = ", ".join(str(item) for item in value)
                     span.set_attribute(attr_key, serialised)
                 else:
