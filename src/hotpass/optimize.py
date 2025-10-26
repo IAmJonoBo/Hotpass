@@ -49,7 +49,7 @@ class DataOptimizer:
             self.normalize_organization_name
         )
 
-        duplicates = {}
+        duplicate_groups = {}
         name_to_indices = {}
 
         for idx, row in self.df.iterrows():
@@ -62,10 +62,10 @@ class DataOptimizer:
         for normalized_name, indices in name_to_indices.items():
             if len(indices) > 1:
                 key = f"{normalized_name} ({self.df.loc[indices[0], 'organization_name']})"
-                duplicates[key] = indices
+                duplicate_groups[key] = indices
 
-        logger.info("Found %d potential duplicate groups", len(duplicates))
-        return duplicates
+        logger.info("Found %d potential duplicate groups", len(duplicate_groups))
+        return duplicate_groups
 
     def validate_website(self, url):
         """Basic website validation - check if URL format is valid."""
@@ -230,7 +230,7 @@ class DataOptimizer:
         logger.info("Starting data optimization...")
 
         # Find duplicates
-        duplicates = self.find_duplicates()
+        duplicate_groups = self.find_duplicates()
 
         # Validate websites
         logger.info("Validating websites...")
@@ -247,7 +247,7 @@ class DataOptimizer:
 
         # Add optimization flags
         self.df["duplicate_group"] = None
-        for group_name, indices in duplicates.items():
+        for group_name, indices in duplicate_groups.items():
             for idx in indices:
                 self.df.at[idx, "duplicate_group"] = group_name
 
@@ -260,7 +260,7 @@ class DataOptimizer:
         ) / 4.0
 
         logger.info("Optimization complete. Original: %d records", self.original_shape[0])
-        logger.info("Duplicates identified: %d groups", len(duplicates))
+        logger.info("Duplicates identified: %d groups", len(duplicate_groups))
 
         return self.df
 
@@ -276,14 +276,14 @@ if __name__ == "__main__":
     optimizer.save_optimized_data("data/optimized_data.xlsx")
 
     # Print summary
-    duplicates = optimized_df["duplicate_group"].notna().sum()
+    duplicate_count = optimized_df["duplicate_group"].notna().sum()
     valid_websites = optimized_df["website_valid"].sum()
     valid_primary_emails = optimized_df.get("contact_primary_email_valid", pd.Series()).sum()
     valid_secondary_emails = optimized_df.get("contact_secondary_emails_valid", pd.Series()).sum()
 
     print("\nOptimization Summary:")
     print(f"Total records: {len(optimized_df)}")
-    print(f"Records in duplicate groups: {duplicates}")
+    print(f"Records in duplicate groups: {duplicate_count}")
     print(f"Valid websites: {valid_websites}")
     print(f"Valid primary emails: {valid_primary_emails}")
     print(f"Valid secondary emails: {valid_secondary_emails}")
