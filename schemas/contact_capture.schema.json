@@ -1,0 +1,19 @@
+{
+  "$schema": "https://frictionlessdata.io/schemas/table-schema.json",
+  "name": "contact_capture",
+  "title": "Contact Database capture log",
+  "description": "Schema for 10-10-25 Capture sheet in Contact Database.xlsx",
+  "primaryKey": ["School"],
+  "fields": [
+    {"name": "Unnamed: 0", "type": "string"},
+    {"name": "School", "type": "string", "constraints": {"required": true}},
+    {"name": "Contact person (role)", "type": "string"},
+    {"name": "Phone", "type": "string"},
+    {"name": "Email", "type": "string"},
+    {"name": "Addresses", "type": "string"},
+    {"name": "Planes", "type": "string"},
+    {"name": "Website", "type": "string"},
+    {"name": "Description", "type": "string"},
+    {"name": "Type", "type": "string"}
+  ]
+}

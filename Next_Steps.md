@@ -34,6 +34,9 @@
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
 - [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
 - [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
+- [x] Enforce governed ingest schemas with Frictionless + Great Expectations validation gates (Owner: Engineering, Due: 2025-12-27)
+- [x] Introduce shared data normalisers with Polars/DuckDB persistence for refined outputs (Owner: Engineering, Due: 2026-01-10)
+- [x] Expand regression coverage and documentation for input formatting and validation flows (Owner: QA & Docs, Due: 2025-12-27)
 
 ## Steps
 
@@ -74,6 +77,7 @@
 - [x] Embedded dashboard remediation guidance with glossary and operations links (2025-10-26)
 - [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
 - [x] Cleared CLI/pipeline lint, type, and security findings and reran the full QA suite after progress instrumentation landed (2025-10-26)
+- [x] Baseline QA suite rerun for ingest schema initiative (2025-12-26)【387e77†L1-L84】
 
 ## Deliverables
 
@@ -125,13 +129,13 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 89%)【d6c49f†L1-L80】
-- [x] Ruff lint clean (`uv run ruff check`)【789518†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【dbdfc8†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【a54a0a†L1-L23】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
-- [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
+- [x] Pytest with coverage ≥ 80% (current: 89%)【387e77†L1-L84】
+- [x] Ruff lint clean (`uv run ruff check`)【253270†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【443f6f†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【001966†L1-L21】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【ecaef5†L1-L20】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【1484ff†L1-L65】
+- [x] Package build succeeds (`uv run uv build`)【da2407†L1-L120】
 - [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
