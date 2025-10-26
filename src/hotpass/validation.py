@@ -46,8 +46,8 @@ def _project_root() -> Path:
 
 def _resource_path(folder: str, name: str) -> Path:
     package_candidate = resources.files("hotpass") / folder / name
-    if package_candidate.is_file():
-        with resources.as_file(package_candidate) as path:
+    with resources.as_file(package_candidate) as path:
+        if Path(path).is_file():
             return Path(path)
     fallback = _project_root() / folder / name
     if fallback.exists():
