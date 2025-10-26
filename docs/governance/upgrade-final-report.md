@@ -82,7 +82,7 @@ Developer experience audits (`docs/metrics/devex-audit.md`) highlight improved t
 
 ## 6. PR-ready artefacts
 
-```
+```text
 hotpass/
 └── docs/governance/upgrade-final-report.md
 ```
