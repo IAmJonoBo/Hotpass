@@ -36,7 +36,12 @@ except ImportError as exc:  # pragma: no cover - handled via tests when GE absen
 
 
 def _project_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    """Find the project root by searching for a marker file (pyproject.toml) upwards."""
+    current = Path(__file__).resolve().parent
+    for parent in [current] + list(current.parents):
+        if (parent / "pyproject.toml").is_file():
+            return parent
+    raise RuntimeError("Could not find project root (pyproject.toml not found in any parent directory)")
 
 
 def _resource_path(folder: str, name: str) -> Path:
