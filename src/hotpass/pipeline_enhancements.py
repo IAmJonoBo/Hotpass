@@ -90,6 +90,10 @@ def apply_entity_resolution(
             df = linkage_result.deduplicated
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.error("Entity resolution failed: %s", exc)
+            logger.warning(
+                "Falling back to rule-based entity resolution using threshold %.2f",
+                config.entity_resolution_threshold,
+            )
             df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
             linkage_result = None
 

@@ -70,6 +70,8 @@ def test_link_entities_rule_based_classification(
 def test_link_entities_label_studio_integration(
     sample_dataframe: pd.DataFrame, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pytest.importorskip("splink.duckdb.linker")
+
     submitted_payloads: list[dict[str, object]] = []
 
     class StubConnector:
@@ -84,10 +86,14 @@ def test_link_entities_label_studio_integration(
 
     monkeypatch.setattr(linkage_runner, "LabelStudioConnector", StubConnector)
 
+    variant = sample_dataframe.copy()
+    variant.loc[1, "contact_primary_email"] = "ops+alt@aerologistics.example"
+    variant.loc[1, "contact_primary_phone"] = "+27 11 000 9999"
+
     persistence = LinkagePersistence(root_dir=tmp_path)
     config = LinkageConfig(
-        use_splink=False,
-        thresholds=LinkageThresholds(high=0.85, review=0.5),
+        use_splink=True,
+        thresholds=LinkageThresholds(high=0.9, review=0.01),
         persistence=persistence,
         label_studio=LabelStudioConfig(
             api_url="https://labelstudio.example",
@@ -96,7 +102,7 @@ def test_link_entities_label_studio_integration(
         ),
     )
 
-    result = link_entities(sample_dataframe, config)
+    result = link_entities(variant, config)
 
     assert submitted_payloads, "expected review payload to be submitted"
     decisions_path = persistence.decisions_path()
@@ -104,5 +110,23 @@ def test_link_entities_label_studio_integration(
     lines = decisions_path.read_text(encoding="utf-8").strip().splitlines()
     assert lines, "expected reviewer decisions to be persisted"
     record = json.loads(lines[0])
-    assert record["thresholds"]["review"] == 0.5
+    assert record["thresholds"]["review"] == pytest.approx(config.thresholds.review)
     assert result.review_queue.shape[0] == len(submitted_payloads)
+
+
+def test_link_entities_splink_review_queue(sample_dataframe: pd.DataFrame) -> None:
+    pytest.importorskip("splink.duckdb.linker")
+
+    variant = sample_dataframe.copy()
+    variant.loc[1, "contact_primary_email"] = "ops+alt@aerologistics.example"
+    variant.loc[1, "contact_primary_phone"] = "+27 11 000 9999"
+
+    config = LinkageConfig(
+        use_splink=True,
+        thresholds=LinkageThresholds(high=0.9, review=0.01),
+    )
+
+    result = link_entities(variant, config)
+
+    assert not result.review_queue.empty
+    assert (result.matches["classification"] == "review").any()
