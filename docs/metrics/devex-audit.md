@@ -1,7 +1,7 @@
 ---
 title: Metrics — developer experience audit
 summary: SPACE-aligned assessment of Hotpass developer workflows, tooling friction, and improvement backlog hooks.
-last_updated: 2025-10-25
+last_updated: 2025-10-27
 ---
 
 # Metrics — developer experience audit
@@ -22,7 +22,7 @@ last_updated: 2025-10-25
 | --- | --- | --- | --- |
 | Automated environment bootstrap | Provide script or make target to configure uv, Prefect, and telemetry defaults. | Platform Engineering | `Next_Steps.md` (Tasks: DevEx automation) |
 | Secrets management standard | Decide approach for registry connectors and telemetry secrets. | DevOps | `Next_Steps.md` (Tasks: Secrets management) |
-| Dashboard hardening | Implement auth and filesystem allowlists for Streamlit dashboard. | Platform | `Next_Steps.md` (Tasks: Dashboard controls) |
+| Dashboard hardening | Auth + filesystem allowlists implemented; migrate to SSO and audit logging next. | Platform | `Next_Steps.md` (Tasks: Dashboard controls) |
 | Compliance telemetry integration | Feed POPIA/ISO/SOC evidence into metrics dashboards for visibility. | Observability | [Remediation backlog](../compliance/remediation-backlog.md) |
 
 ## Next steps

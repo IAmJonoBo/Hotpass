@@ -1,7 +1,7 @@
 ---
 title: Hotpass upgrade final report
 summary: Consolidated critical-reasoning checks and delivery package for the Hotpass frontier upgrade initiative.
-last_updated: 2025-10-25
+last_updated: 2025-10-27
 ---
 
 # Hotpass upgrade final report
@@ -17,7 +17,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 | Failure mode | Effect | Severity (1-10) | Occurrence (1-10) | Detection (1-10) | RPN | Mitigations |
 | --- | --- | --- | --- | --- | --- | --- |
 | Secrets platform decision stalls | Manual credential handling persists, increasing leak risk | 9 | 6 | 6 | 324 | Secure owner decision by sprint end, prototype Vault vs SOPS, enforce interim detect-secrets and rotation playbook |
-| Dashboard auth remains unsolved | Streamlit deployment accessible beyond intended audience | 8 | 5 | 5 | 200 | Ship reverse proxy with OIDC, bake access tests, document rollback |
+| Dashboard auth uplift pending | Shared-secret gate live, but lack of SSO/auditing risks credential reuse | 6 | 4 | 5 | 120 | Maintain secret rotation, add access logging, and scope SSO rollout via reverse proxy |
 | Supply-chain gates drift | Provenance/SBOM scripts unused, blocking SLSA uplift | 7 | 4 | 6 | 168 | Automate in CI, publish attestation storage policy, rotate signing keys |
 | Prefect policy enforcement delayed | Misconfigured flows bypass validation causing runtime failures | 6 | 5 | 4 | 120 | Add policy-as-code checks, integrate with deployment templates, simulate failure |
 | Quality reporting stagnates | Stakeholders lose confidence in data trustworthiness | 6 | 4 | 5 | 120 | Automate briefing dashboards, add regression tests for CLI reports, embed in release checklist |
@@ -25,7 +25,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 ### 1.3 Attacker and chaos opportunities
 
 - **Pipeline configuration injection**: Prefect deployments pull parameters from environment variables without full validation. An attacker with CI access can insert malicious expectation suites that exfiltrate refined data.
-- **Dashboard unauthenticated preview**: The Streamlit dashboard can be launched locally without SSO, leaving data snapshots on shared machines.
+- **Dashboard shared-secret exposure**: The Streamlit dashboard now requires a password, but leaked secrets or absent session logging could still expose data when shared broadly. Prioritise SSO or identity-aware proxy hardening.
 - **Dependency poisoning window**: Renovate automation exists but commits are unsigned; a compromised dependency mirror can inject modified wheels before provenance scripts run.
 - **Observability exporter defaults**: Tracing endpoints default to public URLs. Misconfigured collectors could leak metadata to untrusted networks.
 - **Backstage template drift**: Scaffolding scripts might skip latest security additions, enabling new services without SBOM/policy hooks.
@@ -45,7 +45,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 ### 2.1 Top risks, impacts, quick wins
 
 1. **Secrets fragmentation** → POPIA breach potential → Accelerate platform decision, publish interim rotation SOP.
-2. **Dashboard auth gap** → Unauthorized analytics access → Gate deployments behind reverse proxy with enforced SSO.
+2. **Dashboard auth uplift** → Shared secret may leak without rotation/logging → Add access logging and move to SSO-backed proxy.
 3. **Supply-chain drift** → Attestation gaps undermine SLSA targets → Wire SBOM/provenance scripts into CI with policy enforcement.
 4. **Prefect policy lag** → Runtime instabilities → Implement validation hooks and dry-run suite before promotion.
 5. **Quality signal decay** → Stakeholder trust erosion → Automate report generation and embed acceptance metrics into release sign-off.
@@ -67,7 +67,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 Each finding lists **Title • Severity • Confidence • Evidence • Affected assets** followed by remediation guidance.
 
 1. **Secrets management undecided • High • Medium • evidence: roadmap and Next_Steps owner backlog • Assets: Prefect deployments, connectors**. *Residual risk*: exposure of regulated data. *Standards*: {SSDF: PO.3, PW.4 | SAMM: S3-B | ASVS: 2.1.1 | ISO 25010: Security}. *Actions*: finalize platform selection, implement rotation policy, integrate with deployment templates. *Trade-offs*: additional infra overhead vs compliance readiness. *Exposure*: reduced once platform live and audit logging enabled.
-2. **Dashboard auth backlog • High • Medium • evidence: Next_Steps platform actions • Assets: Streamlit dashboard**. *Standards*: {SSDF: PW.8 | SAMM: OE2 | ASVS: 2.1.2, 4.1.3 | ISO 25010: Security, Usability}. *Actions*: enforce SSO, add automated accessibility/security checks, log access. *Residual risk*: minimal post implementation.
+2. **Dashboard auth uplift • Medium • Medium • evidence: shared-secret gate shipped; `Next_Steps.md` backlog • Assets: Streamlit dashboard**. *Standards*: {SSDF: PW.8 | SAMM: OE2 | ASVS: 2.1.2, 4.1.3 | ISO 25010: Security, Usability}. *Actions*: rotate shared secret, add access logging, implement SSO-backed proxy. *Residual risk*: reduced but present until SSO live.
 3. **Supply-chain automation manual • Medium • Medium • evidence: SBOM/provenance scripts require CI wiring • Assets: build pipeline, artifacts**. *Standards*: {SSDF: PS.3, PO.5 | SLSA: 2 | Scorecard: SAST, Signed Releases | ISO 5055: Reliability}. *Actions*: integrate scripts, add policy gate, publish attestation storage location. *Exposure*: tampering risk until automation complete.
 4. **Prefect policy enforcement pending • Medium • Medium • evidence: Next_Steps tasks • Assets: Orchestration runtime**. *Standards*: {SSDF: PW.1, PW.9 | SAMM: OE1 | ASVS: 1.9.1}. *Actions*: define validation rules, implement tests, tie to deployment CLI. *Residual risk*: misconfigured flows causing outages.
 5. **Quality report automation incomplete • Medium • Low • evidence: coverage results and Next_Steps**. *Standards*: {SSDF: RV.1 | ISO 25010: Quality in use}. *Actions*: maintain tests, schedule report generation, integrate dashboards. *Residual risk*: stakeholder communication gap.
@@ -99,7 +99,7 @@ hotpass/
 | Horizon | Item | Owner role | Effort | Risk reduction | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- | --- |
 | 30 | Choose secrets platform and pilot integration | DevOps + Security | M | High (breach prevention) | Infra budget, compliance review | Successful pilot in staging, audit log sample |
-| 30 | Enforce dashboard auth & logging | Platform | S | High (access control) | Secrets platform decision | Pen test pass, WCAG tests |
+| 30 | Add dashboard access logging & scope SSO rollout | Platform | S | High (access control) | Secrets platform decision | Shared-secret rotation runbook, proxy plan approved |
 | 60 | Automate SBOM & provenance in CI | DevOps | M | Medium (supply-chain) | Secrets platform, artifact repo | Signed attestation in CI run |
 | 60 | Prefect deployment policy checks | Engineering | M | Medium (reliability) | Config schema update | QA suite run with failing policies |
 | 90 | Automate quality report distribution | Product + Engineering | S | Medium (trust) | Prefect policies, telemetry stabilization | Acceptance report delivered post-release |
