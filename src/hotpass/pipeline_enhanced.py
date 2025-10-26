@@ -3,22 +3,16 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
-from contextlib import AbstractContextManager
 
-from .observability import (
-    get_pipeline_metrics,
-    initialize_observability,
-    trace_operation,
+from .observability import get_pipeline_metrics, initialize_observability
+from .pipeline import (
+    PipelineConfig,
+    PipelineExecutionConfig,
+    PipelineOrchestrator,
+    PipelineResult,
+    default_feature_bundle,
 )
-from .pipeline import PipelineConfig, PipelineResult, run_pipeline
-from .pipeline_enhancements import (
-    EnhancedPipelineConfig,
-    apply_compliance,
-    apply_enrichment,
-    apply_entity_resolution,
-    apply_geospatial,
-)
+from .pipeline.features import EnhancedPipelineConfig
 
 logger = logging.getLogger(__name__)
 
@@ -43,36 +37,16 @@ def run_enhanced_pipeline(
         enhanced_config.linkage_output_dir = str(config.output_path.parent / "linkage")
 
     metrics = _initialize_observability(enhanced_config)
-    trace_factory = _build_trace_factory(enhanced_config.enable_observability)
 
-    # Run base pipeline
-    with trace_operation("base_pipeline") if enhanced_config.enable_observability else _noop():
-        result = run_pipeline(config)
-        if metrics:
-            metrics.record_records_processed(len(result.refined), source="base_pipeline")
+    orchestrator = PipelineOrchestrator()
+    execution = PipelineExecutionConfig(
+        base_config=config,
+        enhanced_config=enhanced_config,
+        features=default_feature_bundle(),
+        metrics=metrics,
+    )
 
-    df = result.refined
-    df, linkage_result = apply_entity_resolution(df, enhanced_config, trace_factory)
-    df = apply_geospatial(df, enhanced_config, trace_factory)
-    df = apply_enrichment(df, enhanced_config, trace_factory)
-    df, compliance_report = apply_compliance(df, enhanced_config, trace_factory)
-    if compliance_report is not None:
-        result.compliance_report = compliance_report
-
-    if linkage_result is not None:
-        result.linkage = linkage_result
-
-    # Update result with enhanced dataframe
-    result.refined = df
-
-    if metrics:
-        metrics.record_records_processed(len(df), source="enhanced_pipeline")
-        if result.quality_report and result.quality_report.total_records > 0:
-            # Calculate quality score from data quality distribution
-            quality_score = result.quality_report.data_quality_distribution.get("mean", 0.0)
-            metrics.update_quality_score(quality_score)
-
-    return result
+    return orchestrator.run(execution)
 
 
 def _initialize_observability(config: EnhancedPipelineConfig):
@@ -84,27 +58,3 @@ def _initialize_observability(config: EnhancedPipelineConfig):
     initialize_observability(service_name="hotpass", export_to_console=True)
     logger.info("Observability initialized")
     return get_pipeline_metrics()
-
-
-def _build_trace_factory(
-    enabled: bool,
-) -> Callable[[str], AbstractContextManager[object]]:
-    """Return a helper that wraps operations in observability spans when enabled."""
-
-    if not enabled:
-        return lambda _name: _noop()
-
-    def _factory(operation: str) -> AbstractContextManager[object]:
-        return trace_operation(operation)
-
-    return _factory
-
-
-class _noop:
-    """No-op context manager for when observability is disabled."""
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        pass

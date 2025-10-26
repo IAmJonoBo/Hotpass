@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-26
+last_updated: 2025-12-26
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -63,19 +63,43 @@ When you enrich records with external website content, enable the enhanced pipel
 concurrency to speed up network-bound fetches:
 
 ```python
-from hotpass.pipeline_enhanced import EnhancedPipelineConfig
+from pathlib import Path
 
-config = EnhancedPipelineConfig(
+from hotpass.pipeline import (
+    PipelineConfig,
+    PipelineExecutionConfig,
+    PipelineOrchestrator,
+    default_feature_bundle,
+)
+from hotpass.pipeline.features import EnhancedPipelineConfig
+
+base_config = PipelineConfig(
+    input_dir=Path("data"),
+    output_path=Path("dist/refined.xlsx"),
+    enable_formatting=True,
+)
+
+enhanced = EnhancedPipelineConfig(
     enable_enrichment=True,
     enrich_websites=True,
     enrichment_concurrency=8,
 )
+
+execution = PipelineExecutionConfig(
+    base_config=base_config,
+    enhanced_config=enhanced,
+    features=default_feature_bundle(),
+)
+
+result = PipelineOrchestrator().run(execution)
 ```
 
 Set `enrichment_concurrency` to the number of parallel fetches you are comfortable running
 against upstream sites. The default (`8`) uses asynchronous workers to download multiple
 pages at once while respecting cache guardrails. Lower the value if an API enforces strict
-rate limits.
+rate limits. Passing a custom `features` sequence lets you mix built-in strategies (entity
+resolution, geospatial, enrichment, compliance) with your own feature hooks while
+retaining deterministic orchestration and telemetry.
 
 ## 3. Extend column mapping
 

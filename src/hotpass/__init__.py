@@ -12,8 +12,11 @@ from .formatting import OutputFormat, apply_excel_formatting, export_to_multiple
 from .pipeline import (
     PIIRedactionConfig,
     PipelineConfig,
+    PipelineExecutionConfig,
+    PipelineOrchestrator,
     PipelineResult,
     QualityReport,
+    default_feature_bundle,
     run_pipeline,
 )
 from .pipeline_enhanced import EnhancedPipelineConfig, run_enhanced_pipeline
@@ -24,9 +27,12 @@ __all__ = [
     "benchmarks",
     "create_refined_archive",
     "PipelineConfig",
+    "PipelineExecutionConfig",
     "PipelineResult",
     "QualityReport",
     "run_pipeline",
+    "PipelineOrchestrator",
+    "default_feature_bundle",
     "PIIRedactionConfig",
     "EnhancedPipelineConfig",
     "run_enhanced_pipeline",

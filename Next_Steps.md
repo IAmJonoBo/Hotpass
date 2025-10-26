@@ -147,6 +147,7 @@
 - [x] Brought acquisition guardrail and ScanCode compliance tooling back within lint/type style expectations (2025-10-26)【F:scripts/acquisition/guardrails.py†L1-L134】【F:scripts/compliance/check_scancode.py†L1-L120】【F:tests/test_acquisition_guardrails.py†L1-L120】
 - [x] Added MCP server/client configs, Prefect agent gating helpers, regression tests, and operator documentation (2025-10-26)【F:scripts/agents/mcp_server.yaml†L1-L38】【F:scripts/agents/mcp_client.yaml†L1-L24】【F:src/hotpass/orchestration.py†L58-L401】【F:tests/test_agentic_orchestration.py†L1-L119】【F:docs/how-to-guides/agentic-orchestration.md†L1-L76】
 - [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
+- [x] Replaced orchestrator `assert` with runtime guard and reran full QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, build) (2025-10-26)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 
 ## Quality Gates
 
@@ -166,6 +167,7 @@
 - [x] Prefect agent gating regression suite executes (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【614e2b†L1-L87】
 - [x] Lint/type/security/build checks re-run after agent gating updates (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【5a5346†L1-L2】【35c67e†L1-L1】【31b801†L1-L22】【a160a5†L1-L33】【cedbe4†L1-L57】【262e3d†L1-L147】
 - [x] Accessibility, mutation, and evidence tooling re-run post-update (`uv run pytest -m accessibility`; `uv run python scripts/qa/run_mutation_tests.py`; `uv run python scripts/supply_chain/generate_sbom.py`)【6f2970†L1-L56】【4ebbbd†L1-L56】【c5964d†L1-L2】
+- [x] Post-assert guard QA gate: pytest, ruff check/format, mypy, bandit, detect-secrets, build (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`; `uv run ruff check`; `uv run ruff format --check`; `uv run mypy`; `uv run bandit -r src scripts`; `uv run detect-secrets scan`; `uv build`)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 - [ ] Fitness functions require pipeline refactor to drop below 1300 lines (`uv run python scripts/quality/fitness_functions.py`)【cbd1b5†L1-L4】
 - [ ] Semgrep registry scan blocked by SSL trust chain in sandbox (`uv run semgrep --config=auto`)【6c2e8a†L1-L66】
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
