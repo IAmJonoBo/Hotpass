@@ -52,6 +52,12 @@ src/hotpass.egg-info/dependency_links.txt
 src/hotpass.egg-info/entry_points.txt
 src/hotpass.egg-info/requires.txt
 src/hotpass.egg-info/top_level.txt
+src/hotpass/domain/__init__.py
+src/hotpass/domain/party/__init__.py
+src/hotpass/domain/party/dictionary.py
+src/hotpass/domain/party/loader.py
+src/hotpass/domain/party/models.py
+src/hotpass/domain/party/schemas.py
 src/hotpass/transform/__init__.py
 src/hotpass/transform/normalize.py
 tests/test_artifacts.py
