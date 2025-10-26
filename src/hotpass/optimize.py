@@ -140,7 +140,7 @@ class DataOptimizer:
                 if validated_count % 10 == 0:
                     time.sleep(1)  # Be respectful to external services
 
-        logger.info(f"Validated {validated_count} organization names")
+        logger.info("Validated %d organization names", validated_count)
 
     def geocode_address(
         self, address: str, province: str | None = None

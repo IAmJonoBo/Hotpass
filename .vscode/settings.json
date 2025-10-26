@@ -6,9 +6,7 @@
   "ruff.configuration": "${workspaceFolder}/pyproject.toml",
   "ruff.configurationPreference": "filesystemFirst",
   "ruff.importStrategy": "fromEnvironment",
-  "ruff.interpreter": [
-    "${workspaceFolder}/.venv/bin/python"
-  ],
+  "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"],
   "ruff.fixAll": true,
   "ruff.organizeImports": true,
   "[python]": {

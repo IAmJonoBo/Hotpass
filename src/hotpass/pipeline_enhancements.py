@@ -59,7 +59,8 @@ def apply_entity_resolution(
                     from .entity_resolution import resolve_entities_with_splink
                 except ImportError as import_err:  # pragma: no cover - optional dependency
                     logger.warning(
-                        "Splink import failed, falling back to rule-based: %s", import_err
+                        "Splink import failed, falling back to rule-based: %s",
+                        import_err,
                     )
                     df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
                 else:  # pragma: no branch - executed when Splink is available

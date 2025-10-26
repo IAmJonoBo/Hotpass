@@ -16,11 +16,11 @@ Hotpass processes regulated datasets and depends on registry APIs, Prefect deplo
 
 ## Options considered
 
-| Option | Summary | Pros | Cons |
-| --- | --- | --- | --- |
-| **HashiCorp Vault (self-hosted)** | Deploy Vault with integrated storage, namespace per environment, and GitHub OIDC auth method. | Fine-grained policies, audit logging, dynamic secrets engines, broad ecosystem support. | Operational overhead (HA cluster, unseal process), requires platform ownership. |
-| **AWS Secrets Manager** | Use managed service with IAM roles and rotation workflows. | Fully managed, integrates with AWS workloads, built-in rotation helpers. | Locks platform to AWS (current roadmap keeps Hotpass cloud-agnostic), GitHub OIDC support requires additional plumbing, higher per-secret cost. |
-| **SOPS + Git-backed storage** | Encrypt secrets in git using KMS-managed keys. | Simple tooling, works offline, minimal infrastructure. | Requires CI bootstrap secrets, limited auditability, slower revocation/rotation, high risk of merge conflicts for frequently rotated secrets. |
+| Option                            | Summary                                                                                       | Pros                                                                                    | Cons                                                                                                                                            |
+| --------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **HashiCorp Vault (self-hosted)** | Deploy Vault with integrated storage, namespace per environment, and GitHub OIDC auth method. | Fine-grained policies, audit logging, dynamic secrets engines, broad ecosystem support. | Operational overhead (HA cluster, unseal process), requires platform ownership.                                                                 |
+| **AWS Secrets Manager**           | Use managed service with IAM roles and rotation workflows.                                    | Fully managed, integrates with AWS workloads, built-in rotation helpers.                | Locks platform to AWS (current roadmap keeps Hotpass cloud-agnostic), GitHub OIDC support requires additional plumbing, higher per-secret cost. |
+| **SOPS + Git-backed storage**     | Encrypt secrets in git using KMS-managed keys.                                                | Simple tooling, works offline, minimal infrastructure.                                  | Requires CI bootstrap secrets, limited auditability, slower revocation/rotation, high risk of merge conflicts for frequently rotated secrets.   |
 
 Vault best satisfies the audit and automation requirements: policies map directly to POPIA/ISO controls, audit devices cover regulator evidence, and GitHub OIDC removes long-lived CI tokens.
 
@@ -54,11 +54,11 @@ Vault best satisfies the audit and automation requirements: policies map directl
 
 ## Risks and mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Vault outage blocks deployments | Pipeline and dashboard cannot access credentials. | Run HA cluster with health checks, enable auto-unseal, and document manual recovery. |
-| Misconfigured policies leak secrets | POPIA breach and SOC 2 finding. | Peer-review policy changes, run automated integration tests, and audit logs daily. |
-| Migration stalls due to teams lacking access | Secrets continue living in `.env` files. | Provide onboarding sessions, automate bootstrap scripts, and make Vault access part of the platform checklist. |
+| Risk                                         | Impact                                            | Mitigation                                                                                                     |
+| -------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Vault outage blocks deployments              | Pipeline and dashboard cannot access credentials. | Run HA cluster with health checks, enable auto-unseal, and document manual recovery.                           |
+| Misconfigured policies leak secrets          | POPIA breach and SOC 2 finding.                   | Peer-review policy changes, run automated integration tests, and audit logs daily.                             |
+| Migration stalls due to teams lacking access | Secrets continue living in `.env` files.          | Provide onboarding sessions, automate bootstrap scripts, and make Vault access part of the platform checklist. |
 
 ## Next steps
 

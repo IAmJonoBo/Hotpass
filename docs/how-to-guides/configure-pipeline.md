@@ -123,6 +123,7 @@ The enhanced pipeline now enforces consent for POPIA-regulated fields. When you 
    ```
 
    Overrides can use the organisation slug (`organization_slug`) or the display name; they update the `consent_status` column before validation runs.
+
 3. **Review the compliance report** — `PipelineResult.compliance_report` includes a summary of consent statuses and any violations detected. A `ConsentValidationError` stops the run if any required record lacks a granted status.
 
 Consent statuses are case-insensitive. The defaults treat `granted`/`approved` as valid, `pending`/`unknown` as awaiting action, and `revoked`/`denied` as blockers. Adjust `consent_granted_statuses`, `consent_pending_statuses`, or `consent_denied_statuses` via `POPIAPolicy` if your organisation uses different terminology.
