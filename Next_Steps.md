@@ -32,6 +32,8 @@
 - [x] Optimise geospatial distance calculations and expose actionable errors (Owner: Data, Due: 2025-12-20)
 - [x] Add deterministic evidence logging tests covering consent/export helpers (Owner: Compliance & QA, Due: 2025-12-06)
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
+- [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
+- [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
 
 ## Steps
 
@@ -44,6 +46,7 @@
 - [x] Executed repository-wide Ruff formatting sweep and cleared lingering lint/security warnings (2025-10-26)
 - [x] Added CI artifact checksum publication alongside pinned GitHub Actions references
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
+- [x] Delivered interactive CLI progress reporting and bootstrap plan via `scripts/idp/bootstrap.py`
 - [x] Implement entity registry history merge flow and regression coverage
 - [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
 - [x] Drafted governance charter and metrics instrumentation plan to guide upcoming telemetry work
@@ -71,6 +74,7 @@
 - [x] Vendored Semgrep ruleset to unblock static analysis in sandbox environments (2025-10-26)
 - [x] Embedded dashboard remediation guidance with glossary and operations links (2025-10-26)
 - [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
+- [x] Cleared CLI/pipeline lint, type, and security findings and reran the full QA suite after progress instrumentation landed (2025-10-26)
 ## Deliverables
 
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
@@ -79,15 +83,15 @@
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
-- [x] Pytest with coverage ≥ 80% (current: 87%)
+- [x] Pytest with coverage ≥ 80% (current: 89%)【d6c49f†L1-L80】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【619137†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【fa5cfd†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【ac3eaf†L1-L20】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【689a9e†L1-L20】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【9668ed†L1-L60】
-- [x] Package build succeeds (`uv run uv build`)【733457†L1-L110】
+- [x] Ruff lint clean (`uv run ruff check`)【ca34ba†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【78ba8a†L1-L1】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【a54a0a†L1-L23】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
+- [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【5a78d4†L1-L26】
 - [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【f029ee†L1-L24】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
@@ -121,13 +125,13 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 87%)【287104†L1-L80】
-- [x] Ruff lint clean (`uv run ruff check`)【619137†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【fa5cfd†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【ac3eaf†L1-L20】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【689a9e†L1-L20】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【9668ed†L1-L60】
-- [x] Package build succeeds (`uv run uv build`)【733457†L1-L110】
+- [x] Pytest with coverage ≥ 80% (current: 89%)【d6c49f†L1-L80】
+- [x] Ruff lint clean (`uv run ruff check`)【789518†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【dbdfc8†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【a54a0a†L1-L23】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
+- [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
 - [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
@@ -139,14 +143,14 @@
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `287104`)
-- Lint: `uv run ruff check` (chunk `619137`)
-- Format: `uv run ruff format --check` (chunk `fa5cfd`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d6c49f`)
+- Lint: `uv run ruff check` (chunk `ca34ba`)
+- Format: `uv run ruff format --check` (chunk `78ba8a`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `uv run mypy src tests scripts` (chunk `ac3eaf`)
-- Security: `uv run bandit -r src scripts` (chunk `689a9e`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `9668ed`)
-- Build: `uv run uv build` (chunk `733457`)
+- Types: `uv run mypy src tests scripts` (chunk `a54a0a`)
+- Security: `uv run bandit -r src scripts` (chunk `bc752c`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `a40074`)
+- Build: `uv run uv build` (chunk `5e74d7`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)
@@ -176,6 +180,7 @@
 - Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Local Semgrep ruleset focuses on high-risk patterns (eval, shell=True); expand coverage with additional rules as the backlog evolves.
 - Mutation suite now exercises observability toggles in `pipeline_enhanced`; rerun kill rate report after next mutation sweep.
+- CLI progress instrumentation still requires high-volume stress verification to validate operator feedback loops (tracked above).
 - Shared-secret dashboard password still requires rotation and monitoring until SSO-backed auth replaces it; integrate Vault-issued credentials during rollout.
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
 - Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.

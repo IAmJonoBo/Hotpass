@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +9,7 @@ import pandas as pd
 import pytest
 
 import hotpass.cli as cli
+from hotpass.pipeline import PipelineConfig, QualityReport
 
 
 def _collect_json_lines(output: str) -> list[dict[str, Any]]:
@@ -139,6 +141,70 @@ def test_cli_supports_rich_logging(
     assert "Load seconds" in captured.out
     assert report_path.exists()
     assert report_path.suffix == ".html"
+
+
+def test_cli_json_logs_redact_sensitive_fields(capsys: pytest.CaptureFixture[str]) -> None:
+    logger = cli.StructuredLogger("json", ["email"])
+    report = QualityReport(
+        total_records=1,
+        invalid_records=0,
+        schema_validation_errors=[],
+        expectations_passed=True,
+        expectation_failures=[],
+        source_breakdown={},
+        data_quality_distribution={"mean": 1.0, "min": 1.0, "max": 1.0},
+        performance_metrics={},
+        audit_trail=[{"contact_email": "sensitive@example.com"}],
+    )
+
+    logger.log_summary(report)
+
+    captured = capsys.readouterr()
+    records = _collect_json_lines(captured.out)
+    summary = next(item for item in records if item["event"] == "pipeline.summary")
+    masked = summary["data"]["audit_trail"][0]["contact_email"]
+    assert masked == cli.REDACTED_PLACEHOLDER
+
+
+def test_cli_attaches_progress_listener_when_rich_logging(
+    sample_data_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured_listener: Callable[[str, dict[str, Any]], None] | None = None
+
+    class DummyResult:
+        def __init__(self) -> None:
+            self.refined = pd.DataFrame()
+            self.quality_report = QualityReport(
+                total_records=0,
+                invalid_records=0,
+                schema_validation_errors=[],
+                expectations_passed=True,
+                expectation_failures=[],
+                source_breakdown={},
+                data_quality_distribution={"mean": 0.0, "min": 0.0, "max": 0.0},
+                performance_metrics={},
+            )
+
+    def fake_run_pipeline(config: PipelineConfig) -> DummyResult:
+        nonlocal captured_listener
+        captured_listener = config.progress_listener
+        return DummyResult()
+
+    monkeypatch.setattr(cli, "run_pipeline", fake_run_pipeline)
+
+    exit_code = cli.main(
+        [
+            "--input-dir",
+            str(sample_data_dir),
+            "--output-path",
+            str(tmp_path / "refined.xlsx"),
+            "--log-format",
+            "rich",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured_listener is not None
 
 
 def test_cli_accepts_excel_tuning_options(

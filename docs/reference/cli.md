@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the `hotpass` and `hotpass-enhanced` CLI entry points.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Reference — command-line interface
@@ -24,6 +24,7 @@ uv run hotpass [OPTIONS]
 | `--archive / --no-archive`   | Enable or disable creation of a timestamped `.zip` archive that bundles the refined workbook.                                                                               |
 | `--dist-dir PATH`            | Directory used for archive output when `--archive` is enabled (default: `./dist`).                                                                                          |
 | `--log-format [rich          | json]`                                                                                                                                                                      | Structured log format for pipeline output (default: `rich`).                               |
+| `--interactive / --no-interactive` | Control whether the CLI prompts to review recommendations when using rich output (default: auto-detect). |
 | `--sensitive-field FIELD`    | Field name to redact from structured logs. Repeat the flag to mask multiple fields. Default redactions cover `email`, `phone`, `contact`, `cell`, `mobile`, and `whatsapp`. |
 | `--report-path PATH`         | Optional path to write the quality report (Markdown or HTML).                                                                                                               |
 | `--report-format [markdown   | html]`                                                                                                                                                                      | Explicit report format override. When omitted the format is inferred from `--report-path`. |
@@ -31,9 +32,9 @@ uv run hotpass [OPTIONS]
 | `--excel-engine TEXT`        | Explicit pandas Excel engine (for example `openpyxl`).                                                                                                                      |
 | `--excel-stage-dir PATH`     | Directory for staging chunked Excel reads to parquet for reuse.                                                                                                             |
 
-Structured JSON logs redact the default sensitive fields listed above. Add additional masks by repeating `--sensitive-field` or
-set the list in a configuration file (`sensitive_fields = ["passport", "id_number"]`). When the list is empty the CLI emits full
-payloads for downstream debugging.
+Structured JSON logs replace masked fields with `***redacted***` using the default sensitive field list above. Add additional masks by repeating `--sensitive-field` or set the list in a configuration file (`sensitive_fields = ["passport", "id_number"]`). When the list is empty the CLI emits full payloads for downstream debugging.
+
+When running with rich output the CLI streams stage-aware progress updates covering load, aggregation, validation, and write phases. Interactive sessions prompt operators to review the top recommendations inline once the run completes.
 
 ## `hotpass-enhanced`
 
