@@ -60,6 +60,7 @@
 
 - [x] Vendored Semgrep ruleset to unblock static analysis in sandbox environments (2025-10-26)
 - [x] Embedded dashboard remediation guidance with glossary and operations links (2025-10-26)
+- [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
 ## Deliverables
 
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
@@ -67,16 +68,17 @@
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
-- [x] Pytest with coverage ≥ 80% (current: 87%)【a62055†L1-L64】
+- [x] Pytest with coverage ≥ 80% (current: 87%)【287104†L1-L80】
+- [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)【26d6c6†L1-L29】
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【383796†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【a100bb†L1-L2】
+- [x] Ruff lint clean (`uv run ruff check`)【619137†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【fa5cfd†L1-L2】
 - [x] Mypy type checks clean (`uv run mypy src tests scripts`)【ac3eaf†L1-L20】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【689a9e†L1-L20】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【9668ed†L1-L60】
 - [x] Package build succeeds (`uv run uv build`)【733457†L1-L110】
-- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【ed1aaa†L1-L9】
-- [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【9e84c2†L1-L34】
+- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【e173e2†L1-L9】
+- [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【2b87dd†L1-L26】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
 - [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
 - [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【6cdc80†L1-L48】
@@ -104,39 +106,40 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 87%)【a62055†L1-L64】
-- [x] Ruff lint clean (`uv run ruff check`)【383796†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【a100bb†L1-L2】
+- [x] Pytest with coverage ≥ 80% (current: 87%)【287104†L1-L80】
+- [x] Ruff lint clean (`uv run ruff check`)【619137†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【fa5cfd†L1-L2】
 - [x] Mypy type checks clean (`uv run mypy src tests scripts`)【ac3eaf†L1-L20】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【689a9e†L1-L20】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【9668ed†L1-L60】
 - [x] Package build succeeds (`uv run uv build`)【733457†L1-L110】
 - [ ] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)
-- [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【b5a7b7†L1-L20】
-- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0c6984†L1-L5】
-- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【d33438†L1-L2】
-- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【0da7d0†L1-L2】
-- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【36e269†L1-L2】
-- [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml`)【ea309d†L1-L24】
+- [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
+- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
+- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【8eab1a†L1-L2】
+- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【8b644b†L1-L2】
+- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【efd15c†L1-L2】
+- [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml`)【de7d30†L1-L24】
 - [ ] Compliance evidence catalog refreshed (due 2025-01-15)
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `a62055`)
-- Lint: `uv run ruff check` (chunk `383796`)
-- Format: `uv run ruff format --check` (chunk `a100bb`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `287104`)
+- Lint: `uv run ruff check` (chunk `619137`)
+- Format: `uv run ruff format --check` (chunk `fa5cfd`)
+- Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
 - Types: `uv run mypy src tests scripts` (chunk `ac3eaf`)
 - Security: `uv run bandit -r src scripts` (chunk `689a9e`)
 - Secrets: `uv run detect-secrets scan src tests scripts` (chunk `9668ed`)
 - Build: `uv run uv build` (chunk `733457`)
-- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `ed1aaa`)
-- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `9e84c2`)
-- Accessibility: `uv run pytest -m accessibility` (chunk `b5a7b7`)
-- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `0c6984`)
-- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `d33438`)
-- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `0da7d0`)
-- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `36e269`)
-- Semgrep: `uv run semgrep --config=policy/semgrep/hotpass.yml` (chunk `ea309d`)
+- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
+- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
+- Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)
+- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `0b6520`)
+- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `8eab1a`)
+- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `8b644b`)
+- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `efd15c`)
+- Semgrep: `uv run semgrep --config=policy/semgrep/hotpass.yml` (chunk `de7d30`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
 - Verification cadence: `docs/compliance/verification-plan.md`

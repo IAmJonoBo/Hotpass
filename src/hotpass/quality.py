@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import warnings
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, cast
 
 import pandas as pd
-import pandera as pa
-from pandera import Column, DataFrameSchema
+import pandera.pandas as pa
+from pandera.pandas import Column, DataFrameSchema
 
 try:  # pragma: no cover - import guard exercised via unit tests
     from great_expectations.core.batch import Batch
@@ -18,7 +20,10 @@ try:  # pragma: no cover - import guard exercised via unit tests
     from great_expectations.data_context.data_context.ephemeral_data_context import (
         EphemeralDataContext,
     )
-    from great_expectations.data_context.types.base import DataContextConfig
+    from great_expectations.data_context.types.base import (
+        DataContextConfig,
+        InMemoryStoreBackendDefaults,
+    )
     from great_expectations.execution_engine.pandas_execution_engine import (
         PandasExecutionEngine,
     )
@@ -31,6 +36,7 @@ else:
         "ExpectationSuite": ExpectationSuite,
         "EphemeralDataContext": EphemeralDataContext,
         "DataContextConfig": DataContextConfig,
+        "InMemoryStoreBackendDefaults": InMemoryStoreBackendDefaults,
         "PandasExecutionEngine": PandasExecutionEngine,
         "Validator": Validator,
         "project_manager": ge_context_factory.project_manager,
@@ -49,8 +55,9 @@ def _run_with_great_expectations(
     email_mostly: float,
     phone_mostly: float,
     website_mostly: float,
+    runtime_override: Mapping[str, Any] | None = None,
 ) -> ExpectationSummary | None:
-    runtime = _GE_RUNTIME
+    runtime = runtime_override if runtime_override is not None else _GE_RUNTIME
     if runtime is None:
         return None
 
@@ -59,61 +66,67 @@ def _run_with_great_expectations(
         expectations_store_name="expectations_store",
         validation_results_store_name="validation_results_store",
         checkpoint_store_name="checkpoint_store",
-        stores={
-            "expectations_store": {
-                "class_name": "ExpectationsStore",
-                "store_backend": {"class_name": "InMemoryStoreBackend"},
-            },
-            "validation_results_store": {
-                "class_name": "ValidationResultsStore",
-                "store_backend": {"class_name": "InMemoryStoreBackend"},
-            },
-            "checkpoint_store": {
-                "class_name": "CheckpointStore",
-                "store_backend": {"class_name": "InMemoryStoreBackend"},
-            },
-        },
         data_docs_sites={},
         analytics_enabled=False,
+        store_backend_defaults=runtime["InMemoryStoreBackendDefaults"](init_temp_docs_sites=False),
     )
 
-    context = runtime["EphemeralDataContext"](project_config=config)
-    project_manager = runtime["project_manager"]
-    previous_project = project_manager.get_project()
-    project_manager.set_project(context)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=ResourceWarning,
+            message="Implicitly cleaning up <TemporaryDirectory",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message=("`result_format` configured at the Validator-level will not be persisted"),
+        )
 
-    try:
-        validator = runtime["Validator"](
-            execution_engine=runtime["PandasExecutionEngine"](),
-            expectation_suite=runtime["ExpectationSuite"](name="hotpass"),
-            batches=[runtime["Batch"](data=sanitized)],
-            data_context=context,
-        )
-        validator.set_default_expectation_argument("catch_exceptions", True)
+        context = runtime["EphemeralDataContext"](project_config=config)
+        project_manager = runtime["project_manager"]
+        previous_project = project_manager.get_project()
+        project_manager.set_project(context)
 
-        validator.expect_column_values_to_not_be_null("organization_name")
-        validator.expect_column_values_to_not_be_null("organization_slug")
-        validator.expect_column_values_to_be_between(
-            "data_quality_score", min_value=0.0, max_value=1.0, mostly=1.0
-        )
-        validator.expect_column_values_to_match_regex(
-            "contact_primary_email",
-            r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-            mostly=email_mostly,
-        )
-        validator.expect_column_values_to_match_regex(
-            "contact_primary_phone",
-            r"^\+\d{6,}$",
-            mostly=phone_mostly,
-        )
-        validator.expect_column_values_to_match_regex(
-            "website", r"^https?://", mostly=website_mostly
-        )
-        validator.expect_column_values_to_be_in_set("country", {"South Africa"})
+        try:
+            validator = runtime["Validator"](
+                execution_engine=runtime["PandasExecutionEngine"](),
+                expectation_suite=runtime["ExpectationSuite"](name="hotpass"),
+                batches=[runtime["Batch"](data=sanitized)],
+                data_context=context,
+            )
+            validator.set_default_expectation_argument("catch_exceptions", True)
 
-        validation = validator.validate()
-    finally:
-        project_manager.set_project(previous_project)
+            validator.expect_column_values_to_not_be_null("organization_name")
+            validator.expect_column_values_to_not_be_null("organization_slug")
+            validator.expect_column_values_to_be_between(
+                "data_quality_score", min_value=0.0, max_value=1.0, mostly=1.0
+            )
+            validator.expect_column_values_to_match_regex(
+                "contact_primary_email",
+                r"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                mostly=email_mostly,
+            )
+            validator.expect_column_values_to_match_regex(
+                "contact_primary_phone",
+                r"^\+\d{6,}$",
+                mostly=phone_mostly,
+            )
+            validator.expect_column_values_to_match_regex(
+                "website", r"^https?://", mostly=website_mostly
+            )
+            validator.expect_column_values_to_be_in_set("country", {"South Africa"})
+
+            validation = validator.validate()
+        finally:
+            project_manager.set_project(previous_project)
+            cleanup_manager = getattr(context, "_temp_dir_manager", None)
+            if cleanup_manager is not None:
+                if hasattr(cleanup_manager, "cleanup"):
+                    cleanup_manager.cleanup()
+                exit_method = getattr(cleanup_manager, "__exit__", None)
+                if callable(exit_method):
+                    exit_method(None, None, None)
 
     failures: list[str] = []
     for result in validation.results:
@@ -201,6 +214,7 @@ def run_expectations(
         email_mostly=email_mostly,
         phone_mostly=phone_mostly,
         website_mostly=website_mostly,
+        runtime_override=None,
     )
     if ge_summary is not None:
         return ge_summary

@@ -6,10 +6,6 @@ import logging
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 
-from .compliance import POPIAPolicy, add_provenance_columns, detect_pii_in_dataframe
-from .enrichment import CacheManager, enrich_dataframe_with_websites
-from .entity_resolution import add_ml_priority_scores, resolve_entities_fallback
-from .geospatial import geocode_dataframe, normalize_address
 from .observability import (
     get_pipeline_metrics,
     initialize_observability,
@@ -59,99 +55,6 @@ def run_enhanced_pipeline(
     df, compliance_report = apply_compliance(df, enhanced_config, trace_factory)
     if compliance_report is not None:
         result.compliance_report = compliance_report
-
-    # Entity Resolution
-    if enhanced_config.enable_entity_resolution:
-        with (
-            trace_operation("entity_resolution")
-            if enhanced_config.enable_observability
-            else _noop()
-        ):
-            logger.info("Running entity resolution...")
-            try:
-                if enhanced_config.use_splink:
-                    try:
-                        from .entity_resolution import resolve_entities_with_splink
-                    except ImportError as import_err:
-                        logger.warning(
-                            f"Splink import failed, falling back to rule-based: {import_err}"
-                        )
-                        df, _ = resolve_entities_fallback(
-                            df, enhanced_config.entity_resolution_threshold
-                        )
-                    else:
-                        df, _ = resolve_entities_with_splink(
-                            df, enhanced_config.entity_resolution_threshold
-                        )
-                else:
-                    df, _ = resolve_entities_fallback(
-                        df, enhanced_config.entity_resolution_threshold
-                    )
-
-                # Add ML priority scores
-                df = add_ml_priority_scores(df)
-                logger.info(f"Entity resolution complete: {len(df)} unique entities")
-            except Exception as e:
-                logger.error(f"Entity resolution failed: {e}")
-
-    # Geospatial Enrichment
-    if enhanced_config.enable_geospatial and enhanced_config.geocode_addresses:
-        with trace_operation("geospatial") if enhanced_config.enable_observability else _noop():
-            logger.info("Running geospatial enrichment...")
-            try:
-                # Normalize addresses first
-                if "address_primary" in df.columns:
-                    df["address_primary"] = df["address_primary"].apply(normalize_address)
-
-                # Geocode addresses
-                df = geocode_dataframe(
-                    df, address_column="address_primary", country_column="country"
-                )
-                logger.info("Geospatial enrichment complete")
-            except Exception as e:
-                logger.error(f"Geospatial enrichment failed: {e}")
-
-    # External Data Enrichment
-    if enhanced_config.enable_enrichment and enhanced_config.enrich_websites:
-        with trace_operation("enrichment") if enhanced_config.enable_observability else _noop():
-            logger.info("Running external data enrichment...")
-            try:
-                cache = CacheManager(db_path=enhanced_config.cache_path)
-
-                # Enrich from websites
-                if "website" in df.columns:
-                    df = enrich_dataframe_with_websites(df, website_column="website", cache=cache)
-                logger.info("External enrichment complete")
-
-                # Log cache stats
-                stats = cache.stats()
-                logger.info(f"Cache stats: {stats}")
-            except Exception as e:
-                logger.error(f"External enrichment failed: {e}")
-
-    # Compliance and PII Detection
-    if enhanced_config.enable_compliance:
-        with trace_operation("compliance") if enhanced_config.enable_observability else _noop():
-            logger.info("Running compliance checks...")
-            try:
-                # Add provenance tracking
-                df = add_provenance_columns(df, source_name="hotpass_pipeline")
-
-                # Detect PII if enabled
-                if enhanced_config.detect_pii:
-                    pii_columns = [
-                        "contact_primary_email",
-                        "contact_primary_phone",
-                        "contact_primary_name",
-                    ]
-                    df = detect_pii_in_dataframe(df, columns=pii_columns, threshold=0.5)
-
-                # Generate compliance report
-                policy = POPIAPolicy()
-                compliance_report = policy.generate_compliance_report(df)
-                logger.info(f"Compliance report generated: {compliance_report}")
-            except Exception as e:
-                logger.error(f"Compliance checks failed: {e}")
 
     # Update result with enhanced dataframe
     result.refined = df

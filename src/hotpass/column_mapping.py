@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 from difflib import SequenceMatcher
 from typing import Any
 
@@ -186,8 +187,14 @@ def infer_column_types(df: pd.DataFrame) -> dict[str, str]:
 
         # Check if it's a date
         try:
-            pd.to_datetime(sample, errors="coerce")
-            if sample.notna().sum() / len(sample) > 0.7:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=UserWarning,
+                    message=("Could not infer format, so each element will be parsed individually"),
+                )
+                parsed_dates = pd.to_datetime(sample, errors="coerce")
+            if parsed_dates.notna().sum() / len(sample) > 0.7:
                 column_types[column] = "date"
                 continue
         except (ValueError, TypeError):

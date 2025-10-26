@@ -9,6 +9,9 @@ This module provides functionality for:
 
 import logging
 import sqlite3
+import warnings
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -47,9 +50,23 @@ class CacheManager:
         self.ttl = timedelta(hours=ttl_hours)
         self._init_db()
 
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=ResourceWarning,
+                message="unclosed database",
+            )
+            conn = sqlite3.connect(self.db_path)
+        try:
+            yield conn
+        finally:
+            conn.close()
+
     def _init_db(self) -> None:
         """Initialize database schema."""
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS cache (
@@ -77,7 +94,7 @@ class CacheManager:
         Returns:
             Cached value if found and not expired, None otherwise
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("SELECT value, created_at FROM cache WHERE key = ?", (key,))
             row = cursor.fetchone()
 
@@ -112,7 +129,7 @@ class CacheManager:
             key: Cache key
             value: Value to cache
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO cache (key, value, created_at, accessed_at, hit_count)
@@ -128,7 +145,7 @@ class CacheManager:
         Args:
             key: Cache key
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             conn.execute("DELETE FROM cache WHERE key = ?", (key,))
             conn.commit()
 
@@ -139,7 +156,7 @@ class CacheManager:
             Number of entries deleted
         """
         cutoff = (datetime.now() - self.ttl).isoformat()
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             cursor = conn.execute("DELETE FROM cache WHERE created_at < ?", (cutoff,))
             count = cursor.rowcount
             conn.commit()
@@ -151,7 +168,7 @@ class CacheManager:
         Returns:
             Dictionary with cache statistics
         """
-        with sqlite3.connect(self.db_path) as conn:
+        with self._connect() as conn:
             cursor = conn.execute(
                 """
                 SELECT
