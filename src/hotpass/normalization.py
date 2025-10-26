@@ -5,9 +5,12 @@ from __future__ import annotations
 import re
 import unicodedata
 from collections.abc import Iterable
-from urllib.parse import urlparse, urlunparse
 
-import phonenumbers
+from .transform import clean_text as _clean_text
+from .transform import normalise_identifier
+from .transform import normalize_email as _normalize_email
+from .transform import normalize_phone as _normalize_phone
+from .transform import normalize_website as _normalize_website
 
 _PROVINCE_ALIASES = {
     "gauteng": "Gauteng",
@@ -35,63 +38,19 @@ def coalesce(*values: str | None) -> str | None:
 
 def clean_string(value: object | None, max_length: int = 10000) -> str | None:
     """Clean and validate string input with optional length limit for security."""
-    if value is None:
-        return None
-    if isinstance(value, float) and value != value:
-        return None
-    if isinstance(value, str):
-        cleaned = value.strip()
-        if len(cleaned) > max_length:
-            # Truncate extremely long strings to prevent memory issues
-            cleaned = cleaned[:max_length]
-        return cleaned or None
-    result = str(value).strip()
-    if len(result) > max_length:
-        result = result[:max_length]
-    return result or None
+    return _clean_text(value, max_length=max_length)
 
 
 def normalize_email(value: str | None) -> str | None:
-    value = clean_string(value)
-    if not value:
-        return None
-    normalized = value.lower()
-    if "@" not in normalized:
-        return None
-    return normalized
+    return _normalize_email(value)
 
 
 def normalize_phone(value: str | None, country_code: str = "ZA") -> str | None:
-    value = clean_string(value)
-    if not value:
-        return None
-    digits = re.sub(r"[^0-9+]+", "", value)
-    if not digits:
-        return None
-    try:
-        parsed = phonenumbers.parse(digits, country_code)
-    except phonenumbers.NumberParseException:
-        return None
-    if not phonenumbers.is_possible_number(parsed) or not phonenumbers.is_valid_number(parsed):
-        return None
-    return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+    return _normalize_phone(value, country_code=country_code)
 
 
 def normalize_website(value: str | None) -> str | None:
-    value = clean_string(value)
-    if not value:
-        return None
-    if not re.match(r"https?://", value, flags=re.I):
-        value = f"https://{value}"
-    parsed = urlparse(value)
-    netloc = parsed.netloc or parsed.path
-    path = parsed.path if parsed.netloc else ""
-    netloc = netloc.lower().lstrip()
-    if netloc.startswith("www."):
-        netloc = netloc[4:]
-    normalised_path = path.rstrip("/")
-    rebuilt = urlunparse(("https", netloc, normalised_path, "", "", ""))
-    return rebuilt.rstrip("/")
+    return _normalize_website(value)
 
 
 def normalize_province(value: str | None) -> str | None:
@@ -125,3 +84,8 @@ def join_non_empty(parts: Iterable[str | None], separator: str = " ") -> str | N
     if not cleaned:
         return None
     return separator.join(cleaned)
+
+
+def normalize_identifier(value: str | None) -> str | None:
+    """Expose identifier normalisation based on python-stdnum helpers."""
+    return normalise_identifier(value)

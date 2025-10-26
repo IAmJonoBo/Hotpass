@@ -1,7 +1,7 @@
 ---
 title: How-to — format outputs and enforce validation rules
-summary: Apply professional Excel styling and tune validation thresholds for your sector.
-last_updated: 2025-10-25
+summary: Apply professional styling, govern ingest schemas, and surface parquet/CSVW artefacts for downstream tooling.
+last_updated: 2025-12-26
 ---
 
 # How-to — format outputs and enforce validation rules
@@ -38,9 +38,44 @@ Key options:
 - `zebra_striping` alternates row colours for better readability.
 - `add_filters` adds Excel auto-filters to every column.
 
+## Govern ingest schemas and expectations
+
+Every workbook consumed by the pipeline now carries a Frictionless Table Schema contract under `schemas/` and a matching Great Expectations suite under `data_expectations/`. Contracts ship with the package and are exercised automatically during `_load_sources()`.
+
+To introduce a new sheet, add the schema/expectation pair:
+
+```bash
+cp schemas/reachout_organisation.schema.json schemas/my_feed.schema.json
+cp data_expectations/reachout/organisation.json data_expectations/my_feed/source.json
+```
+
+Update the descriptors with your column names, then reference them from a data source loader. If the workbook drifts from the schema, `DataContractError` raises with the missing/extra fields and blocks the run.
+
+To dry-run a contract locally, use the helper APIs:
+
+```python
+from pathlib import Path
+import pandas as pd
+
+from hotpass.validation import validate_with_frictionless, validate_with_expectations
+
+frame = pd.read_excel(Path("data/Reachout Database.xlsx"), sheet_name="Organisation")
+validate_with_frictionless(
+    frame,
+    schema_descriptor="reachout_organisation.schema.json",
+    table_name="Reachout Organisation",
+    source_file="Reachout Database.xlsx#Organisation",
+)
+validate_with_expectations(
+    frame,
+    suite_descriptor="reachout/organisation.json",
+    source_file="Reachout Database.xlsx#Organisation",
+)
+```
+
 ## Customise validation thresholds
 
-Profiles define default validation requirements. Override them for specific deployments:
+Profiles still define the SSOT quality tolerances. Override them for specific deployments:
 
 ```yaml
 validation:
@@ -51,6 +86,26 @@ validation:
 ```
 
 Lower thresholds make the pipeline more permissive for exploratory analysis. Higher thresholds (≥0.95) are recommended for production datasets.
+
+## Capture governed artefacts (Parquet, DuckDB, CSVW)
+
+Validated outputs are now materialised as Polars-backed Parquet snapshots and queried via DuckDB before the final export. After every run you will find:
+
+- A Parquet file beside your chosen output (`refined.xlsx → refined.parquet`) containing the DuckDB ordered dataset.
+- Optional CSV exports accompanied by a CSVW sidecar (`refined.csv-metadata.json`) whose table schema is sourced from `schemas/ssot.schema.json`.
+
+You can inspect the Parquet snapshot directly with DuckDB for ad-hoc SQL:
+
+```python
+import duckdb
+
+with duckdb.connect() as conn:
+    df = conn.execute(
+        "SELECT organization_name, data_quality_score FROM read_parquet('dist/refined.parquet') ORDER BY data_quality_score DESC"
+    ).fetch_df()
+```
+
+Re-running `run_pipeline` will refresh both the parquet snapshot and any CSVW metadata automatically.
 
 ## Monitor validation feedback
 
@@ -68,5 +123,6 @@ Combine the structured report with the Markdown export to share remediation task
 ## Troubleshooting
 
 - **Excel formatting not applied**: Ensure `enable_formatting=True` and install the `dashboards` extra for the required libraries.
-- **Unexpected validation failures**: Check whether the incoming workbook uses the latest field mapping and review the field dictionary in the [data model reference](../reference/data-model.md).
+- **Frictionless or Great Expectations failures**: Compare the failure payload in the raised `DataContractError` with the schema/expectation JSON files. Align the workbook headers (case-sensitive) or extend the contract as needed.
 - **Large Excel files**: Disable conditional formatting for columns with more than 50,000 rows to speed up exports.
+- **Missing CSVW sidecar**: Confirm the target filename ends with `.csv`; other extensions bypass CSVW generation.

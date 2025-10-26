@@ -12,7 +12,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import duckdb
 import pandas as pd
+import polars as pl
 from pandera.errors import SchemaErrors
 
 from .config import IndustryProfile, get_default_profile
@@ -31,6 +33,7 @@ from .pipeline_reporting import (
     html_source_performance,
 )
 from .quality import ExpectationSummary, build_ssot_schema, run_expectations
+from .validation import load_schema_descriptor
 
 # Set up module logger
 logger = logging.getLogger(__name__)
@@ -89,6 +92,19 @@ SOURCE_PRIORITY: dict[str, int] = {
     "Reachout Database": 2,
     "Contact Database": 1,
 }
+
+
+def _write_csvw_metadata(output_path: Path) -> None:
+    """Persist a CSVW sidecar aligned with the SSOT schema."""
+    schema_descriptor = load_schema_descriptor("ssot.schema.json")
+    sidecar = output_path.with_suffix(f"{output_path.suffix}-metadata.json")
+    metadata = {
+        "@context": "http://www.w3.org/ns/csvw",
+        "url": output_path.name,
+        "tableSchema": schema_descriptor,
+    }
+    with sidecar.open("w", encoding="utf-8") as handle:
+        json.dump(metadata, handle, indent=2)
 
 
 @dataclass(frozen=True)
@@ -1120,19 +1136,29 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
 
-    # Handle empty validated_df gracefully
-    if len(validated_df) > 0:
-        quality_distribution = {
-            "mean": float(validated_df["data_quality_score"].mean()),
-            "min": float(validated_df["data_quality_score"].min()),
-            "max": float(validated_df["data_quality_score"].max()),
-        }
+    polars_validated = pl.from_pandas(validated_df, include_index=False)
+    parquet_path = config.output_path.with_suffix(".parquet")
+    parquet_path.parent.mkdir(parents=True, exist_ok=True)
+    polars_validated.write_parquet(parquet_path)
+    metrics["parquet_path"] = str(parquet_path)
+
+    if polars_validated.height > 0:
+        stats = polars_validated.select(
+            pl.col("data_quality_score").mean().alias("mean"),
+            pl.col("data_quality_score").min().alias("min"),
+            pl.col("data_quality_score").max().alias("max"),
+        ).to_dicts()[0]
+        quality_distribution = {key: float(value) for key, value in stats.items()}
     else:
-        quality_distribution = {
-            "mean": 0.0,
-            "min": 0.0,
-            "max": 0.0,
-        }
+        quality_distribution = {"mean": 0.0, "min": 0.0, "max": 0.0}
+
+    with duckdb.connect() as conn:
+        ordered_df = conn.execute(
+            "SELECT * FROM read_parquet(?) ORDER BY organization_name",
+            [str(parquet_path)],
+        ).fetch_df()
+    validated_df = ordered_df
+    pl.from_pandas(validated_df, include_index=False).write_parquet(parquet_path)
 
     # Generate recommendations if enabled
     recommendations = []
@@ -1147,10 +1173,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     write_start = time.perf_counter()
 
     # Use formatting if enabled
-    if config.enable_formatting and config.output_path.suffix.lower() in [
-        ".xlsx",
-        ".xls",
-    ]:
+    suffix = config.output_path.suffix.lower()
+
+    if config.enable_formatting and suffix in [".xlsx", ".xls"]:
         logger.info("Writing output with enhanced formatting")
         with pd.ExcelWriter(config.output_path, engine="openpyxl") as writer:
             validated_df.to_excel(writer, sheet_name="Data", index=False)
@@ -1164,6 +1189,12 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             }
             summary_df = create_summary_sheet(validated_df, quality_report_dict)
             summary_df.to_excel(writer, sheet_name="Summary", index=False, header=False)
+    elif suffix == ".csv":
+        validated_df.to_csv(config.output_path, index=False)
+        _write_csvw_metadata(config.output_path)
+    elif suffix == ".parquet":
+        # Snapshot already written via Polars, ensure DuckDB ordering persisted.
+        pl.from_pandas(validated_df, include_index=False).write_parquet(config.output_path)
     else:
         validated_df.to_excel(config.output_path, index=False)
 

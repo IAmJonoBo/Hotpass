@@ -147,6 +147,65 @@ class SchemaMismatchError(HotpassError):
         return cls(context)
 
 
+class DataContractError(HotpassError):
+    """Raised when governed data contracts fail during validation."""
+
+    @classmethod
+    def from_frictionless(
+        cls,
+        table_name: str,
+        *,
+        expected_fields: list[str],
+        actual_fields: list[str],
+        issues: list[str],
+        source_file: str | None = None,
+    ) -> DataContractError:
+        missing = sorted(set(expected_fields) - set(actual_fields))
+        extra = sorted(set(actual_fields) - set(expected_fields))
+        context = ErrorContext(
+            category=ErrorCategory.SCHEMA_MISMATCH,
+            severity=ErrorSeverity.ERROR,
+            message=f"Frictionless schema validation failed for {table_name}",
+            details={
+                "table": table_name,
+                "missing_fields": missing,
+                "extra_fields": extra,
+                "issues": issues,
+            },
+            source_file=source_file,
+            recoverable=False,
+            suggested_fix=(
+                "Align the ingest table with the governed schema or update the schema contract"
+            ),
+        )
+        return cls(context)
+
+    @classmethod
+    def from_expectations(
+        cls,
+        suite_name: str,
+        failures: list[str],
+        *,
+        source_file: str | None = None,
+    ) -> DataContractError:
+        failure_hint = failures[0] if failures else ""
+        context = ErrorContext(
+            category=ErrorCategory.VALIDATION_FAILURE,
+            severity=ErrorSeverity.ERROR,
+            message=(
+                f"Great Expectations suite '{suite_name}' failed"
+                + (f": {failure_hint}" if failure_hint else "")
+            ),
+            details={"suite": suite_name, "failures": failures},
+            source_file=source_file,
+            recoverable=False,
+            suggested_fix=(
+                "Inspect the expectation failures and correct the source data before retrying"
+            ),
+        )
+        return cls(context)
+
+
 @dataclass
 class ErrorReport:
     """Aggregated error report for a pipeline run."""

@@ -18,6 +18,7 @@ from .normalization import (
     normalize_province,
     normalize_website,
 )
+from .validation import validate_with_expectations, validate_with_frictionless
 
 
 @dataclass(frozen=True)
@@ -251,6 +252,30 @@ def load_reachout_database(
     organisation_df = _read_excel(org_path, "Organisation", options)
     contacts_df = _read_excel(org_path, "Contact Info", options)
 
+    validate_with_frictionless(
+        organisation_df,
+        schema_descriptor="reachout_organisation.schema.json",
+        table_name="Reachout Organisation",
+        source_file=f"{org_path.name}#Organisation",
+    )
+    validate_with_expectations(
+        organisation_df,
+        suite_descriptor="reachout/organisation.json",
+        source_file=f"{org_path.name}#Organisation",
+    )
+
+    validate_with_frictionless(
+        contacts_df,
+        schema_descriptor="reachout_contact_info.schema.json",
+        table_name="Reachout Contact Info",
+        source_file=f"{org_path.name}#Contact Info",
+    )
+    validate_with_expectations(
+        contacts_df,
+        suite_descriptor="reachout/contact_info.json",
+        source_file=f"{org_path.name}#Contact Info",
+    )
+
     contact_groups = contacts_df.groupby("ID")
     records: list[RawRecord] = []
     for _, org in organisation_df.iterrows():
@@ -309,6 +334,54 @@ def load_contact_database(
     contacts_df = _read_excel(path, "Company_Contacts", options)
     addresses_df = _read_excel(path, "Company_Addresses", options)
     capture_df = _read_excel(path, "10-10-25 Capture", options)
+
+    validate_with_frictionless(
+        company_df,
+        schema_descriptor="contact_company_cat.schema.json",
+        table_name="Contact Company Catalogue",
+        source_file=f"{path.name}#Company_Cat",
+    )
+    validate_with_expectations(
+        company_df,
+        suite_descriptor="contact/company_cat.json",
+        source_file=f"{path.name}#Company_Cat",
+    )
+
+    validate_with_frictionless(
+        contacts_df,
+        schema_descriptor="contact_company_contacts.schema.json",
+        table_name="Contact Company Contacts",
+        source_file=f"{path.name}#Company_Contacts",
+    )
+    validate_with_expectations(
+        contacts_df,
+        suite_descriptor="contact/company_contacts.json",
+        source_file=f"{path.name}#Company_Contacts",
+    )
+
+    validate_with_frictionless(
+        addresses_df,
+        schema_descriptor="contact_company_addresses.schema.json",
+        table_name="Contact Company Addresses",
+        source_file=f"{path.name}#Company_Addresses",
+    )
+    validate_with_expectations(
+        addresses_df,
+        suite_descriptor="contact/company_addresses.json",
+        source_file=f"{path.name}#Company_Addresses",
+    )
+
+    validate_with_frictionless(
+        capture_df,
+        schema_descriptor="contact_capture.schema.json",
+        table_name="Contact Capture Log",
+        source_file=f"{path.name}#10-10-25 Capture",
+    )
+    validate_with_expectations(
+        capture_df,
+        suite_descriptor="contact/capture.json",
+        source_file=f"{path.name}#10-10-25 Capture",
+    )
 
     contacts_grouped = contacts_df.groupby("C_ID")
     address_map: dict[str, str] = {}
@@ -377,6 +450,18 @@ def load_sacaa_cleaned(
 ) -> pd.DataFrame:
     path = input_dir / "SACAA Flight Schools - Refined copy__CLEANED.xlsx"
     df = _read_excel(path, "Cleaned", options)
+
+    validate_with_frictionless(
+        df,
+        schema_descriptor="sacaa_cleaned.schema.json",
+        table_name="SACAA Cleaned",
+        source_file=f"{path.name}#Cleaned",
+    )
+    validate_with_expectations(
+        df,
+        suite_descriptor="sacaa/cleaned.json",
+        source_file=f"{path.name}#Cleaned",
+    )
     records: list[RawRecord] = []
     for _, row in df.iterrows():
         org_name = clean_string(row.get("Name of Organisation"))

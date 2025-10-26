@@ -1,0 +1,20 @@
+{
+  "$schema": "https://frictionlessdata.io/schemas/table-schema.json",
+  "name": "contact_company_cat",
+  "title": "Contact Database company catalogue",
+  "description": "Schema for Company_Cat sheet in Contact Database.xlsx",
+  "primaryKey": ["C_ID"],
+  "fields": [
+    {"name": "C_ID", "type": "number", "constraints": {"required": true}},
+    {"name": "Company", "type": "string", "constraints": {"required": true}},
+    {"name": "QuickNooks_Name", "type": "string"},
+    {"name": "Last_Order_Date", "type": "string"},
+    {"name": "Category", "type": "string"},
+    {"name": "Strat", "type": "string"},
+    {"name": "Priority", "type": "string"},
+    {"name": "Status", "type": "string"},
+    {"name": "LoadDate", "type": "string"},
+    {"name": "Checked", "type": "string"},
+    {"name": "Website", "type": "string"}
+  ]
+}
