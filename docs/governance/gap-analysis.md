@@ -63,7 +63,7 @@ Skips: Parquet-related tests remain skipped when `pyarrow` is unavailable, so co
 
 ### 6. Evidence logging coverage gap
 
-- `hotpass.evidence` contains the compliance/export logging helpers but lacks dedicated tests (0% coverage) even though they manipulate filesystem state and timestamps that underpin compliance audit trails.【F:src/hotpass/evidence.py†L22-L96】【3c25ae†L19-L57】
+- `hotpass.evidence` contains the compliance/export logging helpers but lacks dedicated tests (0% coverage) even though they manipulate filesystem state and timestamps that underpin compliance audit trails.
 
 **Impact**: Regressions in audit log generation would go unnoticed; forthcoming overhaul work should introduce unit tests and deterministic timestamp strategies.
 
