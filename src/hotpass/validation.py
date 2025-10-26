@@ -41,7 +41,9 @@ def _project_root() -> Path:
     for parent in [current] + list(current.parents):
         if (parent / "pyproject.toml").is_file():
             return parent
-    raise RuntimeError("Could not find project root (pyproject.toml not found in any parent directory)")
+    raise RuntimeError(
+        "Could not find project root (pyproject.toml not found in any parent directory)"
+    )
 
 
 def _resource_path(folder: str, name: str) -> Path:
@@ -140,22 +142,22 @@ def validate_with_expectations(
         store_backend_defaults=InMemoryStoreBackendDefaults(init_temp_docs_sites=False),
     )
 
-    with EphemeralDataContext(project_config=config) as context:
-        project_manager = ge_context_factory.project_manager
-        previous_project = project_manager.get_project()
-        project_manager.set_project(context)
+    context = EphemeralDataContext(project_config=config)
+    project_manager = ge_context_factory.project_manager
+    previous_project = project_manager.get_project()
+    project_manager.set_project(context)
 
-        try:
-            validator = Validator(
-                execution_engine=PandasExecutionEngine(),
-                expectation_suite=suite,
-                batches=[Batch(data=df)],
-                data_context=context,
-            )
-            validator.set_default_expectation_argument("catch_exceptions", True)
-            results = cast(ExpectationSuiteValidationResult, validator.validate())
-        finally:
-            project_manager.set_project(previous_project)
+    try:
+        validator = Validator(
+            execution_engine=PandasExecutionEngine(),
+            expectation_suite=suite,
+            batches=[Batch(data=df)],
+            data_context=context,
+        )
+        validator.set_default_expectation_argument("catch_exceptions", True)
+        results = cast(ExpectationSuiteValidationResult, validator.validate())
+    finally:
+        project_manager.set_project(previous_project)
     if results.success:
         return
 

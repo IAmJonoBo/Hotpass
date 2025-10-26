@@ -9,6 +9,7 @@ unit tests or constrained deployments.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -45,6 +46,12 @@ else:
     _prefect_flow_decorator = prefect_flow_decorator
     _prefect_task_decorator = prefect_task_decorator
     _prefect_get_run_logger = prefect_get_run_logger
+
+    if os.getenv("HOTPASS_ENABLE_PREFECT_RUNTIME", "0") != "1":
+        PREFECT_AVAILABLE = False
+        _prefect_flow_decorator = None
+        _prefect_task_decorator = None
+        _prefect_get_run_logger = None
 
 
 if _prefect_flow_decorator is not None:

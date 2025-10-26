@@ -1,7 +1,7 @@
 ---
 title: How-to — orchestrate and observe Hotpass runs
 summary: Configure Prefect deployments and OpenTelemetry exporters for continuous Hotpass operations.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # How-to — orchestrate and observe Hotpass runs
@@ -43,6 +43,20 @@ datasources:
 ```bash
 uv run prefect deployment run hotpass-prod --params '{"refresh_contacts": true}'
 ```
+
+## Toggle Prefect runtime decorators
+
+During unit tests Hotpass disables Prefect's runtime decorators to avoid starting ephemeral
+servers. Set `HOTPASS_ENABLE_PREFECT_RUNTIME=1` before invoking CLI or Prefect commands when
+you need the real Prefect runtime behaviour:
+
+```bash
+export HOTPASS_ENABLE_PREFECT_RUNTIME=1
+uv run hotpass-enhanced orchestrate --profile aviation
+```
+
+Unset the variable (or leave it blank) to fall back to the no-op decorators that keep local
+unit tests offline-friendly.
 
 ## Enable telemetry
 

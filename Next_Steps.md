@@ -37,6 +37,7 @@
 - [x] Enforce governed ingest schemas with Frictionless + Great Expectations validation gates (Owner: Engineering, Due: 2025-12-27)
 - [x] Introduce shared data normalisers with Polars/DuckDB persistence for refined outputs (Owner: Engineering, Due: 2026-01-10)
 - [x] Expand regression coverage and documentation for input formatting and validation flows (Owner: QA & Docs, Due: 2025-12-27)
+- [x] Publish guidance for enabling Prefect runtime via `HOTPASS_ENABLE_PREFECT_RUNTIME` in orchestration docs (Owner: Platform, Due: 2025-11-30)
 
 ## Steps
 
@@ -78,6 +79,8 @@
 - [x] Suppressed Great Expectations and sqlite resource warnings under `pytest -W error` via targeted filters and cleanup (2025-11-29)【4701d5†L1-L1】【09f95e†L1-L40】
 - [x] Cleared CLI/pipeline lint, type, and security findings and reran the full QA suite after progress instrumentation landed (2025-10-26)
 - [x] Baseline QA suite rerun for ingest schema initiative (2025-12-26)【387e77†L1-L84】
+- [x] Implement canonical Party/Role/Alias store, loader backfill, CLI party-store export, and data dictionary tooling (2025-10-26)【5a2f34†L1-L20】【02a776†L1-L120】
+- [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 
 ## Deliverables
 
@@ -144,17 +147,18 @@
 - [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【efd15c†L1-L2】
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
 - [x] Compliance evidence catalog refreshed (due 2025-01-15)【F:docs/compliance/evidence-catalog.md†L13-L20】
+- [x] `scripts/catalog/generate_dictionary.py` emits Hotpass data dictionary (`uv run python scripts/catalog/generate_dictionary.py`)【b7480d†L1-L2】
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d6c49f`)
-- Lint: `uv run ruff check` (chunk `ca34ba`)
-- Format: `uv run ruff format --check` (chunk `78ba8a`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `26fb20`)
+- Lint: `uv run ruff check` (chunk `31f921`)
+- Format: `uv run ruff format --check` (chunk `7b02fd`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `uv run mypy src tests scripts` (chunk `a54a0a`)
-- Security: `uv run bandit -r src scripts` (chunk `bc752c`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `a40074`)
-- Build: `uv run uv build` (chunk `5e74d7`)
+- Types: `uv run mypy src tests scripts` (chunk `21d9e9`)
+- Security: `uv run bandit -r src scripts` (chunk `602aef`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `653187`)
+- Build: `uv run uv build` (chunk `f995b1`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)

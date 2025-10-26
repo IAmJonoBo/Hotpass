@@ -9,6 +9,7 @@ import re
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,7 @@ from .data_sources import (
     load_reachout_database,
     load_sacaa_cleaned,
 )
+from .domain.party import PartyStore, build_party_store_from_refined
 from .formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from .normalization import clean_string, coalesce, normalize_province, slugify
 from .pipeline_reporting import (
@@ -414,6 +416,7 @@ class PipelineResult:
     quality_report: QualityReport
     performance_metrics: dict[str, Any]
     compliance_report: dict[str, Any] | None = None
+    party_store: PartyStore | None = None
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
@@ -974,6 +977,8 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             refined=refined,
             quality_report=report,
             performance_metrics=metrics_copy,
+            # In the early-return path (no data loaded), the party store is empty by definition.
+            party_store=PartyStore(),
         )
 
     aggregated_rows = []
@@ -1168,6 +1173,12 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         )
         logger.info(f"Generated {len(recommendations)} recommendations")
 
+    party_store = build_party_store_from_refined(
+        validated_df,
+        default_country=config.country_code,
+        execution_time=datetime.now(tz=UTC),
+    )
+
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
     _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
     write_start = time.perf_counter()
@@ -1251,6 +1262,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         refined=validated_df,
         quality_report=report,
         performance_metrics=metrics_copy,
+        party_store=party_store,
     )
 
 

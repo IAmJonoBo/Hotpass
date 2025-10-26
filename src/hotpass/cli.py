@@ -59,6 +59,7 @@ class CLIOptions:
     log_format: str
     report_path: Path | None
     report_format: str | None
+    party_store_path: Path | None
     config_paths: list[Path]
     excel_chunk_size: int | None
     excel_engine: str | None
@@ -164,6 +165,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicit format for the rendered quality report",
     )
     parser.add_argument(
+        "--party-store-path",
+        type=Path,
+        help="Optional path to write the canonical party store as JSON",
+    )
+    parser.add_argument(
         "--excel-chunk-size",
         type=int,
         help="Chunk size for streaming Excel sheets (enables chunked reading when set)",
@@ -211,6 +217,7 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         "log_format": "rich",
         "report_path": None,
         "report_format": None,
+        "party_store_path": None,
         "excel_chunk_size": None,
         "excel_engine": None,
         "excel_stage_dir": None,
@@ -238,6 +245,7 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         "log_format",
         "report_path",
         "report_format",
+        "party_store_path",
         "excel_chunk_size",
         "excel_engine",
         "excel_stage_dir",
@@ -259,6 +267,9 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
     dist_dir = Path(options["dist_dir"])
     report_path = Path(options["report_path"]) if options.get("report_path") else None
     stage_dir = Path(options["excel_stage_dir"]) if options.get("excel_stage_dir") else None
+    party_store_path = (
+        Path(options["party_store_path"]) if options.get("party_store_path") else None
+    )
 
     chunk_size = options.get("excel_chunk_size")
     if chunk_size is not None:
@@ -316,6 +327,7 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         log_format=log_format,
         report_path=report_path,
         report_format=report_format,
+        party_store_path=party_store_path,
         config_paths=list(namespace.config_paths),
         excel_chunk_size=chunk_size,
         excel_engine=(str(options["excel_engine"]) if options.get("excel_engine") else None),
@@ -613,6 +625,14 @@ class StructuredLogger:
         label = report_format or "auto"
         console.print(f"[green]Quality report written ({label}):[/green] {report_path}")
 
+    def log_party_store(self, output_path: Path) -> None:
+        if self.log_format == "json":
+            self._emit_json("party_store.write", {"path": output_path})
+            return
+
+        console = self._get_console()
+        console.print(f"[green]Party store exported:[/green] {output_path}")
+
     def log_error(self, message: str) -> None:
         if self.log_format == "json":
             self._emit_json("error", {"message": message})
@@ -746,6 +766,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             options.report_path.write_text(report.to_markdown(), encoding="utf-8")
         logger.log_report_write(options.report_path, options.report_format)
+
+    if options.party_store_path is not None and result.party_store is not None:
+        options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = result.party_store.as_dict()
+        options.party_store_path.write_text(
+            json.dumps(payload, indent=2),
+            encoding="utf-8",
+        )
+        logger.log_party_store(options.party_store_path)
 
     if options.archive:
         options.dist_dir.mkdir(parents=True, exist_ok=True)
