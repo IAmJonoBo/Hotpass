@@ -1,3 +1,5 @@
+"""Deprecated shim script that proxies to the packaged Hotpass CLI."""
+
 from __future__ import annotations
 
 # Deprecated shim that proxies to the packaged Hotpass CLI.
