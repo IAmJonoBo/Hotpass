@@ -80,7 +80,7 @@
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
 - [x] Pytest with coverage ≥ 80% (current: 87%)
-- [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)【26d6c6†L1-L29】
+- [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
 - [x] Ruff lint clean (`uv run ruff check`)【619137†L1-L2】
 - [x] Ruff formatting clean (`uv run ruff format --check`)【fa5cfd†L1-L2】
