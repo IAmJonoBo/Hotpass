@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the `hotpass` and `hotpass-enhanced` CLI entry points.
-last_updated: 2025-10-25
+last_updated: 2025-10-27
 ---
 
 # Reference — command-line interface
@@ -17,12 +17,23 @@ uv run hotpass [OPTIONS]
 | Option | Description |
 | --- | --- |
 | `--input-dir PATH` | Directory containing raw spreadsheets (default: `./data`). |
-| `--output-path PATH` | Target Excel file (default: `./dist/refined.xlsx`). |
-| `--config FILE` | YAML configuration file that overrides CLI flags. |
-| `--archive / --no-archive` | Retain raw inputs and emit CSV/Parquet alongside Excel. |
-| `--log-format [rich|json]` | Structured log output. |
-| `--log-level LEVEL` | Logging level (default: `INFO`). |
-| `--profile NAME` | Industry profile to load (default: `aviation`). |
+| `--output-path PATH` | Destination path for the refined Excel workbook (default: `<input-dir>/refined_data.xlsx`). |
+| `--config FILE` | TOML or JSON configuration file applied before CLI flags. Repeat the flag to merge multiple files. |
+| `--country-code TEXT` | ISO country code used when normalising phone numbers (default: `ZA`). |
+| `--expectation-suite TEXT` | Great Expectations suite to execute (default: `default`). |
+| `--archive / --no-archive` | Enable or disable creation of a timestamped `.zip` archive that bundles the refined workbook. |
+| `--dist-dir PATH` | Directory used for archive output when `--archive` is enabled (default: `./dist`). |
+| `--log-format [rich|json]` | Structured log format for pipeline output (default: `rich`). |
+| `--sensitive-field FIELD` | Field name to redact from structured logs. Repeat the flag to mask multiple fields. Default redactions cover `email`, `phone`, `contact`, `cell`, `mobile`, and `whatsapp`. |
+| `--report-path PATH` | Optional path to write the quality report (Markdown or HTML). |
+| `--report-format [markdown|html]` | Explicit report format override. When omitted the format is inferred from `--report-path`. |
+| `--excel-chunk-size INTEGER` | Chunk size for streaming Excel sheets; must be greater than zero when provided. |
+| `--excel-engine TEXT` | Explicit pandas Excel engine (for example `openpyxl`). |
+| `--excel-stage-dir PATH` | Directory for staging chunked Excel reads to parquet for reuse. |
+
+Structured JSON logs redact the default sensitive fields listed above. Add additional masks by repeating `--sensitive-field` or
+set the list in a configuration file (`sensitive_fields = ["passport", "id_number"]`). When the list is empty the CLI emits full
+payloads for downstream debugging.
 
 ## `hotpass-enhanced`
 
@@ -75,6 +86,11 @@ Launches the Streamlit monitoring dashboard.
 ```bash
 uv run hotpass-enhanced dashboard --port 8501
 ```
+
+Configure runtime controls with environment variables:
+
+- `HOTPASS_DASHBOARD_PASSWORD` — shared secret required before operators can execute the pipeline through the dashboard. Omit the variable to run in unsecured local-only mode.
+- `HOTPASS_DASHBOARD_ALLOWED_ROOTS` — list of allowed directories (separated by the platform path separator, e.g. `:` on Linux/macOS, `;` on Windows). Input and output selections must resolve within these roots. Defaults to `./data`, `./dist`, and `./logs` when unset.
 
 ### Exit codes
 

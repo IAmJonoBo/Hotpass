@@ -87,7 +87,7 @@ The architecture emphasises modularity—each layer can be extended independentl
 
 ## Unknowns and follow-up questions
 
-- **Authentication for the dashboard**: Determine whether the Streamlit app will be exposed beyond trusted operators and, if so, what authentication/authorisation model to apply.
+- **Authentication for the dashboard**: Shared-secret password gate now protects local deployments; determine if SSO-backed auth and centralised session logging are required before exposing beyond trusted operators.
 - **Secrets management**: Clarify the target mechanism (Prefect blocks, environment variables, vault) for registry API credentials and telemetry endpoints.
 - **CI artefact handling**: The GitHub Actions workflow publishes refined datasets to a `data-artifacts` branch. Validate retention requirements and access controls with stakeholders.
 - **Docker image distribution**: The current Dockerfile builds the CLI but CI does not yet push images. Confirm if container registries or air-gapped deployments are in scope.

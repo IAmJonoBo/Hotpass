@@ -4,7 +4,12 @@ This module provides a web-based dashboard for monitoring pipeline runs,
 quality metrics, and orchestration status.
 """
 
+from __future__ import annotations
+
 import json
+import os
+import secrets
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 
@@ -14,6 +19,97 @@ import streamlit as st
 from hotpass.config import get_default_profile
 from hotpass.data_sources import ExcelReadOptions
 from hotpass.pipeline import PipelineConfig, run_pipeline
+
+# nosec B105 - environment variable name
+AUTH_PASSWORD_ENV = "HOTPASS_DASHBOARD_PASSWORD"  # pragma: allowlist secret
+ALLOWED_ROOTS_ENV = "HOTPASS_DASHBOARD_ALLOWED_ROOTS"
+AUTH_STATE_KEY = "hotpass_dashboard_authenticated"
+# nosec B105 - UI label only
+PASSWORD_INPUT_LABEL = "Dashboard password"  # pragma: allowlist secret
+UNLOCK_BUTTON_LABEL = "Unlock dashboard"
+RUN_BUTTON_LABEL = "▶️ Run Pipeline"
+
+
+def _load_allowed_roots() -> list[Path]:
+    """Load filesystem allowlist from environment or defaults."""
+
+    env_value = os.getenv(ALLOWED_ROOTS_ENV, "")
+    if env_value:
+        candidates = [entry.strip() for entry in env_value.split(os.pathsep)]
+    else:
+        candidates = ["./data", "./dist", "./logs"]
+
+    roots: list[Path] = []
+    for candidate in candidates:
+        if not candidate:
+            continue
+        roots.append(Path(candidate).expanduser().resolve())
+    return roots
+
+
+def _ensure_path_within_allowlist(
+    target: Path, allowlist: Iterable[Path], *, description: str
+) -> None:
+    """Ensure *target* sits inside at least one allowed root."""
+
+    resolved_target = target.expanduser().resolve()
+    allowed = []
+    for root in allowlist:
+        resolved_root = root.expanduser().resolve()
+        allowed.append(resolved_root)
+        try:
+            resolved_target.relative_to(resolved_root)
+            return
+        except ValueError:
+            continue
+
+    allowed_display = ", ".join(str(root) for root in allowed)
+    raise ValueError(
+        f"{description} '{resolved_target}' is outside of allowed directories: {allowed_display}"
+    )
+
+
+def _validate_input_directory(path: Path, allowlist: Iterable[Path]) -> Path:
+    """Validate input directory selection against allowlist."""
+
+    resolved = path.expanduser().resolve()
+    _ensure_path_within_allowlist(resolved, allowlist, description="Input directory")
+    return resolved
+
+
+def _validate_output_path(path: Path, allowlist: Iterable[Path]) -> Path:
+    """Validate output path selection against allowlist."""
+
+    resolved = path.expanduser().resolve()
+    _ensure_path_within_allowlist(resolved.parent, allowlist, description="Output directory")
+    return resolved
+
+
+def _require_authentication() -> bool:
+    """Prompt for password when dashboard authentication is configured."""
+
+    password = os.getenv(AUTH_PASSWORD_ENV)
+    if not password:
+        return True
+
+    if st.session_state.get(AUTH_STATE_KEY):
+        return True
+
+    st.sidebar.header("Authentication")
+    provided_password = st.sidebar.text_input(
+        PASSWORD_INPUT_LABEL, type="password", help="Enter the shared dashboard secret"
+    )
+    unlock_pressed = st.sidebar.button(UNLOCK_BUTTON_LABEL, use_container_width=True)
+
+    if unlock_pressed:
+        if secrets.compare_digest(provided_password, password):
+            st.session_state[AUTH_STATE_KEY] = True
+            st.success("Dashboard unlocked for this session.")
+            return True
+        st.error("Invalid dashboard password. Access denied.")
+
+    st.warning("Authentication required. Provide the dashboard password to continue.")
+    return False
 
 
 def load_pipeline_history(history_file: Path) -> list[dict]:
@@ -59,6 +155,11 @@ def main():
     st.markdown("Monitor and control your data refinement pipeline")
 
     # Sidebar configuration
+    if not _require_authentication():
+        return
+
+    allowlist = _load_allowed_roots()
+
     st.sidebar.header("Configuration")
 
     input_dir = st.sidebar.text_input(
@@ -98,16 +199,19 @@ def main():
             st.info("Configure settings in the sidebar, then click 'Run Pipeline' to execute")
 
         with col2:
-            run_button = st.button("▶️ Run Pipeline", type="primary", use_container_width=True)
+            run_button = st.button(RUN_BUTTON_LABEL, type="primary", use_container_width=True)
 
         if run_button:
             with st.spinner("Running pipeline..."):
                 try:
+                    input_dir_path = _validate_input_directory(Path(input_dir), allowlist)
+                    output_path_obj = _validate_output_path(Path(output_path), allowlist)
+
                     # Build configuration
                     profile = get_default_profile(profile_name)
                     config = PipelineConfig(
-                        input_dir=Path(input_dir),
-                        output_path=Path(output_path),
+                        input_dir=input_dir_path,
+                        output_path=output_path_obj,
                         industry_profile=profile,
                         excel_options=ExcelReadOptions(
                             chunk_size=excel_chunk_size if excel_chunk_size > 0 else None
@@ -127,8 +231,8 @@ def main():
                         "total_records": len(result.refined),
                         "expectations_passed": result.quality_report.expectations_passed,
                         "profile": profile_name,
-                        "input_dir": input_dir,
-                        "output_path": output_path,
+                        "input_dir": str(input_dir_path),
+                        "output_path": str(output_path_obj),
                     }
                     save_pipeline_run(history_file, run_data)
 
@@ -162,6 +266,8 @@ def main():
                     with st.expander("🔍 Data Preview"):
                         st.dataframe(result.refined.head(20), use_container_width=True)
 
+                except ValueError as error:
+                    st.error(str(error))
                 except Exception as e:
                     st.error(f"❌ Pipeline failed: {str(e)}")
                     st.exception(e)
