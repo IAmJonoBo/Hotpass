@@ -1,44 +1,37 @@
-# Hotpass Repository Guidance for GitHub Copilot
+# Hotpass Guidance for AI Agents
 
-## Project Overview
+## Orientation
+- Python 3.13 project managed with uv; run `uv sync --extra dev --extra docs` once and prefer `uv run ...` for every command.
+- Primary CLI lives in `src/hotpass/cli.py` (exposed as `uv run hotpass`); enhanced features hang off `cli_enhanced.py` and `pipeline_enhanced.py`.
+- Core package code sits under `src/hotpass/`; automation scripts are in `scripts/`; documentation (MyST + Sphinx) is under `docs/`.
+- Test data fixtures in `tests/conftest.py` write sample Excel workbooks into a temp `data/` directory—mirror that structure when adding new sources.
 
-- Hotpass is a Python 3.13 data-refinement pipeline that consolidates heterogeneous Excel inputs into a governed single source of truth.
-- Tooling is managed with uv; documentation is built with Sphinx + MyST; QA is enforced through pre-commit hooks (ruff, black, mypy, detect-secrets, bandit).
-- Source code lives under `src/hotpass/`; automation scripts are in `scripts/`; documentation is in `docs/` with MyST-flavoured Markdown under `docs/source/`.
+## Architecture Map
+- `hotpass.pipeline` orchestrates the end-to-end refinement: Excel ingest via `data_sources`, normalisation + slug generation, provenance tracking, quality scoring, progress events, and Excel output through `formatting` + `artifacts`.
+- `data_sources` adapters (`load_reachout_database`, `load_contact_database`, `load_sacaa_cleaned`) use `ExcelReadOptions` for chunked reads and optional parquet staging; keep column semantics and chunking guards intact.
+- Supporting modules (`normalization`, `entity_resolution`, `pipeline_reporting`, `quality`) provide deterministic helpers. Preserve `SSOT_COLUMNS`, slug rules, and `QualityReport` serialization because downstream consumers and tests rely on them.
+- Enhanced workloads flow through `pipeline_enhancements`: gated by `EnhancedPipelineConfig` to enable entity resolution, geospatial normalisation, web enrichment, and POPIA compliance. Every branch must degrade gracefully when optional deps (Splink, requests, trafilatura, Presidio) are missing—log and return the original frame.
+- Observability lives in `observability.py`; `pipeline_enhanced` wires counters/spans via `get_pipeline_metrics` and `trace_operation`. Tests assert that fallbacks still work when OpenTelemetry is absent.
+- Prefect orchestration in `orchestration.py` wraps the pipeline with optional decorators. Maintain the `PipelineRunOptions` contract and `_execute_pipeline` summary shape because CLI + deployments consume it.
 
-## Required Toolchain
+## Workflow & QA
+- Typical refinement run: `uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive`. CLI options resolve through `_resolve_options` and are mirrored in `contracts/hotpass-cli-contract.yaml`.
+- When adding pipeline features, update the matching pytest suites: `tests/test_pipeline*.py`, `tests/test_cli*.py`, `tests/test_pipeline_enhanced.py`, plus extras-specific suites (`test_compliance*.py`, `test_geospatial.py`, `test_enrichment.py`).
+- Local QA mirrors `.github/workflows/process-data.yml`: run `uv run pytest`, `uv run ruff check`, `uv run mypy src scripts`, and `uv run python scripts/quality/fitness_functions.py` (guards LOC and observability imports). Add `uv run bandit -r src scripts` and `uv run detect-secrets scan src tests scripts` when touching security-sensitive paths.
+- Documentation is generated with `uv run sphinx-build docs docs/_build`; keep `docs/architecture/fitness-functions.md` and relevant how-to guides in sync with behavioural or threshold changes.
 
-- Install dependencies with `uv sync --extra dev --extra docs` (lockfile enforced).
-- Execute commands through `uv run ...` to reuse the managed virtual environment.
-- Primary entry points:
-  - `uv run hotpass --help` for CLI usage.
-  - `uv run pytest` for the full test suite.
-  - `uv run ruff check` and `uv run ruff format --check` for lint/format.
-  - `uv run mypy src scripts` for type checks.
-  - `uv run sphinx-build docs/source docs/build` to regenerate HTML docs.
+## Conventions & Invariants
+- Respect the `SSOT_COLUMNS` order, provenance JSON schema, and `QualityReport.to_dict()` keys—tests load these structures directly.
+- Thread new configuration flags through `PipelineConfig`, CLI parsing, orchestration, and tests. Keep defaults aligned with `config.get_default_profile` and industry profiles under `src/hotpass/profiles/`.
+- `ExcelReadOptions` must reject non-positive chunk sizes and preserve staging semantics; avoid introducing side effects in helper functions used by chunked reads.
+- Progress instrumentation relies on the `PIPELINE_EVENT_*` constants; CLI progress UI (`PipelineProgress`) expects those exact event names.
+- Optional dependency fallbacks (Great Expectations, Prefect, Presidio, OpenTelemetry) are deliberate. Preserve import guards and ensure new code paths handle their absence without raising.
+- Compliance flows (`POPIAPolicy`, `add_provenance_columns`, consent overrides) power POPIA reporting. Changing column names or statuses requires coordinated updates to tests and policy docs.
+- `scripts/process_data.py` remains a thin shim around the CLI; keep it aligned with package entrypoints for legacy automation.
 
-## Coding Expectations
-
-- Keep line length ≤100 characters; rely on ruff/black for formatting.
-- Add tests in `tests/` for new behaviour; prefer parametrised pytest cases where feasible.
-- Update documentation alongside code changes (especially `docs/source/*.md`) to stay release-ready.
-- Preserve provenance and compliance hooks in `hotpass.artifacts`, `hotpass.contacts`, and configuration profiles when modifying pipeline logic.
-
-## Useful Resources
-
-- Docs overview: `docs/architecture-overview.md`, `docs/implementation-guide.md`, `docs/gap-analysis.md`.
-- QA workflow mirrors `.github/workflows/process-data.yml`; emulate those steps locally before large changes.
-- For benchmarking or packaging, see `tests/test_artifacts.py` and existing CLI scripts.
-
-## When Assigning Tasks to Copilot
-
-1. Ensure dependencies are synced (setup steps workflow covers this for the agent).
-2. Reference specific paths or functions to narrow scope.
-3. Ask Copilot to run targeted QA commands (ruff, pytest, mypy, docs build) before completion.
-4. Mention compliance considerations when touching sensitive data handling code.
-
-## Networking Notes
-
-- Copilot relies on outbound HTTPS access to GitHub and PyPI when installing dependencies. If a proxy is required, populate `HTTPS_PROXY`/`HTTP_PROXY` environment variables in the repository’s `copilot` environment to mirror local settings.
-- For private package indexes or additional services, store tokens as Copilot environment secrets and expose them through environment variables in setup steps.
-- Prefect Cloud endpoints are blocked in the agent environment; avoid commands that require `sens-o-matic.prefect.io` or other external Prefect services. Use the local profile configured by setup steps (`PREFECT_API_URL=http://127.0.0.1:4200/api`) and keep orchestration tasks in offline mode.
+## Key References
+- Pipeline core: `src/hotpass/pipeline.py`, `pipeline_enhanced.py`, `pipeline_enhancements.py`, `pipeline_reporting.py`.
+- Data ingestion & cleaning: `data_sources.py`, `normalization.py`, `entity_resolution.py`, `geospatial.py`, `enrichment.py`.
+- Compliance & quality: `compliance.py`, `quality.py`, `artifacts.py`.
+- Interfaces & orchestration: `cli.py`, `cli_enhanced.py`, `orchestration.py`, `observability.py`.
+- Tests to mirror: `tests/test_pipeline.py`, `tests/test_cli.py`, `tests/test_pipeline_enhanced.py`, `tests/test_compliance.py`, `tests/test_geospatial.py`, `tests/test_enrichment.py`.
