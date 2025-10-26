@@ -10,7 +10,7 @@ import json
 import os
 import secrets
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -28,6 +28,14 @@ AUTH_STATE_KEY = "hotpass_dashboard_authenticated"
 PASSWORD_INPUT_LABEL = "Dashboard Password"  # nosec B105  # pragma: allowlist secret
 UNLOCK_BUTTON_LABEL = "Unlock dashboard"
 RUN_BUTTON_LABEL = "▶️ Run Pipeline"
+DOCS_URL = (
+    "https://github.com/IAmJonoBo/Hotpass/tree/main/docs/how-to-guides/orchestrate-and-observe.md"
+)
+GLOSSARY_URL = "https://github.com/IAmJonoBo/Hotpass/tree/main/docs/reference/data-model.md"
+DATA_PREVIEW_CAPTION = (
+    "Preview of the first 20 refined records. Use arrow keys or J/K to move between rows, "
+    "and consult the glossary for field definitions."
+)
 
 
 def _load_allowed_roots() -> list[Path]:
@@ -238,9 +246,17 @@ def main():
 
                     # Display results
                     if result.quality_report.expectations_passed:
-                        st.success("✅ Pipeline completed successfully!")
+                        st.success(
+                            "✅ Pipeline completed successfully! "
+                            "Download the refined workbook or inspect the data preview below "
+                            "to confirm the results meet expectations."
+                        )
                     else:
-                        st.warning("⚠️ Pipeline completed with validation warnings")
+                        st.warning(
+                            "⚠️ Pipeline completed with validation warnings. "
+                            "Review the Quality Report panel for remediation steps and rerun once "
+                            "the highlighted issues are fixed."
+                        )
 
                     col1, col2, col3, col4 = st.columns(4)
 
@@ -262,17 +278,33 @@ def main():
                         st.metric("Invalid Records", invalid)
 
                     # Show quality report details
-                    with st.expander("📊 Quality Report Details"):
-                        st.json(result.quality_report.to_dict())
+                    with st.expander("📊 Quality Report Details") as report_panel:
+                        report_panel.markdown(
+                            "Use this report to identify expectations that failed and "
+                            "cross-reference remediation guidance in the documentation."
+                        )
+                        report_panel.json(result.quality_report.to_dict())
 
                     # Show data preview
-                    with st.expander("🔍 Data Preview"):
-                        st.dataframe(result.refined.head(20), use_container_width=True)
+                    with st.expander("🔍 Data Preview") as preview_panel:
+                        preview_panel.caption(DATA_PREVIEW_CAPTION)
+                        preview_panel.markdown(
+                            "Need help interpreting fields? See the [data model glossary]"
+                            f"({GLOSSARY_URL})."
+                        )
+                        preview_panel.dataframe(result.refined.head(20), use_container_width=True)
 
                 except ValueError as error:
-                    st.error(str(error))
+                    st.error(
+                        "⚠️ Input validation failed. Adjust the configured paths or "
+                        "options and try again."
+                    )
+                    st.info(str(error))
                 except Exception as e:
-                    st.error(f"❌ Pipeline failed: {str(e)}")
+                    st.error(
+                        "❌ Pipeline failed unexpectedly. Review the stack trace, "
+                        "address the failure, and rerun the pipeline."
+                    )
                     st.exception(e)
 
     with tab2:
@@ -367,9 +399,10 @@ def main():
 
     # Footer
     st.markdown("---")
+    timestamp = datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC")
+    st.markdown("Hotpass Data Refinement Pipeline")
     st.markdown(
-        "Hotpass Data Refinement Pipeline | "
-        f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        f"Last updated: {timestamp} • Need help? Review the [operations guide]({DOCS_URL})."
     )
 
 

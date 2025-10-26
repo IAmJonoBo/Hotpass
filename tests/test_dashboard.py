@@ -48,11 +48,21 @@ class FakeTab(_FakeContext):
 
 
 class FakeExpander(_FakeContext):
+    def __init__(self) -> None:
+        self.markdown_messages: list[str] = []
+        self.caption_messages: list[str] = []
+
     def json(self, *_: object, **__: object) -> None:
         return None
 
     def dataframe(self, *_: object, **__: object) -> None:
         return None
+
+    def markdown(self, message: str, **_: object) -> None:
+        self.markdown_messages.append(message)
+
+    def caption(self, message: str, **_: object) -> None:
+        self.caption_messages.append(message)
 
 
 class FakeSidebar:
@@ -89,6 +99,9 @@ class FakeStreamlit:
         self.success_messages: list[str] = []
         self.warning_messages: list[str] = []
         self.error_messages: list[str] = []
+        self.markdown_messages: list[str] = []
+        self.caption_messages: list[str] = []
+        self.expanders: list[tuple[str, FakeExpander]] = []
 
     def set_button_response(self, label: str, pressed: bool) -> None:
         self._button_responses[label] = pressed
@@ -115,7 +128,12 @@ class FakeStreamlit:
         return None
 
     def markdown(self, *_: object, **__: object) -> None:
+        if _:
+            self.markdown_messages.append(str(_[0]))
         return None
+
+    def caption(self, message: str, **_: object) -> None:
+        self.caption_messages.append(message)
 
     def tabs(self, labels: list[str]) -> tuple[FakeTab, ...]:
         return tuple(FakeTab() for _ in labels)
@@ -171,7 +189,10 @@ class FakeStreamlit:
         return None
 
     def expander(self, *_: object, **__: object) -> FakeExpander:
-        return FakeExpander()
+        label = str(_[0]) if _ else ""
+        expander = FakeExpander()
+        self.expanders.append((label, expander))
+        return expander
 
 
 def test_load_pipeline_history_missing_file(tmp_path):
@@ -257,6 +278,19 @@ def test_dashboard_main_runs_pipeline_and_persists_history(tmp_path, monkeypatch
     assert len(history) == 1
     assert history[0]["total_records"] == len(refined_df)
     assert fake_streamlit.success_messages
+    assert "Download the refined workbook" in fake_streamlit.success_messages[-1]
+
+    preview_expanders = [
+        exp for label, exp in fake_streamlit.expanders if label == "🔍 Data Preview"
+    ]
+    assert preview_expanders, "Expected data preview expander to be registered"
+    preview = preview_expanders[-1]
+    assert any("Preview of the first 20 refined records" in msg for msg in preview.caption_messages)
+    assert any("data model glossary" in msg for msg in preview.markdown_messages)
+
+    footer_messages = [msg for msg in fake_streamlit.markdown_messages if "Last updated:" in msg]
+    assert footer_messages, "Expected footer message with last updated timestamp"
+    assert "operations guide" in footer_messages[-1]
 
 
 def test_dashboard_authentication_required(monkeypatch, tmp_path, fake_streamlit):
