@@ -44,5 +44,8 @@ actions:
   enabled:
     - trunk-upgrade-available
 tools:
+  disabled:
+    - markdownlint
   enabled:
+    - markdownlint-cli2@0.18.1
     - yamlfmt@0.20.0
