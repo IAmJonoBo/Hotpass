@@ -13,7 +13,7 @@ The Hotpass governance programme spans POPIA, ISO 27001, and SOC 2. This index t
 1. **Evidence-first** — Every control references tangible artefacts such as pipeline configuration, QA outputs, or architecture documentation.
 2. **Target alignment** — Each control compares the current state to the desired target and captures the gap narrative plus risk severity.
 3. **Actionable backlog** — High-risk gaps feed the [remediation backlog](./remediation-backlog.md) with owners and due dates for audit traceability.
-4. **Cadence discipline** — Verification checkpoints and metrics live in the [verification plan](./verification-plan.md) to ensure continuous assurance.
+4. **Cadence discipline** — Verification checkpoints and metrics live in the [verification plan](./verification-plan.md) and are captured through the `scripts/compliance/run_verification.py` helper to ensure continuous assurance.
 
 ## Framework matrices
 

@@ -53,6 +53,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /governance/project-charter
 /governance/pr-playbook
 /governance/upgrade-final-report
+/governance/supplier-risk-register
 /governance/secrets-management
 /CONTRIBUTING
 /style
