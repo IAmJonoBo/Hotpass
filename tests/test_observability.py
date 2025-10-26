@@ -394,6 +394,27 @@ def test_pipeline_stage_records_metrics_and_attributes(instrumentation_stubs):
     assert attributes == {"source": "unknown"}
 
 
+def test_pipeline_stage_serializes_attribute_variants(instrumentation_stubs):
+    """Attributes from sequences and other types should be normalised consistently."""
+
+    initialize_observability()
+
+    attributes = {
+        "flags": ["a", "b", 3],
+        "enabled": True,
+        "metadata": {"key": "value"},
+    }
+
+    with pipeline_stage("publish", attributes):
+        pass
+
+    tracer = instrumentation_stubs.trace_module.tracer
+    span = tracer.spans[-1]
+    assert span.attributes["hotpass.pipeline.flags"] == "a, b, 3"
+    assert span.attributes["hotpass.pipeline.enabled"] is True
+    assert span.attributes["hotpass.pipeline.metadata"] == "{'key': 'value'}"
+
+
 def test_safe_console_exporter_swallows_value_error(monkeypatch):
     """Console exporter should ignore ValueError emitted during shutdown."""
 
