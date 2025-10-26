@@ -96,16 +96,22 @@ def _link_with_splink(
     thresholds: LinkageThresholds,
 ) -> LinkageResult:
     try:
-        from splink import DuckDBAPI, Linker  # type: ignore
+        from splink.duckdb.linker import DuckDBLinker  # type: ignore
     except ImportError:
         logger.warning("Splink not installed; falling back to RapidFuzz rule-based linkage")
         return _link_with_rules(working, original, thresholds)
 
-    api = DuckDBAPI()
-    register_duckdb_functions(api)
+    try:
+        import duckdb
+    except ImportError:
+        logger.warning("duckdb not available; using RapidFuzz rule-based linkage")
+        return _link_with_rules(working, original, thresholds)
+
+    connection = duckdb.connect(database=":memory:")
+    register_duckdb_functions(connection)
     settings = build_splink_settings()
 
-    linker = Linker(working, settings, api)
+    linker = DuckDBLinker(working, settings, connection=connection)
     predictions = linker.predict(threshold_match_probability=thresholds.review)
     predictions_df = predictions.as_pandas_dataframe()
 
@@ -115,8 +121,8 @@ def _link_with_splink(
     matches_df = predictions_df[predictions_df["classification"] != "reject"].copy()
     review_df = matches_df[matches_df["classification"] == "review"].copy()
 
-    matches_df = _rename_pair_columns(matches_df)
-    review_df = _rename_pair_columns(review_df)
+    matches_df = _attach_pair_context(matches_df, working, original)
+    review_df = _attach_pair_context(review_df, working, original)
 
     clusters = linker.cluster_pairwise_predictions_at_threshold(
         predictions, threshold_match_probability=thresholds.review
@@ -124,6 +130,11 @@ def _link_with_splink(
     cluster_df = clusters.as_pandas_dataframe()
 
     deduplicated = _deduplicate_from_clusters(working, original, cluster_df)
+
+    try:
+        connection.close()
+    except Exception:  # pragma: no cover - best effort cleanup
+        pass
 
     return LinkageResult(
         deduplicated=deduplicated,
@@ -140,13 +151,13 @@ def _link_with_rules(
 ) -> LinkageResult:
     logger.info("Running RapidFuzz rule-based linkage")
 
-    keys = working["_linkage_slug"].fillna("")
+    keys = working["linkage_slug"].fillna("")
     composite = (
-        working["_linkage_name"].fillna("")
+        working["linkage_name"].fillna("")
         + "|"
-        + working["_linkage_province"].fillna("")
+        + working["linkage_province"].fillna("")
         + "|"
-        + working["_linkage_email"].fillna("")
+        + working["linkage_email"].fillna("")
     )
     keys = keys.where(keys.astype(bool), composite)
     fallback = working.index.map(lambda value: f"row-{value}")
@@ -162,32 +173,26 @@ def _link_with_rules(
             for right_idx in indices[i + 1 :]:
                 left = working.loc[left_idx]
                 right = working.loc[right_idx]
-                name_score = rapidfuzz_token_sort_ratio(
-                    left["_linkage_name"], right["_linkage_name"]
-                )
+                name_score = rapidfuzz_token_sort_ratio(left["linkage_name"], right["linkage_name"])
                 email_score = (
                     1.0
-                    if left["_linkage_email"] and left["_linkage_email"] == right["_linkage_email"]
+                    if left["linkage_email"] and left["linkage_email"] == right["linkage_email"]
                     else 0.0
                 )
-                phone_score = rapidfuzz_partial_ratio(
-                    left["_linkage_phone"], right["_linkage_phone"]
-                )
+                phone_score = rapidfuzz_partial_ratio(left["linkage_phone"], right["linkage_phone"])
                 province_score = (
                     1.0
-                    if left["_linkage_province"]
-                    and left["_linkage_province"] == right["_linkage_province"]
+                    if left["linkage_province"]
+                    and left["linkage_province"] == right["linkage_province"]
                     else 0.0
                 )
                 website_score = (
                     1.0
-                    if left["_linkage_website"]
-                    and left["_linkage_website"] == right["_linkage_website"]
+                    if left["linkage_website"]
+                    and left["linkage_website"] == right["linkage_website"]
                     else 0.0
                 )
-                fuzzy_bonus = rapidfuzz_token_set_ratio(
-                    left["_linkage_name"], right["_linkage_name"]
-                )
+                fuzzy_bonus = rapidfuzz_token_set_ratio(left["linkage_name"], right["linkage_name"])
 
                 match_probability = min(
                     1.0,
@@ -241,6 +246,28 @@ def _rename_pair_columns(df: pd.DataFrame) -> pd.DataFrame:
     return renamed
 
 
+def _attach_pair_context(
+    df: pd.DataFrame, working: pd.DataFrame, original: pd.DataFrame
+) -> pd.DataFrame:
+    if df.empty:
+        return df.reset_index(drop=True)
+
+    enriched = _rename_pair_columns(df)
+    if "__linkage_id_l" not in enriched.columns or "__linkage_id_r" not in enriched.columns:
+        return enriched.reset_index(drop=True)
+
+    left_map = pd.concat([working[["__linkage_id"]], original.add_prefix("left_")], axis=1).rename(
+        columns={"__linkage_id": "__linkage_id_l"}
+    )
+    right_map = pd.concat(
+        [working[["__linkage_id"]], original.add_prefix("right_")], axis=1
+    ).rename(columns={"__linkage_id": "__linkage_id_r"})
+
+    enriched = enriched.merge(left_map, on="__linkage_id_l", how="left")
+    enriched = enriched.merge(right_map, on="__linkage_id_r", how="left")
+    return enriched.reset_index(drop=True)
+
+
 def _deduplicate_from_clusters(
     working: pd.DataFrame,
     original: pd.DataFrame,
@@ -249,10 +276,14 @@ def _deduplicate_from_clusters(
     if clusters.empty:
         return original.copy().reset_index(drop=True)
 
-    cluster_map = clusters[["unique_id", "cluster_id"]].dropna()
-    cluster_map = cluster_map.astype({"unique_id": int, "cluster_id": int})
+    id_column = "unique_id" if "unique_id" in clusters.columns else "__linkage_id"
+    if id_column not in clusters.columns or "cluster_id" not in clusters.columns:
+        return original.copy().reset_index(drop=True)
 
-    merged = working.merge(cluster_map, left_on="__linkage_id", right_on="unique_id", how="left")
+    cluster_map = clusters[[id_column, "cluster_id"]].dropna()
+    cluster_map = cluster_map.astype({id_column: int, "cluster_id": int})
+
+    merged = working.merge(cluster_map, left_on="__linkage_id", right_on=id_column, how="left")
     merged["cluster_id"] = merged["cluster_id"].fillna(-1).astype(int)
 
     dedup_indices = merged.sort_values("__linkage_id").drop_duplicates("cluster_id", keep="first")[

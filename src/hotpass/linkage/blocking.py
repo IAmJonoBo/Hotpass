@@ -9,10 +9,10 @@ def default_blocking_rules() -> list[str]:
     """Return deterministic Splink blocking rules that suit Hotpass data."""
 
     return [
-        "l._linkage_slug = r._linkage_slug",
+        "l.linkage_slug = r.linkage_slug",
         "l.contact_primary_email IS NOT NULL AND l.contact_primary_email = r.contact_primary_email",
-        "rapidfuzz_token_sort_ratio(l._linkage_name, r._linkage_name) >= 0.96",
-        "rapidfuzz_partial_ratio(l._linkage_phone, r._linkage_phone) >= 0.92",
+        "rapidfuzz_token_sort_ratio(l.linkage_name, r.linkage_name) >= 0.96",
+        "rapidfuzz_partial_ratio(l.linkage_phone, r.linkage_phone) >= 0.92",
     ]
 
 

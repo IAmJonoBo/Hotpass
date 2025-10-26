@@ -27,32 +27,45 @@ def add_normalized_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Return a copy of *df* with normalized helper columns."""
 
     working = df.copy()
-    working["_linkage_slug"] = working.get("organization_slug")
-    working["_linkage_slug"] = working["_linkage_slug"].apply(slugify)
+    working["linkage_slug"] = working.get("organization_slug")
+    working["linkage_slug"] = working["linkage_slug"].apply(slugify)
 
     def _norm_or_fallback(series: pd.Series, func: Callable[[str | None], str | None]) -> pd.Series:
         return series.apply(lambda value: func(value) if pd.notna(value) else None)
 
-    working["_linkage_name"] = working.get(NAME_COLUMN, pd.Series(dtype="object")).apply(
+    working["linkage_name"] = working.get(NAME_COLUMN, pd.Series(dtype="object")).apply(
         lambda value: clean_string(value) or None
     )
-    working["_linkage_email"] = _norm_or_fallback(
+    working["linkage_email"] = _norm_or_fallback(
         working.get(EMAIL_COLUMN, pd.Series(dtype="object")), normalize_email
     )
-    working["_linkage_phone"] = _norm_or_fallback(
+    working["linkage_phone"] = _norm_or_fallback(
         working.get(PHONE_COLUMN, pd.Series(dtype="object")), normalize_phone
     )
-    working["_linkage_website"] = _norm_or_fallback(
+    working["linkage_website"] = _norm_or_fallback(
         working.get(WEBSITE_COLUMN, pd.Series(dtype="object")), normalize_website
     )
-    working["_linkage_province"] = _norm_or_fallback(
+    working["linkage_province"] = _norm_or_fallback(
         working.get(PROVINCE_COLUMN, pd.Series(dtype="object")), normalize_province
     )
-    working["_linkage_slug"] = working["_linkage_slug"].where(
-        working["_linkage_slug"].astype(bool),
-        working["_linkage_name"].apply(slugify),
+    working["linkage_slug"] = working["linkage_slug"].where(
+        working["linkage_slug"].astype(bool),
+        working["linkage_name"].apply(slugify),
     )
-    working["_linkage_name"] = working["_linkage_name"].fillna("")
+    working["linkage_name"] = working["linkage_name"].fillna("")
+
+    # Maintain the legacy column names used by older rule-based linkage helpers.
+    legacy_aliases = {
+        "_linkage_slug": "linkage_slug",
+        "_linkage_name": "linkage_name",
+        "_linkage_email": "linkage_email",
+        "_linkage_phone": "linkage_phone",
+        "_linkage_website": "linkage_website",
+        "_linkage_province": "linkage_province",
+    }
+    for legacy, target in legacy_aliases.items():
+        working[legacy] = working[target]
+
     return working
 
 
@@ -75,11 +88,17 @@ def rapidfuzz_token_set_ratio(left: str | None, right: str | None) -> float:
 
 
 def register_duckdb_functions(api: object) -> None:
-    """Register RapidFuzz helpers on a DuckDBAPI instance if supported."""
+    """Register RapidFuzz helpers on a DuckDB connection or API wrapper."""
 
     register = getattr(api, "register_function", None)
     if register is None:
-        return
+        create_function = getattr(api, "create_function", None)
+
+        if create_function is None:
+            return
+
+        def register(name: str, func: Callable[[str | None, str | None], float]) -> None:
+            create_function(name, func, return_type="DOUBLE")
 
     try:
         register("rapidfuzz_token_sort_ratio", rapidfuzz_token_sort_ratio)

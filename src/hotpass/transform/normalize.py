@@ -4,33 +4,61 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass
+from importlib import import_module
+from types import ModuleType
+from typing import cast
 from urllib.parse import urlparse, urlunparse
 
 import phonenumbers
 
-try:
-    from stdnum import numdb
-    from stdnum.exceptions import InvalidFormat
-    from stdnum.util import clean as stdnum_clean
-except ImportError:  # pragma: no cover - optional dependency fallback
-    numdb = None
+from .._compat_nameparser import HumanName
 
-    class _InvalidFormatFallback(Exception):
+StdnumCleanFunc = Callable[[str, str], str]
+
+
+def _fallback_clean(number: str, deletechars: str = " ") -> str:
+    """Basic character stripping fallback when python-stdnum is unavailable."""
+
+    result = number
+    for character in deletechars:
+        result = result.replace(character, "")
+    return result
+
+
+_numdb_module: ModuleType | None
+try:  # pragma: no cover - optional dependency
+    _numdb_module = cast(ModuleType, import_module("stdnum.numdb"))
+except ImportError:  # pragma: no cover - fallback when stdnum is absent
+    _numdb_module = None
+
+
+_stdnum_clean: StdnumCleanFunc
+try:  # pragma: no cover - optional dependency
+    _stdnum_util = import_module("stdnum.util")
+except ImportError:  # pragma: no cover - fallback when stdnum is absent
+    _stdnum_clean = _fallback_clean
+else:
+    _stdnum_clean = cast(StdnumCleanFunc, _stdnum_util.clean)
+
+
+_invalid_format: type[Exception]
+try:  # pragma: no cover - optional dependency
+    _stdnum_exceptions = import_module("stdnum.exceptions")
+except ImportError:  # pragma: no cover - fallback when stdnum is absent
+
+    class _StdnumInvalidFormat(Exception):
         """Fallback exception mirroring python-stdnum's InvalidFormat."""
 
-    InvalidFormat = _InvalidFormatFallback
-
-    def stdnum_clean(value: str, delete_chars: str) -> str:
-        """Basic character stripping fallback when python-stdnum is unavailable."""
-
-        result = value
-        for character in delete_chars:
-            result = result.replace(character, "")
-        return result
+    _invalid_format = _StdnumInvalidFormat
+else:
+    _invalid_format = cast(type[Exception], _stdnum_exceptions.InvalidFormat)
 
 
-from .._compat_nameparser import HumanName
+numdb: ModuleType | None = _numdb_module
+InvalidFormat = _invalid_format
+stdnum_clean: StdnumCleanFunc = _stdnum_clean
 
 try:  # pragma: no cover - optional modules for locale-specific numbers
     from stdnum.za import postcode as za_postcode  # type: ignore[attr-defined]
