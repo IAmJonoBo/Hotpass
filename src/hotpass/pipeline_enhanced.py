@@ -1,17 +1,10 @@
-"""Enhanced pipeline with full integration of all features.
-
-This module extends the base pipeline with:
-- Entity resolution
-- Geospatial enrichment
-- External data enrichment
-- Compliance tracking
-- Observability integration
-"""
+"""Orchestrates the optional feature set for the enhanced pipeline."""
 
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 
 from .compliance import POPIAPolicy, add_provenance_columns, detect_pii_in_dataframe
 from .enrichment import CacheManager, enrich_dataframe_with_websites
@@ -23,25 +16,15 @@ from .observability import (
     trace_operation,
 )
 from .pipeline import PipelineConfig, PipelineResult, run_pipeline
+from .pipeline_enhancements import (
+    EnhancedPipelineConfig,
+    apply_compliance,
+    apply_enrichment,
+    apply_entity_resolution,
+    apply_geospatial,
+)
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class EnhancedPipelineConfig:
-    """Configuration for enhanced pipeline features."""
-
-    enable_entity_resolution: bool = False
-    enable_geospatial: bool = False
-    enable_enrichment: bool = False
-    enable_compliance: bool = False
-    enable_observability: bool = False
-    entity_resolution_threshold: float = 0.75
-    use_splink: bool = False
-    geocode_addresses: bool = False
-    enrich_websites: bool = False
-    detect_pii: bool = False
-    cache_path: str = "data/.cache/enrichment.db"
 
 
 def run_enhanced_pipeline(
@@ -60,13 +43,8 @@ def run_enhanced_pipeline(
     if enhanced_config is None:
         enhanced_config = EnhancedPipelineConfig()
 
-    # Initialize observability if enabled
-    if enhanced_config.enable_observability:
-        initialize_observability(service_name="hotpass", export_to_console=True)
-        metrics = get_pipeline_metrics()
-        logger.info("Observability initialized")
-    else:
-        metrics = None
+    metrics = _initialize_observability(enhanced_config)
+    trace_factory = _build_trace_factory(enhanced_config.enable_observability)
 
     # Run base pipeline
     with (
@@ -81,6 +59,12 @@ def run_enhanced_pipeline(
             )
 
     df = result.refined
+    df = apply_entity_resolution(df, enhanced_config, trace_factory)
+    df = apply_geospatial(df, enhanced_config, trace_factory)
+    df = apply_enrichment(df, enhanced_config, trace_factory)
+    df, compliance_report = apply_compliance(df, enhanced_config, trace_factory)
+    if compliance_report is not None:
+        result.compliance_report = compliance_report
 
     # Entity Resolution
     if enhanced_config.enable_entity_resolution:
@@ -194,7 +178,6 @@ def run_enhanced_pipeline(
     # Update result with enhanced dataframe
     result.refined = df
 
-    # Record final metrics
     if metrics:
         metrics.record_records_processed(len(df), source="enhanced_pipeline")
         if result.quality_report and result.quality_report.total_records > 0:
@@ -205,6 +188,31 @@ def run_enhanced_pipeline(
             metrics.update_quality_score(quality_score)
 
     return result
+
+
+def _initialize_observability(config: EnhancedPipelineConfig):
+    """Initialise observability when requested and return the metrics sink."""
+
+    if not config.enable_observability:
+        return None
+
+    initialize_observability(service_name="hotpass", export_to_console=True)
+    logger.info("Observability initialized")
+    return get_pipeline_metrics()
+
+
+def _build_trace_factory(
+    enabled: bool,
+) -> Callable[[str], AbstractContextManager[object]]:
+    """Return a helper that wraps operations in observability spans when enabled."""
+
+    if not enabled:
+        return lambda _name: _noop()
+
+    def _factory(operation: str) -> AbstractContextManager[object]:
+        return trace_operation(operation)
+
+    return _factory
 
 
 class _noop:

@@ -1,7 +1,7 @@
 ---
 title: Compliance — POPIA maturity matrix
 summary: Baseline POPIA control coverage, gaps, evidence links, and owners for Hotpass.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — POPIA maturity matrix

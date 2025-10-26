@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -102,3 +102,27 @@ uv run pytest tests/test_config.py tests/test_contacts.py
 ```
 
 A green test suite confirms your configuration behaves as expected across the supported use cases.
+
+## 6. Enforce consent validation
+
+The enhanced pipeline now enforces consent for POPIA-regulated fields. When you enable compliance with `EnhancedPipelineConfig(enable_compliance=True)`, the pipeline checks that every record requiring consent has a granted status.
+
+1. **Capture consent sources** — Extend your upstream data to include a `consent_status` column (`granted`, `pending`, `revoked`, etc.).
+2. **Map overrides** — Provide overrides per organisation when you orchestrate the pipeline:
+
+   ```python
+   from hotpass.pipeline_enhanced import EnhancedPipelineConfig
+
+   config = EnhancedPipelineConfig(
+       enable_compliance=True,
+       consent_overrides={
+           "test-org-1": "granted",
+           "Example Flight School": "granted",
+       },
+   )
+   ```
+
+   Overrides can use the organisation slug (`organization_slug`) or the display name; they update the `consent_status` column before validation runs.
+3. **Review the compliance report** — `PipelineResult.compliance_report` includes a summary of consent statuses and any violations detected. A `ConsentValidationError` stops the run if any required record lacks a granted status.
+
+Consent statuses are case-insensitive. The defaults treat `granted`/`approved` as valid, `pending`/`unknown` as awaiting action, and `revoked`/`denied` as blockers. Adjust `consent_granted_statuses`, `consent_pending_statuses`, or `consent_denied_statuses` via `POPIAPolicy` if your organisation uses different terminology.

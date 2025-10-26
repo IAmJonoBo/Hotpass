@@ -1,7 +1,7 @@
 ---
 title: Metrics — developer experience audit
 summary: SPACE-aligned assessment of Hotpass developer workflows, tooling friction, and improvement backlog hooks.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Metrics — developer experience audit

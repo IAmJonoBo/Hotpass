@@ -430,6 +430,7 @@ class PipelineResult:
     refined: pd.DataFrame
     quality_report: QualityReport
     performance_metrics: dict[str, Any]
+    compliance_report: dict[str, Any] | None = None
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")

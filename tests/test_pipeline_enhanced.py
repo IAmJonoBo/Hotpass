@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 
 import hotpass.pipeline_enhanced as pipeline_enhanced
+import hotpass.pipeline_enhancements as pipeline_features
+from hotpass.compliance import ConsentValidationError
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
     EnhancedPipelineConfig,
@@ -198,6 +200,10 @@ def test_enhanced_pipeline_with_compliance(
         enable_compliance=True,
         enable_observability=False,
         detect_pii=False,  # Disable PII detection to avoid Presidio dependency
+        consent_overrides={
+            "test-org-1": "granted",
+            "test-org-2": "granted",
+        },
     )
 
     result = run_enhanced_pipeline(config, enhanced_config)
@@ -209,6 +215,37 @@ def test_enhanced_pipeline_with_compliance(
     assert "data_source" in result.refined.columns
     assert "processed_at" in result.refined.columns
     assert "consent_status" in result.refined.columns
+    assert result.compliance_report is not None
+    assert result.compliance_report["consent_violations"] == []
+    assert result.compliance_report["consent_status_summary"].get("granted", 0) == len(
+        result.refined
+    )
+
+
+def test_enhanced_pipeline_missing_consent_raises(sample_dataframe, mock_pipeline_result, tmp_path):
+    """Compliance enabled without granted consent should raise an error."""
+    from hotpass.config import get_default_profile
+    from hotpass.data_sources import ExcelReadOptions
+    from hotpass.pipeline import PipelineConfig
+
+    output_path = tmp_path / "output.xlsx"
+
+    profile = get_default_profile("aviation")
+    config = PipelineConfig(
+        input_dir=tmp_path,
+        output_path=output_path,
+        industry_profile=profile,
+        excel_options=ExcelReadOptions(),
+    )
+
+    enhanced_config = EnhancedPipelineConfig(
+        enable_compliance=True,
+        enable_observability=False,
+        detect_pii=False,
+    )
+
+    with pytest.raises(ConsentValidationError):
+        run_enhanced_pipeline(config, enhanced_config)
 
 
 def test_enhanced_pipeline_with_observability(
@@ -285,6 +322,10 @@ def test_enhanced_pipeline_all_features(
         geocode_addresses=False,
         enrich_websites=False,
         detect_pii=False,
+        consent_overrides={
+            "test-org-1": "granted",
+            "test-org-2": "granted",
+        },
     )
 
     result = run_enhanced_pipeline(config, enhanced_config)

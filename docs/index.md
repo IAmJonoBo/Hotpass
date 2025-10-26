@@ -53,6 +53,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /governance/project-charter
 /governance/pr-playbook
 /governance/upgrade-final-report
+/governance/secrets-management
 /CONTRIBUTING
 /style
 /metrics/metrics-plan
@@ -110,6 +111,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 /security/threat-model
 /security/supply-chain-plan
+/security/risk-register
 /security/quality-gates
 ```
 

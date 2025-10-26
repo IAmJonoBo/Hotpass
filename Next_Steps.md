@@ -10,7 +10,7 @@
 - [x] Merge entity registry history during deduplication to unlock roadmap follow-up (Owner: Engineering, Due: 2025-11-01)
 - [x] Add regression coverage for dashboard persistence helpers (Owner: Engineering, Due: 2025-11-01)
 - [x] Confirm Streamlit dashboard authentication and hosting controls (Owner: Platform, Due: 2025-11-22)
-- [ ] Decide secrets management approach for registry connectors and telemetry endpoints (Owner: DevOps, Due: 2025-11-22)
+- [x] Decide secrets management approach for registry connectors and telemetry endpoints (Owner: DevOps, Due: 2025-11-22)
 - [x] Harden Streamlit dashboard authentication and filesystem allowlists (Owner: Platform, Due: 2025-11-22)
 - [x] Enforce Prefect deployment parameter validation and policies (Owner: Engineering, Due: 2025-11-22)
 - [x] Replace curl-pipe installer in Dockerfile with pinned, verified artefacts (Owner: DevOps, Due: 2025-11-15)
@@ -18,9 +18,11 @@
 - [x] Implement CLI log redaction strategy for PII-bearing metrics (Owner: Engineering, Due: 2025-11-22)
 - [ ] Improve mutation kill rate for quality/pipeline flows via additional assertions or fixtures (Owner: Engineering, Due: 2025-11-29)
 - [x] Establish compliance baseline matrices and backlog (Owner: Compliance, Due: 2025-10-25)
-- [ ] Automate consent validation per POPIA-001 (Owner: Product & Engineering, Due: 2025-11-22)
-- [ ] Build comprehensive asset register per ISO27001-002 (Owner: Security & Platform, Due: 2025-11-29)
-- [ ] Maintain SOC 2 risk register seeded from threat model (Owner: Security, Due: 2025-11-22)
+- [x] Automate consent validation per POPIA-001 (Owner: Product & Engineering, Due: 2025-11-22)
+- [x] Build comprehensive asset register per ISO27001-002 (Owner: Security & Platform, Due: 2025-11-29)
+- [x] Maintain SOC 2 risk register seeded from threat model (Owner: Security, Due: 2025-11-22)
+- [ ] Implement Vault-backed secret delivery for CI workflows and Prefect deployments (Owner: DevOps, Due: 2025-12-06)
+- [ ] Capture consent validation audit logs within Prefect evidence exports (Owner: Product & Engineering, Due: 2025-12-06)
 - [ ] Harden refined data confidentiality controls (Owner: Platform, Due: 2025-12-13)
 - [ ] Launch quarterly compliance verification cadence (Owner: Compliance, Due: 2025-01-15)
 
@@ -47,6 +49,9 @@
 - [x] Enforced Prefect flow parameter validation and added regression coverage for invalid inputs
 - [x] Added configurable structured log redaction with default PII masks and documented usage
 - [x] Secured Streamlit dashboard behind shared-secret authentication and filesystem allowlists with regression coverage and documentation updates
+- [x] Documented Vault-based secrets management strategy with rollout plan
+- [x] Automated POPIA consent validation with compliance reporting and regression coverage
+- [x] Linked governance and security documentation into the Diátaxis toctree and cleared Sphinx cross-reference warnings
 
 ## Deliverables
 
@@ -62,13 +67,13 @@
 - [x] Mypy type checks clean (`uv run mypy src tests scripts`)【c2416b†L1-L24】
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【20260d†L1-L20】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【48a655†L1-L63】
-- [x] Package build succeeds (`uv run uv build`)【d865a6†L1-L98】
-- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【6beeed†L1-L33】
-- [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【6f7723†L1-L45】
+- [x] Package build succeeds (`uv run uv build`)【cb9751†L1-L103】
+- [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【371823†L1-L29】
+- [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【9e84c2†L1-L34】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
 - [x] Governance charter recorded in `docs/governance/project-charter.md`; metrics instrumentation captured in `docs/metrics/metrics-plan.md`
-- [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【a2633f†L1-L200】
-- [x] Lint/type/security/build checks re-run (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【91aebd†L1-L3】【67f807†L1-L3】【c2416b†L1-L24】【20260d†L1-L20】【48a655†L1-L63】【d865a6†L1-L98】
+- [x] Baseline QA suite re-run prior to threat modelling (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`)【6cdc80†L1-L48】
+- [x] Lint/type/security/build checks re-run (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【7ea5ac†L1-L2】【19132d†L1-L2】【5a1833†L1-L2】【0f1459†L1-L32】【2503e8†L1-L60】【cb9751†L1-L103】
 - [x] Security threat model documented with STRIDE/MITRE mapping (`docs/security/threat-model.md`)
 - [x] Compliance baseline established with matrices and backlog (`docs/compliance/index.md`, `docs/compliance/remediation-backlog.md`)
 - [x] Verification cadence and evidence catalog recorded (`docs/compliance/verification-plan.md`, `docs/compliance/evidence-catalog.md`)
@@ -80,42 +85,47 @@
 - [x] Prefect refinement flow validates parameters via Pydantic models and rejects unsafe paths/chunk sizes with dedicated tests
 - [x] Structured logging redacts configurable sensitive fields and documentation calls out the new `--sensitive-field` option
 - [x] Streamlit dashboard authentication and filesystem allowlists implemented with docs, threat model, and resilience plan updates
+- [x] Secrets management strategy defined with Vault rollout guidance (`docs/governance/secrets-management.md`)
+- [x] Asset inventory captured in `data/inventory/asset-register.yaml` with custodians and classifications
+- [x] SOC 2 risk register established with scoring and owners (`docs/security/risk-register.md`)
+- [x] Enhanced pipeline enforces consent validation with overrides and compliance reporting updates
+- [x] Enhanced pipeline feature orchestration extracted into helper module to satisfy fitness function limits
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (latest run: 88%)【2e6f03†L1-L78】
-- [x] Ruff lint clean (`uv run ruff check`)【ab9df9†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【1cb4b5†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【7d9b9b†L1-L21】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【ab39b7†L1-L20】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【170e60†L1-L72】
-- [x] Package build succeeds (`uv run uv build`)【a8f549†L1-L72】
+- [x] Pytest with coverage ≥ 80% (latest run: 88%)【6cdc80†L1-L48】
+- [x] Ruff lint clean (`uv run ruff check`)【7ea5ac†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【19132d†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【5a1833†L1-L2】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【0f1459†L1-L32】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【2503e8†L1-L60】
+- [x] Package build succeeds (`uv run uv build`)【cb9751†L1-L103】
 - [ ] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)
-- [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【65458c†L1-L27】
-- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【2f3000†L1-L5】
-- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【c05e47†L1-L5】
-- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【7ad901†L1-L2】
-- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【3682db†L1-L2】
-- [ ] Semgrep auto configuration scan (`uv run semgrep --config=auto`) — blocked by SSL trust chain in sandbox【612303†L1-L52】
+- [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【b5a7b7†L1-L20】
+- [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0c6984†L1-L5】
+- [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【d33438†L1-L2】
+- [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【0da7d0†L1-L2】
+- [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【36e269†L1-L2】
+- [ ] Semgrep auto configuration scan (`uv run semgrep --config=auto`) — blocked by SSL trust chain in sandbox【94e19c†L1-L62】
 - [ ] Compliance evidence catalog refreshed (due 2025-01-15)
 
 ## Links
 
-- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `2e6f03`)
-- Lint: `uv run ruff check` (chunk `ab9df9`)
-- Format: `uv run ruff format --check` (chunk `1cb4b5`)
-- Types: `uv run mypy src tests scripts` (chunk `7d9b9b`)
-- Security: `uv run bandit -r src scripts` (chunk `ab39b7`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `170e60`)
-- Build: `uv run uv build` (chunk `a8f549`)
-- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `6beeed`)
-- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `6f7723`)
-- Accessibility: `uv run pytest -m accessibility` (chunk `65458c`)
-- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `2f3000`)
-- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `c05e47`)
-- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `7ad901`)
-- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `3682db`)
-- Semgrep: `uv run semgrep --config=auto` (chunk `612303`)
+- Tests: `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `6cdc80`)
+- Lint: `uv run ruff check` (chunk `7ea5ac`)
+- Format: `uv run ruff format --check` (chunk `19132d`)
+- Types: `uv run mypy src tests scripts` (chunk `5a1833`)
+- Security: `uv run bandit -r src scripts` (chunk `0f1459`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `2503e8`)
+- Build: `uv run uv build` (chunk `cb9751`)
+- Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `371823`)
+- Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `9e84c2`)
+- Accessibility: `uv run pytest -m accessibility` (chunk `b5a7b7`)
+- Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `0c6984`)
+- Fitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `d33438`)
+- SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `0da7d0`)
+- Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `36e269`)
+- Semgrep: `uv run semgrep --config=auto` (chunk `94e19c`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
 - Verification cadence: `docs/compliance/verification-plan.md`
@@ -132,7 +142,8 @@
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
 - New evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) need directory ownership and retention policies before implementation work begins.
-- Pending decision on preferred secrets management platform may affect POPIA cross-border control implementation timeline.
+- Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Semgrep registry download fails in sandbox because of missing CA chain; rerun in CI with trusted root store or pin to offline config.【612303†L1-L52】
 - Mutation suite currently reports zero killed mutants across `quality`/`pipeline_enhanced`; expand assertions or targeted fixtures to increase kill rate.
-- Shared-secret dashboard password must be rotated and monitored until SSO-backed auth replaces it; capture owner under Platform backlog.
+- Shared-secret dashboard password still requires rotation and monitoring until SSO-backed auth replaces it; integrate Vault-issued credentials during rollout.
+- Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.

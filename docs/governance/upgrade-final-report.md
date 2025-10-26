@@ -1,7 +1,7 @@
 ---
 title: Hotpass upgrade final report
 summary: Consolidated critical-reasoning checks and delivery package for the Hotpass frontier upgrade initiative.
-last_updated: 2025-10-27
+last_updated: 2025-10-26
 ---
 
 # Hotpass upgrade final report
@@ -44,7 +44,7 @@ If the upgrade initiative fails, the most plausible narrative begins with incomp
 
 ### 2.1 Top risks, impacts, quick wins
 
-1. **Secrets fragmentation** → POPIA breach potential → Accelerate platform decision, publish interim rotation SOP.
+1. **Secrets migration execution** → POPIA breach potential → Deliver Vault rollout plan, migrate credentials, and monitor audit trail per governance strategy.
 2. **Dashboard auth uplift** → Shared secret may leak without rotation/logging → Add access logging and move to SSO-backed proxy.
 3. **Supply-chain drift** → Attestation gaps undermine SLSA targets → Wire SBOM/provenance scripts into CI with policy enforcement.
 4. **Prefect policy lag** → Runtime instabilities → Implement validation hooks and dry-run suite before promotion.

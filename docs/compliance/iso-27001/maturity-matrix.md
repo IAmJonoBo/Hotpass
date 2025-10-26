@@ -1,7 +1,7 @@
 ---
 title: Compliance — ISO 27001 maturity matrix
 summary: Baseline ISO 27001 control implementation status with evidence links, owners, and remediation hooks.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — ISO 27001 maturity matrix

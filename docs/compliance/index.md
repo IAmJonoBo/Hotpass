@@ -1,7 +1,7 @@
 ---
 title: Compliance — framework baseline
 summary: Overview of Hotpass compliance frameworks, maturity scoring, evidence mapping, and remediation approach.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — framework baseline

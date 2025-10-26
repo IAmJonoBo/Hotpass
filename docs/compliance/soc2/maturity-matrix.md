@@ -1,7 +1,7 @@
 ---
 title: Compliance — SOC 2 maturity matrix
 summary: SOC 2 Trust Services Criteria baseline with evidence references, owners, and remediation actions.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Compliance — SOC 2 maturity matrix
