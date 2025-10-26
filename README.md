@@ -16,6 +16,8 @@ uv sync --extra dev --extra docs
 uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
 ```
 
+Run `python scripts/idp/bootstrap.py` (add `--execute` to apply changes) for an interactive bootstrap that provisions dependencies, Prefect profiles, and supply-chain tooling.
+
 Need orchestration or enrichment? Install the relevant extras:
 
 ```bash

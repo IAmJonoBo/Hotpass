@@ -6,17 +6,45 @@ import argparse
 import json
 import sys
 import tomllib
-from collections.abc import Sequence
+from collections.abc import Callable, Iterable, Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskID,
+    TaskProgressColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.prompt import Confirm
 from rich.table import Table
 
 from hotpass.artifacts import create_refined_archive
 from hotpass.data_sources import ExcelReadOptions
-from hotpass.pipeline import PipelineConfig, QualityReport, run_pipeline
+from hotpass.pipeline import (
+    PIPELINE_EVENT_AGGREGATE_COMPLETED,
+    PIPELINE_EVENT_AGGREGATE_PROGRESS,
+    PIPELINE_EVENT_AGGREGATE_STARTED,
+    PIPELINE_EVENT_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_STARTED,
+    PIPELINE_EVENT_LOAD_COMPLETED,
+    PIPELINE_EVENT_LOAD_STARTED,
+    PIPELINE_EVENT_SCHEMA_COMPLETED,
+    PIPELINE_EVENT_SCHEMA_STARTED,
+    PIPELINE_EVENT_START,
+    PIPELINE_EVENT_WRITE_COMPLETED,
+    PIPELINE_EVENT_WRITE_STARTED,
+    PipelineConfig,
+    QualityReport,
+    run_pipeline,
+)
 
 
 @dataclass
@@ -34,6 +62,8 @@ class CLIOptions:
     excel_chunk_size: int | None
     excel_engine: str | None
     excel_stage_dir: Path | None
+    sensitive_fields: tuple[str, ...]
+    interactive: bool | None
 
 
 _PERFORMANCE_FIELDS: list[tuple[str, str]] = [
@@ -45,6 +75,16 @@ _PERFORMANCE_FIELDS: list[tuple[str, str]] = [
     ("Rows per second", "rows_per_second"),
     ("Load rows per second", "load_rows_per_second"),
 ]
+
+DEFAULT_SENSITIVE_FIELD_TOKENS: tuple[str, ...] = (
+    "email",
+    "phone",
+    "contact",
+    "cell",
+    "mobile",
+    "whatsapp",
+)
+REDACTED_PLACEHOLDER = "***redacted***"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -92,6 +132,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Structured logging format to use (default: rich)",
     )
     parser.add_argument(
+        "--sensitive-field",
+        dest="sensitive_fields",
+        action="append",
+        default=None,
+        help=(
+            "Field name to redact from structured logs. Repeat the flag to mask multiple fields."
+        ),
+    )
+    parser.add_argument(
+        "--interactive",
+        dest="interactive",
+        action="store_true",
+        help="Force interactive prompts even when not connected to a TTY.",
+    )
+    parser.add_argument(
+        "--no-interactive",
+        dest="interactive",
+        action="store_false",
+        help="Disable interactive prompts even when using rich output.",
+    )
+    parser.add_argument(
         "--report-path",
         type=Path,
         help="Optional path to write the quality report (Markdown or HTML)",
@@ -116,7 +177,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Directory to stage chunked Excel reads to parquet for reuse",
     )
-    parser.set_defaults(archive=None)
+    parser.set_defaults(archive=None, interactive=None)
     parser.add_argument(
         "--archive",
         dest="archive",
@@ -152,6 +213,8 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         "excel_chunk_size": None,
         "excel_engine": None,
         "excel_stage_dir": None,
+        "sensitive_fields": list(DEFAULT_SENSITIVE_FIELD_TOKENS),
+        "interactive": None,
     }
 
     config_values: dict[str, Any] = {}
@@ -181,6 +244,11 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         value = getattr(namespace, field, None)
         if value is not None:
             options[field] = value
+
+    if namespace.sensitive_fields is not None:
+        options["sensitive_fields"] = list(namespace.sensitive_fields)
+    if getattr(namespace, "interactive", None) is not None:
+        options["interactive"] = namespace.interactive
 
     input_dir = Path(options["input_dir"])
     if options["output_path"]:
@@ -214,6 +282,29 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
 
     archive = bool(options.get("archive", False))
 
+    raw_sensitive = options.get("sensitive_fields")
+    tokens: list[str] = []
+    if raw_sensitive is None:
+        tokens = list(DEFAULT_SENSITIVE_FIELD_TOKENS)
+    elif isinstance(raw_sensitive, list | tuple | set):
+        for value in raw_sensitive:
+            if isinstance(value, str):
+                cleaned = value.strip()
+                if cleaned:
+                    tokens.append(cleaned)
+    else:
+        cleaned = str(raw_sensitive).strip()
+        if cleaned:
+            tokens.append(cleaned)
+    sensitive_fields = tuple(dict.fromkeys(token.lower() for token in tokens))
+
+    interactive_option = options.get("interactive")
+    interactive: bool | None
+    if isinstance(interactive_option, bool) or interactive_option is None:
+        interactive = interactive_option
+    else:
+        interactive = bool(interactive_option)
+
     return CLIOptions(
         input_dir=input_dir,
         output_path=output_path,
@@ -228,6 +319,8 @@ def _resolve_options(namespace: argparse.Namespace) -> CLIOptions:
         excel_chunk_size=chunk_size,
         excel_engine=(str(options["excel_engine"]) if options.get("excel_engine") else None),
         excel_stage_dir=stage_dir,
+        sensitive_fields=sensitive_fields,
+        interactive=interactive,
     )
 
 
@@ -250,10 +343,122 @@ def _infer_report_format(report_path: Path) -> str | None:
     return None
 
 
+class PipelineProgress:
+    def __init__(self, console: Console) -> None:
+        self._progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(bar_width=None),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=console,
+            transient=True,
+        )
+        self._tasks: dict[str, TaskID] = {}
+        self._aggregate_total = 0
+        self._aggregate_progress_total = 1
+
+    def __enter__(self) -> PipelineProgress:
+        self._progress.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - delegated cleanup
+        self._progress.__exit__(exc_type, exc, tb)
+
+    def handle_event(self, event: str, payload: dict[str, Any]) -> None:
+        if event == PIPELINE_EVENT_START:
+            self._progress.log("[bold cyan]Starting pipeline[/bold cyan]")
+        elif event == PIPELINE_EVENT_LOAD_STARTED:
+            self._start_task("load", "Loading source files")
+        elif event == PIPELINE_EVENT_LOAD_COMPLETED:
+            rows = int(payload.get("total_rows", 0))
+            sources = payload.get("sources", []) or []
+            message = f"[green]Loaded {rows} rows from {len(sources)} source(s)[/green]"
+            self._complete_task("load", message)
+        elif event == PIPELINE_EVENT_AGGREGATE_STARTED:
+            total = int(payload.get("total", 0))
+            self._aggregate_total = total if total > 0 else 0
+            self._aggregate_progress_total = self._aggregate_total or 1
+            self._start_task(
+                "aggregate",
+                "Aggregating organisations",
+                total=self._aggregate_progress_total,
+            )
+        elif event == PIPELINE_EVENT_AGGREGATE_PROGRESS:
+            task_id = self._tasks.get("aggregate")
+            if task_id is not None:
+                if self._aggregate_total <= 0:
+                    self._progress.update(task_id, completed=self._aggregate_progress_total)
+                else:
+                    completed = int(payload.get("completed", 0))
+                    completed = max(0, min(completed, self._aggregate_progress_total))
+                    self._progress.update(task_id, completed=completed)
+        elif event == PIPELINE_EVENT_AGGREGATE_COMPLETED:
+            aggregated = int(payload.get("aggregated_records", 0))
+            conflicts = int(payload.get("conflicts", 0))
+            message = f"[green]Aggregated {aggregated} record(s)[/green]"
+            if conflicts:
+                message += f" with [yellow]{conflicts}[/yellow] conflict(s) resolved"
+            self._complete_task("aggregate", message)
+        elif event == PIPELINE_EVENT_SCHEMA_STARTED:
+            self._start_task("schema", "Validating schema")
+        elif event == PIPELINE_EVENT_SCHEMA_COMPLETED:
+            errors = int(payload.get("errors", 0))
+            if errors:
+                message = f"[yellow]Schema validation reported {errors} issue(s)[/yellow]"
+            else:
+                message = "[green]Schema validation passed[/green]"
+            self._complete_task("schema", message)
+        elif event == PIPELINE_EVENT_EXPECTATIONS_STARTED:
+            self._start_task("expectations", "Evaluating expectations")
+        elif event == PIPELINE_EVENT_EXPECTATIONS_COMPLETED:
+            success = bool(payload.get("success", False))
+            failure_count = int(payload.get("failure_count", 0))
+            if success:
+                message = "[green]Expectations passed[/green]"
+            else:
+                message = f"[yellow]Expectations failed ({failure_count} issue(s))[/yellow]"
+            self._complete_task("expectations", message)
+        elif event == PIPELINE_EVENT_WRITE_STARTED:
+            self._start_task("write", "Writing refined dataset")
+        elif event == PIPELINE_EVENT_WRITE_COMPLETED:
+            seconds = float(payload.get("write_seconds", 0.0))
+            message = f"[green]Refined data persisted in {seconds:.2f}s[/green]"
+            self._complete_task("write", message)
+        elif event == PIPELINE_EVENT_COMPLETED:
+            total = int(payload.get("total_records", 0))
+            invalid = int(payload.get("invalid_records", 0))
+            duration = float(payload.get("duration", 0.0))
+            summary = (
+                f"[bold green]Pipeline finished[/bold green]: {total} records, "
+                f"{invalid} invalid, {duration:.2f}s"
+            )
+            self._progress.log(summary)
+
+    def _start_task(self, name: str, description: str, *, total: int = 1) -> None:
+        if name in self._tasks:
+            return
+        task_id = self._progress.add_task(description, total=total or 1)
+        self._tasks[name] = task_id
+
+    def _complete_task(self, name: str, message: str | None = None) -> None:
+        task_id = self._tasks.pop(name, None)
+        if task_id is not None:
+            task = next((task for task in self._progress.tasks if task.id == task_id), None)
+            total = task.total if task and task.total else 1
+            self._progress.update(task_id, total=total, completed=total)
+        if message:
+            self._progress.log(message)
+
+
 class StructuredLogger:
-    def __init__(self, log_format: str) -> None:
+    def __init__(self, log_format: str, sensitive_fields: Iterable[str] | None = None) -> None:
         self.log_format = log_format
         self.console: Console | None = Console() if log_format == "rich" else None
+        tokens = (
+            sensitive_fields if sensitive_fields is not None else DEFAULT_SENSITIVE_FIELD_TOKENS
+        )
+        self._sensitive_tokens = {token.lower() for token in tokens}
 
     def _get_console(self) -> Console:
         if self.console is None:  # pragma: no cover - defensive safeguard
@@ -264,9 +469,32 @@ class StructuredLogger:
     def _emit_json(self, event: str, data: dict[str, Any]) -> None:
         serialisable = {
             "event": event,
-            "data": _convert_paths(data),
+            "data": _convert_paths(self._mask_payload(data)),
         }
         print(json.dumps(serialisable))
+
+    def _mask_payload(self, data: dict[str, Any]) -> dict[str, Any]:
+        return {key: self._redact_value(key, value) for key, value in data.items()}
+
+    def _redact_value(self, key: str, value: Any) -> Any:
+        if self._should_redact(key):
+            if isinstance(value, list):
+                return [REDACTED_PLACEHOLDER for _ in value]
+            if isinstance(value, dict):
+                return {nested_key: REDACTED_PLACEHOLDER for nested_key in value}
+            return REDACTED_PLACEHOLDER
+        if isinstance(value, dict):
+            return {
+                nested_key: self._redact_value(nested_key, nested_value)
+                for nested_key, nested_value in value.items()
+            }
+        if isinstance(value, list):
+            return [self._redact_value(key, item) for item in value]
+        return value
+
+    def _should_redact(self, key: str) -> bool:
+        lowered = key.lower()
+        return any(token in lowered for token in self._sensitive_tokens)
 
     def log_summary(self, report: QualityReport) -> None:
         if self.log_format == "json":
@@ -381,8 +609,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
 
-    logger = StructuredLogger(options.log_format)
+    logger = StructuredLogger(options.log_format, options.sensitive_fields)
     console = Console() if options.log_format == "rich" else None
+    interactive = options.interactive
+    if interactive is None:
+        interactive = console is not None and sys.stdin.isatty()
 
     # Pre-flight validation
     if not options.input_dir.exists():
@@ -425,22 +656,36 @@ def main(argv: Sequence[str] | None = None) -> int:
             stage_dir=options.excel_stage_dir,
         )
 
-    config = PipelineConfig(
-        input_dir=options.input_dir,
-        output_path=options.output_path,
-        expectation_suite_name=options.expectation_suite_name,
-        country_code=options.country_code,
-        excel_options=excel_options,
-    )
+    progress_context = PipelineProgress(console) if console else nullcontext(None)
+    result = None
+    with progress_context as progress:
+        listener: Callable[[str, dict[str, Any]], None] | None
+        if isinstance(progress, PipelineProgress):
+            listener = progress.handle_event
+        else:
+            listener = None
 
-    try:
-        result = run_pipeline(config)
-    except Exception as exc:  # pragma: no cover - surface runtime failures
-        logger.log_error(str(exc))
-        if console:
-            console.print("[bold red]Pipeline failed with error:[/bold red]")
-            console.print_exception()
-        return 1
+        config = PipelineConfig(
+            input_dir=options.input_dir,
+            output_path=options.output_path,
+            expectation_suite_name=options.expectation_suite_name,
+            country_code=options.country_code,
+            excel_options=excel_options,
+            progress_listener=listener,
+        )
+
+        try:
+            result = run_pipeline(config)
+        except Exception as exc:  # pragma: no cover - surface runtime failures
+            logger.log_error(str(exc))
+            if console:
+                console.print("[bold red]Pipeline failed with error:[/bold red]")
+                console.print_exception()
+            return 1
+
+    if result is None:  # pragma: no cover - defensive safeguard
+        msg = "Pipeline run did not return a result"
+        raise RuntimeError(msg)
 
     report = result.quality_report
     logger.log_summary(report)
@@ -450,6 +695,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         console.print()
         console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
         console.print(f"[dim]Refined data written to:[/dim] {options.output_path}")
+
+    if interactive and console and report.recommendations:
+        console.print()
+        if Confirm.ask("View top recommendations now?", default=True):
+            console.print("[bold]Top recommendations:[/bold]")
+            for recommendation in report.recommendations[:3]:
+                console.print(f"  • {recommendation}")
 
     if options.report_path is not None:
         options.report_path.parent.mkdir(parents=True, exist_ok=True)

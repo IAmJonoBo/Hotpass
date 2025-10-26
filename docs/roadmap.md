@@ -10,7 +10,7 @@ The roadmap consolidates delivery status, upcoming work, and known risks across 
 
 ## Executive summary
 
-Hotpass has delivered every phase in the modernisation programme. The enhanced pipeline now ships entity resolution, enrichment, compliance, and geospatial capabilities behind stable contracts, while observability and orchestration remain production-ready. Ongoing work centres on automating releases, exercising optional dependency suites in CI, and closing newly catalogued compliance gaps. Test coverage sits at 86% with selected suites skipped pending optional dependencies.
+Hotpass has delivered every phase in the modernisation programme. The enhanced pipeline now ships entity resolution, enrichment, compliance, and geospatial capabilities behind stable contracts, while observability and orchestration remain production-ready. Ongoing work centres on automating releases, exercising optional dependency suites in CI, and closing newly catalogued compliance gaps. Test coverage sits at 89% with selected suites skipped pending optional dependencies. The CLI now streams stage-aware progress updates with configurable log redaction, and the new `scripts/idp/bootstrap.py` workflow accelerates developer onboarding while wiring supply-chain tooling.
 
 ## Delivery status
 
@@ -32,13 +32,14 @@ Hotpass has delivered every phase in the modernisation programme. The enhanced p
 
 | Gate                    | Target                                                                                   | Latest                                                         |
 | ----------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Test coverage           | ≥ 80%                                                                                    | 81% (optional suites mocked for coverage)                      |
-| Linting                 | Ruff, no warnings                                                                        | ✅ Pass                                                        |
-| Type checks             | mypy                                                                                     | ✅ Pass                                                        |
-| Security                | Bandit                                                                                   | ✅ Pass                                                        |
-| Secrets                 | detect-secrets                                                                           | ✅ Pass                                                        |
-| Build                   | `uv build`                                                                               | ✅ Pass                                                        |
-| Docs                    | `sphinx-build -n -W` & linkcheck                                                         | ✅ Pass                                                        |
+| Test coverage           | ≥ 80%                                                                                    | 89% (pytest `d6c49f`)                                       |
+| Linting                 | Ruff, no warnings                                                                        | ✅ Pass (`ruff check` chunk `ca34ba`)                       |
+| Formatting              | `ruff format --check`                                                                    | ✅ Pass (`78ba8a`)                                          |
+| Type checks             | mypy                                                                                     | ✅ Pass (`a54a0a`)                                          |
+| Security                | Bandit                                                                                   | ✅ Pass (`bc752c`)                                          |
+| Secrets                 | detect-secrets                                                                           | ✅ Pass (`a40074`)                                          |
+| Build                   | `uv build`                                                                               | ✅ Pass (`5e74d7`)                                          |
+| Docs                    | `sphinx-build -n -W` & linkcheck                                                         | ✅ Pass                                                      |
 | Compliance verification | Quarterly POPIA/ISO/SOC reviews per [verification plan](compliance/verification-plan.md) | Cadence defined; first review sprint scheduled for 2025-Q1     |
 | Compliance evidence     | Evidence catalog current with quarterly refresh                                          | New catalog published; initial evidence refresh due 2025-01-15 |
 

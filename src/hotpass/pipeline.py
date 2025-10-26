@@ -7,7 +7,7 @@ import json
 import logging
 import re
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -28,6 +28,24 @@ from .quality import ExpectationSummary, build_ssot_schema, run_expectations
 
 # Set up module logger
 logger = logging.getLogger(__name__)
+
+ProgressListener = Callable[[str, dict[str, Any]], None]
+
+
+PIPELINE_EVENT_START = "pipeline.start"
+PIPELINE_EVENT_LOAD_STARTED = "load.started"
+PIPELINE_EVENT_LOAD_COMPLETED = "load.completed"
+PIPELINE_EVENT_AGGREGATE_STARTED = "aggregate.started"
+PIPELINE_EVENT_AGGREGATE_PROGRESS = "aggregate.progress"
+PIPELINE_EVENT_AGGREGATE_COMPLETED = "aggregate.completed"
+PIPELINE_EVENT_SCHEMA_STARTED = "schema.started"
+PIPELINE_EVENT_SCHEMA_COMPLETED = "schema.completed"
+PIPELINE_EVENT_EXPECTATIONS_STARTED = "expectations.started"
+PIPELINE_EVENT_EXPECTATIONS_COMPLETED = "expectations.completed"
+PIPELINE_EVENT_WRITE_STARTED = "write.started"
+PIPELINE_EVENT_WRITE_COMPLETED = "write.completed"
+PIPELINE_EVENT_COMPLETED = "pipeline.completed"
+
 
 SSOT_COLUMNS: list[str] = [
     "organization_name",
@@ -140,6 +158,7 @@ class PipelineConfig:
     enable_formatting: bool = True
     enable_audit_trail: bool = True
     enable_recommendations: bool = True
+    progress_listener: ProgressListener | None = None
 
 
 @dataclass
@@ -932,6 +951,13 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     pipeline_start = time.perf_counter()
     audit_trail: list[dict[str, Any]] = []
 
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_START,
+        input_dir=str(config.input_dir),
+        output_path=str(config.output_path),
+    )
+
     # Log pipeline start
     if config.enable_audit_trail:
         audit_trail.append(
@@ -956,9 +982,18 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         },
     )
 
+    _notify_progress(config, PIPELINE_EVENT_LOAD_STARTED)
     load_start = time.perf_counter()
     combined, source_timings = _load_sources(config)
     load_seconds = time.perf_counter() - load_start
+
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_LOAD_COMPLETED,
+        total_rows=len(combined),
+        sources=list(source_timings.keys()),
+        load_seconds=load_seconds,
+    )
 
     if config.enable_audit_trail:
         audit_trail.append(
@@ -993,6 +1028,15 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     if combined.empty:
         refined = pd.DataFrame(columns=SSOT_COLUMNS)
         config.output_path.parent.mkdir(parents=True, exist_ok=True)
+        _notify_progress(config, PIPELINE_EVENT_AGGREGATE_STARTED, total=0)
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_AGGREGATE_COMPLETED,
+            total=0,
+            aggregated_records=0,
+            conflicts=0,
+        )
+        _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
         write_start = time.perf_counter()
         refined.to_excel(config.output_path, index=False)
         write_seconds = time.perf_counter() - write_start
@@ -1002,6 +1046,12 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             write_seconds=write_seconds,
             total_seconds=time.perf_counter() - pipeline_start,
             rows_per_second=0.0,
+        )
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_WRITE_COMPLETED,
+            path=str(config.output_path),
+            write_seconds=write_seconds,
         )
         metrics_copy = dict(metrics)
         report = QualityReport(
@@ -1017,6 +1067,13 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             audit_trail=audit_trail,
             conflict_resolutions=[],
         )
+        _notify_progress(
+            config,
+            PIPELINE_EVENT_COMPLETED,
+            total_records=0,
+            invalid_records=0,
+            duration=metrics_copy["total_seconds"],
+        )
         return PipelineResult(
             refined=refined,
             quality_report=report,
@@ -1026,18 +1083,39 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     aggregated_rows = []
     all_conflicts: list[dict[str, Any]] = []
     aggregation_start = time.perf_counter()
+    group_total = int(combined["organization_slug"].nunique(dropna=False))
+    _notify_progress(config, PIPELINE_EVENT_AGGREGATE_STARTED, total=group_total)
 
-    for slug, group in combined.groupby("organization_slug", dropna=False):
+    for index, (slug, group) in enumerate(
+        combined.groupby("organization_slug", dropna=False),
+        start=1,
+    ):
         row_dict = _aggregate_group(slug, group)
         # Extract and accumulate conflicts
         conflicts_obj = row_dict.pop("_conflicts", [])
         if isinstance(conflicts_obj, list):
             all_conflicts.extend(conflicts_obj)
         aggregated_rows.append(row_dict)
+        if group_total > 0:
+            if index == group_total or index % max(group_total // 10, 1) == 0:
+                _notify_progress(
+                    config,
+                    PIPELINE_EVENT_AGGREGATE_PROGRESS,
+                    completed=index,
+                    total=group_total,
+                    slug=str(slug),
+                )
 
     refined_df = pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
     refined_df = refined_df.sort_values("organization_name").reset_index(drop=True)
     metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_AGGREGATE_COMPLETED,
+        total=group_total,
+        aggregated_records=len(refined_df),
+        conflicts=len(all_conflicts),
+    )
 
     if config.enable_audit_trail:
         audit_trail.append(
@@ -1059,6 +1137,11 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     schema = build_ssot_schema()
     schema_errors: list[str] = []
     validated_df = refined_df
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_SCHEMA_STARTED,
+        total_records=len(refined_df),
+    )
     try:
         validated_df = schema.validate(refined_df, lazy=True)
         logger.info("Schema validation passed")
@@ -1119,12 +1202,24 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
                 "Writing original data to prevent empty output file."
             )
 
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_SCHEMA_COMPLETED,
+        errors=len(schema_errors),
+    )
+
     expectation_start = time.perf_counter()
     # Use profile thresholds if available
     profile = config.industry_profile
     email_threshold = profile.email_validation_threshold if profile else 0.85
     phone_threshold = profile.phone_validation_threshold if profile else 0.85
     website_threshold = profile.website_validation_threshold if profile else 0.85
+
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_EXPECTATIONS_STARTED,
+        total_records=len(validated_df),
+    )
 
     expectation_summary: ExpectationSummary = run_expectations(
         validated_df,
@@ -1135,6 +1230,13 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     metrics["expectations_seconds"] = time.perf_counter() - expectation_start
 
     logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
+
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+        success=expectation_summary.success,
+        failure_count=len(expectation_summary.failures),
+    )
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
 
@@ -1161,6 +1263,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         logger.info(f"Generated {len(recommendations)} recommendations")
 
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
+    _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
     write_start = time.perf_counter()
 
     # Use formatting if enabled
@@ -1188,6 +1291,13 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     metrics["total_seconds"] = time.perf_counter() - pipeline_start
     if metrics["total_seconds"] > 0:
         metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
+
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_WRITE_COMPLETED,
+        path=str(config.output_path),
+        write_seconds=metrics["write_seconds"],
+    )
 
     if config.enable_audit_trail:
         audit_trail.append(
@@ -1218,8 +1328,22 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         conflict_resolutions=all_conflicts,
     )
 
+    _notify_progress(
+        config,
+        PIPELINE_EVENT_COMPLETED,
+        total_records=report.total_records,
+        invalid_records=report.invalid_records,
+        duration=metrics_copy["total_seconds"],
+    )
+
     return PipelineResult(
         refined=validated_df,
         quality_report=report,
         performance_metrics=metrics_copy,
     )
+
+
+def _notify_progress(config: PipelineConfig, event: str, **payload: Any) -> None:
+    listener = config.progress_listener
+    if listener is not None:
+        listener(event, payload)
