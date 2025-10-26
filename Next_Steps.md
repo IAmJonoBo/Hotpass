@@ -33,6 +33,7 @@
 - [x] Refreshed README to act as a lightweight entry point into docs
 - [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
 - [ ] Capture outcomes from docs workflow once it runs on `main`
+- [x] Executed repository-wide Ruff formatting sweep and cleared lingering lint/security warnings (2025-10-26)
 - [x] Added CI artifact checksum publication alongside pinned GitHub Actions references
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
 - [x] Implement entity registry history merge flow and regression coverage
@@ -97,6 +98,7 @@
 - [x] Consent validation audit logs persisted to `data/logs/prefect/` alongside documentation updates
 - [x] Export access logs captured under `dist/logs/access/` with hashing metadata for SOC 2 evidence
 - [x] Vault integration shipped for Prefect flows and CI via `hotpass.secrets` utilities and `scripts/secrets/pull_vault_secrets.py`
+- [x] Repository formatting normalized via `uv run ruff format` and Bandit allowlist adjustments (2025-10-26)
 
 ## Quality Gates
 
@@ -154,4 +156,4 @@
 - Mutation suite currently reports zero killed mutants across `quality`/`pipeline_enhanced`; expand assertions or targeted fixtures to increase kill rate.
 - Shared-secret dashboard password still requires rotation and monitoring until SSO-backed auth replaces it; integrate Vault-issued credentials during rollout.
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
-- Ruff formatter check still fails due to long-standing repository drift (44 files flagged on latest run); coordinate a dedicated formatting sweep or tooling adjustment before flipping gate back on.
+- Ruff formatter drift resolved via repository-wide sweep; keep formatter gate enforced in CI and rerun after major merges.

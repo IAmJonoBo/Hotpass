@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 import hotpass.pipeline_enhanced as pipeline_enhanced
-import hotpass.pipeline_enhancements as pipeline_features
 from hotpass.compliance import ConsentValidationError
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
