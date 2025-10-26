@@ -144,11 +144,11 @@ def _run_with_great_expectations(
             project_manager.set_project(previous_project)
             cleanup_manager = getattr(context, "_temp_dir_manager", None)
             if cleanup_manager is not None:
-                if hasattr(cleanup_manager, "cleanup"):
-                    cleanup_manager.cleanup()
                 exit_method = getattr(cleanup_manager, "__exit__", None)
                 if callable(exit_method):
                     exit_method(None, None, None)
+                elif hasattr(cleanup_manager, "cleanup"):
+                    cleanup_manager.cleanup()
 
     failures: list[str] = []
     for result in validation.results:
