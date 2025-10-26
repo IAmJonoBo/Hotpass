@@ -977,6 +977,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             refined=refined,
             quality_report=report,
             performance_metrics=metrics_copy,
+            # In the early-return path (no data loaded), the party store is empty by definition.
             party_store=PartyStore(),
         )
 
