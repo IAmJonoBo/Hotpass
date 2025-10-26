@@ -1,0 +1,18 @@
+# Allowed license expressions for third-party dependencies.
+allowed:
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - CC-BY-4.0
+  - CC0-1.0
+  - ISC
+  - MIT
+  - MIT-0
+  - Python-2.0
+  - Unlicense
+  - Zlib
+forbidden:
+  - AGPL-3.0
+  - GPL-2.0
+  - GPL-3.0
+fail_on_unknown: true
