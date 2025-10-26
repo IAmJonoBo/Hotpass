@@ -75,6 +75,9 @@ class AccessibilityStreamlit:
             return
         self.info_messages.append(message)
 
+    def caption(self, message: str, **_: Any) -> None:
+        self.info_messages.append(message)
+
     def tabs(self, labels: list[str]) -> tuple[AccessibilityStreamlit, ...]:
         self.tabs_requested = tuple(labels)
         return tuple(self for _ in labels)

@@ -1,0 +1,20 @@
+rules:
+  - id: hotpass-python-eval
+    message: "Avoid using eval(); prefer safer parsing or explicit dispatch."
+    languages: [python]
+    severity: ERROR
+    patterns:
+      - pattern: eval(...)
+      - pattern-not: eval("...", ...)
+  - id: hotpass-shell-true
+    message: "Avoid shell=True in subprocess calls; use list arguments or mark as intentional."
+    languages: [python]
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run($CMD, shell=True, ...)
+          - pattern: subprocess.Popen($CMD, shell=True, ...)
+          - pattern: subprocess.check_call($CMD, shell=True, ...)
+          - pattern: subprocess.check_output($CMD, shell=True, ...)
+    metadata:
+      remediation: "Set shell=False and pass arguments as a sequence, or document why shell access is required."

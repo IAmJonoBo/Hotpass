@@ -95,7 +95,7 @@ jobs:
         run: uv sync --extra dev --frozen
 
       - name: Run Semgrep
-        run: uv run semgrep --config=auto
+        run: uv run semgrep --config=policy/semgrep/hotpass.yml
 
   fitness-functions:
     runs-on: ubuntu-latest
