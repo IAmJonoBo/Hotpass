@@ -16,15 +16,15 @@ The source-to-target mapping defines how the ingestion layer normalises incoming
 
 ## Example mapping
 
-| Canonical field | Source columns | Transformation |
-| --- | --- | --- |
-| `organization_name` | `Company`, `School`, `Organisation` | Title-case normalisation. |
-| `organization_type` | `Type`, `Category` | Mapped via profile-specific lookup tables. |
-| `primary_contact_email` | `Email`, `Primary Email` | Lower-cased and validated against regex. |
-| `primary_contact_phone` | `Phone`, `Cell` | Converted to E.164 format with the profile’s `default_country_code`. |
-| `status` | `Status`, `Lifecycle` | Restricted to the canonical status enum. |
-| `geocode_latitude` | `Latitude`, `Lat` | Cast to float and rounded to 4 decimals. |
-| `enrichment_sources` | `Source`, `Verified By` | Aggregated into a comma-separated list. |
+| Canonical field         | Source columns                      | Transformation                                                       |
+| ----------------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| `organization_name`     | `Company`, `School`, `Organisation` | Title-case normalisation.                                            |
+| `organization_type`     | `Type`, `Category`                  | Mapped via profile-specific lookup tables.                           |
+| `primary_contact_email` | `Email`, `Primary Email`            | Lower-cased and validated against regex.                             |
+| `primary_contact_phone` | `Phone`, `Cell`                     | Converted to E.164 format with the profile’s `default_country_code`. |
+| `status`                | `Status`, `Lifecycle`               | Restricted to the canonical status enum.                             |
+| `geocode_latitude`      | `Latitude`, `Lat`                   | Cast to float and rounded to 4 decimals.                             |
+| `enrichment_sources`    | `Source`, `Verified By`             | Aggregated into a comma-separated list.                              |
 
 ## Adding a new mapping
 

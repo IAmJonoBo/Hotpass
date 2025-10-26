@@ -23,7 +23,9 @@ from hotpass.observability import (
 def reset_observability_globals(monkeypatch):
     """Reset module-level state between tests."""
 
-    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
+    monkeypatch.setattr(
+        observability, "_instrumentation_initialized", False, raising=False
+    )
     monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
     monkeypatch.setattr(observability, "_meter_provider", None, raising=False)
     monkeypatch.setattr(observability, "_metric_reader", None, raising=False)
@@ -49,10 +51,14 @@ def instrumentation_stubs(monkeypatch):
         def __init__(self) -> None:
             self.calls: list[tuple[str, float, dict[str, object]]] = []
 
-        def add(self, value: float, attributes: dict[str, object] | None = None) -> None:
+        def add(
+            self, value: float, attributes: dict[str, object] | None = None
+        ) -> None:
             self.calls.append(("add", value, attributes or {}))
 
-        def record(self, value: float, attributes: dict[str, object] | None = None) -> None:
+        def record(
+            self, value: float, attributes: dict[str, object] | None = None
+        ) -> None:
             self.calls.append(("record", value, attributes or {}))
 
     class DummyObservableGauge:
@@ -155,7 +161,9 @@ def instrumentation_stubs(monkeypatch):
     class DummyMetricReader:
         instances: list[DummyMetricReader] = []
 
-        def __init__(self, exporter: object, export_interval_millis: int = 60000) -> None:
+        def __init__(
+            self, exporter: object, export_interval_millis: int = 60000
+        ) -> None:
             self.exporter = exporter
             self.export_interval_millis = export_interval_millis
             self.shutdown_called = False
@@ -243,15 +251,21 @@ def instrumentation_stubs(monkeypatch):
 
     monkeypatch.setattr(observability, "metrics", metrics_module, raising=False)
     monkeypatch.setattr(observability, "trace", trace_module, raising=False)
-    monkeypatch.setattr(observability, "MeterProvider", DummyMeterProvider, raising=False)
+    monkeypatch.setattr(
+        observability, "MeterProvider", DummyMeterProvider, raising=False
+    )
     monkeypatch.setattr(
         observability,
         "PeriodicExportingMetricReader",
         DummyMetricReader,
         raising=False,
     )
-    monkeypatch.setattr(observability, "TracerProvider", DummyTracerProvider, raising=False)
-    monkeypatch.setattr(observability, "BatchSpanProcessor", DummyBatchSpanProcessor, raising=False)
+    monkeypatch.setattr(
+        observability, "TracerProvider", DummyTracerProvider, raising=False
+    )
+    monkeypatch.setattr(
+        observability, "BatchSpanProcessor", DummyBatchSpanProcessor, raising=False
+    )
     monkeypatch.setattr(
         observability,
         "ConsoleSpanExporter",
@@ -319,7 +333,9 @@ def test_initialize_observability_idempotent(instrumentation_stubs):
 
     assert tracer is first_tracer
     assert meter is first_meter
-    assert len(instrumentation_stubs.metric_reader_cls.instances) == initial_reader_count
+    assert (
+        len(instrumentation_stubs.metric_reader_cls.instances) == initial_reader_count
+    )
 
 
 def test_shutdown_observability(instrumentation_stubs):
@@ -372,7 +388,9 @@ def test_safe_console_exporter_swallows_value_error(monkeypatch):
 
     calls: list[tuple[object, float]] = []
 
-    def failing_export(self, metrics_data, timeout_millis: float = 1000.0, **_: object) -> None:  # noqa: ANN001
+    def failing_export(
+        self, metrics_data, timeout_millis: float = 1000.0, **_: object
+    ) -> None:  # noqa: ANN001
         calls.append((metrics_data, timeout_millis))
         raise ValueError("closed file")
 

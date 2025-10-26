@@ -26,7 +26,9 @@ class DiagnosticResult:
 class ConfigDoctor:
     """Diagnose and suggest fixes for configuration issues."""
 
-    def __init__(self, config_path: Path | None = None, profile: IndustryProfile | None = None):
+    def __init__(
+        self, config_path: Path | None = None, profile: IndustryProfile | None = None
+    ):
         self.config_path = config_path
         self.profile = profile or get_default_profile()
         self.diagnostics: list[DiagnosticResult] = []
@@ -169,7 +171,9 @@ class ConfigDoctor:
         else:
             # Check for common critical fields
             critical_fields = ["organization_name", "contact_email", "contact_phone"]
-            missing_fields = [f for f in critical_fields if f not in self.profile.column_synonyms]
+            missing_fields = [
+                f for f in critical_fields if f not in self.profile.column_synonyms
+            ]
 
             if missing_fields:
                 self._add_diagnostic(
@@ -317,6 +321,8 @@ def doctor_command(profile_name: str = "generic", autofix: bool = False) -> None
 
     summary = doctor.get_summary()
     if summary["health_score"] < 80:
-        print("\n⚠️  Configuration health is below 80%. Review and fix the issues above.")
+        print(
+            "\n⚠️  Configuration health is below 80%. Review and fix the issues above."
+        )
     else:
         print("\n✓ Configuration looks healthy!")

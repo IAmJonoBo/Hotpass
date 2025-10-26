@@ -43,7 +43,12 @@ def sample_df_with_duplicates():
             ],
             "contact_primary_phone": ["+27123456789", "+27123456789", None, None],
             "address_primary": ["123 Main St", "123 Main St", None, "456 Oak Ave"],
-            "organization_category": ["Flight School", "Flight School", "Aviation", "Aviation"],
+            "organization_category": [
+                "Flight School",
+                "Flight School",
+                "Aviation",
+                "Aviation",
+            ],
             "status": ["Active", "Active", "Active", "Active"],
             "data_quality_score": [0.8, 0.8, 0.6, 0.7],
         }

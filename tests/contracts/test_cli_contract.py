@@ -30,7 +30,9 @@ def extract_options(parser: argparse.ArgumentParser) -> dict[str, argparse.Actio
     actions = []
     for group in parser._action_groups:
         actions.extend(group._group_actions)
-    return {action.option_strings[0]: action for action in actions if action.option_strings}
+    return {
+        action.option_strings[0]: action for action in actions if action.option_strings
+    }
 
 
 def test_cli_contract_matches_spec() -> None:

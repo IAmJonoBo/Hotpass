@@ -48,7 +48,9 @@ class Geocoder:
         else:
             self.geolocator = Nominatim(user_agent=user_agent, timeout=timeout)
 
-    def geocode_address(self, address: str, country: str | None = None) -> dict[str, Any] | None:
+    def geocode_address(
+        self, address: str, country: str | None = None
+    ) -> dict[str, Any] | None:
         """Geocode an address to coordinates.
 
         Args:
@@ -90,7 +92,9 @@ class Geocoder:
             logger.error(f"Unexpected error geocoding '{address}': {e}")
             return None
 
-    def reverse_geocode(self, latitude: float, longitude: float) -> dict[str, Any] | None:
+    def reverse_geocode(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any] | None:
         """Reverse geocode coordinates to an address.
 
         Args:
@@ -287,7 +291,9 @@ def create_geodataframe(
         raise ImportError("Geopandas is required for creating GeoDataFrames")
 
     if lat_column not in df.columns or lon_column not in df.columns:
-        raise ValueError(f"Columns {lat_column} and {lon_column} must exist in dataframe")
+        raise ValueError(
+            f"Columns {lat_column} and {lon_column} must exist in dataframe"
+        )
 
     # Filter rows with valid coordinates
     valid_coords = df[[lat_column, lon_column]].notna().all(axis=1)
@@ -299,7 +305,8 @@ def create_geodataframe(
 
     # Create geometry column
     geometry = [
-        Point(lon, lat) for lon, lat in zip(df_valid[lon_column], df_valid[lat_column], strict=True)
+        Point(lon, lat)
+        for lon, lat in zip(df_valid[lon_column], df_valid[lat_column], strict=True)
     ]
 
     gdf = gpd.GeoDataFrame(df_valid, geometry=geometry, crs="EPSG:4326")
@@ -346,7 +353,9 @@ def calculate_distance_matrix(
                     distances.iloc[i, j] = 0.0
                 else:
                     # Distance in meters, convert to kilometers
-                    dist_m = gdf_proj.geometry.iloc[i].distance(gdf_proj.geometry.iloc[j])
+                    dist_m = gdf_proj.geometry.iloc[i].distance(
+                        gdf_proj.geometry.iloc[j]
+                    )
                     distances.iloc[i, j] = dist_m / 1000.0
 
         logger.info(f"Calculated {n}x{n} distance matrix")

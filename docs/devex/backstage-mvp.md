@@ -8,12 +8,12 @@ last_updated: 2025-10-25
 
 ## Catalog entries
 
-| Component | Backstage kind | File | Description |
-| --- | --- | --- | --- |
-| Hotpass pipeline | Component | [`catalog-info.yaml`](../../catalog-info.yaml) | Core data refinement service with Prefect orchestration. |
-| Prefect deployment template | Template | [`templates/backstage/prefect-pipeline.yaml`](../../templates/backstage/prefect-pipeline.yaml) | Golden path for spinning up new Prefect flow + CLI wrapper with QA gates. |
-| Streamlit dashboard | Component | [`catalog-info.yaml`](../../catalog-info.yaml) | Observability and data quality visualisation layer. |
-| DevEx governance | Resource | [`catalog-info.yaml`](../../catalog-info.yaml) | Captures DevEx review loop and metrics dashboard resources. |
+| Component                   | Backstage kind | File                                                                                           | Description                                                               |
+| --------------------------- | -------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Hotpass pipeline            | Component      | [`catalog-info.yaml`](../../catalog-info.yaml)                                                 | Core data refinement service with Prefect orchestration.                  |
+| Prefect deployment template | Template       | [`templates/backstage/prefect-pipeline.yaml`](../../templates/backstage/prefect-pipeline.yaml) | Golden path for spinning up new Prefect flow + CLI wrapper with QA gates. |
+| Streamlit dashboard         | Component      | [`catalog-info.yaml`](../../catalog-info.yaml)                                                 | Observability and data quality visualisation layer.                       |
+| DevEx governance            | Resource       | [`catalog-info.yaml`](../../catalog-info.yaml)                                                 | Captures DevEx review loop and metrics dashboard resources.               |
 
 ## TechDocs integration
 
@@ -30,12 +30,12 @@ last_updated: 2025-10-25
 
 ## Automation roadmap
 
-| Milestone | Description | Dependencies | Target |
-| --- | --- | --- | --- |
-| Bootstrap script GA | Deliver `scripts/idp/bootstrap.py` CLI for local environment configuration. | Secrets management decision, `uv` global cache. | 2025-11-15 |
-| Template publishing | Deploy Backstage template and catalog entry to production instance. | Backstage admin access, TechDocs pipeline credentials. | 2025-11-22 |
-| Self-service QA gating | Integrate mutation, accessibility, and supply-chain jobs into template scaffolding. | CI workflows finalised in repo. | 2025-12-06 |
-| Evidence automation | Pipe compliance evidence exports into Backstage resources and Scorecards. | POPIA automation, object storage endpoint. | 2025-12-20 |
+| Milestone              | Description                                                                         | Dependencies                                           | Target     |
+| ---------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------- |
+| Bootstrap script GA    | Deliver `scripts/idp/bootstrap.py` CLI for local environment configuration.         | Secrets management decision, `uv` global cache.        | 2025-11-15 |
+| Template publishing    | Deploy Backstage template and catalog entry to production instance.                 | Backstage admin access, TechDocs pipeline credentials. | 2025-11-22 |
+| Self-service QA gating | Integrate mutation, accessibility, and supply-chain jobs into template scaffolding. | CI workflows finalised in repo.                        | 2025-12-06 |
+| Evidence automation    | Pipe compliance evidence exports into Backstage resources and Scorecards.           | POPIA automation, object storage endpoint.             | 2025-12-20 |
 
 ## Runbooks & ownership
 

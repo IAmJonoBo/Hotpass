@@ -22,12 +22,12 @@ Hotpass refines messy spreadsheets into a governed single source of truth. This 
 
 ## Personas and needs
 
-| Persona | Needs | Success signals |
-| --- | --- | --- |
-| Data operations lead | Reliable, repeatable pipeline runs with transparent quality reporting. | Flow runtimes stable, dashboards highlight fewer untriaged failures per release. |
-| Compliance officer | Evidence of POPIA adherence, audit-friendly provenance, and redaction controls. | Quality reports flag zero high-severity unresolved compliance issues per run. |
-| Data engineer | Extendable pipeline with clear contracts, tests, and observability hooks. | Onboarding new profiles or connectors requires ≤ 2 PRs and passes automated gates on first attempt. |
-| Product analyst | Self-service access to refined datasets and dashboards. | Streamlit dashboard uptime ≥ 99% during business hours, with fresh exports after each pipeline run. |
+| Persona              | Needs                                                                           | Success signals                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Data operations lead | Reliable, repeatable pipeline runs with transparent quality reporting.          | Flow runtimes stable, dashboards highlight fewer untriaged failures per release.                    |
+| Compliance officer   | Evidence of POPIA adherence, audit-friendly provenance, and redaction controls. | Quality reports flag zero high-severity unresolved compliance issues per run.                       |
+| Data engineer        | Extendable pipeline with clear contracts, tests, and observability hooks.       | Onboarding new profiles or connectors requires ≤ 2 PRs and passes automated gates on first attempt. |
+| Product analyst      | Self-service access to refined datasets and dashboards.                         | Streamlit dashboard uptime ≥ 99% during business hours, with fresh exports after each pipeline run. |
 
 ## Constraints and operating assumptions
 

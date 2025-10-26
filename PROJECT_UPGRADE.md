@@ -14,14 +14,14 @@
 
 ## 1. Project Context Inputs
 
-| Dimension | Value |
-| --- | --- |
-| Project | Hotpass data refinement platform delivering a governed single source of truth for messy spreadsheets. |
-| Repo or paths to scan | `/workspace/Hotpass` → `src/hotpass`, `tests`, `scripts`, `docs`, `.github/workflows/`, `Dockerfile`, `pyproject.toml`, `requirements*.txt`. |
-| Stack | Python 3.13 • Pandas • Prefect 3 • Great Expectations • Streamlit • OpenTelemetry • CLI/Prefect runtime • Packaging via uv & setuptools • CI/CD: GitHub Actions • Docs: Sphinx (MyST). |
+| Dimension                        | Value                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Project                          | Hotpass data refinement platform delivering a governed single source of truth for messy spreadsheets.                                                                                                                                                                                                                                                                          |
+| Repo or paths to scan            | `/workspace/Hotpass` → `src/hotpass`, `tests`, `scripts`, `docs`, `.github/workflows/`, `Dockerfile`, `pyproject.toml`, `requirements*.txt`.                                                                                                                                                                                                                                   |
+| Stack                            | Python 3.13 • Pandas • Prefect 3 • Great Expectations • Streamlit • OpenTelemetry • CLI/Prefect runtime • Packaging via uv & setuptools • CI/CD: GitHub Actions • Docs: Sphinx (MyST).                                                                                                                                                                                         |
 | Ranked non-functional priorities | 1️⃣ Data quality & compliance (Great Expectations suites, POPIA checks). 2️⃣ Reliability & observability (Prefect orchestration, OpenTelemetry, ≥80% coverage). 3️⃣ Maintainability & automation (uv workflows, docs CI, conventional commits). 4️⃣ Security & privacy (Bandit, detect-secrets, compliance module). 5️⃣ Usability & adoption (CLI ergonomics, Streamlit dashboard). |
-| Compliance / targets | NIST SSDF v1.1 baseline adoption; OWASP SAMM progressing to Managed; OWASP ASVS Level 2 for CLI/API surfaces; SLSA Level 2 provenance; OpenSSF Scorecard ≥7; ISO/IEC 25010 (functionality, reliability, maintainability); POPIA-aligned data handling. |
-| Constraints | Preserve CLI/pipeline contracts; optional extras (enrichment, geospatial, dashboards) may be unavailable in CI; sandbox runners have restricted network access; datasets carry POPIA-sensitive information; Docker image publication workflow pending validation. |
+| Compliance / targets             | NIST SSDF v1.1 baseline adoption; OWASP SAMM progressing to Managed; OWASP ASVS Level 2 for CLI/API surfaces; SLSA Level 2 provenance; OpenSSF Scorecard ≥7; ISO/IEC 25010 (functionality, reliability, maintainability); POPIA-aligned data handling.                                                                                                                         |
+| Constraints                      | Preserve CLI/pipeline contracts; optional extras (enrichment, geospatial, dashboards) may be unavailable in CI; sandbox runners have restricted network access; datasets carry POPIA-sensitive information; Docker image publication workflow pending validation.                                                                                                              |
 
 ## 2. Discovery → Objectives → Measures
 
@@ -201,44 +201,35 @@
 ### 5.2 Common Failure Modes & Required Controls
 
 1. **Insecure or low-quality code**
-
    - Enforce OWASP ASVS level mapping, CWE Top-25 SAST/Semgrep rules, and a mandatory secure-review checklist.
    - Run mutation testing to raise defect detection and block PRs missing tests, threat-model notes, or remediation on SAST/DAST findings via policy-as-code.
 
 1. **Data leakage & over-permissive retrieval**
-
    - Limit retrieval to verified identity scopes, auto-classify and label data assets, enable DLP across chat/mail/file shares, and schedule permission recertification.
    - Deploy OWASP LLM Top-10 prompt-injection defences with input/output filtering, model-spec policies, and tool allowlists.
 
 1. **Agent brittleness**
-
    - Issue least-privilege tool bundles, enforce per-run scopes, favour dry-run defaults, and capture auditable traces for every tool call.
    - Require sandboxed execution (ephemeral containers, restricted egress/filesystem) and gate destructive actions behind human approval.
    - Apply Plan-and-Execute/ReAct task decomposition and repository-aware retrieval to stabilise longer-horizon work.
 
 1. **Supply-chain exposure & dependency drift**
-
    - Target SLSA L2→L3 for builds with signed provenance and SBOM attestations (in-toto + Sigstore/Cosign).
    - Use private proxies, dependency allowlists, immutable lockfiles, and “no-scripts” install policies in CI.
 
 1. **Hallucinations, licence/IP uncertainty**
-
    - Enable duplication filters, run automated licence scanners, and restrict prompts that request high-risk boilerplate.
 
 1. **Test flakiness & regression churn**
-
    - Quarantine flaky tests, enforce deterministic seeds/time, adopt contract tests for brittle integrations, and maintain mutation testing plus historical flake dashboards.
 
 1. **Developer experience friction**
-
    - Practice trunk-based development with small PRs, time-boxed reviews, and DORA metric SLAs; monitor SPACE signals; surface repo-aware RAG content to cut context switching.
 
 1. **UX/UI quality lag**
-
    - Track HEART metrics via Goals-Signals-Metrics, embed Nielsen heuristics in definition-of-done, and uphold ISO/IEC 25010 non-functional requirements.
 
 1. **Governance gaps for AI in SDLC**
-
    - Anchor governance in NIST SSDF with SP 800-218A extensions and OWASP LLM Top-10; automate compliance checks and remediation workflows.
 
 ### 5.3 Frontier Control Set (Embed in Scaffolding)

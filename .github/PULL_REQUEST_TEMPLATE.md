@@ -1,9 +1,11 @@
 ## Summary
+
 - [ ] Linked roadmap item / issue (e.g. closes #123):
 - [ ] Documentation updated (Diátaxis + TechDocs)
 - [ ] `Next_Steps.md` updated
 
 ## Testing
+
 - [ ] `uv run pytest --cov=src --cov=tests`
 - [ ] `uv run ruff check`
 - [ ] `uv run ruff format --check`
@@ -19,7 +21,9 @@
 - [ ] `uv run semgrep --config=auto`
 
 ## Risk & mitigation
+
 - Describe risk, blast radius, rollback plan.
 
 ## Artefacts
+
 - Attach SBOM/provenance/accessibility reports if relevant.

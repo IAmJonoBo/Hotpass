@@ -33,7 +33,9 @@ def test_excel_stage_to_parquet_invoked(
 ) -> None:
     calls: list[Path] = []
 
-    def _fake_to_parquet(self: pd.DataFrame, path: Path, *, index: bool = False) -> None:
+    def _fake_to_parquet(
+        self: pd.DataFrame, path: Path, *, index: bool = False
+    ) -> None:
         calls.append(Path(path))
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", _fake_to_parquet, raising=False)

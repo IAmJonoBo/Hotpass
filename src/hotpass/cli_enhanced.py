@@ -189,9 +189,13 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
     )
 
     if enable_enhanced:
-        console.print("[bold blue]Running enhanced pipeline with advanced features...[/bold blue]")
+        console.print(
+            "[bold blue]Running enhanced pipeline with advanced features...[/bold blue]"
+        )
     else:
-        console.print("[bold blue]Running orchestrated pipeline with Prefect...[/bold blue]")
+        console.print(
+            "[bold blue]Running orchestrated pipeline with Prefect...[/bold blue]"
+        )
 
     try:
         # Load profile and create config
@@ -206,7 +210,8 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
         if enable_enhanced:
             # Use enhanced pipeline
             enhanced_config = EnhancedPipelineConfig(
-                enable_entity_resolution=args.enable_all or args.enable_entity_resolution,
+                enable_entity_resolution=args.enable_all
+                or args.enable_entity_resolution,
                 enable_geospatial=args.enable_all or args.enable_geospatial,
                 enable_enrichment=args.enable_all or args.enable_enrichment,
                 enable_compliance=args.enable_all or args.enable_compliance,
@@ -230,10 +235,14 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
                 console.print(f"Archive created: {archive_path}")
 
             if result.quality_report.expectations_passed:
-                console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
+                console.print(
+                    "[bold green]✓[/bold green] Pipeline completed successfully!"
+                )
                 console.print(f"  Records processed: {len(result.refined)}")
                 if "total_seconds" in result.performance_metrics:
-                    console.print(f"  Duration: {result.performance_metrics['total_seconds']:.2f}s")
+                    console.print(
+                        f"  Duration: {result.performance_metrics['total_seconds']:.2f}s"
+                    )
                 return 0
             else:
                 console.print(
@@ -253,7 +262,9 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
             )
 
             if flow_result["success"]:
-                console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
+                console.print(
+                    "[bold green]✓[/bold green] Pipeline completed successfully!"
+                )
                 console.print(f"  Records processed: {flow_result['total_records']}")
                 console.print(f"  Duration: {flow_result['elapsed_seconds']:.2f}s")
                 return 0
@@ -282,7 +293,10 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     """
     import pandas as pd
 
-    from hotpass.entity_resolution import resolve_entities_fallback, resolve_entities_with_splink
+    from hotpass.entity_resolution import (
+        resolve_entities_fallback,
+        resolve_entities_with_splink,
+    )
 
     console = Console()
     console.print("[bold blue]Running entity resolution...[/bold blue]")
@@ -390,7 +404,9 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
     dashboard_path = Path(__file__).parent / "dashboard.py"
     if not dashboard_path.exists():  # pragma: no cover - defensive guard
-        console.print(f"[bold red]✗[/bold red] Dashboard entrypoint missing at {dashboard_path}")
+        console.print(
+            f"[bold red]✗[/bold red] Dashboard entrypoint missing at {dashboard_path}"
+        )
         return 1
 
     if not 0 < args.port < 65536:
@@ -401,7 +417,9 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
 
     host = _normalise_dashboard_host(args.host)
     if host is None:
-        console.print("[bold red]✗[/bold red] Invalid host. Use localhost or a valid IP/DNS label.")
+        console.print(
+            "[bold red]✗[/bold red] Invalid host. Use localhost or a valid IP/DNS label."
+        )
         return 1
 
     runner, error_message = _load_streamlit_runner()
@@ -422,7 +440,9 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
     except SystemExit as exc:
         code = exc.code or 0
         if code != 0:
-            console.print("[bold red]✗[/bold red] Dashboard exited with non-zero status.")
+            console.print(
+                "[bold red]✗[/bold red] Dashboard exited with non-zero status."
+            )
         return int(code)
     except Exception as exc:  # pragma: no cover - defensive guard
         console.print(f"[bold red]✗[/bold red] Dashboard failed to start: {exc}")

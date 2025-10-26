@@ -8,34 +8,34 @@ last_updated: 2025-10-25
 
 ## Adopt
 
-| Technology | Domain | Rationale |
-| --- | --- | --- |
-| uv | Build & dependency mgmt | Fast Python package management, reproducible sync. |
-| Prefect 3 | Orchestration | Production orchestration with observability hooks. |
-| Streamlit | Dashboards | Rapid dashboarding for quality signals. |
-| CycloneDX | SBOM | Industry-standard SBOM format, integrates with policy gate. |
+| Technology | Domain                  | Rationale                                                   |
+| ---------- | ----------------------- | ----------------------------------------------------------- |
+| uv         | Build & dependency mgmt | Fast Python package management, reproducible sync.          |
+| Prefect 3  | Orchestration           | Production orchestration with observability hooks.          |
+| Streamlit  | Dashboards              | Rapid dashboarding for quality signals.                     |
+| CycloneDX  | SBOM                    | Industry-standard SBOM format, integrates with policy gate. |
 
 ## Trial
 
-| Technology | Domain | Experiment |
-| --- | --- | --- |
-| Mutmut | Testing | Evaluate mutation coverage for core modules. |
+| Technology            | Domain        | Experiment                                       |
+| --------------------- | ------------- | ------------------------------------------------ |
+| Mutmut                | Testing       | Evaluate mutation coverage for core modules.     |
 | Playwright + axe-core | Accessibility | Browser-based accessibility scans for dashboard. |
-| Sigstore | Supply-chain | Keyless signing for artefacts. |
+| Sigstore              | Supply-chain  | Keyless signing for artefacts.                   |
 
 ## Assess
 
-| Technology | Domain | Notes |
-| --- | --- | --- |
-| Chaos Mesh | Chaos engineering | Investigate for Prefect flow disruption testing. |
-| Import Linter | Architecture | Potential tool for coupling guardrails. |
-| Semgrep Supply-chain ruleset | Security | Validate coverage for dependency integrity. |
+| Technology                   | Domain            | Notes                                            |
+| ---------------------------- | ----------------- | ------------------------------------------------ |
+| Chaos Mesh                   | Chaos engineering | Investigate for Prefect flow disruption testing. |
+| Import Linter                | Architecture      | Potential tool for coupling guardrails.          |
+| Semgrep Supply-chain ruleset | Security          | Validate coverage for dependency integrity.      |
 
 ## Hold
 
-| Technology | Domain | Reason |
-| --- | --- | --- |
-| `curl | sh` installers | Build | Replaced with pinned artefacts per roadmap item. |
+| Technology | Domain         | Reason |
+| ---------- | -------------- | ------ | ------------------------------------------------ |
+| `curl      | sh` installers | Build  | Replaced with pinned artefacts per roadmap item. |
 
 ## Governance process
 

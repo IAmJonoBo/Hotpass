@@ -22,7 +22,8 @@ repos:
     rev: 25.9.0
     hooks:
       - id: black
-        args: ["--line-length", "100"]
+        args:
+          - --line-length=100
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.2
@@ -31,10 +32,10 @@ repos:
         additional_dependencies:
           - types-PyYAML
           - types-requests
-        args: ["--config-file", "pyproject.toml"]
+        args: [--config-file, pyproject.toml]
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:
       - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+        args: [--baseline, .secrets.baseline]

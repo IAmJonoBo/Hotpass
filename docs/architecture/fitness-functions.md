@@ -8,12 +8,12 @@ last_updated: 2025-10-25
 
 ## Active fitness functions
 
-| ID | Scenario | Guardrail | Implementation | Threshold |
-| --- | --- | --- | --- | --- |
-| FF-1 | Prevent runaway pipeline complexity | `src/hotpass/pipeline.py` ≤ 1200 LOC | `scripts/quality/fitness_functions.py` | Pass/fail |
-| FF-2 | Ensure enhanced pipeline remains modular | `src/hotpass/pipeline_enhanced.py` ≤ 200 LOC | Same script | Pass/fail |
-| FF-3 | Preserve observability instrumentation | `BatchSpanProcessor` import required | Same script | Presence |
-| FF-4 | Guarantee public API completeness | `__all__` exposes `run_pipeline`, `PipelineConfig` | Same script | Presence |
+| ID   | Scenario                                 | Guardrail                                          | Implementation                         | Threshold |
+| ---- | ---------------------------------------- | -------------------------------------------------- | -------------------------------------- | --------- |
+| FF-1 | Prevent runaway pipeline complexity      | `src/hotpass/pipeline.py` ≤ 1200 LOC               | `scripts/quality/fitness_functions.py` | Pass/fail |
+| FF-2 | Ensure enhanced pipeline remains modular | `src/hotpass/pipeline_enhanced.py` ≤ 200 LOC       | Same script                            | Pass/fail |
+| FF-3 | Preserve observability instrumentation   | `BatchSpanProcessor` import required               | Same script                            | Presence  |
+| FF-4 | Guarantee public API completeness        | `__all__` exposes `run_pipeline`, `PipelineConfig` | Same script                            | Presence  |
 
 ## Planned functions
 

@@ -233,7 +233,9 @@ class QualityReport:
                 source = conflict.get("chosen_source", "Unknown")
                 value = str(conflict.get("value", ""))[:50]  # Truncate long values
                 alt_count = len(conflict.get("alternatives", []))
-                lines.append(f"| {field} | {source} | {value} | {alt_count} alternatives |")
+                lines.append(
+                    f"| {field} | {source} | {value} | {alt_count} alternatives |"
+                )
             if len(self.conflict_resolutions) > 10:
                 remaining = len(self.conflict_resolutions) - 10
                 lines.append(f"| ... | ... | ... | {remaining} more conflicts |")
@@ -287,14 +289,14 @@ class QualityReport:
 
     def to_html(self) -> str:
         def _metrics_row(label: str, value: str) -> str:
-            return (
-                f'<tr><th scope="row">{html.escape(label)}</th><td>{html.escape(value)}</td></tr>'
-            )
+            return f'<tr><th scope="row">{html.escape(label)}</th><td>{html.escape(value)}</td></tr>'
 
         quality_rows = [
             _metrics_row("Total records", str(self.total_records)),
             _metrics_row("Invalid records", str(self.invalid_records)),
-            _metrics_row("Expectations passed", "Yes" if self.expectations_passed else "No"),
+            _metrics_row(
+                "Expectations passed", "Yes" if self.expectations_passed else "No"
+            ),
             _metrics_row(
                 "Mean quality score",
                 f"{self.data_quality_distribution.get('mean', 0.0):.2f}",
@@ -317,11 +319,17 @@ class QualityReport:
             source_rows = '<tr><td colspan="2">No source data recorded.</td></tr>'
 
         schema_items = (
-            "".join(f"<li>{html.escape(error)}</li>" for error in self.schema_validation_errors)
+            "".join(
+                f"<li>{html.escape(error)}</li>"
+                for error in self.schema_validation_errors
+            )
             or "<li>None</li>"
         )
         expectation_items = (
-            "".join(f"<li>{html.escape(failure)}</li>" for failure in self.expectation_failures)
+            "".join(
+                f"<li>{html.escape(failure)}</li>"
+                for failure in self.expectation_failures
+            )
             or "<li>None</li>"
         )
 
@@ -387,7 +395,9 @@ def _html_performance_rows(metrics: dict[str, Any]) -> str:
             value = f"{float(raw):.4f}"
         else:
             value = str(raw)
-        rows.append(f"<tr><td>{html.escape(label)}</td><td>{html.escape(value)}</td></tr>")
+        rows.append(
+            f"<tr><td>{html.escape(label)}</td><td>{html.escape(value)}</td></tr>"
+        )
     if not rows:
         return '<tr><td colspan="2">No performance metrics recorded.</td></tr>'
     return "".join(rows)
@@ -499,7 +509,9 @@ def _generate_recommendations(
         )
 
     if not recommendations:
-        recommendations.append("Data quality looks good! No critical issues identified.")
+        recommendations.append(
+            "Data quality looks good! No critical issues identified."
+        )
 
     return recommendations
 
@@ -576,7 +588,9 @@ def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:
         "address": bool(row.get("address_primary")),
     }
     score = sum(1 for flag in checks.values() if flag) / max(len(checks), 1)
-    missing_flags = [f"missing_{name}" for name, present in checks.items() if not present]
+    missing_flags = [
+        f"missing_{name}" for name, present in checks.items() if not present
+    ]
     return {
         "score": round(score, 2),
         "flags": ";".join(missing_flags) if missing_flags else "none",
@@ -682,7 +696,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     ) -> ValueSelection | None:
         if not selections:
             return None
-        primary_selection = next((sel for sel in selections if sel.value == value), selections[0])
+        primary_selection = next(
+            (sel for sel in selections if sel.value == value), selections[0]
+        )
         entry = _build_provenance(field, primary_selection, value)
         contributors = [sel for sel in selections if sel is not primary_selection]
         if contributors:
@@ -729,8 +745,12 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     name_values = _iter_values("contact_names", treat_list=True)
     role_values = _iter_values("contact_roles", treat_list=True)
 
-    source_datasets = "; ".join(sorted(_collect_unique(group["source_dataset"].tolist())))
-    source_record_ids = "; ".join(sorted(_collect_unique(group["source_record_id"].tolist())))
+    source_datasets = "; ".join(
+        sorted(_collect_unique(group["source_dataset"].tolist()))
+    )
+    source_record_ids = "; ".join(
+        sorted(_collect_unique(group["source_record_id"].tolist()))
+    )
 
     province = provinces[0].value if provinces else None
     _record_provenance("province", provinces, province)
@@ -753,12 +773,16 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     website = websites[0].value if websites else None
     _record_provenance("website", websites, website)
 
-    planes_value = "; ".join(selection.value for selection in planes) if planes else None
+    planes_value = (
+        "; ".join(selection.value for selection in planes) if planes else None
+    )
     if planes_value:
         _record_provenance("planes", planes, planes_value)
 
     description_value = (
-        "; ".join(selection.value for selection in descriptions) if descriptions else None
+        "; ".join(selection.value for selection in descriptions)
+        if descriptions
+        else None
     )
     if description_value:
         _record_provenance("description", descriptions, description_value)
@@ -779,7 +803,9 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     secondary_email_values = email_values[1:]
     secondary_emails = ";".join(selection.value for selection in secondary_email_values)
     if secondary_emails:
-        _record_provenance("contact_secondary_emails", secondary_email_values, secondary_emails)
+        _record_provenance(
+            "contact_secondary_emails", secondary_email_values, secondary_emails
+        )
 
     primary_phone_selection = _record_provenance(
         "contact_primary_phone",
@@ -790,9 +816,13 @@ def _aggregate_group(slug: str, group: pd.DataFrame) -> dict[str, object | None]
     secondary_phone_values = phone_values[1:]
     secondary_phones = ";".join(selection.value for selection in secondary_phone_values)
     if secondary_phones:
-        _record_provenance("contact_secondary_phones", secondary_phone_values, secondary_phones)
+        _record_provenance(
+            "contact_secondary_phones", secondary_phone_values, secondary_phones
+        )
 
-    def _first_value_from_row(selection: ValueSelection | None, column: str) -> str | None:
+    def _first_value_from_row(
+        selection: ValueSelection | None, column: str
+    ) -> str | None:
         if selection is None:
             return None
         row = group.iloc[selection.row_metadata.index]
@@ -884,7 +914,9 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
             OSError,
             ValueError,
         ) as exc:  # pragma: no cover - defensive logging hook
-            raise RuntimeError(f"Failed to load source via {loader.__name__}: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to load source via {loader.__name__}: {exc}"
+            ) from exc
         duration = time.perf_counter() - start
         timings[loader.__name__] = duration
         if not frame.empty:
@@ -942,7 +974,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
                     "input_dir": str(config.input_dir),
                     "output_path": str(config.output_path),
                     "profile": (
-                        config.industry_profile.name if config.industry_profile else "default"
+                        config.industry_profile.name
+                        if config.industry_profile
+                        else "default"
                     ),
                 },
             }
@@ -951,7 +985,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     logger.info(
         "Starting pipeline execution",
         extra={
-            "profile": (config.industry_profile.name if config.industry_profile else "default"),
+            "profile": (
+                config.industry_profile.name if config.industry_profile else "default"
+            ),
             "input_dir": str(config.input_dir),
         },
     )
@@ -988,7 +1024,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         "source_load_seconds": source_timings,
     }
     if load_seconds > 0:
-        metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0
+        metrics["load_rows_per_second"] = (
+            len(combined) / load_seconds if len(combined) else 0.0
+        )
 
     if combined.empty:
         refined = pd.DataFrame(columns=SSOT_COLUMNS)
@@ -1064,7 +1102,8 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         logger.info("Schema validation passed")
     except SchemaErrors as exc:
         schema_errors = [
-            f"{row['column']}: {row['failure_case']}" for _, row in exc.failure_cases.iterrows()
+            f"{row['column']}: {row['failure_case']}"
+            for _, row in exc.failure_cases.iterrows()
         ]
         invalid_indices = exc.failure_cases["index"].unique().tolist()
         valid_indices = [idx for idx in refined_df.index if idx not in invalid_indices]
@@ -1112,7 +1151,10 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             "Writing original data to prevent data loss."
         )
         validated_df = refined_df
-        if "CRITICAL: Schema validation resulted in complete data loss" not in schema_errors:
+        if (
+            "CRITICAL: Schema validation resulted in complete data loss"
+            not in schema_errors
+        ):
             schema_errors.append(
                 f"CRITICAL: Schema validation resulted in complete data loss. "
                 f"All {len(refined_df)} records would have been filtered out. "
@@ -1134,7 +1176,9 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     )
     metrics["expectations_seconds"] = time.perf_counter() - expectation_start
 
-    logger.info(f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}")
+    logger.info(
+        f"Expectations validation: {'PASSED' if expectation_summary.success else 'FAILED'}"
+    )
 
     source_breakdown = combined["source_dataset"].value_counts().to_dict()
 

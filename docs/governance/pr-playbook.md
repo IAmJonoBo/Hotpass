@@ -16,12 +16,12 @@ last_updated: 2025-10-25
 
 ## Quality gate waivers
 
-| Gate | Owner | Waiver conditions | Max duration |
-| --- | --- | --- | --- |
-| Tests | Engineering | Only for flaky tests with mitigation issue filed. | 5 days |
-| Accessibility | Platform | Allowed for feature flagged UI with remediation scheduled. | 7 days |
-| Mutation | QA | Permitted if coverage tool unstable; rerun within next sprint. | 7 days |
-| Supply-chain | Security | Only if upstream CycloneDX outage; require manual SBOM in PR. | 3 days |
+| Gate          | Owner       | Waiver conditions                                              | Max duration |
+| ------------- | ----------- | -------------------------------------------------------------- | ------------ |
+| Tests         | Engineering | Only for flaky tests with mitigation issue filed.              | 5 days       |
+| Accessibility | Platform    | Allowed for feature flagged UI with remediation scheduled.     | 7 days       |
+| Mutation      | QA          | Permitted if coverage tool unstable; rerun within next sprint. | 7 days       |
+| Supply-chain  | Security    | Only if upstream CycloneDX outage; require manual SBOM in PR.  | 3 days       |
 
 Waivers require documented approval comment and entry in `Next_Steps.md` Quality Gates with expiry date.
 
