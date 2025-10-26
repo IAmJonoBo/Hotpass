@@ -269,7 +269,8 @@ def test_entity_resolution_uses_fallback_when_splink_missing(
     def fake_add_scores(df: pd.DataFrame) -> pd.DataFrame:
         return df.assign(priority_applied=True)
 
-    monkeypatch.delattr("hotpass.entity_resolution.resolve_entities_with_splink", raising=False)
+    import hotpass.entity_resolution
+    monkeypatch.delattr(hotpass.entity_resolution, "resolve_entities_with_splink", raising=False)
     monkeypatch.setattr(pipeline_stages, "resolve_entities_fallback", fake_fallback)
     monkeypatch.setattr(pipeline_stages, "add_ml_priority_scores", fake_add_scores)
 
