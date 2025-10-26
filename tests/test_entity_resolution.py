@@ -1,8 +1,11 @@
 """Tests for entity resolution module."""
 
+import json
+
 import pandas as pd
 import pytest
 
+import hotpass.entity_resolution as entity_resolution
 from hotpass.entity_resolution import (
     add_ml_priority_scores,
     build_entity_registry,
@@ -274,6 +277,45 @@ def test_build_entity_registry_merges_history(tmp_path):
 
     dormant = registry.loc[registry["organization_slug"] == "dormant-org"].iloc[0]
     assert dormant["status_history"][0]["status"] == "Inactive"
+
+
+def test_load_entity_history_parses_json_lists(tmp_path):
+    """History loader parses JSON payloads without using literal evaluation."""
+
+    history_path = tmp_path / "history.json"
+    history_path.write_text(
+        json.dumps(
+            [
+                {
+                    "entity_id": 1,
+                    "name_variants": ["Alpha", "Aviation"],
+                    "status_history": [{"status": "active"}],
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    history = entity_resolution._load_entity_history(str(history_path))
+
+    first_row = history.iloc[0]
+    assert first_row["name_variants"] == ["Alpha", "Aviation"]
+    assert first_row["status_history"] == [{"status": "active", "date": None}]
+
+
+def test_load_entity_history_ignores_unexpected_strings(tmp_path):
+    """Unexpected values are preserved safely instead of being executed."""
+
+    history_path = tmp_path / "history.csv"
+    history_path.write_text(
+        """entity_id,name_variants\n1,__import__('os').system('whoami')\n""",
+        encoding="utf-8",
+    )
+
+    history = entity_resolution._load_entity_history(str(history_path))
+
+    first_row = history.iloc[0]
+    assert first_row["name_variants"] == ["__import__('os').system('whoami')"]
 
 
 def test_resolve_entities_with_splink_not_available():

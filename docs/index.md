@@ -50,6 +50,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 :caption: Roadmap and governance
 
 /roadmap
+/governance/gap-analysis
 /governance/project-charter
 /governance/pr-playbook
 /governance/upgrade-final-report

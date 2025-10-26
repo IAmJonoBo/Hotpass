@@ -11,6 +11,7 @@ This module provides functionality for:
 import logging
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 try:
@@ -30,6 +31,10 @@ except ImportError:
     GEOPANDAS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+class GeospatialError(RuntimeError):
+    """Raised when geospatial helpers cannot complete their work."""
 
 
 class Geocoder:
@@ -324,37 +329,44 @@ def calculate_distance_matrix(
 
     Returns:
         Distance matrix dataframe (distances in kilometers)
+
+    Raises:
+        GeospatialError: If coordinates are missing or invalid.
     """
-    if not GEOPANDAS_AVAILABLE:
-        logger.warning("Geopandas not available, cannot calculate distances")
-        return pd.DataFrame()
+
+    if lat_column not in df.columns or lon_column not in df.columns:
+        raise GeospatialError(f"Columns {lat_column!r} and {lon_column!r} must exist in dataframe")
+
+    coordinates = df[[lat_column, lon_column]].copy()
+    coordinates = coordinates.dropna(how="any")
+
+    if coordinates.empty:
+        raise GeospatialError("No valid coordinates available for distance matrix computation")
 
     try:
-        gdf = create_geodataframe(df, lat_column, lon_column)
+        latitudes = np.radians(pd.to_numeric(coordinates[lat_column], errors="raise").to_numpy())
+        longitudes = np.radians(pd.to_numeric(coordinates[lon_column], errors="raise").to_numpy())
+    except (TypeError, ValueError) as exc:  # pragma: no cover - exercised via tests
+        raise GeospatialError(f"Invalid coordinate data: {exc}") from exc
 
-        # Project to a metric CRS for accurate distance calculation
-        # Using World Mercator projection (EPSG:3395)
-        gdf_proj = gdf.to_crs(epsg=3395)
+    lat_diff = latitudes[:, None] - latitudes[None, :]
+    lon_diff = longitudes[:, None] - longitudes[None, :]
 
-        # Calculate distance matrix
-        n = len(gdf_proj)
-        distances = pd.DataFrame(index=range(n), columns=range(n), dtype=float)
+    sin_lat = np.sin(lat_diff / 2) ** 2
+    sin_lon = np.sin(lon_diff / 2) ** 2
+    cos_lat = np.cos(latitudes)[:, None] * np.cos(latitudes)[None, :]
 
-        for i in range(n):
-            for j in range(n):
-                if i == j:
-                    distances.iloc[i, j] = 0.0
-                else:
-                    # Distance in meters, convert to kilometers
-                    dist_m = gdf_proj.geometry.iloc[i].distance(gdf_proj.geometry.iloc[j])
-                    distances.iloc[i, j] = dist_m / 1000.0
+    a = sin_lat + cos_lat * sin_lon
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(np.maximum(0.0, 1 - a)))
 
-        logger.info(f"Calculated {n}x{n} distance matrix")
-        return distances
+    earth_radius_km = 6371.0088
+    distances_km = earth_radius_km * c
 
-    except Exception as e:
-        logger.error(f"Error calculating distance matrix: {e}")
-        return pd.DataFrame()
+    np.fill_diagonal(distances_km, 0.0)
+
+    logger.info("Calculated %dx%d distance matrix", len(distances_km), len(distances_km))
+
+    return pd.DataFrame(distances_km, index=coordinates.index, columns=coordinates.index)
 
 
 def cluster_by_proximity(
@@ -376,10 +388,6 @@ def cluster_by_proximity(
     """
     enriched_df = df.copy()
     enriched_df["geo_cluster_id"] = -1
-
-    if not GEOPANDAS_AVAILABLE:
-        logger.warning("Geopandas not available, skipping clustering")
-        return enriched_df
 
     try:
         # Calculate distance matrix
@@ -414,7 +422,7 @@ def cluster_by_proximity(
             f"Created {cluster_id} geographical clusters (max distance: {max_distance_km}km)"
         )
 
-    except Exception as e:
-        logger.error(f"Error clustering by proximity: {e}")
+    except GeospatialError as exc:
+        logger.error(f"Error clustering by proximity: {exc}")
 
     return enriched_df

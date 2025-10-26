@@ -1,5 +1,3 @@
-"""Tests for geospatial utilities without requiring heavy optional deps."""
-
 from __future__ import annotations
 
 from unittest.mock import Mock, patch
@@ -10,6 +8,7 @@ import pytest
 import hotpass.geospatial as geospatial
 from hotpass.geospatial import (
     Geocoder,
+    GeospatialError,
     calculate_distance_matrix,
     cluster_by_proximity,
     create_geodataframe,
@@ -301,7 +300,7 @@ def test_create_geodataframe_missing_columns(mock_point, mock_gpd):
 
 @patch("hotpass.geospatial.GEOPANDAS_AVAILABLE", False)
 def test_calculate_distance_matrix_no_geopandas():
-    """Test distance calculation without geopandas."""
+    """Distance calculation succeeds when geopandas is unavailable."""
     df = pd.DataFrame(
         {
             "latitude": [40.7128, 34.0522],
@@ -311,7 +310,18 @@ def test_calculate_distance_matrix_no_geopandas():
 
     result = calculate_distance_matrix(df)
 
-    assert result.empty
+    assert pytest.approx(result.iloc[0, 1], rel=0.01) == 3936.0
+    assert result.iloc[1, 0] == result.iloc[0, 1]
+    assert result.iloc[0, 0] == 0
+
+
+def test_calculate_distance_matrix_invalid_input():
+    """Invalid coordinate data raises a structured geospatial error."""
+
+    df = pd.DataFrame({"latitude": [None], "longitude": [None]})
+
+    with pytest.raises(GeospatialError):
+        calculate_distance_matrix(df)
 
 
 @patch("hotpass.geospatial.GEOPANDAS_AVAILABLE", False)
@@ -327,4 +337,4 @@ def test_cluster_by_proximity_no_geopandas():
     result = cluster_by_proximity(df)
 
     assert "geo_cluster_id" in result.columns
-    assert (result["geo_cluster_id"] == -1).all()
+    assert set(result["geo_cluster_id"]) == {0, 1}

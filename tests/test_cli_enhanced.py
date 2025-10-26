@@ -3,9 +3,15 @@
 import argparse
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 from hotpass import cli_enhanced as cli_enhanced_module
-from hotpass.cli_enhanced import build_enhanced_parser, cmd_dashboard
+from hotpass.cli_enhanced import (
+    PipelineOrchestrationError,
+    build_enhanced_parser,
+    cmd_dashboard,
+    cmd_orchestrate,
+)
 
 
 def test_build_enhanced_parser():
@@ -174,6 +180,58 @@ def test_cmd_dashboard_missing_streamlit(monkeypatch):
     monkeypatch.setattr("hotpass.cli_enhanced.importlib.import_module", _missing_import)
 
     exit_code = cmd_dashboard(args)
+
+    assert exit_code == 1
+
+
+def test_cmd_orchestrate_success(monkeypatch, tmp_path):
+    """Successful orchestrations delegate to the shared pipeline helper."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(
+        [
+            "orchestrate",
+            "--input-dir",
+            str(tmp_path),
+            "--output-path",
+            str(tmp_path / "out.xlsx"),
+        ]
+    )
+
+    summary = Mock()
+    summary.success = True
+    summary.total_records = 5
+    summary.elapsed_seconds = 1.2
+    summary.archive_path = None
+    summary.quality_report = {"expectations_passed": True}
+
+    monkeypatch.setattr("hotpass.cli_enhanced.run_pipeline_once", lambda _opts: summary)
+
+    exit_code = cmd_orchestrate(args)
+
+    assert exit_code == 0
+
+
+def test_cmd_orchestrate_handles_structured_errors(monkeypatch, tmp_path):
+    """Structured orchestration errors surface as non-zero exit codes."""
+
+    parser = build_enhanced_parser()
+    args = parser.parse_args(
+        [
+            "orchestrate",
+            "--input-dir",
+            str(tmp_path),
+            "--output-path",
+            str(tmp_path / "out.xlsx"),
+        ]
+    )
+
+    def _raise(_opts):
+        raise PipelineOrchestrationError("failed to archive")
+
+    monkeypatch.setattr("hotpass.cli_enhanced.run_pipeline_once", _raise)
+
+    exit_code = cmd_orchestrate(args)
 
     assert exit_code == 1
 
