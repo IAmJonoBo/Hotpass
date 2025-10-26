@@ -97,6 +97,31 @@ jobs:
       - name: Run Semgrep
         run: uv run semgrep --config=policy/semgrep/hotpass.yml
 
+  license-compliance:
+    runs-on: ubuntu-latest
+    needs: qa
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5
+        with:
+          python-version: "3.13"
+
+      - name: Install ScanCode and reuse tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install scancode-toolkit==32.1.0 reuse==3.0.2 license-expression==30.4.4
+
+      - name: Run ScanCode licence audit
+        run: scancode --license --info --json-pp scancode-report.json --license-score 0 .
+
+      - name: Enforce licence policy
+        run: python scripts/compliance/check_scancode.py --report scancode-report.json --policy policy/licensing/allowlist.yml
+
+      - name: Validate REUSE metadata
+        run: reuse lint --dep5-path policy/reuse/dep5
+
   fitness-functions:
     runs-on: ubuntu-latest
     needs: qa
@@ -122,6 +147,7 @@ jobs:
       - mutation-testing
       - static-analysis
       - fitness-functions
+      - license-compliance
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 

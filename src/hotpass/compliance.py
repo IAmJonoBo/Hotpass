@@ -10,6 +10,8 @@ This module provides functionality for:
 
 import logging
 from collections import Counter
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -47,6 +49,37 @@ except ImportError:
     PRESIDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_REDACTION_COLUMNS: tuple[str, ...] = (
+    "contact_primary_name",
+    "contact_primary_email",
+    "contact_primary_phone",
+    "contact_secondary_emails",
+    "contact_secondary_phones",
+    "notes",
+    "description",
+)
+
+
+@dataclass(slots=True)
+class PIIRedactionConfig:
+    """Configuration controlling Presidio-powered redaction flows."""
+
+    enabled: bool = True
+    columns: tuple[str, ...] = DEFAULT_REDACTION_COLUMNS
+    language: str = "en"
+    score_threshold: float = 0.5
+    operator: str = "redact"
+    operator_params: Mapping[str, Any] | None = None
+    capture_entity_scores: bool = True
+
+    def iter_columns(self, frame: pd.DataFrame) -> Iterable[str]:
+        """Yield configured columns that are present on the dataframe."""
+
+        for column in self.columns:
+            if column in frame.columns:
+                yield column
 
 
 class ConsentValidationError(RuntimeError):
@@ -88,8 +121,13 @@ class PIIDetector:
             self.analyzer = None
             self.anonymizer = None
         else:
-            self.analyzer = AnalyzerEngine()
-            self.anonymizer = AnonymizerEngine()
+            try:
+                self.analyzer = AnalyzerEngine()
+                self.anonymizer = AnonymizerEngine()
+            except Exception as exc:  # pragma: no cover - defensive initialisation
+                logger.warning("Failed to initialise Presidio engines: %s", exc)
+                self.analyzer = None
+                self.anonymizer = None
 
     def detect_pii(
         self, text: str, language: str = "en", threshold: float = 0.5
@@ -129,7 +167,13 @@ class PIIDetector:
             logger.error(f"Error detecting PII: {e}")
             return []
 
-    def anonymize_text(self, text: str, operation: str = "replace", language: str = "en") -> str:
+    def anonymize_text(
+        self,
+        text: str,
+        operation: str = "replace",
+        language: str = "en",
+        operator_params: Mapping[str, Any] | None = None,
+    ) -> str:
         """Anonymize PII in text.
 
         Args:
@@ -155,10 +199,11 @@ class PIIDetector:
                 return text
 
             # Anonymize
+            operator = OperatorConfig(operation, operator_params or {})
             anonymized = self.anonymizer.anonymize(
                 text=text,
                 analyzer_results=results,
-                operators={"DEFAULT": OperatorConfig(operation)},
+                operators={"DEFAULT": operator},
             )
 
             return anonymized.text
@@ -260,6 +305,123 @@ def anonymize_dataframe(
     logger.info(f"Anonymized {anonymized_count} cells across {len(columns)} columns")
 
     return result_df
+
+
+def _summarise_entities(
+    entities: Iterable[Mapping[str, Any]],
+    *,
+    include_scores: bool,
+) -> list[dict[str, Any]]:
+    summary: list[dict[str, Any]] = []
+    for entity in entities:
+        entity_type = entity.get("entity_type", "UNKNOWN")
+        item: dict[str, Any] = {"entity_type": entity_type}
+        if include_scores and "score" in entity:
+            try:
+                item["score"] = round(float(entity["score"]), 4)
+            except (TypeError, ValueError):  # pragma: no cover - defensive
+                pass
+        summary.append(item)
+    return summary
+
+
+def redact_dataframe(
+    df: pd.DataFrame,
+    config: PIIRedactionConfig | None = None,
+    *,
+    detector: PIIDetector | None = None,
+) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
+    """Redact PII from a dataframe and emit structured metadata."""
+
+    if config is None or not config.enabled:
+        return df, []
+
+    detector = detector or PIIDetector()
+    if not detector.analyzer or not detector.anonymizer:
+        logger.warning("PII redaction unavailable; returning original dataframe")
+        return df, []
+
+    result_df = df.copy()
+    events: list[dict[str, Any]] = []
+
+    for column in config.iter_columns(df):
+        for row_index, raw_value in df[column].items():
+            if pd.isna(raw_value) or raw_value in {"", None}:
+                continue
+
+            if isinstance(raw_value, (list, tuple)):
+                updated_values = list(raw_value)
+                for value_index, item in enumerate(raw_value):
+                    if item in {None, ""}:
+                        continue
+                    text = str(item)
+                    entities = detector.detect_pii(
+                        text,
+                        language=config.language,
+                        threshold=config.score_threshold,
+                    )
+                    if not entities:
+                        continue
+                    anonymized = detector.anonymize_text(
+                        text,
+                        operation=config.operator,
+                        language=config.language,
+                        operator_params=config.operator_params,
+                    )
+                    updated_values[value_index] = anonymized
+                    events.append(
+                        {
+                            "row_index": row_index,
+                            "column": column,
+                            "value_index": value_index,
+                            "entities": _summarise_entities(
+                                entities, include_scores=config.capture_entity_scores
+                            ),
+                        }
+                    )
+                if updated_values != list(raw_value):
+                    result_df.at[row_index, column] = updated_values
+                continue
+
+            text_value = str(raw_value)
+            if not text_value.strip():
+                continue
+
+            entities = detector.detect_pii(
+                text_value,
+                language=config.language,
+                threshold=config.score_threshold,
+            )
+            if not entities:
+                continue
+
+            anonymized = detector.anonymize_text(
+                text_value,
+                operation=config.operator,
+                language=config.language,
+                operator_params=config.operator_params,
+            )
+            if anonymized != text_value:
+                result_df.at[row_index, column] = anonymized
+            events.append(
+                {
+                    "row_index": row_index,
+                    "column": column,
+                    "value_index": None,
+                    "entities": _summarise_entities(
+                        entities, include_scores=config.capture_entity_scores
+                    ),
+                }
+            )
+
+    if events:
+        logger.info(
+            "Redacted %s values across %s columns",
+            len(events),
+            len(list(config.iter_columns(df))),
+        )
+
+    return result_df, events
 
 
 class POPIAPolicy:

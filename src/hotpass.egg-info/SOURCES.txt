@@ -66,8 +66,14 @@ src/hotpass/linkage/config.py
 src/hotpass/linkage/review.py
 src/hotpass/linkage/runner.py
 src/hotpass/linkage/settings.py
+src/hotpass/storage/__init__.py
+src/hotpass/storage/adapters.py
+src/hotpass/storage/dataset.py
+src/hotpass/storage/duckdb.py
+src/hotpass/telemetry/__init__.py
 src/hotpass/transform/__init__.py
 src/hotpass/transform/normalize.py
+tests/test_acquisition_guardrails.py
 tests/test_artifacts.py
 tests/test_benchmarks.py
 tests/test_bootstrap.py
@@ -96,4 +102,5 @@ tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
 tests/test_quality.py
 tests/test_quality_report.py
+tests/test_scancode_policy.py
 tests/test_secrets.py

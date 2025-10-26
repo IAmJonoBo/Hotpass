@@ -19,6 +19,7 @@ from hotpass.pipeline import (  # noqa: E402
     PIPELINE_EVENT_START,
     PIPELINE_EVENT_WRITE_COMPLETED,
     SSOT_COLUMNS,
+    PIIRedactionConfig,
     PipelineConfig,
     PipelineResult,
     _aggregate_group,
@@ -33,6 +34,7 @@ def test_pipeline_generates_refined_dataset(tmp_path: Path, sample_data_dir: Pat
         output_path=output_path,
         expectation_suite_name="default",
         country_code="ZA",
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     result: PipelineResult = run_pipeline(config)
@@ -67,6 +69,59 @@ def test_pipeline_generates_refined_dataset(tmp_path: Path, sample_data_dir: Pat
     assert report.schema_validation_errors == []
 
 
+def test_pipeline_redacts_sensitive_fields(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, sample_data_dir: Path
+) -> None:
+    output_path = tmp_path / "redacted.xlsx"
+    config = PipelineConfig(
+        input_dir=sample_data_dir,
+        output_path=output_path,
+        expectation_suite_name="default",
+        country_code="ZA",
+        pii_redaction=PIIRedactionConfig(
+            columns=("contact_primary_email", "contact_primary_phone"),
+            operator="replace",
+            operator_params={"new_value": "[REDACTED]"},
+            capture_entity_scores=False,
+        ),
+    )
+
+    class _StubDetector:
+        analyzer = object()
+        anonymizer = object()
+
+        def detect_pii(
+            self, text: str, language: str = "en", threshold: float = 0.5
+        ) -> list[dict[str, Any]]:
+            if "@" in text:
+                return [{"entity_type": "EMAIL_ADDRESS", "score": 0.99}]
+            if text.startswith("+"):
+                return [{"entity_type": "PHONE_NUMBER", "score": 0.95}]
+            return []
+
+        def anonymize_text(
+            self,
+            text: str,
+            operation: str = "replace",
+            language: str = "en",
+            operator_params: dict[str, Any] | None = None,
+        ) -> str:
+            if operator_params and "new_value" in operator_params:
+                return str(operator_params["new_value"])
+            return "[REDACTED]"
+
+    monkeypatch.setattr("hotpass.compliance.PIIDetector", lambda: _StubDetector())
+
+    result = run_pipeline(config)
+    aero_record = result.refined.loc[result.refined["organization_name"] == "Aero School"].iloc[0]
+
+    assert aero_record["contact_primary_email"] == "[REDACTED]"
+    assert aero_record["contact_primary_phone"] == "[REDACTED]"
+    assert result.performance_metrics.get("redacted_cells", 0) == len(result.pii_redaction_events)
+    assert any(event["column"] == "contact_primary_email" for event in result.pii_redaction_events)
+    assert any(event["column"] == "contact_primary_phone" for event in result.pii_redaction_events)
+
+
 def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_path: Path) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
@@ -74,6 +129,7 @@ def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_
         output_path=output_path,
         expectation_suite_name="default",
         country_code="ZA",
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
     result = run_pipeline(config)
     heli = result.refined.loc[result.refined["organization_name"] == "Heli Ops"].iloc[0]
@@ -99,6 +155,7 @@ def test_pipeline_exposes_performance_metrics(sample_data_dir: Path, tmp_path: P
         expectation_suite_name="default",
         country_code="ZA",
         excel_options=ExcelReadOptions(chunk_size=1),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     result = run_pipeline(config)
@@ -127,6 +184,7 @@ def test_pipeline_emits_progress_events(sample_data_dir: Path, tmp_path: Path) -
         expectation_suite_name="default",
         country_code="ZA",
         progress_listener=listener,
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     run_pipeline(config)
@@ -403,6 +461,7 @@ def test_pipeline_handles_all_invalid_records(
         output_path=output_path,
         expectation_suite_name="default",
         country_code="ZA",
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     # Run pipeline - should not raise an error

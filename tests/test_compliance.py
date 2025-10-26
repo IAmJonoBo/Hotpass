@@ -12,10 +12,12 @@ from hotpass.compliance import (  # noqa: E402
     DataClassification,
     LawfulBasis,
     PIIDetector,
+    PIIRedactionConfig,
     POPIAPolicy,
     add_provenance_columns,
     anonymize_dataframe,
     detect_pii_in_dataframe,
+    redact_dataframe,
 )
 
 
@@ -201,6 +203,41 @@ def test_anonymize_dataframe(mock_detector_class):
 
     assert result_df.loc[0, "name"] == "<PERSON>"
     assert result_df.loc[0, "email"] == "<EMAIL_ADDRESS>"
+
+
+@patch("hotpass.compliance.PIIDetector")
+def test_redact_dataframe_captures_events(mock_detector_class):
+    """Redaction should replace values and emit metadata events."""
+    df = pd.DataFrame({"email": ["john@example.com", "clean"]})
+
+    mock_detector = Mock()
+    mock_detector.analyzer = Mock()
+    mock_detector.anonymizer = Mock()
+    mock_detector.detect_pii.side_effect = [
+        [{"entity_type": "EMAIL_ADDRESS", "score": 0.91, "text": "john@example.com"}],
+        [],
+    ]
+    mock_detector.anonymize_text.return_value = "<EMAIL_ADDRESS>"
+    mock_detector_class.return_value = mock_detector
+
+    config = PIIRedactionConfig(columns=("email",), capture_entity_scores=True)
+    redacted, events = redact_dataframe(df, config)
+
+    assert redacted.loc[0, "email"] == "<EMAIL_ADDRESS>"
+    assert redacted.loc[1, "email"] == "clean"
+    assert events
+    assert events[0]["entities"][0]["entity_type"] == "EMAIL_ADDRESS"
+    assert events[0]["entities"][0]["score"] == pytest.approx(0.91, rel=1e-3)
+
+
+def test_redact_dataframe_disabled():
+    """Disabled configuration returns original dataframe and no events."""
+    df = pd.DataFrame({"email": ["john@example.com"]})
+    config = PIIRedactionConfig(enabled=False)
+    redacted, events = redact_dataframe(df, config)
+
+    pd.testing.assert_frame_equal(redacted, df)
+    assert events == []
 
 
 def test_data_classification_enum():

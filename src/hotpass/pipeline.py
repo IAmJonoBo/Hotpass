@@ -17,6 +17,7 @@ import pandas as pd
 import polars as pl
 from pandera.errors import SchemaErrors
 
+from .compliance import PIIRedactionConfig, redact_dataframe
 from .config import IndustryProfile, get_default_profile
 from .data_sources import (
     ExcelReadOptions,
@@ -187,6 +188,7 @@ class PipelineConfig:
     enable_audit_trail: bool = True
     enable_recommendations: bool = True
     progress_listener: ProgressListener | None = None
+    pii_redaction: PIIRedactionConfig = field(default_factory=PIIRedactionConfig)
 
 
 @dataclass
@@ -422,6 +424,7 @@ class PipelineResult:
     compliance_report: dict[str, Any] | None = None
     party_store: PartyStore | None = None
     linkage: LinkageResult | None = None
+    pii_redaction_events: list[dict[str, Any]] = field(default_factory=list)
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
@@ -872,6 +875,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
 
     pipeline_start = time.perf_counter()
     audit_trail: list[dict[str, Any]] = []
+    redaction_events: list[dict[str, Any]] = []
 
     _notify_progress(
         config,
@@ -908,6 +912,20 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
     load_start = time.perf_counter()
     with pipeline_stage("ingest", {"input_dir": str(config.input_dir)}):
         combined, source_timings = _load_sources(config)
+    if config.pii_redaction.enabled:
+        combined, redaction_events = redact_dataframe(combined, config.pii_redaction)
+        if redaction_events and config.enable_audit_trail:
+            audit_trail.append(
+                {
+                    "timestamp": time.time(),
+                    "event": "pii_redacted",
+                    "details": {
+                        "columns": sorted({event["column"] for event in redaction_events}),
+                        "redacted_cells": len(redaction_events),
+                        "operator": config.pii_redaction.operator,
+                    },
+                }
+            )
     load_seconds = time.perf_counter() - load_start
 
     _notify_progress(
@@ -945,6 +963,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         "load_rows_per_second": 0.0,
         "source_load_seconds": source_timings,
     }
+    post_validation_redaction_events: list[dict[str, Any]] = []
     if load_seconds > 0:
         metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0
 
@@ -1003,6 +1022,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
             performance_metrics=metrics_copy,
             # In the early-return path (no data loaded), the party store is empty by definition.
             party_store=PartyStore(),
+            pii_redaction_events=redaction_events,
         )
 
     combined_polars = pl.from_pandas(combined, include_index=False)
@@ -1218,6 +1238,30 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         failure_count=len(expectation_summary.failures),
     )
 
+    if config.pii_redaction.enabled:
+        validated_df, post_validation_redaction_events = redact_dataframe(
+            validated_df, config.pii_redaction
+        )
+        if post_validation_redaction_events:
+            redaction_events.extend(post_validation_redaction_events)
+            if config.enable_audit_trail:
+                audit_trail.append(
+                    {
+                        "timestamp": time.time(),
+                        "event": "pii_redacted_output",
+                        "details": {
+                            "columns": sorted(
+                                {event["column"] for event in post_validation_redaction_events}
+                            ),
+                            "redacted_cells": len(post_validation_redaction_events),
+                            "operator": config.pii_redaction.operator,
+                        },
+                    }
+                )
+
+    if redaction_events:
+        metrics["redacted_cells"] = len(redaction_events)
+
     source_counts = (
         combined_polars.select(pl.col("source_dataset"))
         .drop_nulls()
@@ -1354,6 +1398,7 @@ def run_pipeline(config: PipelineConfig) -> PipelineResult:
         quality_report=report,
         performance_metrics=metrics_copy,
         party_store=party_store,
+        pii_redaction_events=redaction_events,
     )
 
 

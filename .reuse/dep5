@@ -1,0 +1,10 @@
+# Maintained in policy/reuse/dep5; this copy exists for tooling compatibility.
+# Update policy/reuse/dep5 and mirror changes here.
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Hotpass
+Upstream-Contact: security@hotpass.example
+Source: https://github.com/IAmJonoBo/Hotpass
+
+Files: *
+Copyright: 2024-2025 Hotpass Contributors
+License: Apache-2.0

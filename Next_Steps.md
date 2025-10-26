@@ -88,6 +88,7 @@
 - [x] Baseline QA suite rerun with Splink linkage dependencies enabled (2025-12-27)【e8ff23†L1-L84】
 - [x] Implement canonical Party/Role/Alias store, loader backfill, CLI party-store export, and data dictionary tooling (2025-10-26)【5a2f34†L1-L20】【02a776†L1-L120】
 - [x] Resolved Polars grouping regression, refreshed telemetry adapters, and reran full QA suite (pytest, ruff, format, mypy, bandit, detect-secrets, uv build, uv pip check) (2025-10-26)【095878†L1-L84】【123bd6†L1-L2】【058b8a†L1-L2】【e95512†L1-L19】【8d5e85†L5-L27】【fe1fc0†L1-L57】【8c87c0†L1-L139】【9785b9†L1-L3】
+- [x] Implemented ingestion-time Presidio redaction with append-only provenance ledgers and acquisition guardrails (2025-10-26)
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 - [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
 - [x] Baseline QA suite executed (pytest 303 passed @ 88% coverage; lint/format/type/secrets/build clean; Bandit reports existing low-risk cleanup guard) (2025-10-26)【cbe9ef†L1-L123】【155bf6†L1-L2】【509179†L1-L2】【c3900e†L1-L20】【a009d0†L1-L27】【59a08e†L1-L58】【f47b44†L1-L120】
@@ -121,6 +122,7 @@
 - [x] High-risk compliance summary table links backlog items to evidence directories (`docs/compliance/index.md`)
 - [x] Developer experience audit captured (`docs/metrics/devex-audit.md`)
 - [x] Supply-chain automation documented with SBOM/provenance tooling and Backstage catalog entries (`scripts/supply_chain/*`, `templates/backstage/`, `catalog-info.yaml`)
+- [x] Data acquisition guardrails logged with append-only ledgers and robots.txt/ToS enforcement (`scripts/acquisition/*`, `policy/licensing/allowlist.yml`, `policy/reuse/dep5`)
 - [x] Final upgrade report published with pre-mortem, FMEA, attacker review, control matrix, and runbook (`docs/governance/upgrade-final-report.md`)
 - [x] GitHub Actions workflows pinned to commit SHAs and publishing checksum manifests for refined data and supply-chain artefacts
 - [x] Prefect refinement flow validates parameters via Pydantic models and rejects unsafe paths/chunk sizes with dedicated tests
@@ -140,6 +142,9 @@
 - [x] Geospatial distance matrix vectorised with deterministic `GeospatialError` signalling
 - [x] Evidence logging accepts deterministic clocks with dedicated tests for consent/export paths
 - [x] Added telemetry attribute regression coverage and resolved Ruff UP038 lint failure for pipeline spans (2025-10-26)
+- [x] Ensured final pipeline outputs apply Presidio redaction after validation and recorded audit metadata updates (2025-10-26)【F:src/hotpass/pipeline.py†L900-L956】
+- [x] Brought acquisition guardrail and ScanCode compliance tooling back within lint/type style expectations (2025-10-26)【F:scripts/acquisition/guardrails.py†L1-L134】【F:scripts/compliance/check_scancode.py†L1-L120】【F:tests/test_acquisition_guardrails.py†L1-L120】
+- [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
 
 ## Quality Gates
 
@@ -157,6 +162,8 @@
 - [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【8b644b†L1-L2】
 - [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【efd15c†L1-L2】
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
+- [x] ScanCode licence audit (`scancode --license --info --json-pp scancode-report.json --license-score 0 .`)【283e5b†L1-L14】
+- [x] REUSE metadata lint (`reuse lint`)【10d37b†L1-L12】
 - [x] Compliance evidence catalog refreshed (due 2025-01-15)【F:docs/compliance/evidence-catalog.md†L13-L20】
 - [x] `scripts/catalog/generate_dictionary.py` emits Hotpass data dictionary (`uv run python scripts/catalog/generate_dictionary.py`)【b7480d†L1-L2】
 

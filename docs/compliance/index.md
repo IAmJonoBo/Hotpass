@@ -39,5 +39,6 @@ The Hotpass governance programme spans POPIA, ISO 27001, and SOC 2. This index t
 - [Remediation backlog](./remediation-backlog.md) — Prioritised work to close gaps.
 - [Evidence catalog](./evidence-catalog.md) — Retrieval instructions and owners for audit artefacts.
 - [Verification plan](./verification-plan.md) — Cadence, measurement approach, and tooling alignment per framework.
+- [Presidio redaction guide](./presidio-redaction.md) — Runtime options for ingestion-time PII scrubbing and provenance ledgers.
 
 Update these pages whenever controls, evidence sources, or remediation statuses change. Keep `Next_Steps.md` and the [roadmap](../roadmap.md) aligned so compliance remains a first-class workstream.

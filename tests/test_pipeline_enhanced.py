@@ -11,7 +11,7 @@ pytest.importorskip("frictionless")
 import hotpass.pipeline_enhanced as pipeline_enhanced  # noqa: E402
 import hotpass.pipeline_enhancements as pipeline_stages  # noqa: E402
 from hotpass.compliance import ConsentValidationError  # noqa: E402
-from hotpass.pipeline import PipelineResult, QualityReport  # noqa: E402
+from hotpass.pipeline import PIIRedactionConfig, PipelineResult, QualityReport  # noqa: E402
 from hotpass.pipeline_enhanced import (  # noqa: E402
     EnhancedPipelineConfig,
     _build_trace_factory,
@@ -190,6 +190,7 @@ def test_enhanced_pipeline_basic(sample_dataframe, mock_pipeline_result, tmp_pat
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -221,6 +222,7 @@ def test_enhanced_pipeline_with_entity_resolution(sample_dataframe, mock_pipelin
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -256,6 +258,7 @@ def test_enhanced_pipeline_with_compliance(sample_dataframe, mock_pipeline_resul
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -301,6 +304,7 @@ def test_enhanced_pipeline_missing_consent_raises(sample_dataframe, mock_pipelin
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -330,6 +334,7 @@ def test_entity_resolution_uses_fallback_when_splink_missing(
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     fallback_thresholds: list[float] = []
@@ -380,6 +385,7 @@ def test_enhanced_pipeline_with_observability(sample_dataframe, mock_pipeline_re
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -420,6 +426,7 @@ def test_enhanced_pipeline_all_features(sample_dataframe, mock_pipeline_result, 
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     enhanced_config = EnhancedPipelineConfig(
@@ -469,6 +476,7 @@ def test_enhanced_pipeline_with_geospatial_and_enrichment(
         output_path=output_path,
         industry_profile=profile,
         excel_options=ExcelReadOptions(),
+        pii_redaction=PIIRedactionConfig(enabled=False),
     )
 
     geocode_calls: list[pd.DataFrame] = []
