@@ -25,6 +25,13 @@
 - [x] Capture consent validation audit logs within Prefect evidence exports (Owner: Product & Engineering, Due: 2025-12-06)
 - [x] Harden refined data confidentiality controls (Owner: Platform, Due: 2025-12-13)
 - [x] Launch quarterly compliance verification cadence (Owner: Compliance, Due: 2025-01-15)
+- [ ] Consolidate CLI and Prefect orchestration logic with structured error handling (Owner: Engineering, Due: 2025-12-13)
+- [ ] Remove Prefect console handler monkey patch in favour of scoped logging (Owner: Platform, Due: 2025-12-13)
+- [ ] Wire cron scheduling/work pool options through `deploy_pipeline` and add regression tests (Owner: Engineering, Due: 2025-12-20)
+- [ ] Harden entity history parsing to avoid `ast.literal_eval` and add fixtures (Owner: Engineering, Due: 2025-12-20)
+- [ ] Optimise geospatial distance calculations and expose actionable errors (Owner: Data, Due: 2025-12-20)
+- [ ] Add deterministic evidence logging tests covering consent/export helpers (Owner: Compliance & QA, Due: 2025-12-06)
+- [ ] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
 
 ## Steps
 
@@ -58,6 +65,8 @@
 - [x] Implemented Vault-backed secret sync tooling for CI and Prefect orchestrations
 - [x] Persisted consent validation audit logs and refined export access evidence with updated documentation
 - [x] Resolved Vault session typing gaps so mypy accepts StubSession fixtures and aligned evidence logging timestamps with `datetime.UTC`
+- [x] Captured orchestration, entity resolution, geospatial, and evidence gaps ahead of research/validation overhaul (2025-10-26)
+- [ ] Track remediation progress for the documented gap analysis recommendations
 
 - [x] Vendored Semgrep ruleset to unblock static analysis in sandbox environments (2025-10-26)
 - [x] Embedded dashboard remediation guidance with glossary and operations links (2025-10-26)
@@ -69,6 +78,7 @@
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
+- [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
 - [x] Pytest with coverage ≥ 80% (current: 87%)【287104†L1-L80】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)【26d6c6†L1-L29】
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
@@ -158,6 +168,7 @@
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
+- Gap analysis surfaced orchestration duplication, logging shims, entity history parsing, geospatial scaling, and audit logging coverage gaps—see new tasks for mitigation sequencing.
 - Evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) now ship with READMEs; confirm retention SLAs with Compliance and Platform owners.
 - Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Local Semgrep ruleset focuses on high-risk patterns (eval, shell=True); expand coverage with additional rules as the backlog evolves.
