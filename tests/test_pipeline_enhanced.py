@@ -12,6 +12,8 @@ from hotpass.compliance import ConsentValidationError
 from hotpass.pipeline import PipelineResult, QualityReport
 from hotpass.pipeline_enhanced import (
     EnhancedPipelineConfig,
+    _build_trace_factory,
+    _initialize_observability,
     _noop,
     run_enhanced_pipeline,
 )
@@ -102,6 +104,67 @@ def test_noop_context_manager():
     with _noop() as ctx:
         assert ctx is not None
     # Should not raise any exceptions
+
+
+def test_initialize_observability_disabled_returns_none(monkeypatch):
+    """Observability initialisation should be skipped when disabled."""
+
+    config = EnhancedPipelineConfig(enable_observability=False)
+    called = False
+
+    def _guard(*_args, **_kwargs):
+        nonlocal called
+        called = True
+        return None
+
+    monkeypatch.setattr(pipeline_enhanced, "initialize_observability", _guard)
+
+    assert _initialize_observability(config) is None
+    assert called is False
+
+
+def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
+    """When enabled the helper must call the OpenTelemetry bootstrap and return metrics."""
+
+    config = EnhancedPipelineConfig(enable_observability=True)
+    bootstrap_called = False
+    metrics_mock = Mock()
+
+    def _fake_initialize(*_args, **_kwargs):
+        nonlocal bootstrap_called
+        bootstrap_called = True
+
+    monkeypatch.setattr(pipeline_enhanced, "initialize_observability", _fake_initialize)
+    monkeypatch.setattr(pipeline_enhanced, "get_pipeline_metrics", lambda: metrics_mock)
+
+    assert _initialize_observability(config) is metrics_mock
+    assert bootstrap_called is True
+
+
+def test_build_trace_factory_disabled(monkeypatch):
+    """Disabled tracing should yield the no-op context manager."""
+
+    factory = _build_trace_factory(enabled=False)
+    with factory("anything") as ctx:
+        assert isinstance(ctx, _noop)
+
+
+def test_build_trace_factory_enabled_uses_trace_operation(monkeypatch):
+    """The trace factory should proxy to trace_operation when enabled."""
+
+    captured = []
+
+    def _fake_trace(name):
+        captured.append(name)
+        return _noop()
+
+    monkeypatch.setattr(pipeline_enhanced, "trace_operation", _fake_trace)
+
+    factory = _build_trace_factory(enabled=True)
+    with factory("entity_resolution"):
+        pass
+
+    assert captured == ["entity_resolution"]
 
 
 def test_enhanced_pipeline_basic(sample_dataframe, mock_pipeline_result, tmp_path):
@@ -270,6 +333,7 @@ def test_entity_resolution_uses_fallback_when_splink_missing(
         return df.assign(priority_applied=True)
 
     import hotpass.entity_resolution
+
     monkeypatch.delattr(hotpass.entity_resolution, "resolve_entities_with_splink", raising=False)
     monkeypatch.setattr(pipeline_stages, "resolve_entities_fallback", fake_fallback)
     monkeypatch.setattr(pipeline_stages, "add_ml_priority_scores", fake_add_scores)

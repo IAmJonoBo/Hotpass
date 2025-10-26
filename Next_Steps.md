@@ -24,7 +24,7 @@
 - [x] Implement Vault-backed secret delivery for CI workflows and Prefect deployments (Owner: DevOps, Due: 2025-12-06)
 - [x] Capture consent validation audit logs within Prefect evidence exports (Owner: Product & Engineering, Due: 2025-12-06)
 - [x] Harden refined data confidentiality controls (Owner: Platform, Due: 2025-12-13)
-- [ ] Launch quarterly compliance verification cadence (Owner: Compliance, Due: 2025-01-15)
+- [x] Launch quarterly compliance verification cadence (Owner: Compliance, Due: 2025-01-15)
 
 ## Steps
 
@@ -33,6 +33,7 @@
 - [x] Refreshed README to act as a lightweight entry point into docs
 - [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
 - [ ] Capture outcomes from docs workflow once it runs on `main`
+- [x] Automated quarterly verification logging via `scripts/compliance/run_verification.py`
 - [x] Executed repository-wide Ruff formatting sweep and cleared lingering lint/security warnings (2025-10-26)
 - [x] Added CI artifact checksum publication alongside pinned GitHub Actions references
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
@@ -102,6 +103,7 @@
 - [x] Consent validation audit logs persisted to `data/logs/prefect/` alongside documentation updates
 - [x] Export access logs captured under `dist/logs/access/` with hashing metadata for SOC 2 evidence
 - [x] Vault integration shipped for Prefect flows and CI via `hotpass.secrets` utilities and `scripts/secrets/pull_vault_secrets.py`
+- [x] Quarterly verification automation script writes ledger and JSON summary (`scripts/compliance/run_verification.py`, `data/compliance/verification-log.json`)
 - [x] Repository formatting normalized via `uv run ruff format` and Bandit allowlist adjustments (2025-10-26)
 
 ## Quality Gates
@@ -113,14 +115,14 @@
 - [x] Bandit security scan clean (`uv run bandit -r src scripts`)【689a9e†L1-L20】
 - [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【9668ed†L1-L60】
 - [x] Package build succeeds (`uv run uv build`)【733457†L1-L110】
-- [ ] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)
+- [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
 - [x] Fitness functions satisfied (`uv run python scripts/quality/fitness_functions.py`)【8eab1a†L1-L2】
 - [x] SBOM generation script writes CycloneDX output (`uv run python scripts/supply_chain/generate_sbom.py`)【8b644b†L1-L2】
 - [x] Provenance statement emitted (`uv run python scripts/supply_chain/generate_provenance.py`)【efd15c†L1-L2】
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml`)【de7d30†L1-L24】
-- [ ] Compliance evidence catalog refreshed (due 2025-01-15)
+- [x] Compliance evidence catalog refreshed (due 2025-01-15)【F:docs/compliance/evidence-catalog.md†L13-L20】
 
 ## Links
 
@@ -140,6 +142,7 @@
 - SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `8b644b`)
 - Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `efd15c`)
 - Semgrep: `uv run semgrep --config=policy/semgrep/hotpass.yml` (chunk `de7d30`)
+- Compliance cadence: `uv run python scripts/compliance/run_verification.py --reviewer "Compliance Bot" --notes "Initial automation baseline"` (chunk `65fb01`)
 - Compliance baseline: `docs/compliance/index.md`
 - Compliance backlog: `docs/compliance/remediation-backlog.md`
 - Verification cadence: `docs/compliance/verification-plan.md`
@@ -155,10 +158,11 @@
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
-- New evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) need directory ownership and retention policies before implementation work begins.
+- Evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) now ship with READMEs; confirm retention SLAs with Compliance and Platform owners.
 - Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Local Semgrep ruleset focuses on high-risk patterns (eval, shell=True); expand coverage with additional rules as the backlog evolves.
-- Mutation suite currently reports zero killed mutants across `quality`/`pipeline_enhanced`; expand assertions or targeted fixtures to increase kill rate.
+- Mutation suite now exercises observability toggles in `pipeline_enhanced`; rerun kill rate report after next mutation sweep.
 - Shared-secret dashboard password still requires rotation and monitoring until SSO-backed auth replaces it; integrate Vault-issued credentials during rollout.
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
+- Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.
 - Ruff formatter drift resolved via repository-wide sweep; keep formatter gate enforced in CI and rerun after major merges.
