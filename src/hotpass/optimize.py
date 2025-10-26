@@ -20,7 +20,7 @@ class DataOptimizer:
     def __init__(self, data_path: str):
         self.df = pd.read_excel(data_path)
         self.original_shape = self.df.shape
-        logger.info(f"Loaded {self.original_shape[0]} records")
+        logger.info("Loaded %d records", self.original_shape[0])
 
     def normalize_organization_name(self, name) -> str:
         """Normalize organization names for better matching using existing utilities."""
@@ -64,7 +64,7 @@ class DataOptimizer:
                 key = f"{normalized_name} ({self.df.loc[indices[0], 'organization_name']})"
                 duplicates[key] = indices
 
-        logger.info(f"Found {len(duplicates)} potential duplicate groups")
+        logger.info("Found %d potential duplicate groups", len(duplicates))
         return duplicates
 
     def validate_website(self, url):
@@ -223,7 +223,7 @@ class DataOptimizer:
                 if geocoded_count % 10 == 0:
                     time.sleep(0.1)
 
-        logger.info(f"Geocoded {geocoded_count} addresses")
+        logger.info("Geocoded %d addresses", geocoded_count)
 
     def optimize_data(self) -> pd.DataFrame:
         """Run all optimization processes."""
@@ -259,15 +259,15 @@ class DataOptimizer:
             + (self.df.get("contact_primary_email_valid", False)).astype(int)
         ) / 4.0
 
-        logger.info(f"Optimization complete. Original: {self.original_shape[0]} records")
-        logger.info(f"Duplicates identified: {len(duplicates)} groups")
+        logger.info("Optimization complete. Original: %d records", self.original_shape[0])
+        logger.info("Duplicates identified: %d groups", len(duplicates))
 
         return self.df
 
     def save_optimized_data(self, output_path: str):
         """Save the optimized dataset."""
         self.df.to_excel(output_path, index=False)
-        logger.info(f"Optimized data saved to {output_path}")
+        logger.info("Optimized data saved to %s", output_path)
 
 
 if __name__ == "__main__":
