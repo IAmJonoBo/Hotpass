@@ -34,7 +34,7 @@ uv run python -c "import prefect, opentelemetry"
 orchestration:
   enabled: true
   prefect:
-    flow_name: hotpass-enhanced
+    flow_name: hotpass
     work_pool: default-agent-pool
     description: Nightly SSOT refresh
 ```
@@ -42,7 +42,7 @@ orchestration:
 ## 3. Register the flow with Prefect
 
 ```bash
-uv run hotpass-enhanced deploy --name hotpass-prod --profile aviation --schedule "0 2 * * *"
+uv run hotpass deploy --name hotpass-prod --profile aviation --schedule "0 2 * * *"
 ```
 
 The deploy command:
@@ -58,7 +58,7 @@ Confirm the deployment in the Prefect UI and trigger a manual run to validate co
 Hotpass emits OpenTelemetry metrics and traces when observability is enabled.
 
 ```bash
-uv run hotpass-enhanced orchestrate --profile aviation --enable-observability
+uv run hotpass orchestrate --profile aviation --enable-observability
 ```
 
 By default the exporter writes to stdout. To ship metrics to another backend, set environment variables before the run:
@@ -73,7 +73,7 @@ export PREFECT_LOGGING_EXTRA_LOGGERS="hotpass"
 Augment the orchestration run with enrichment and entity-resolution capabilities:
 
 ```bash
-uv run hotpass-enhanced orchestrate \
+uv run hotpass orchestrate \
   --profile aviation \
   --enable-entity-resolution \
   --enable-enrichment \
@@ -92,7 +92,7 @@ Use the Prefect UI to compare runtime, row counts, and validation failures acros
 Launch the Streamlit dashboard locally to visualise pipeline health:
 
 ```bash
-uv run hotpass-enhanced dashboard --port 8501
+uv run hotpass dashboard --port 8501
 ```
 
 The dashboard surfaces throughput, error rates, and enrichment coverage so stakeholders can assess data quality without reading logs.
