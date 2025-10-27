@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ..compliance import PIIRedactionConfig
 from ..quality import build_ssot_schema as _default_build_ssot_schema
 from .base import (
@@ -30,6 +32,9 @@ from .orchestrator import (
     PipelineOrchestrator,
     default_feature_bundle,
 )
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from ..config_schema import HotpassConfig
 
 
 def build_ssot_schema():
@@ -67,9 +72,23 @@ __all__ = [
 ]
 
 
-def run_pipeline(config: PipelineConfig) -> PipelineResult:
-    """Execute the base pipeline using the shared orchestrator."""
+def run_pipeline(config: PipelineConfig | HotpassConfig) -> PipelineResult:
+    """Execute the pipeline from either a legacy dataclass or canonical config."""
 
     orchestrator = PipelineOrchestrator()
+
+    if not isinstance(config, PipelineConfig):
+        from ..config_schema import HotpassConfig  # Local import to avoid circular dependency
+
+        if isinstance(config, HotpassConfig):
+            execution = PipelineExecutionConfig(
+                base_config=config.to_pipeline_config(),
+                enhanced_config=config.to_enhanced_config(),
+                features=default_feature_bundle(),
+            )
+            return orchestrator.run(execution)
+        msg = f"Unsupported configuration type: {type(config)!r}"
+        raise TypeError(msg)
+
     execution = PipelineExecutionConfig(base_config=config)
     return orchestrator.run(execution)

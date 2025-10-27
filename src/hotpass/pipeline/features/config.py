@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
+from ...compliance import DataClassification, LawfulBasis
 from ...linkage import LinkageConfig
 
 
@@ -29,3 +30,8 @@ class EnhancedPipelineConfig:
     linkage_output_dir: str | None = None
     linkage_match_threshold: float | None = None
     telemetry_attributes: Mapping[str, str] = field(default_factory=dict)
+    audit_log_enabled: bool = True
+    consent_required: bool = True
+    governance_intent: tuple[str, ...] = field(default_factory=tuple)
+    governance_classification: DataClassification = DataClassification.INTERNAL
+    lawful_basis: LawfulBasis | None = None

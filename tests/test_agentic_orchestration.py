@@ -128,7 +128,7 @@ def test_broker_agent_run_executes_pipeline_with_approval() -> None:
     mock_runner.assert_called_once()
     options_arg = mock_runner.call_args[0][0]
     assert options_arg.profile_name == "aviation"
-    assert options_arg.input_dir == Path("./data/inbox")
+    assert options_arg.config.pipeline.input_dir == Path("./data/inbox")
 
     assert len(log_sink) >= 2
     assert log_sink[0].status == "approved"

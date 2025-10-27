@@ -15,12 +15,14 @@ from collections.abc import Callable, Mapping, MutableSequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from .artifacts import create_refined_archive
 from .config import get_default_profile
-from .data_sources import ExcelReadOptions
 from .pipeline import PipelineConfig, run_pipeline
+
+if TYPE_CHECKING:  # pragma: no cover - typing aids
+    from hotpass.config_schema import HotpassConfig
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -113,15 +115,10 @@ class AgentApprovalError(PipelineOrchestrationError):
 class PipelineRunOptions:
     """Configuration required to execute the pipeline once."""
 
-    input_dir: Path
-    output_path: Path
-    profile_name: str
-    excel_chunk_size: int | None = None
-    archive: bool = False
-    archive_dir: Path | None = None
+    config: HotpassConfig
+    profile_name: str | None = None
     runner: Callable[..., Any] | None = None
     runner_kwargs: Mapping[str, Any] | None = None
-    profile_loader: Callable[[str], Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,21 +227,32 @@ def _pipeline_options_from_request(request: AgenticRequest) -> PipelineRunOption
     except KeyError as exc:  # pragma: no cover - defensive, asserted via tests
         raise AgentApprovalError(f"Missing pipeline parameter: {exc.args[0]}") from exc
 
-    excel_chunk_size_value = payload.get("excel_chunk_size")
-    excel_chunk_size = int(excel_chunk_size_value) if excel_chunk_size_value is not None else None
-
     archive = bool(payload.get("archive", False))
     archive_dir_value = payload.get("archive_dir")
-    archive_dir = Path(str(archive_dir_value)) if archive and archive_dir_value else None
+    excel_chunk_size_value = payload.get("excel_chunk_size")
 
-    return PipelineRunOptions(
-        input_dir=input_dir,
-        output_path=output_path,
-        profile_name=profile_name,
-        excel_chunk_size=excel_chunk_size,
-        archive=archive,
-        archive_dir=archive_dir,
-    )
+    config_updates: dict[str, Any] = {
+        "pipeline": {
+            "input_dir": input_dir,
+            "output_path": output_path,
+            "archive": archive,
+        }
+    }
+
+    if archive_dir_value is not None:
+        config_updates["pipeline"]["dist_dir"] = Path(str(archive_dir_value))
+    if excel_chunk_size_value is not None:
+        config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size_value)
+
+    from hotpass.config_schema import HotpassConfig
+
+    config = HotpassConfig().merge(config_updates)
+
+    if profile_name:
+        industry = get_default_profile(profile_name)
+        config = config.merge({"profile": industry.to_dict()})
+
+    return PipelineRunOptions(config=config, profile_name=profile_name)
 
 
 @task(name="evaluate-agent-request", retries=0)
@@ -453,24 +461,16 @@ def _execute_pipeline(
 def run_pipeline_once(options: PipelineRunOptions) -> PipelineRunSummary:
     """Execute the pipeline once using shared orchestration helpers."""
 
-    profile_loader = options.profile_loader or get_default_profile
-    profile = profile_loader(options.profile_name)
-
-    config = PipelineConfig(
-        input_dir=Path(options.input_dir),
-        output_path=Path(options.output_path),
-        industry_profile=profile,
-        excel_options=ExcelReadOptions(chunk_size=options.excel_chunk_size),
-    )
-
+    config = options.config
     runner = options.runner or run_pipeline
+    pipeline_config = config.to_pipeline_config()
 
     return _execute_pipeline(
-        config,
+        pipeline_config,
         runner=runner,
         runner_kwargs=options.runner_kwargs,
-        archive=options.archive,
-        archive_dir=options.archive_dir,
+        archive=config.pipeline.archive,
+        archive_dir=config.pipeline.dist_dir,
     )
 
 
@@ -538,16 +538,39 @@ def refinement_pipeline_flow(
         profile_name,
     )
 
-    summary = run_pipeline_once(
-        PipelineRunOptions(
-            input_dir=Path(input_dir),
-            output_path=Path(output_path),
-            profile_name=profile_name,
-            excel_chunk_size=excel_chunk_size,
-            archive=archive,
-            archive_dir=Path(dist_dir) if archive else None,
-        )
-    )
+    from hotpass.config_schema import HotpassConfig
+
+    config_updates: dict[str, Any] = {
+        "pipeline": {
+            "input_dir": Path(input_dir),
+            "output_path": Path(output_path),
+            "archive": archive,
+            "dist_dir": Path(dist_dir),
+        }
+    }
+    if excel_chunk_size is not None:
+        config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size)
+
+    config = HotpassConfig().merge(config_updates)
+    profile = get_default_profile(profile_name)
+
+    profile_payload: Mapping[str, Any] | None = None
+    model_dump = getattr(profile, "model_dump", None)
+    if callable(model_dump):
+        candidate = model_dump()
+        if isinstance(candidate, Mapping):
+            profile_payload = candidate
+    if profile_payload is None and hasattr(profile, "to_dict"):
+        candidate = profile.to_dict()
+        if isinstance(candidate, Mapping):
+            profile_payload = candidate
+    if profile_payload is None and isinstance(profile, Mapping):
+        profile_payload = profile
+
+    if profile_payload is not None:
+        config = config.merge({"profile": profile_payload})
+
+    summary = run_pipeline_once(PipelineRunOptions(config=config, profile_name=profile_name))
 
     _safe_log(
         logger,

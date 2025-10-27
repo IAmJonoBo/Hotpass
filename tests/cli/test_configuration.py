@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from hotpass.cli import configuration, shared
+from hotpass.config_schema import HotpassConfig
 
 
 def test_load_profile_from_toml(tmp_path: Path) -> None:
@@ -82,3 +83,19 @@ def test_load_config_supports_json(tmp_path: Path) -> None:
 
     payload = shared.load_config(json_path)
     assert payload == {"archive": True}
+
+
+def test_profile_apply_to_config_merges_pipeline_defaults() -> None:
+    profile = configuration.CLIProfile(
+        name="demo",
+        expectation_suite="aviation",
+        country_code="GB",
+        qa_mode="strict",
+    )
+
+    base = HotpassConfig()
+    merged = profile.apply_to_config(base)
+
+    assert merged.pipeline.expectation_suite == "aviation"
+    assert merged.pipeline.country_code == "GB"
+    assert merged.pipeline.qa_mode == "strict"

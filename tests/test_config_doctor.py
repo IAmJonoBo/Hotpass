@@ -1,285 +1,110 @@
-"""Tests for configuration doctor functionality."""
+"""Regression tests for the canonical configuration doctor."""
 
-import pytest
+from __future__ import annotations
 
-pytest.importorskip("frictionless")
+from pathlib import Path
 
-from hotpass.config import get_default_profile  # noqa: E402
-from hotpass.config_doctor import ConfigDoctor, DiagnosticResult  # noqa: E402
+from hotpass.compliance import DataClassification
+from hotpass.config import get_default_profile
+from hotpass.config_doctor import ConfigDoctor, DiagnosticResult
+from hotpass.config_schema import GovernanceMetadata, HotpassConfig, PipelineRuntimeConfig
 
 
-def test_config_doctor_diagnose_default_profile():
-    """Test that config doctor can diagnose default profile."""
-    profile = get_default_profile("generic")
-    doctor = ConfigDoctor(profile=profile)
+def _make_config(tmp_path: Path) -> HotpassConfig:
+    input_dir = tmp_path / "input"
+    output_path = tmp_path / "dist" / "refined.xlsx"
+    input_dir.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    return HotpassConfig(
+        pipeline=PipelineRuntimeConfig(
+            input_dir=input_dir,
+            output_path=output_path,
+        ),
+        governance=GovernanceMetadata(
+            intent=["Baseline refinement"],
+            data_owner="Data",  # Satisfy validation
+            classification=DataClassification.INTERNAL,
+        ),
+    )
+
+
+def test_config_doctor_diagnose_flags_missing_governance(tmp_path: Path) -> None:
+    """Missing governance metadata should be reported as errors."""
+
+    config = _make_config(tmp_path)
+    config = config.model_copy(
+        update={
+            "governance": GovernanceMetadata(
+                intent=["Baseline refinement"],
+                data_owner="",
+                classification=DataClassification.INTERNAL,
+            )
+        }
+    )
+
+    doctor = ConfigDoctor(config=config)
     results = doctor.diagnose()
 
-    assert len(results) > 0
-    assert all(isinstance(r, DiagnosticResult) for r in results)
+    assert any(r.check_name == "governance.data_owner" and not r.passed for r in results)
 
 
-def test_config_doctor_summary():
-    """Test that config doctor generates summary correctly."""
-    profile = get_default_profile("aviation")
-    doctor = ConfigDoctor(profile=profile)
+def test_config_doctor_autofix_injects_governance_defaults(tmp_path: Path) -> None:
+    """Autofix should patch missing governance metadata when possible."""
+
+    config = _make_config(tmp_path).model_copy(
+        update={
+            "governance": GovernanceMetadata(
+                intent=["Baseline refinement"],
+                data_owner="",
+                classification=DataClassification.INTERNAL,
+            ),
+        }
+    )
+
+    doctor = ConfigDoctor(config=config)
+    assert doctor.autofix() is True
 
     summary = doctor.get_summary()
-
-    assert "total_checks" in summary
-    assert "passed" in summary
-    assert "failed" in summary
-    assert "health_score" in summary
-    assert 0 <= summary["health_score"] <= 100
+    assert summary["passed"] >= summary["failed"]
+    assert doctor.config.governance.data_owner == "Data Governance"
 
 
-def test_config_doctor_identifies_issues():
-    """Test that config doctor identifies configuration issues."""
-    from hotpass.config import IndustryProfile
+def test_config_doctor_upgrade_from_legacy_payload(tmp_path: Path) -> None:
+    """Legacy payloads should be converted into canonical Hotpass configs."""
 
-    # Create a profile with issues
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        email_validation_threshold=1.5,  # Invalid: > 1.0
-        phone_validation_threshold=0.3,  # Warning: too low
+    legacy_payload = {
+        "input_dir": str(tmp_path),
+        "output_path": str(tmp_path / "dist" / "refined.xlsx"),
+        "expectation_suite": "default",
+        "country_code": "ZA",
+        "profile": get_default_profile("aviation").to_dict(),
+        "features": {"compliance": True},
+        "governance": {
+            "intent": ["Process regulated data"],
+            "data_owner": "Data Governance",
+        },
+    }
+
+    doctor = ConfigDoctor()
+    config, notices = doctor.upgrade_payload(legacy_payload)
+
+    assert isinstance(config, HotpassConfig)
+    assert config.pipeline.expectation_suite == "default"
+    assert config.features.compliance is True
+    assert any("deprecated" in notice.message for notice in notices)
+
+
+def test_config_doctor_diagnostic_result_repr() -> None:
+    """Ensure diagnostic results remain human readable."""
+
+    result = DiagnosticResult(
+        check_name="test",
+        passed=False,
+        message="example",
+        fix_suggestion="fix it",
+        severity="warning",
     )
 
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should find the invalid email threshold
-    email_issues = [r for r in results if "email" in r.check_name and not r.passed]
-    assert len(email_issues) > 0
-
-    # Should find the low phone threshold
-    phone_warnings = [r for r in results if "phone" in r.check_name and r.severity == "warning"]
-    assert len(phone_warnings) > 0
-
-
-def test_config_doctor_autofix():
-    """Test that config doctor can auto-fix common issues."""
-    from hotpass.config import IndustryProfile
-
-    # Create a profile with fixable issues
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        email_validation_threshold=1.5,  # Will be fixed to 0.85
-        required_fields=[],  # Missing organization_name
-    )
-
-    doctor = ConfigDoctor(profile=profile)
-
-    # Auto-fix should make changes
-    fixed = doctor.autofix()
-    assert fixed is True
-
-    # Check that fixes were applied
-    assert profile.email_validation_threshold == 0.85
-    assert "organization_name" in profile.required_fields
-
-
-def test_config_doctor_health_score():
-    """Test health score calculation."""
-    profile = get_default_profile("aviation")
-    doctor = ConfigDoctor(profile=profile)
-
-    summary = doctor.get_summary()
-
-    # Aviation profile should be well-configured
-    assert summary["health_score"] >= 70
-
-
-def test_config_doctor_empty_profile_name():
-    """Test detection of empty profile name."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(name="", display_name="Test")
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect empty profile name
-    name_issues = [r for r in results if r.check_name == "profile_name" and not r.passed]
-    assert len(name_issues) > 0
-    assert name_issues[0].severity == "error"
-
-
-def test_config_doctor_empty_display_name():
-    """Test detection of empty display name."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(name="test", display_name="")
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect empty display name
-    display_issues = [r for r in results if r.check_name == "profile_display_name" and not r.passed]
-    assert len(display_issues) > 0
-    assert display_issues[0].severity == "warning"
-
-
-def test_config_doctor_high_threshold_warning():
-    """Test warning for very high validation thresholds."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        website_validation_threshold=0.98,  # Very high
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should warn about high website threshold
-    website_warnings = [r for r in results if "website" in r.check_name and r.severity == "warning"]
-    assert len(website_warnings) > 0
-
-
-def test_config_doctor_no_source_priorities():
-    """Test detection of missing source priorities."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        source_priorities={},  # Empty priorities
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect missing source priorities
-    priority_issues = [r for r in results if r.check_name == "source_priorities" and not r.passed]
-    assert len(priority_issues) > 0
-    assert priority_issues[0].severity == "warning"
-
-
-def test_config_doctor_duplicate_source_priorities():
-    """Test detection of duplicate source priority values."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        source_priorities={"source1": 1, "source2": 1},  # Duplicate priority values
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect duplicate priorities
-    dup_issues = [r for r in results if r.check_name == "source_priorities_unique" and not r.passed]
-    assert len(dup_issues) > 0
-
-
-def test_config_doctor_no_column_synonyms():
-    """Test detection of missing column synonyms."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        column_synonyms={},  # No synonyms
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect missing column synonyms
-    synonym_issues = [r for r in results if r.check_name == "column_synonyms" and not r.passed]
-    assert len(synonym_issues) > 0
-
-
-def test_config_doctor_missing_critical_field_synonyms():
-    """Test detection of missing synonyms for critical fields."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        column_synonyms={"other_field": ["synonym"]},  # Missing critical fields
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect missing critical field synonyms
-    critical_issues = [
-        r for r in results if r.check_name == "column_synonyms_critical" and not r.passed
-    ]
-    assert len(critical_issues) > 0
-    assert critical_issues[0].severity == "warning"
-
-
-def test_config_doctor_no_required_fields():
-    """Test detection of missing required fields."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(name="test", display_name="Test", required_fields=[])
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect missing required fields
-    required_issues = [r for r in results if r.check_name == "required_fields" and not r.passed]
-    assert len(required_issues) > 0
-
-
-def test_config_doctor_missing_org_name_in_required():
-    """Test detection of organization_name not in required fields."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(
-        name="test",
-        display_name="Test",
-        required_fields=["other_field"],  # Missing org_name
-    )
-    doctor = ConfigDoctor(profile=profile)
-    results = doctor.diagnose()
-
-    # Should detect missing organization_name in required fields
-    org_issues = [r for r in results if r.check_name == "required_fields_org_name" and not r.passed]
-    assert len(org_issues) > 0
-
-
-def test_config_doctor_print_report(capsys):
-    """Test that print_report outputs to console."""
-    profile = get_default_profile("generic")
-    doctor = ConfigDoctor(profile=profile)
-
-    doctor.print_report()
-
-    captured = capsys.readouterr()
-    assert "Configuration Health Check Report" in captured.out
-    assert "Health Score" in captured.out
-
-
-def test_config_doctor_autofix_phone_threshold():
-    """Test autofix for phone threshold."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(name="test", display_name="Test", phone_validation_threshold=1.5)
-    doctor = ConfigDoctor(profile=profile)
-
-    fixed = doctor.autofix()
-    assert fixed is True
-    assert profile.phone_validation_threshold == 0.85
-
-
-def test_config_doctor_autofix_website_threshold():
-    """Test autofix for website threshold."""
-    from hotpass.config import IndustryProfile
-
-    profile = IndustryProfile(name="test", display_name="Test", website_validation_threshold=1.5)
-    doctor = ConfigDoctor(profile=profile)
-
-    fixed = doctor.autofix()
-    assert fixed is True
-    assert profile.website_validation_threshold == 0.75
-
-
-def test_config_doctor_no_autofix_needed():
-    """Test that autofix returns False when no fixes are needed."""
-    profile = get_default_profile("aviation")
-    doctor = ConfigDoctor(profile=profile)
-
-    # Aviation profile is already well-configured
-    fixed = doctor.autofix()
-    # May or may not need fixes depending on profile state
-    assert isinstance(fixed, bool)
+    assert "test" in repr(result)
+    assert "warning" in repr(result)

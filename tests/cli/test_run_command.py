@@ -13,8 +13,8 @@ import pytest
 pytest.importorskip("frictionless")
 
 from hotpass import cli
-from hotpass.cli.commands import run as run_command
-from hotpass.pipeline import PipelineConfig, QualityReport
+from hotpass.pipeline import QualityReport
+from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
 
 
 def _collect_json_lines(output: str) -> list[dict[str, Any]]:
@@ -171,12 +171,14 @@ def test_run_command_attaches_progress_listener_when_rich_logging(
                 performance_metrics={},
             )
 
-    def fake_run_pipeline(config: PipelineConfig) -> DummyResult:
+    def fake_run_pipeline(
+        self: PipelineOrchestrator, execution: PipelineExecutionConfig
+    ) -> DummyResult:
         nonlocal captured_listener
-        captured_listener = config.progress_listener
+        captured_listener = execution.base_config.progress_listener
         return DummyResult()
 
-    monkeypatch.setattr(run_command, "run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr(PipelineOrchestrator, "run", fake_run_pipeline, raising=False)
 
     exit_code = cli.main(
         [

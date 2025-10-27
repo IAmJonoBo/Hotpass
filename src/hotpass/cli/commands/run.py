@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,8 +14,9 @@ from rich.prompt import Confirm
 
 from hotpass.artifacts import create_refined_archive
 from hotpass.config import load_industry_profile
-from hotpass.pipeline import PipelineConfig, run_pipeline
-from hotpass.pipeline.base import ExcelReadOptions
+from hotpass.config_schema import HotpassConfig
+from hotpass.pipeline import default_feature_bundle
+from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -27,32 +28,40 @@ from ..progress import (
 )
 from ..shared import infer_report_format, load_config, normalise_sensitive_fields
 
+LEGACY_PIPELINE_KEYS: frozenset[str] = frozenset(
+    {
+        "input_dir",
+        "output_path",
+        "dist_dir",
+        "archive",
+        "expectation_suite",
+        "country_code",
+        "party_store_path",
+        "log_format",
+        "report_path",
+        "report_format",
+        "excel_chunk_size",
+        "excel_engine",
+        "excel_stage_dir",
+        "qa_mode",
+        "observability",
+        "sensitive_fields",
+    }
+)
+
 
 @dataclass(slots=True)
 class RunOptions:
     """Resolved options driving the core pipeline run."""
 
-    input_dir: Path
-    output_path: Path
-    expectation_suite_name: str
-    country_code: str
-    archive: bool
-    dist_dir: Path
+    canonical_config: HotpassConfig
     log_format: str
     report_path: Path | None
     report_format: str | None
     party_store_path: Path | None
-    config_paths: list[Path]
-    excel_chunk_size: int | None
-    excel_engine: str | None
-    excel_stage_dir: Path | None
     sensitive_fields: tuple[str, ...]
     interactive: bool | None
-    qa_mode: str
-    observability: bool | None
     profile_name: str | None
-    features: dict[str, bool]
-    industry_profile: str | None
 
 
 def build(
@@ -86,69 +95,52 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     logger = StructuredLogger(options.log_format, options.sensitive_fields)
     console = logger.console if options.log_format == "rich" else None
 
+    config = options.canonical_config
+
     interactive = options.interactive
     if interactive is None:
         interactive = console is not None and sys.stdin.isatty()
 
-    if not options.input_dir.exists():
-        logger.log_error(f"Input directory does not exist: {options.input_dir}")
+    input_dir = config.pipeline.input_dir
+    output_path = config.pipeline.output_path
+
+    if not input_dir.exists():
+        logger.log_error(f"Input directory does not exist: {input_dir}")
         logger.log_error("Please create the directory or specify a different path with --input-dir")
         return 1
-    if not options.input_dir.is_dir():
-        logger.log_error(f"Input path is not a directory: {options.input_dir}")
+    if not input_dir.is_dir():
+        logger.log_error(f"Input path is not a directory: {input_dir}")
         return 1
 
-    excel_files = list(options.input_dir.glob("*.xlsx")) + list(options.input_dir.glob("*.xls"))
+    excel_files = list(input_dir.glob("*.xlsx")) + list(input_dir.glob("*.xls"))
     if not excel_files:
-        logger.log_error(f"No Excel files found in: {options.input_dir}")
+        logger.log_error(f"No Excel files found in: {input_dir}")
         logger.log_error("Please add Excel files to the input directory")
         return 1
 
     if console:
         console.print("[bold cyan]Hotpass Data Refinement Pipeline[/bold cyan]")
         console.print(f"[dim]Profile:[/dim] {options.profile_name or 'default'}")
-        console.print(f"[dim]Input directory:[/dim] {options.input_dir}")
-        console.print(f"[dim]Output path:[/dim] {options.output_path}")
+        console.print(f"[dim]Input directory:[/dim] {input_dir}")
+        console.print(f"[dim]Output path:[/dim] {output_path}")
         console.print(f"[dim]Found {len(excel_files)} Excel file(s)[/dim]")
         console.print()
-
-    excel_options = None
-    if any(
-        value is not None
-        for value in (options.excel_chunk_size, options.excel_engine, options.excel_stage_dir)
-    ):
-        excel_options = ExcelReadOptions(
-            chunk_size=options.excel_chunk_size,
-            engine=options.excel_engine,
-            stage_to_parquet=options.excel_stage_dir is not None,
-            stage_dir=options.excel_stage_dir,
-        )
-
-    industry_profile = None
-    if options.industry_profile:
-        industry_profile = load_industry_profile(options.industry_profile)
 
     progress_context = render_progress(console)
     with progress_context as progress:
         listener = progress.handle_event if isinstance(progress, PipelineProgress) else None
-        config = PipelineConfig(
-            input_dir=options.input_dir,
-            output_path=options.output_path,
-            expectation_suite_name=options.expectation_suite_name,
-            country_code=options.country_code,
-            excel_options=excel_options,
-            progress_listener=listener,
-            industry_profile=industry_profile,
+
+        base_config = config.to_pipeline_config(progress_listener=listener)
+        enhanced_config = config.to_enhanced_config()
+        orchestrator = PipelineOrchestrator()
+        execution = PipelineExecutionConfig(
+            base_config=base_config,
+            enhanced_config=enhanced_config,
+            features=default_feature_bundle(),
         )
-        if options.qa_mode == "relaxed":
-            config.enable_audit_trail = False
-            config.enable_recommendations = False
-        elif options.qa_mode == "strict":
-            config.enable_audit_trail = True
-            config.enable_recommendations = True
 
         try:
-            result = run_pipeline(config)
+            result = orchestrator.run(execution)
         except Exception as exc:  # pragma: no cover - defensive guard
             logger.log_error(str(exc))
             if console:
@@ -162,7 +154,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     if console:
         console.print()
         console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
-        console.print(f"[dim]Refined data written to:[/dim] {options.output_path}")
+        console.print(f"[dim]Refined data written to:[/dim] {output_path}")
 
     if interactive and console and report.recommendations:
         console.print()
@@ -185,184 +177,133 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         options.party_store_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         logger.log_party_store(options.party_store_path)
 
-    if options.archive:
-        options.dist_dir.mkdir(parents=True, exist_ok=True)
-        archive_path = create_refined_archive(options.output_path, options.dist_dir)
+    if config.pipeline.archive:
+        config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
+        archive_path = create_refined_archive(output_path, config.pipeline.dist_dir)
         logger.log_archive(archive_path)
 
     return 0
 
 
 def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) -> RunOptions:
-    defaults: dict[str, Any] = {
-        "input_dir": Path.cwd() / "data",
-        "output_path": None,
-        "expectation_suite_name": "default",
-        "country_code": "ZA",
-        "archive": False,
-        "dist_dir": Path.cwd() / "dist",
-        "log_format": "rich",
-        "report_path": None,
-        "report_format": None,
-        "party_store_path": None,
-        "excel_chunk_size": None,
-        "excel_engine": None,
-        "excel_stage_dir": None,
-        "sensitive_fields": None,
-        "interactive": None,
-        "qa_mode": "default",
-        "observability": None,
-    }
-
+    canonical = HotpassConfig()
     profile_name = profile.name if profile else None
-    features: dict[str, bool] = profile.feature_payload() if profile else {}
-    industry_profile = profile.industry_profile if profile else None
 
     if profile is not None:
-        defaults = profile.apply(defaults)
+        canonical = profile.apply_to_config(canonical)
 
     config_paths: list[Path] = []
     if profile is not None:
         config_paths.extend(profile.resolved_config_files())
+        if profile.industry_profile:
+            industry = load_industry_profile(profile.industry_profile)
+            canonical = canonical.merge({"profile": industry.to_dict()})
+
     cli_config_paths = getattr(namespace, "config_paths", None)
     if cli_config_paths:
         config_paths.extend(Path(path) for path in cli_config_paths)
 
-    config_values: dict[str, Any] = {}
     for config_path in config_paths:
         if not config_path.exists():
             msg = f"Configuration file not found: {config_path}"
             raise FileNotFoundError(msg)
-        config_values.update(load_config(config_path))
+        payload = _normalise_config_payload(load_config(config_path))
+        canonical = canonical.merge(payload)
 
-    options = {**defaults, **config_values}
+    pipeline_updates: dict[str, Any] = {}
 
-    _apply_cli_override(options, namespace, "input_dir", converter=Path)
-    _apply_cli_override(options, namespace, "output_path", converter=Path)
-    _apply_cli_override(options, namespace, "expectation_suite_name")
-    _apply_cli_override(options, namespace, "country_code")
-    _apply_cli_override(options, namespace, "dist_dir", converter=Path)
-    _apply_cli_override(options, namespace, "party_store_path", converter=Path)
-    _apply_cli_override(options, namespace, "log_format")
-    _apply_cli_override(options, namespace, "report_path", converter=Path)
-    _apply_cli_override(options, namespace, "report_format")
-    _apply_cli_override(options, namespace, "excel_chunk_size", converter=int)
-    _apply_cli_override(options, namespace, "excel_engine")
-    _apply_cli_override(options, namespace, "excel_stage_dir", converter=Path)
-    _apply_cli_override(options, namespace, "interactive")
-    _apply_cli_override(options, namespace, "qa_mode")
-    _apply_cli_override(options, namespace, "observability")
+    if namespace.input_dir is not None:
+        pipeline_updates["input_dir"] = Path(namespace.input_dir)
+    if namespace.output_path is not None:
+        pipeline_updates["output_path"] = Path(namespace.output_path)
+    if namespace.expectation_suite_name is not None:
+        pipeline_updates["expectation_suite"] = namespace.expectation_suite_name
+    if namespace.country_code is not None:
+        pipeline_updates["country_code"] = namespace.country_code
+    if namespace.dist_dir is not None:
+        pipeline_updates["dist_dir"] = Path(namespace.dist_dir)
+    if namespace.party_store_path is not None:
+        pipeline_updates["party_store_path"] = Path(namespace.party_store_path)
+    if namespace.log_format is not None:
+        pipeline_updates["log_format"] = namespace.log_format
+    if namespace.report_path is not None:
+        pipeline_updates["report_path"] = Path(namespace.report_path)
+    if namespace.report_format is not None:
+        pipeline_updates["report_format"] = namespace.report_format
+    if getattr(namespace, "excel_chunk_size", None) is not None:
+        pipeline_updates["excel_chunk_size"] = int(namespace.excel_chunk_size)
+    if getattr(namespace, "excel_engine", None):
+        pipeline_updates["excel_engine"] = namespace.excel_engine
+    if getattr(namespace, "excel_stage_dir", None) is not None:
+        pipeline_updates["excel_stage_dir"] = Path(namespace.excel_stage_dir)
+    if getattr(namespace, "qa_mode", None) is not None:
+        pipeline_updates["qa_mode"] = namespace.qa_mode
+    if getattr(namespace, "observability", None) is not None:
+        pipeline_updates["observability"] = bool(namespace.observability)
+    if getattr(namespace, "archive", None) is not None:
+        pipeline_updates["archive"] = bool(namespace.archive)
 
-    archive_flag = getattr(namespace, "archive", None)
-    if archive_flag is not None:
-        options["archive"] = bool(archive_flag)
+    updates: dict[str, Any] = {}
+    if pipeline_updates:
+        updates["pipeline"] = pipeline_updates
+
+    if updates:
+        canonical = canonical.merge(updates)
+
     sensitive_cli = getattr(namespace, "sensitive_fields", None)
     if sensitive_cli is not None:
-        options["sensitive_fields"] = list(sensitive_cli)
+        canonical = canonical.merge(
+            {
+                "pipeline": {
+                    "sensitive_fields": [str(value) for value in sensitive_cli],
+                }
+            }
+        )
 
-    input_dir = Path(options["input_dir"])
-    output_path = (
-        Path(options["output_path"])
-        if options.get("output_path")
-        else input_dir / "refined_data.xlsx"
+    log_format = canonical.pipeline.log_format
+    sensitive_fields = normalise_sensitive_fields(
+        canonical.pipeline.sensitive_fields,
+        DEFAULT_SENSITIVE_FIELD_TOKENS,
     )
-    dist_dir = Path(options.get("dist_dir", Path.cwd() / "dist"))
-    report_path = Path(options["report_path"]) if options.get("report_path") else None
-    party_store_path = (
-        Path(options["party_store_path"]) if options.get("party_store_path") else None
-    )
-    stage_dir = Path(options["excel_stage_dir"]) if options.get("excel_stage_dir") else None
 
-    chunk_size_value = options.get("excel_chunk_size")
-    chunk_size = None
-    if chunk_size_value is not None:
-        chunk_size = int(chunk_size_value)
-        if chunk_size <= 0:
-            msg = "--excel-chunk-size must be greater than zero"
-            raise ValueError(msg)
-
-    report_format = options.get("report_format")
-    if isinstance(report_format, str):
-        report_format = report_format.lower()
-    if report_format is None and report_path is not None:
-        report_format = infer_report_format(report_path)
-    elif report_format is not None and report_format not in {"markdown", "html"}:
-        msg = f"Unsupported report format: {report_format}"
-        raise ValueError(msg)
-
-    log_format = str(options.get("log_format", "rich")).lower()
-    if log_format not in {"json", "rich"}:
-        msg = f"Unsupported log format: {log_format}"
-        raise ValueError(msg)
-
-    qa_mode = options.get("qa_mode", "default")
-    if qa_mode not in {"default", "strict", "relaxed"}:
-        msg = f"Unsupported QA mode: {qa_mode}"
-        raise ValueError(msg)
-
-    archive = bool(options.get("archive", False))
-    interactive = options.get("interactive")
+    interactive = getattr(namespace, "interactive", None)
     if not isinstance(interactive, (bool, type(None))):
         interactive = bool(interactive)
 
-    observability = options.get("observability")
-    if isinstance(observability, str):
-        observability = observability.lower() in {"1", "true", "yes", "on"}
-
-    sensitive_field_values = options.get("sensitive_fields")
-    sensitive_values_iter: Iterable[str] | None = None
-    if isinstance(sensitive_field_values, str):
-        sensitive_values_iter = [sensitive_field_values]
-    elif isinstance(sensitive_field_values, Iterable):
-        sensitive_values_iter = [
-            str(value) for value in sensitive_field_values if value is not None
-        ]
-    elif sensitive_field_values is not None:
-        sensitive_values_iter = [str(sensitive_field_values)]
-    sensitive_fields = normalise_sensitive_fields(
-        sensitive_values_iter, DEFAULT_SENSITIVE_FIELD_TOKENS
+    report_path = canonical.pipeline.report_path
+    report_format = canonical.pipeline.report_format or (
+        infer_report_format(report_path) if report_path else None
     )
-
-    excel_engine = options.get("excel_engine")
-    if isinstance(excel_engine, str) and not excel_engine:
-        excel_engine = None
+    party_store_path = canonical.pipeline.party_store_path
 
     return RunOptions(
-        input_dir=input_dir,
-        output_path=output_path,
-        expectation_suite_name=str(options["expectation_suite_name"]),
-        country_code=str(options["country_code"]),
-        archive=archive,
-        dist_dir=dist_dir,
+        canonical_config=canonical,
         log_format=log_format,
         report_path=report_path,
         report_format=report_format,
         party_store_path=party_store_path,
-        config_paths=[path for path in config_paths if path.exists()],
-        excel_chunk_size=chunk_size,
-        excel_engine=excel_engine,
-        excel_stage_dir=stage_dir,
         sensitive_fields=sensitive_fields,
-        interactive=interactive if isinstance(interactive, (bool, type(None))) else None,
-        qa_mode=qa_mode,
-        observability=observability if isinstance(observability, (bool, type(None))) else None,
+        interactive=interactive,
         profile_name=profile_name,
-        features=features,
-        industry_profile=industry_profile,
     )
 
 
-def _apply_cli_override(
-    options: dict[str, Any],
-    namespace: argparse.Namespace,
-    field_name: str,
-    *,
-    converter: Callable[[Any], Any] | None = None,
-) -> None:
-    value = getattr(namespace, field_name, None)
-    if value is None:
-        return
-    options[field_name] = converter(value) if converter is not None else value
+def _normalise_config_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Upgrade legacy flat payloads to canonical structure for merging."""
+
+    upgraded: dict[str, Any] = dict(payload)
+    pipeline_payload: dict[str, Any] = dict(upgraded.get("pipeline", {}))
+
+    changed = False
+    for key in list(upgraded.keys()):
+        if key in LEGACY_PIPELINE_KEYS:
+            pipeline_payload.setdefault(key, upgraded.pop(key))
+            changed = True
+
+    if changed:
+        upgraded["pipeline"] = pipeline_payload
+
+    return upgraded
 
 
 __all__ = ["register", "build", "RunOptions"]

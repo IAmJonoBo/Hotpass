@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-12-26
+last_updated: 2025-10-27
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -56,6 +56,45 @@ Run the pipeline with the custom config:
 ```bash
 uv run hotpass --config config/pipeline.healthcare.yaml
 ```
+
+### Canonical schema and migration
+
+Behind the scenes the CLI now converts every profile, config file, and CLI flag into the
+canonical `HotpassConfig` model. You can express the full configuration directly in TOML:
+
+```toml
+[pipeline]
+input_dir = "./data"
+output_path = "./dist/refined.xlsx"
+archive = true
+dist_dir = "./dist"
+
+[features]
+compliance = true
+
+[governance]
+intent = ["Process POPIA regulated dataset"]
+data_owner = "Data Governance"
+classification = "sensitive_pii"
+```
+
+Legacy configuration dictionaries can be upgraded automatically:
+
+```python
+from hotpass.config_doctor import ConfigDoctor
+
+doctor = ConfigDoctor()
+config, notices = doctor.upgrade_payload(legacy_payload)
+if doctor.autofix():
+    print("Applied governance autofixes")
+for diagnostic in doctor.diagnose():
+    print(diagnostic)
+```
+
+Autofix injects sensible governance defaults (for example `Data Governance` as the data owner)
+and flags missing intent declarations when compliance or PII detection is enabled. The resulting
+`HotpassConfig` instance exposes `.to_pipeline_config()` and `.to_enhanced_config()` helpers so
+CLI, Prefect flows, and agentic orchestrations consume the same configuration objects.
 
 ### Enable asynchronous website enrichment
 
