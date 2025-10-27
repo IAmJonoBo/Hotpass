@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.19
-FROM mambaorg/micromamba:2.3.2
+FROM mambaorg/micromamba:2.3.3
 
 ARG PYTHON_VERSION=3.13
 ENV PATH="/root/.local/bin:${PATH}"

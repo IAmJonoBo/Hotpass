@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 
+from hotpass.config_schema import HotpassConfig
+
 pytest.importorskip("frictionless")
 
 orchestration = importlib.import_module("hotpass.orchestration")
@@ -44,25 +46,26 @@ def mock_pipeline_result():
 
 def test_run_pipeline_once_success(mock_pipeline_result, tmp_path):
     """The orchestration helper returns a structured summary on success."""
-    config = PipelineRunOptions(
-        input_dir=tmp_path,
-        output_path=tmp_path / "out.xlsx",
-        profile_name="aviation",
-        excel_chunk_size=None,
-        archive=True,
-        archive_dir=tmp_path / "dist",
+    config = HotpassConfig().merge(
+        {
+            "pipeline": {
+                "input_dir": tmp_path,
+                "output_path": tmp_path / "out.xlsx",
+                "archive": True,
+                "dist_dir": tmp_path / "dist",
+            }
+        }
     )
+    options = PipelineRunOptions(config=config, profile_name="aviation")
 
     with (
-        patch("hotpass.orchestration.get_default_profile") as mock_profile,
         patch("hotpass.orchestration.run_pipeline") as mock_run,
         patch("hotpass.orchestration.create_refined_archive") as mock_archive,
     ):
-        mock_profile.return_value = Mock()
         mock_run.return_value = mock_pipeline_result
         mock_archive.return_value = tmp_path / "dist" / "archive.zip"
 
-        summary = run_pipeline_once(config)
+        summary = run_pipeline_once(options)
 
     assert summary.success is True
     assert summary.total_records == 3
@@ -107,25 +110,26 @@ def test_run_pipeline_task_validation_failure(mock_pipeline_result):
 
 def test_run_pipeline_once_archiving_error(mock_pipeline_result, tmp_path):
     """Archiving failures raise a structured orchestration error."""
-    config = PipelineRunOptions(
-        input_dir=tmp_path,
-        output_path=tmp_path / "out.xlsx",
-        profile_name="aviation",
-        excel_chunk_size=None,
-        archive=True,
-        archive_dir=tmp_path / "dist",
+    config = HotpassConfig().merge(
+        {
+            "pipeline": {
+                "input_dir": tmp_path,
+                "output_path": tmp_path / "out.xlsx",
+                "archive": True,
+                "dist_dir": tmp_path / "dist",
+            }
+        }
     )
+    options = PipelineRunOptions(config=config, profile_name="aviation")
 
     with (
-        patch("hotpass.orchestration.get_default_profile") as mock_profile,
         patch("hotpass.orchestration.run_pipeline") as mock_run,
         patch("hotpass.orchestration.create_refined_archive", side_effect=ValueError("boom")),
     ):
-        mock_profile.return_value = Mock()
         mock_run.return_value = mock_pipeline_result
 
         with pytest.raises(PipelineOrchestrationError) as exc:
-            run_pipeline_once(config)
+            run_pipeline_once(options)
 
     assert "Failed to create archive" in str(exc.value)
 

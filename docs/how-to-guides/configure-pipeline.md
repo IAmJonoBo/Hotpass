@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-26
+last_updated: 2025-10-27
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -57,25 +57,88 @@ Run the pipeline with the custom config:
 uv run hotpass --config config/pipeline.healthcare.yaml
 ```
 
+### Canonical schema and migration
+
+Behind the scenes the CLI now converts every profile, config file, and CLI flag into the
+canonical `HotpassConfig` model. You can express the full configuration directly in TOML:
+
+```toml
+[pipeline]
+input_dir = "./data"
+output_path = "./dist/refined.xlsx"
+archive = true
+dist_dir = "./dist"
+
+[features]
+compliance = true
+
+[governance]
+intent = ["Process POPIA regulated dataset"]
+data_owner = "Data Governance"
+classification = "sensitive_pii"
+```
+
+Legacy configuration dictionaries can be upgraded automatically:
+
+```python
+from hotpass.config_doctor import ConfigDoctor
+
+doctor = ConfigDoctor()
+config, notices = doctor.upgrade_payload(legacy_payload)
+if doctor.autofix():
+    print("Applied governance autofixes")
+for diagnostic in doctor.diagnose():
+    print(diagnostic)
+```
+
+Autofix injects sensible governance defaults (for example `Data Governance` as the data owner)
+and flags missing intent declarations when compliance or PII detection is enabled. The resulting
+`HotpassConfig` instance exposes `.to_pipeline_config()` and `.to_enhanced_config()` helpers so
+CLI, Prefect flows, and agentic orchestrations consume the same configuration objects.
+
 ### Enable asynchronous website enrichment
 
 When you enrich records with external website content, enable the enhanced pipeline with
 concurrency to speed up network-bound fetches:
 
 ```python
-from hotpass.pipeline_enhanced import EnhancedPipelineConfig
+from pathlib import Path
 
-config = EnhancedPipelineConfig(
+from hotpass.pipeline import (
+    PipelineConfig,
+    PipelineExecutionConfig,
+    PipelineOrchestrator,
+    default_feature_bundle,
+)
+from hotpass.pipeline.features import EnhancedPipelineConfig
+
+base_config = PipelineConfig(
+    input_dir=Path("data"),
+    output_path=Path("dist/refined.xlsx"),
+    enable_formatting=True,
+)
+
+enhanced = EnhancedPipelineConfig(
     enable_enrichment=True,
     enrich_websites=True,
     enrichment_concurrency=8,
 )
+
+execution = PipelineExecutionConfig(
+    base_config=base_config,
+    enhanced_config=enhanced,
+    features=default_feature_bundle(),
+)
+
+result = PipelineOrchestrator().run(execution)
 ```
 
 Set `enrichment_concurrency` to the number of parallel fetches you are comfortable running
 against upstream sites. The default (`8`) uses asynchronous workers to download multiple
 pages at once while respecting cache guardrails. Lower the value if an API enforces strict
-rate limits.
+rate limits. Passing a custom `features` sequence lets you mix built-in strategies (entity
+resolution, geospatial, enrichment, compliance) with your own feature hooks while
+retaining deterministic orchestration and telemetry.
 
 ## 3. Extend column mapping
 

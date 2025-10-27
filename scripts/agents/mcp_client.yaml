@@ -1,0 +1,26 @@
+# Prototype MCP client definition for Hotpass operator agents
+version: 1
+client:
+  id: hotpass-agent-cli
+  description: CLI agent that prepares requests for the Prefect broker
+  capabilities:
+    - run_pipeline
+    - fetch_flow_state
+
+brokers:
+  - server_id: hotpass-prefect-broker
+    endpoint: prefect://local
+    default_role: analyst
+    escalation_roles:
+      - operator
+      - reviewer
+    notify:
+      - ops-oncall@hotpass.example
+
+tools:
+  - name: github
+    usage: sync runbook issues after successful deployments
+  - name: prefect
+    usage: trigger the `hotpass-refinement` deployment once approvals are granted
+  - name: google_drive
+    usage: retrieve the latest compliance evidence bundle prior to a run

@@ -1,18 +1,17 @@
-"""Configuration doctor utilities for diagnosing and fixing configuration issues."""
+"""Configuration validation, migration, and autofix tooling."""
 
 from __future__ import annotations
 
-import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .config import IndustryProfile, get_default_profile
+from .config_schema import HotpassConfig
 
-logger = logging.getLogger(__name__)
 
-
-@dataclass
+@dataclass(slots=True)
 class DiagnosticResult:
     """Result of a configuration diagnostic check."""
 
@@ -20,303 +19,181 @@ class DiagnosticResult:
     passed: bool
     message: str
     fix_suggestion: str | None = None
-    severity: str = "info"  # info, warning, error, critical
+    severity: str = "info"
+
+    def __repr__(self) -> str:  # pragma: no cover - convenience for debugging
+        return (
+            "DiagnosticResult("  # noqa: UP031 - multi-line readability
+            f"check_name={self.check_name!r}, "
+            f"passed={self.passed!r}, "
+            f"severity={self.severity!r}, "
+            f"message={self.message!r}"
+            ")"
+        )
 
 
 class ConfigDoctor:
-    """Diagnose and suggest fixes for configuration issues."""
+    """Diagnose, migrate, and autofix canonical configuration payloads."""
 
-    def __init__(self, config_path: Path | None = None, profile: IndustryProfile | None = None):
-        self.config_path = config_path
-        self.profile = profile or get_default_profile()
+    def __init__(self, config: HotpassConfig | None = None):
+        self.config: HotpassConfig = config or HotpassConfig()
         self.diagnostics: list[DiagnosticResult] = []
 
     def diagnose(self) -> list[DiagnosticResult]:
-        """Run all diagnostic checks."""
+        """Run diagnostic checks across governance and pipeline settings."""
+
         self.diagnostics = []
-
-        self._check_profile_validity()
-        self._check_validation_thresholds()
-        self._check_source_priorities()
-        self._check_column_synonyms()
-        self._check_required_fields()
-
+        self._check_governance()
+        self._check_pipeline_contract()
         return self.diagnostics
 
-    def _add_diagnostic(
-        self,
-        check_name: str,
-        passed: bool,
-        message: str,
-        fix_suggestion: str | None = None,
-        severity: str = "info",
-    ) -> None:
-        """Add a diagnostic result."""
+    def _check_governance(self) -> None:
+        governance = self.config.governance
+        if not governance.intent:
+            self.diagnostics.append(
+                DiagnosticResult(
+                    "governance.intent",
+                    False,
+                    "No governance intent declared.",
+                    "Populate governance.intent with the business objective for this run.",
+                    "error",
+                )
+            )
+        if not governance.data_owner.strip():
+            self.diagnostics.append(
+                DiagnosticResult(
+                    "governance.data_owner",
+                    False,
+                    "Data owner is not specified.",
+                    "Assign a data owner responsible for refinement outcomes.",
+                    "error",
+                )
+            )
+        else:
+            self.diagnostics.append(
+                DiagnosticResult(
+                    "governance.data_owner",
+                    True,
+                    f"Data owner registered as '{governance.data_owner}'.",
+                )
+            )
+
+    def _check_pipeline_contract(self) -> None:
+        contract = self.config.data_contract
         self.diagnostics.append(
             DiagnosticResult(
-                check_name=check_name,
-                passed=passed,
-                message=message,
-                fix_suggestion=fix_suggestion,
-                severity=severity,
+                "data_contract.expectation_suite",
+                bool(contract.expectation_suite),
+                f"Expectation suite set to '{contract.expectation_suite}'.",
+                "Specify an expectation suite name." if not contract.expectation_suite else None,
+                "error" if not contract.expectation_suite else "info",
             )
         )
 
-    def _check_profile_validity(self) -> None:
-        """Check if profile has valid basic configuration."""
-        if not self.profile.name:
-            self._add_diagnostic(
-                "profile_name",
-                False,
-                "Profile name is empty",
-                "Set a meaningful profile name",
-                "error",
-            )
-        else:
-            self._add_diagnostic(
-                "profile_name", True, f"Profile name is set to '{self.profile.name}'"
-            )
-
-        if not self.profile.display_name:
-            self._add_diagnostic(
-                "profile_display_name",
-                False,
-                "Profile display name is empty",
-                "Set a user-friendly display name",
-                "warning",
-            )
-
-    def _check_validation_thresholds(self) -> None:
-        """Check if validation thresholds are reasonable."""
-        thresholds = {
-            "email": self.profile.email_validation_threshold,
-            "phone": self.profile.phone_validation_threshold,
-            "website": self.profile.website_validation_threshold,
-        }
-
-        for field, threshold in thresholds.items():
-            if not 0 <= threshold <= 1:
-                self._add_diagnostic(
-                    f"{field}_threshold",
-                    False,
-                    f"{field.capitalize()} validation threshold {threshold} is out of range [0, 1]",
-                    f"Set {field}_validation_threshold to a value between 0 and 1 (e.g., 0.85)",
-                    "error",
-                )
-            elif threshold < 0.5:
-                self._add_diagnostic(
-                    f"{field}_threshold",
-                    True,
-                    f"{field.capitalize()} threshold {threshold} is very low (< 50%)",
-                    f"Consider increasing {field}_validation_threshold to at least 0.70 "
-                    "for better quality",
-                    "warning",
-                )
-            elif threshold > 0.95:
-                self._add_diagnostic(
-                    f"{field}_threshold",
-                    True,
-                    f"{field.capitalize()} threshold {threshold} is very high (> 95%)",
-                    "High thresholds may cause many validation failures. Consider 0.85-0.90",
-                    "warning",
-                )
-            else:
-                self._add_diagnostic(
-                    f"{field}_threshold",
-                    True,
-                    f"{field.capitalize()} threshold {threshold} is reasonable",
-                )
-
-    def _check_source_priorities(self) -> None:
-        """Check if source priorities are configured."""
-        if not self.profile.source_priorities:
-            self._add_diagnostic(
-                "source_priorities",
-                False,
-                "No source priorities configured",
-                "Define source_priorities to control conflict resolution",
-                "warning",
-            )
-        else:
-            # Check for duplicate priorities
-            priorities = list(self.profile.source_priorities.values())
-            if len(priorities) != len(set(priorities)):
-                self._add_diagnostic(
-                    "source_priorities_unique",
-                    False,
-                    "Source priorities contain duplicate values",
-                    "Assign unique priority values to each source for clear precedence",
-                    "warning",
-                )
-            else:
-                self._add_diagnostic(
-                    "source_priorities",
-                    True,
-                    f"Source priorities configured for "
-                    f"{len(self.profile.source_priorities)} sources",
-                )
-
-    def _check_column_synonyms(self) -> None:
-        """Check if column synonyms are configured."""
-        if not self.profile.column_synonyms:
-            self._add_diagnostic(
-                "column_synonyms",
-                False,
-                "No column synonyms configured",
-                "Define column_synonyms for intelligent column mapping",
-                "info",
-            )
-        else:
-            # Check for common critical fields
-            critical_fields = ["organization_name", "contact_email", "contact_phone"]
-            missing_fields = [f for f in critical_fields if f not in self.profile.column_synonyms]
-
-            if missing_fields:
-                self._add_diagnostic(
-                    "column_synonyms_critical",
-                    False,
-                    f"Missing synonyms for critical fields: {', '.join(missing_fields)}",
-                    f"Add synonyms for: {', '.join(missing_fields)}",
-                    "warning",
-                )
-            else:
-                self._add_diagnostic(
-                    "column_synonyms",
-                    True,
-                    f"Column synonyms configured for {len(self.profile.column_synonyms)} fields",
-                )
-
-    def _check_required_fields(self) -> None:
-        """Check if required fields are configured."""
-        if not self.profile.required_fields:
-            self._add_diagnostic(
-                "required_fields",
-                False,
-                "No required fields configured",
-                "Define at least 'organization_name' as required",
-                "warning",
-            )
-        elif "organization_name" not in self.profile.required_fields:
-            self._add_diagnostic(
-                "required_fields_org_name",
-                False,
-                "'organization_name' not in required fields",
-                "Add 'organization_name' to required_fields",
-                "warning",
-            )
-        else:
-            self._add_diagnostic(
-                "required_fields",
-                True,
-                f"{len(self.profile.required_fields)} required fields configured",
-            )
-
     def get_summary(self) -> dict[str, Any]:
-        """Get summary of diagnostic results."""
+        """Return a roll-up summary of the most recent diagnostic run."""
+
         if not self.diagnostics:
             self.diagnose()
-
         total = len(self.diagnostics)
-        passed = sum(1 for d in self.diagnostics if d.passed)
+        passed = len([result for result in self.diagnostics if result.passed])
         failed = total - passed
-
-        by_severity: dict[str, int] = {}
-        for d in self.diagnostics:
-            if not d.passed:
-                by_severity[d.severity] = by_severity.get(d.severity, 0) + 1
-
+        health = 0 if total == 0 else int((passed / total) * 100)
         return {
             "total_checks": total,
             "passed": passed,
             "failed": failed,
-            "by_severity": by_severity,
-            "health_score": (passed / total * 100) if total > 0 else 0,
+            "health_score": health,
         }
 
-    def print_report(self) -> None:
-        """Print diagnostic report to console."""
-        if not self.diagnostics:
-            self.diagnose()
-
-        print("\n" + "=" * 70)
-        print("Configuration Health Check Report")
-        print("=" * 70)
-
-        summary = self.get_summary()
-        print(f"\nOverall Health Score: {summary['health_score']:.1f}%")
-        print(f"Total Checks: {summary['total_checks']}")
-        print(f"Passed: {summary['passed']}")
-        print(f"Failed: {summary['failed']}")
-
-        if summary["by_severity"]:
-            print("\nIssues by Severity:")
-            for severity, count in sorted(summary["by_severity"].items()):
-                print(f"  {severity.upper()}: {count}")
-
-        print("\n" + "-" * 70)
-        print("Detailed Results:")
-        print("-" * 70)
-
-        for d in self.diagnostics:
-            icon = "✓" if d.passed else "✗"
-            print(f"\n{icon} {d.check_name.replace('_', ' ').title()}")
-            print(f"  {d.message}")
-            if not d.passed and d.fix_suggestion:
-                print(f"  💡 Fix: {d.fix_suggestion}")
-
-        print("\n" + "=" * 70 + "\n")
-
     def autofix(self) -> bool:
-        """Attempt to automatically fix common issues."""
-        if not self.diagnostics:
+        """Apply safe autofixes for missing governance metadata."""
+
+        changes = False
+        governance = self.config.governance
+        if not governance.data_owner.strip():
+            updated_governance = governance.model_copy(update={"data_owner": "Data Governance"})
+            self.config = self.config.model_copy(update={"governance": updated_governance})
+            changes = True
+        if changes:
             self.diagnose()
+        return changes
 
-        fixed_count = 0
+    def upgrade_payload(
+        self, payload: Mapping[str, Any]
+    ) -> tuple[HotpassConfig, list[DiagnosticResult]]:
+        """Upgrade a legacy configuration payload to the canonical schema."""
 
-        # Autofix validation thresholds
-        for d in self.diagnostics:
-            if not d.passed and "threshold" in d.check_name:
-                field = d.check_name.replace("_threshold", "")
-                if field == "email":
-                    self.profile.email_validation_threshold = 0.85
-                    fixed_count += 1
-                elif field == "phone":
-                    self.profile.phone_validation_threshold = 0.85
-                    fixed_count += 1
-                elif field == "website":
-                    self.profile.website_validation_threshold = 0.75
-                    fixed_count += 1
+        base = HotpassConfig()
+        notices: list[DiagnosticResult] = []
 
-        # Autofix required fields
-        if "organization_name" not in self.profile.required_fields:
-            self.profile.required_fields.append("organization_name")
-            fixed_count += 1
+        updates: dict[str, Any] = {}
+        pipeline_updates: dict[str, Any] = {}
 
-        # Re-run diagnostics after fixes
-        if fixed_count > 0:
-            logger.info(f"Auto-fixed {fixed_count} configuration issues")
-            self.diagnose()
+        if "input_dir" in payload:
+            pipeline_updates["input_dir"] = Path(payload["input_dir"])
+            notices.append(
+                DiagnosticResult(
+                    "legacy.input_dir",
+                    True,
+                    "Migrated deprecated 'input_dir' field to pipeline configuration.",
+                )
+            )
+        if "output_path" in payload:
+            pipeline_updates["output_path"] = Path(payload["output_path"])
+        if "expectation_suite" in payload:
+            pipeline_updates["expectation_suite"] = payload["expectation_suite"]
+        if "country_code" in payload:
+            pipeline_updates["country_code"] = payload["country_code"]
+        if pipeline_updates:
+            updates["pipeline"] = pipeline_updates
 
-        return fixed_count > 0
+        if "features" in payload:
+            updates["features"] = payload["features"]
+            notices.append(
+                DiagnosticResult(
+                    "legacy.features",
+                    True,
+                    "Migrated legacy feature flags to canonical FeatureSwitches.",
+                )
+            )
 
+        if "governance" in payload:
+            updates["governance"] = payload["governance"]
 
-def doctor_command(profile_name: str = "generic", autofix: bool = False) -> None:
-    """CLI command for configuration doctor."""
-    profile = get_default_profile(profile_name)
-    doctor = ConfigDoctor(profile=profile)
+        profile_payload = payload.get("profile")
+        if profile_payload:
+            try:
+                profile = IndustryProfile.from_dict(profile_payload)
+            except ValueError:
+                profile = get_default_profile("generic")
+                notices.append(
+                    DiagnosticResult(
+                        "legacy.profile",
+                        False,
+                        "Failed to parse legacy profile; defaulted to 'generic'.",
+                        "Review profile payload for validity.",
+                        "warning",
+                    )
+                )
+            else:
+                updates["profile"] = profile.to_dict()
+                notices.append(
+                    DiagnosticResult(
+                        "legacy.profile",
+                        True,
+                        "Migrated legacy profile payload to canonical schema.",
+                        severity="info",
+                    )
+                )
 
-    if autofix:
-        print("Running auto-fix...")
-        fixed = doctor.autofix()
-        if fixed:
-            print("✓ Auto-fix completed")
+        if updates:
+            config = base.merge(updates)
         else:
-            print("ℹ No fixable issues found")
+            config = base
 
-    doctor.print_report()
+        self.config = config
+        return config, notices
 
-    summary = doctor.get_summary()
-    if summary["health_score"] < 80:
-        print("\n⚠️  Configuration health is below 80%. Review and fix the issues above.")
-    else:
-        print("\n✓ Configuration looks healthy!")
+
+__all__ = ["ConfigDoctor", "DiagnosticResult"]

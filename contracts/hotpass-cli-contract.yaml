@@ -1,17 +1,85 @@
-version: 1
 command: hotpass
-options:
-  - name: --input-dir
-    required: false
-  - name: --output-path
-    required: false
-  - name: --country-code
-    required: false
-  - name: --expectation-suite
-    required: false
-  - name: --config
-    required: false
-  - name: --dist-dir
-    required: false
-  - name: --archive
-    required: false
+default_subcommand: run
+subcommands:
+  - name: run
+    options:
+      - name: --profile
+      - name: --profile-search-path
+      - name: --config
+      - name: --input-dir
+      - name: --output-path
+      - name: --expectation-suite
+      - name: --country-code
+      - name: --dist-dir
+      - name: --archive
+      - name: --no-archive
+      - name: --log-format
+      - name: --report-path
+      - name: --report-format
+      - name: --party-store-path
+      - name: --excel-chunk-size
+      - name: --excel-engine
+      - name: --excel-stage-dir
+      - name: --sensitive-field
+      - name: --interactive
+      - name: --no-interactive
+      - name: --qa-mode
+      - name: --observability
+      - name: --no-observability
+  - name: orchestrate
+    options:
+      - name: --profile
+      - name: --profile-search-path
+      - name: --input-dir
+      - name: --output-path
+      - name: --excel-chunk-size
+      - name: --excel-engine
+      - name: --excel-stage-dir
+      - name: --industry-profile
+      - name: --enable-all
+      - name: --enable-entity-resolution
+      - name: --disable-entity-resolution
+      - name: --enable-geospatial
+      - name: --disable-geospatial
+      - name: --enable-enrichment
+      - name: --disable-enrichment
+      - name: --enable-compliance
+      - name: --disable-compliance
+      - name: --enable-observability
+      - name: --disable-observability
+      - name: --linkage-match-threshold
+      - name: --linkage-review-threshold
+      - name: --linkage-output-dir
+      - name: --linkage-use-splink
+      - name: --label-studio-url
+      - name: --label-studio-token
+      - name: --label-studio-project
+  - name: resolve
+    options:
+      - name: --profile
+      - name: --profile-search-path
+      - name: --input-file
+        required: true
+      - name: --output-file
+        required: true
+      - name: --threshold
+      - name: --use-splink
+      - name: --no-use-splink
+      - name: --match-threshold
+      - name: --review-threshold
+      - name: --label-studio-url
+      - name: --label-studio-token
+      - name: --label-studio-project
+  - name: dashboard
+    options:
+      - name: --profile
+      - name: --profile-search-path
+      - name: --port
+      - name: --host
+  - name: deploy
+    options:
+      - name: --profile
+      - name: --profile-search-path
+      - name: --name
+      - name: --schedule
+      - name: --work-pool

@@ -1,7 +1,7 @@
 ---
 title: Tech radar
 summary: Lifecycle governance for tooling used across Hotpass.
-last_updated: 2025-10-25
+last_updated: 2025-10-26
 ---
 
 # Tech radar
@@ -22,6 +22,7 @@ last_updated: 2025-10-25
 | Mutmut                | Testing       | Evaluate mutation coverage for core modules.     |
 | Playwright + axe-core | Accessibility | Browser-based accessibility scans for dashboard. |
 | Sigstore              | Supply-chain  | Keyless signing for artefacts.                   |
+| Model Context Protocol (MCP) | Agent governance | Validate gating of agentic orchestration via Prefect. |
 
 ## Assess
 

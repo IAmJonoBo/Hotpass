@@ -17,7 +17,7 @@ Use this guide when you need to promote Hotpass from ad-hoc execution to a sched
 ## Create a deployment
 
 ```bash
-uv run hotpass-enhanced deploy \
+uv run hotpass deploy \
   --name hotpass-prod \
   --profile aviation \
   --schedule "0 2 * * *" \
@@ -51,7 +51,7 @@ enable entity resolution. Configure thresholds and the review location when
 invoking the enhanced orchestrator:
 
 ```bash
-uv run hotpass-enhanced orchestrate \
+uv run hotpass orchestrate \
   --profile aviation \
   --enable-entity-resolution \
   --linkage-use-splink \
@@ -82,7 +82,7 @@ you need the real Prefect runtime behaviour:
 
 ```bash
 export HOTPASS_ENABLE_PREFECT_RUNTIME=1
-uv run hotpass-enhanced orchestrate --profile aviation
+uv run hotpass orchestrate --profile aviation
 ```
 
 Unset the variable (or leave it blank) to fall back to the no-op decorators that keep local
@@ -90,7 +90,8 @@ unit tests offline-friendly.
 
 ## Enable telemetry
 
-Set the exporter variables before triggering a run:
+Set the exporter variables before triggering a run. The CLI now routes telemetry through the
+shared registry described in [Observability registry and policy](../observability/index.md):
 
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT="https://otel.example.com"
@@ -101,10 +102,12 @@ export PREFECT_LOGGING_EXTRA_LOGGERS="hotpass,hotpass.enrichment"
 Then run the orchestrated pipeline:
 
 ```bash
-uv run hotpass-enhanced orchestrate --profile aviation --enable-observability
+uv run hotpass orchestrate --profile aviation --enable-observability
 ```
 
-Use the Prefect UI or the OTLP backend (Grafana, Datadog, etc.) to verify metrics such as `hotpass.pipeline.duration`, `hotpass.validation.failures`, and `hotpass.enrichment.coverage`.
+Use the Prefect UI or the OTLP backend (Grafana, Datadog, etc.) to verify metrics such as `hotpass.pipeline.duration`, `hotpass.validation.failures`, and `hotpass.enrichment.coverage`. When
+customising exporters, inject a bespoke `TelemetryRegistry` via `hotpass.observability.use_registry`
+and include a call to `shutdown_observability()` in CLI scripts to flush readers.
 
 ## Troubleshooting
 

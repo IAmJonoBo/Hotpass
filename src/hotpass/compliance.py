@@ -349,7 +349,7 @@ def redact_dataframe(
             if pd.isna(raw_value) or raw_value in {"", None}:
                 continue
 
-            if isinstance(raw_value, (list, tuple)):
+            if isinstance(raw_value, list | tuple):
                 updated_values = list(raw_value)
                 for value_index, item in enumerate(raw_value):
                     if item in {None, ""}:

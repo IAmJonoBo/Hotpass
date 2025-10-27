@@ -23,6 +23,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /how-to-guides/configure-pipeline
 /how-to-guides/format-and-validate
 /how-to-guides/orchestrate-and-observe
+/how-to-guides/agentic-orchestration
 /how-to-guides/bootstrap-execute-mode
 ```
 
@@ -74,6 +75,13 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 /architecture/fitness-functions
 /architecture/resilience-plan
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Observability
+
+/observability/index
 ```
 
 ```{toctree}
