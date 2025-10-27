@@ -45,6 +45,11 @@
 - [x] Expand regression coverage and documentation for input formatting and validation flows (Owner: QA & Docs, Due: 2025-12-27)
 - [x] Publish guidance for enabling Prefect runtime via `HOTPASS_ENABLE_PREFECT_RUNTIME` in orchestration docs (Owner: Platform, Due: 2025-11-30)
 - [x] Gate agent-triggered Prefect runs with MCP allowlists, audit logging, and operator docs (Owner: Engineering, Due: 2025-12-27)
+- [x] Design unified CLI command surface aligned with orchestrator presets (Owner: Engineering, Due: 2026-02-28)
+- [x] Implement modular CLI builder with shared options and feature modules (Owner: Engineering, Due: 2026-02-28)
+- [x] Introduce Pydantic-validated configuration profiles with opt-in guardrails (Owner: Engineering, Due: 2026-02-28)
+- [x] Refresh CLI documentation, tutorials, and retire legacy commands (Owner: Docs, Due: 2026-03-07)
+- [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
 
 ## Steps
 
@@ -91,7 +96,10 @@
 - [x] Resolved Polars grouping regression, refreshed telemetry adapters, and reran full QA suite (pytest, ruff, format, mypy, bandit, detect-secrets, uv build, uv pip check) (2025-10-26)【095878†L1-L84】【123bd6†L1-L2】【058b8a†L1-L2】【e95512†L1-L19】【8d5e85†L5-L27】【fe1fc0†L1-L57】【8c87c0†L1-L139】【9785b9†L1-L3】
 - [x] Implemented ingestion-time Presidio redaction with append-only provenance ledgers and acquisition guardrails (2025-10-26)
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
+- [x] Re-ran modular CLI QA sweep (pytest, ruff check, ruff format, mypy, bandit, detect-secrets, uv build) after finalising builder migration (2025-10-26)【a97987†L1-L79】【38d75c†L1-L3】【72fd2a†L1-L3】【53fe2f†L1-L16】【821e3e†L1-L34】【48103c†L1-L64】【c97c1d†L1-L240】
+- [ ] Extend orchestrate/resolve CLI integration coverage for advanced profile and feature permutations (Owner: QA & Engineering, Due: 2026-01-15)
 - [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
+- [x] Executed baseline QA suite prior to CLI consolidation (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-26)【bd696d†L1-L88】【0a62a4†L1-L3】【53bc1d†L1-L2】【cb6a4e†L1-L17】【baee01†L1-L36】【167873†L1-L74】【3c322d†L1-L120】
 - [x] Baseline QA suite executed (pytest 303 passed @ 88% coverage; lint/format/type/secrets/build clean; Bandit reports existing low-risk cleanup guard) (2025-10-26)【cbe9ef†L1-L123】【155bf6†L1-L2】【509179†L1-L2】【c3900e†L1-L20】【a009d0†L1-L27】【59a08e†L1-L58】【f47b44†L1-L120】
 
 ## Deliverables
