@@ -25,11 +25,30 @@ from ..data_sources import (
     load_reachout_database,
     load_sacaa_cleaned,
 )
+from ..data_sources.agents import AcquisitionPlan
+from ..data_sources.agents import run_plan as run_acquisition_plan
 from ..domain.party import PartyStore, build_party_store_from_refined
+from ..enrichment.validators import ContactValidationService
 from ..formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from ..normalization import clean_string, coalesce, normalize_province, slugify
+from ..pipeline.events import (
+    PIPELINE_EVENT_AGGREGATE_COMPLETED,
+    PIPELINE_EVENT_AGGREGATE_PROGRESS,
+    PIPELINE_EVENT_AGGREGATE_STARTED,
+    PIPELINE_EVENT_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_STARTED,
+    PIPELINE_EVENT_LOAD_COMPLETED,
+    PIPELINE_EVENT_LOAD_STARTED,
+    PIPELINE_EVENT_SCHEMA_COMPLETED,
+    PIPELINE_EVENT_SCHEMA_STARTED,
+    PIPELINE_EVENT_START,
+    PIPELINE_EVENT_WRITE_COMPLETED,
+    PIPELINE_EVENT_WRITE_STARTED,
+)
 from ..storage import DuckDBAdapter, PolarsDataset
 from ..telemetry import pipeline_stage
+from ..transform.scoring import LeadScorer
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from ..linkage import LinkageResult
@@ -48,19 +67,8 @@ logger = logging.getLogger(__name__)
 ProgressListener = Callable[[str, dict[str, Any]], None]
 
 
-PIPELINE_EVENT_START = "pipeline.start"
-PIPELINE_EVENT_LOAD_STARTED = "load.started"
-PIPELINE_EVENT_LOAD_COMPLETED = "load.completed"
-PIPELINE_EVENT_AGGREGATE_STARTED = "aggregate.started"
-PIPELINE_EVENT_AGGREGATE_PROGRESS = "aggregate.progress"
-PIPELINE_EVENT_AGGREGATE_COMPLETED = "aggregate.completed"
-PIPELINE_EVENT_SCHEMA_STARTED = "schema.started"
-PIPELINE_EVENT_SCHEMA_COMPLETED = "schema.completed"
-PIPELINE_EVENT_EXPECTATIONS_STARTED = "expectations.started"
-PIPELINE_EVENT_EXPECTATIONS_COMPLETED = "expectations.completed"
-PIPELINE_EVENT_WRITE_STARTED = "write.started"
-PIPELINE_EVENT_WRITE_COMPLETED = "write.completed"
-PIPELINE_EVENT_COMPLETED = "pipeline.completed"
+_CONTACT_VALIDATION = ContactValidationService()
+_PIPELINE_LEAD_SCORER = LeadScorer()
 
 
 SSOT_COLUMNS: list[str] = [
@@ -83,6 +91,12 @@ SSOT_COLUMNS: list[str] = [
     "contact_primary_role",
     "contact_primary_email",
     "contact_primary_phone",
+    "contact_primary_email_confidence",
+    "contact_primary_email_status",
+    "contact_primary_phone_confidence",
+    "contact_primary_phone_status",
+    "contact_primary_lead_score",
+    "contact_validation_flags",
     "contact_secondary_emails",
     "contact_secondary_phones",
     "data_quality_score",
@@ -197,6 +211,8 @@ class PipelineConfig:
     enable_recommendations: bool = True
     progress_listener: ProgressListener | None = None
     pii_redaction: PIIRedactionConfig = field(default_factory=PIIRedactionConfig)
+    acquisition_plan: AcquisitionPlan | None = None
+    agent_credentials: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -518,7 +534,10 @@ def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:
 
 
 def _aggregate_group(
-    slug: str | None, rows: Sequence[Mapping[str, Any]]
+    slug: str | None,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    country_code: str,
 ) -> dict[str, object | None]:
     if not rows:
         raise ValueError("Cannot aggregate empty group")
@@ -774,6 +793,39 @@ def _aggregate_group(
         if primary_role:
             _record_provenance("contact_primary_role", role_values, primary_role)
 
+    validation_summary = _CONTACT_VALIDATION.validate_contact(
+        email=primary_email,
+        phone=primary_phone,
+        country_code=country_code,
+    )
+    email_confidence = validation_summary.email.confidence if validation_summary.email else None
+    phone_confidence = validation_summary.phone.confidence if validation_summary.phone else None
+    email_status = validation_summary.email.status.value if validation_summary.email else None
+    phone_status = validation_summary.phone.status.value if validation_summary.phone else None
+    validation_flags = validation_summary.flags()
+    completeness_inputs = [primary_name, primary_email, primary_phone, primary_role]
+    completeness = (
+        sum(1 for value in completeness_inputs if value) / len(completeness_inputs)
+        if completeness_inputs
+        else 0.0
+    )
+    primary_meta = primary_email_selection or primary_phone_selection
+    if primary_meta is None and name_values:
+        primary_meta = name_values[0]
+    max_priority = max(SOURCE_PRIORITY.values()) if SOURCE_PRIORITY else 1
+    source_priority_norm = (
+        primary_meta.row_metadata.source_priority / max_priority
+        if primary_meta and max_priority
+        else 0.0
+    )
+    lead_score = _PIPELINE_LEAD_SCORER.score(
+        completeness=completeness,
+        email_confidence=email_confidence or 0.0,
+        phone_confidence=phone_confidence or 0.0,
+        source_priority=source_priority_norm,
+        intent_score=0.0,
+    ).value
+
     last_interaction = _latest_iso_date(_column_values("last_interaction_date"))
 
     quality = _summarise_quality(
@@ -808,6 +860,16 @@ def _aggregate_group(
         "contact_primary_role": primary_role,
         "contact_primary_email": primary_email,
         "contact_primary_phone": primary_phone,
+        "contact_primary_email_confidence": email_confidence,
+        "contact_primary_email_status": email_status,
+        "contact_primary_phone_confidence": phone_confidence,
+        "contact_primary_phone_status": phone_status,
+        "contact_primary_lead_score": lead_score
+        if primary_name or primary_email or primary_phone
+        else None,
+        "contact_validation_flags": ";".join(sorted(set(validation_flags)))
+        if validation_flags
+        else None,
         "contact_secondary_emails": secondary_emails,
         "contact_secondary_phones": secondary_phones,
         "data_quality_score": quality["score"],
@@ -825,6 +887,16 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
     loaders = [load_reachout_database, load_contact_database, load_sacaa_cleaned]
     frames: list[pd.DataFrame] = []
     timings: dict[str, float] = {}
+    if config.acquisition_plan and config.acquisition_plan.enabled:
+        agent_frame, agent_timings, _warnings = run_acquisition_plan(
+            config.acquisition_plan,
+            country_code=config.country_code,
+            credentials=config.agent_credentials,
+        )
+        for timing in agent_timings:
+            timings[f"agent:{timing.agent_name}"] = timing.seconds
+        if not agent_frame.empty:
+            frames.append(agent_frame)
     for loader in loaders:
         start = time.perf_counter()
         try:
@@ -1075,7 +1147,11 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             slug = slug_series[index] if slug_series is not None else None
             indices = index_series[index] if index_series is not None else []
             group_frame = combined_polars[indices]
-            row_dict = _aggregate_group(slug, group_frame.to_dicts())
+            row_dict = _aggregate_group(
+                slug,
+                group_frame.to_dicts(),
+                country_code=config.country_code,
+            )
             conflicts_obj = row_dict.pop("_conflicts", [])
             if isinstance(conflicts_obj, list):
                 all_conflicts.extend(conflicts_obj)
