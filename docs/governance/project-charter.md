@@ -31,7 +31,7 @@ Hotpass refines messy spreadsheets into a governed single source of truth. This 
 
 ## Constraints and operating assumptions
 
-- Preserve CLI and Prefect interfaces; downstream teams rely on existing commands (`hotpass`, `hotpass-enhanced`).
+- Preserve CLI and Prefect interfaces; downstream teams now use the unified `hotpass` command while the deprecated `hotpass-enhanced` shim delegates for backwards compatibility.
 - Optional extras (enrichment, geospatial, dashboards) may not install in restricted CI environments—tests and telemetry must tolerate feature flags.
 - Datasets contain POPIA-sensitive information; artefacts must avoid exposing raw PII and respect retention policies.
 - Sandbox environments lack outbound internet access; enrichment connectors require controlled fallbacks and cached fixtures.

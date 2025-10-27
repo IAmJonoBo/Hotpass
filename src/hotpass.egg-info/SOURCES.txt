@@ -20,7 +20,6 @@ src/hotpass/_compat_nameparser.py
 src/hotpass/_warning_filters.py
 src/hotpass/artifacts.py
 src/hotpass/benchmarks.py
-src/hotpass/cli.py
 src/hotpass/cli_enhanced.py
 src/hotpass/column_mapping.py
 src/hotpass/compliance.py
@@ -52,6 +51,18 @@ src/hotpass.egg-info/dependency_links.txt
 src/hotpass.egg-info/entry_points.txt
 src/hotpass.egg-info/requires.txt
 src/hotpass.egg-info/top_level.txt
+src/hotpass/cli/__init__.py
+src/hotpass/cli/builder.py
+src/hotpass/cli/configuration.py
+src/hotpass/cli/main.py
+src/hotpass/cli/progress.py
+src/hotpass/cli/shared.py
+src/hotpass/cli/commands/__init__.py
+src/hotpass/cli/commands/dashboard.py
+src/hotpass/cli/commands/deploy.py
+src/hotpass/cli/commands/orchestrate.py
+src/hotpass/cli/commands/resolve.py
+src/hotpass/cli/commands/run.py
 src/hotpass/domain/__init__.py
 src/hotpass/domain/party/__init__.py
 src/hotpass/domain/party/dictionary.py
@@ -87,7 +98,6 @@ tests/test_agentic_orchestration.py
 tests/test_artifacts.py
 tests/test_benchmarks.py
 tests/test_bootstrap.py
-tests/test_cli.py
 tests/test_cli_enhanced.py
 tests/test_column_mapping.py
 tests/test_compliance.py

@@ -1,230 +1,34 @@
-"""Enhanced CLI commands for orchestration and entity resolution features.
+"""Compatibility shim for the legacy `hotpass-enhanced` entry point."""
 
-This module extends the Hotpass CLI with commands for:
-- Running the pipeline with Prefect orchestration
-- Entity resolution with Splink
-- Launching the monitoring dashboard
-"""
+from __future__ import annotations
 
-import argparse
-import importlib
-import ipaddress
-import re
 import sys
-from collections.abc import Callable
-from pathlib import Path
+from collections.abc import Callable, Sequence
 
-from rich.console import Console
+from hotpass.cli import build_parser as _build_parser
+from hotpass.cli import main as _cli_main
 
-from hotpass.linkage import LabelStudioConfig, LinkageConfig, LinkageThresholds, link_entities
-from hotpass.orchestration import (
-    PipelineOrchestrationError,
-    PipelineRunOptions,
-    run_pipeline_once,
+_DEPRECATION_MESSAGE = (
+    "hotpass-enhanced is deprecated. Use `hotpass` with subcommands instead (for example, "
+    "`hotpass run` or `hotpass orchestrate`)."
 )
 
 
-def build_enhanced_parser() -> argparse.ArgumentParser:
-    """Build parser for enhanced CLI commands.
+def build_enhanced_parser() -> object:
+    """Return the unified CLI parser for backwards compatibility."""
 
-    Returns:
-        ArgumentParser with orchestration and entity resolution commands
-    """
-    parser = argparse.ArgumentParser(
-        prog="hotpass-enhanced",
-        description="Enhanced Hotpass commands for orchestration and entity resolution",
-    )
+    return _build_parser()
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Orchestrate command
-    orchestrate = subparsers.add_parser(
-        "orchestrate",
-        help="Run pipeline with Prefect orchestration and enhanced features",
-    )
-    orchestrate.add_argument(
-        "--input-dir",
-        type=Path,
-        default=Path("./data"),
-        help="Directory containing input Excel files",
-    )
-    orchestrate.add_argument(
-        "--output-path",
-        type=Path,
-        default=Path("./data/refined_data.xlsx"),
-        help="Path for output file",
-    )
-    orchestrate.add_argument(
-        "--profile",
-        default="aviation",
-        help="Industry profile to use",
-    )
-    orchestrate.add_argument(
-        "--chunk-size",
-        type=int,
-        help="Excel chunk size for large files",
-    )
-    orchestrate.add_argument(
-        "--archive",
-        action="store_true",
-        help="Create packaged archive",
-    )
-    # Enhanced features flags
-    orchestrate.add_argument(
-        "--enable-entity-resolution",
-        action="store_true",
-        help="Enable entity resolution to deduplicate records",
-    )
-    orchestrate.add_argument(
-        "--enable-geospatial",
-        action="store_true",
-        help="Enable geospatial enrichment (geocoding)",
-    )
-    orchestrate.add_argument(
-        "--enable-enrichment",
-        action="store_true",
-        help="Enable external data enrichment (web scraping)",
-    )
-    orchestrate.add_argument(
-        "--enable-compliance",
-        action="store_true",
-        help="Enable compliance tracking and PII detection",
-    )
-    orchestrate.add_argument(
-        "--enable-observability",
-        action="store_true",
-        help="Enable OpenTelemetry observability",
-    )
-    orchestrate.add_argument(
-        "--enable-all",
-        action="store_true",
-        help="Enable all enhanced features",
-    )
-    orchestrate.add_argument(
-        "--linkage-match-threshold",
-        type=float,
-        default=0.9,
-        help="Probability threshold treated as an automatic match",
-    )
-    orchestrate.add_argument(
-        "--linkage-review-threshold",
-        type=float,
-        default=0.7,
-        help="Probability threshold that routes pairs to human review",
-    )
-    orchestrate.add_argument(
-        "--linkage-output-dir",
-        type=Path,
-        help="Directory for persisted linkage artefacts",
-    )
-    orchestrate.add_argument(
-        "--linkage-use-splink",
-        action="store_true",
-        help="Use Splink for probabilistic linkage (default: rule-based)",
-    )
-    orchestrate.add_argument(
-        "--label-studio-url",
-        help="Label Studio base URL for review tasks",
-    )
-    orchestrate.add_argument(
-        "--label-studio-token",
-        help="Label Studio API token for task submission",
-    )
-    orchestrate.add_argument(
-        "--label-studio-project",
-        type=int,
-        help="Label Studio project identifier",
-    )
+def main(argv: Sequence[str] | None = None) -> int:
+    """Delegate to the unified CLI after emitting a deprecation warning."""
 
-    # Entity resolution command
-    resolve = subparsers.add_parser(
-        "resolve",
-        help="Run entity resolution on existing data",
-    )
-    resolve.add_argument(
-        "--input-file",
-        type=Path,
-        required=True,
-        help="Input Excel/CSV file with potential duplicates",
-    )
-    resolve.add_argument(
-        "--output-file",
-        type=Path,
-        required=True,
-        help="Output file for deduplicated data",
-    )
-    resolve.add_argument(
-        "--threshold",
-        type=float,
-        default=0.75,
-        help="Match probability threshold (0.0-1.0)",
-    )
-    resolve.add_argument(
-        "--use-splink",
-        action="store_true",
-        help="Use Splink for probabilistic matching (default: fallback)",
-    )
-    resolve.add_argument(
-        "--match-threshold",
-        type=float,
-        default=0.9,
-        help="Probability considered a confirmed match",
-    )
-    resolve.add_argument(
-        "--review-threshold",
-        type=float,
-        default=0.7,
-        help="Probability routed to Label Studio review",
-    )
-    resolve.add_argument(
-        "--label-studio-url",
-        help="Label Studio base URL for review tasks",
-    )
-    resolve.add_argument(
-        "--label-studio-token",
-        help="Label Studio API token",
-    )
-    resolve.add_argument(
-        "--label-studio-project",
-        type=int,
-        help="Label Studio project identifier",
-    )
+    print(_DEPRECATION_MESSAGE, file=sys.stderr)
+    normalised = list(argv) if argv is not None else None
+    return _UNIFIED_ENTRYPOINT(normalised)
 
-    # Dashboard command
-    dashboard = subparsers.add_parser(
-        "dashboard",
-        help="Launch monitoring dashboard",
-    )
-    dashboard.add_argument(
-        "--port",
-        type=int,
-        default=8501,
-        help="Port for Streamlit dashboard",
-    )
-    dashboard.add_argument(
-        "--host",
-        default="localhost",
-        help="Host for dashboard server",
-    )
 
-    # Deploy command for Prefect
-    deploy = subparsers.add_parser(
-        "deploy",
-        help="Deploy pipeline to Prefect",
-    )
-    deploy.add_argument(
-        "--name",
-        default="hotpass-refinement",
-        help="Deployment name",
-    )
-    deploy.add_argument(
-        "--schedule",
-        help="Cron schedule (e.g., '0 2 * * *' for daily at 2am)",
-    )
-    deploy.add_argument(
-        "--work-pool",
-        help="Prefect work pool name",
-    )
+_UNIFIED_ENTRYPOINT: Callable[[Sequence[str] | None], int] = _cli_main
 
     return parser
 
