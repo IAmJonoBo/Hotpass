@@ -289,7 +289,11 @@ def test_aggregate_group_prioritises_reliable_and_recent_values() -> None:
         ]
     )
 
-    aggregated = _aggregate_group(slug, group.to_dict(orient="records"))
+    aggregated = _aggregate_group(
+        slug,
+        group.to_dict(orient="records"),
+        country_code="ZA",
+    )
 
     assert aggregated["website"] == "https://sacaa.example"
     assert aggregated["province"] == "Gauteng"

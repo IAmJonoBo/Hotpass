@@ -73,6 +73,51 @@ class FeatureSwitches(BaseModel):
     dashboards: bool = False
 
 
+class AcquisitionProviderConfig(BaseModel):
+    name: str
+    enabled: bool = True
+    weight: float = Field(default=1.0, ge=0)
+    options: Mapping[str, Any] = Field(default_factory=dict)
+
+
+class AcquisitionTargetConfig(BaseModel):
+    identifier: str
+    domain: str | None = None
+    location: str | None = None
+    metadata: Mapping[str, Any] = Field(default_factory=dict)
+
+
+class AcquisitionAgentConfig(BaseModel):
+    name: str
+    description: str | None = None
+    search_terms: tuple[str, ...] = Field(default_factory=tuple)
+    region: str | None = None
+    concurrency: int = Field(default=1, ge=1)
+    providers: tuple[AcquisitionProviderConfig, ...] = Field(default_factory=tuple)
+    targets: tuple[AcquisitionTargetConfig, ...] = Field(default_factory=tuple)
+    enabled: bool = True
+
+    @field_validator("search_terms", mode="before")
+    @classmethod
+    def _clean_terms(cls, values: Iterable[str] | None) -> tuple[str, ...]:
+        if values is None:
+            return ()
+        cleaned: list[str] = []
+        for value in values:
+            candidate = str(value).strip()
+            if candidate and candidate not in cleaned:
+                cleaned.append(candidate)
+        return tuple(cleaned)
+
+
+class AcquisitionSettings(BaseModel):
+    enabled: bool = False
+    deduplicate: bool = True
+    provenance_namespace: str = "agent"
+    credentials: Mapping[str, str] = Field(default_factory=dict)
+    agents: tuple[AcquisitionAgentConfig, ...] = Field(default_factory=tuple)
+
+
 class PipelineRuntimeConfig(BaseModel):
     """Input/output, reporting, and runtime options for the refinement pipeline."""
 
@@ -92,6 +137,7 @@ class PipelineRuntimeConfig(BaseModel):
     excel_stage_dir: Path | None = None
     sensitive_fields: tuple[str, ...] = Field(default_factory=tuple)
     observability: bool | None = None
+    acquisition: AcquisitionSettings | None = None
 
     @field_validator("sensitive_fields", mode="before")
     @classmethod
@@ -243,6 +289,50 @@ class HotpassConfig(BaseModel):
             progress_listener=progress_listener,
             pii_redaction=self.compliance.to_redaction_config(),
         )
+
+        if self.pipeline.acquisition and self.pipeline.acquisition.enabled:
+            from hotpass.data_sources.agents import (
+                AcquisitionPlan,
+                AgentDefinition,
+                ProviderDefinition,
+                TargetDefinition,
+            )
+
+            plan = AcquisitionPlan(
+                enabled=True,
+                deduplicate=self.pipeline.acquisition.deduplicate,
+                provenance_namespace=self.pipeline.acquisition.provenance_namespace,
+                agents=tuple(
+                    AgentDefinition(
+                        name=agent.name,
+                        description=agent.description,
+                        search_terms=agent.search_terms,
+                        region=agent.region,
+                        concurrency=agent.concurrency,
+                        providers=tuple(
+                            ProviderDefinition(
+                                name=provider.name,
+                                options=dict(provider.options),
+                                enabled=provider.enabled,
+                                weight=provider.weight,
+                            )
+                            for provider in agent.providers
+                        ),
+                        targets=tuple(
+                            TargetDefinition(
+                                identifier=target.identifier,
+                                domain=target.domain,
+                                location=target.location,
+                                metadata=dict(target.metadata),
+                            )
+                            for target in agent.targets
+                        ),
+                    )
+                    for agent in self.pipeline.acquisition.agents
+                ),
+            )
+            config.acquisition_plan = plan
+            config.agent_credentials = dict(self.pipeline.acquisition.credentials)
 
         if self.pipeline.qa_mode == "relaxed":
             config.enable_audit_trail = False

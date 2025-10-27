@@ -5,10 +5,12 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.contacts import (  # noqa: E402
-    Contact,
-    OrganizationContacts,
-    consolidate_contacts_from_rows,
+from hotpass.contacts import Contact, OrganizationContacts, consolidate_contacts_from_rows
+from hotpass.enrichment.validators import (
+    ContactValidationService,
+    EmailValidationResult,
+    PhoneValidationResult,
+    ValidationStatus,
 )
 
 
@@ -39,6 +41,19 @@ def test_contact_to_dict_roundtrip():
         phone="+1234567890",
         role="Manager",
     )
+    contact.lead_score = 0.42
+    contact.validation_flags = ["email:risky"]
+    contact.email_validation = EmailValidationResult(
+        address="john@example.com",
+        status=ValidationStatus.RISKY,
+        confidence=0.4,
+        reason="missing_mx_records",
+    )
+    contact.phone_validation = PhoneValidationResult(
+        number="+1234567890",
+        status=ValidationStatus.DELIVERABLE,
+        confidence=0.9,
+    )
 
     data = contact.to_dict()
     restored = Contact.from_dict(data)
@@ -47,6 +62,28 @@ def test_contact_to_dict_roundtrip():
     assert restored.email == contact.email
     assert restored.phone == contact.phone
     assert restored.role == contact.role
+    assert restored.lead_score == contact.lead_score
+    assert restored.validation_flags == contact.validation_flags
+    assert restored.email_validation is not None
+    assert restored.phone_validation is not None
+
+
+def test_contact_validation_adjusts_completeness():
+    """Deliverability signals should boost or penalise completeness."""
+    base = Contact(name="Valid", email="valid@example.com")
+    base.email_validation = EmailValidationResult(
+        address="valid@example.com",
+        status=ValidationStatus.DELIVERABLE,
+        confidence=0.9,
+    )
+    risky = Contact(name="Risky", email="risky@example.com")
+    risky.email_validation = EmailValidationResult(
+        address="risky@example.com",
+        status=ValidationStatus.UNDELIVERABLE,
+        confidence=0.8,
+    )
+
+    assert base.calculate_completeness() > risky.calculate_completeness()
 
 
 def test_organization_contacts_add_contact():
@@ -142,6 +179,16 @@ def test_organization_contacts_to_flat_dict():
         role="CEO",
         preference_score=1.0,
     )
+    primary.email_validation = EmailValidationResult(
+        address="john@example.com",
+        status=ValidationStatus.DELIVERABLE,
+        confidence=0.9,
+    )
+    primary.phone_validation = PhoneValidationResult(
+        number="+1234567890",
+        status=ValidationStatus.DELIVERABLE,
+        confidence=0.8,
+    )
     secondary = Contact(
         name="Jane Doe",
         email="jane@example.com",
@@ -158,6 +205,7 @@ def test_organization_contacts_to_flat_dict():
     assert flat["organization_name"] == "Acme Inc"
     assert flat["contact_primary_name"] == "John Doe"
     assert flat["contact_primary_email"] == "john@example.com"
+    assert flat["contact_primary_email_confidence"] == primary.email_validation.confidence
     assert "jane@example.com" in flat["contact_secondary_emails"]
     assert flat["total_contacts"] == 2
 
@@ -184,3 +232,23 @@ def test_consolidate_contacts_from_rows():
     assert org.organization_name == "Acme Inc"
     assert len(org.contacts) == 2
     assert org.contacts[0].preference_score > 0  # Scores were calculated
+    assert all(contact.email_validation for contact in org.contacts)
+    assert all(contact.email and "@" in contact.email for contact in org.contacts)
+
+
+def test_contact_validation_service_caches_results():
+    """Ensure repeated validations reuse cached results."""
+    service = ContactValidationService()
+    result_one = service.validate_contact(
+        email="cache@example.com",
+        phone="+27123456789",
+        country_code="ZA",
+    )
+    result_two = service.validate_contact(
+        email="cache@example.com",
+        phone="+27123456789",
+        country_code="ZA",
+    )
+
+    assert result_one.email is result_two.email
+    assert result_one.phone is result_two.phone
