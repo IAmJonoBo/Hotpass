@@ -319,7 +319,7 @@ def _run_api_task(
     requires_credentials = merged_options.get("requires_credentials")
     if requires_credentials and credential_value is None:
         state.warnings.append(
-            f"{task.name}: missing credential for provider '{provider_definition.name}'"
+            f"Task '{task.name}': missing credential for provider '{provider_definition.name}'"
         )
         return
 
