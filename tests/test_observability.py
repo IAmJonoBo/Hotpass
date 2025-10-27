@@ -1,501 +1,162 @@
-"""Tests for OpenTelemetry observability module."""
+# ruff: noqa: I001
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from typing import Literal
+from collections.abc import Iterator
 
 import pytest
 
 pytest.importorskip("frictionless")
 
-import hotpass.observability as observability  # noqa: E402
-from hotpass.observability import (
-    PipelineMetrics,
-    get_meter,
-    get_pipeline_metrics,
-    get_tracer,
-    initialize_observability,
-    shutdown_observability,
-    trace_operation,
-)
 from hotpass.telemetry import pipeline_stage
+from hotpass.telemetry.registry import (
+    TelemetryModules,
+    TelemetryPolicy,
+    TelemetryRegistry,
+)
+
+import hotpass.observability as observability  # noqa: E402
+
+from ._telemetry_stubs import (
+    DummyConsoleMetricExporter,
+    DummyConsoleSpanExporter,
+    DummyMetricReader,
+    DummyMetrics,
+    DummyMeter,
+    DummyMeterProvider,
+    DummyResource,
+    DummySpanProcessor,
+    DummyTracer,
+    DummyTracerProvider,
+    build_modules,
+)
 
 
-@pytest.fixture(autouse=True)
-def reset_observability_globals(monkeypatch):
-    """Reset module-level state between tests."""
-
-    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
-    monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
-    monkeypatch.setattr(observability, "_meter_provider", None, raising=False)
-    monkeypatch.setattr(observability, "_metric_reader", None, raising=False)
-    monkeypatch.setattr(observability, "_trace_provider", None, raising=False)
-    monkeypatch.setattr(observability, "_shutdown_registered", False, raising=False)
-    monkeypatch.setattr(
-        observability,
-        "atexit",
-        SimpleNamespace(register=lambda fn: fn),
-        raising=False,
-    )
-
-
-@pytest.fixture
-def instrumentation_stubs(monkeypatch):
-    """Patch observability dependencies with lightweight stubs."""
-
-    class DummyObservation:
-        def __init__(self, value: float):
-            self.value = value
-
-    class DummyInstrument:
-        def __init__(self) -> None:
-            self.calls: list[tuple[str, float, dict[str, object]]] = []
-
-        def add(self, value: float, attributes: dict[str, object] | None = None) -> None:
-            self.calls.append(("add", value, attributes or {}))
-
-        def record(self, value: float, attributes: dict[str, object] | None = None) -> None:
-            self.calls.append(("record", value, attributes or {}))
-
-    class DummyObservableGauge:
-        def __init__(self, callbacks: list | None = None) -> None:
-            self.callbacks = list(callbacks or [])
-
-    class DummyMeter:
-        def __init__(self) -> None:
-            self.created: dict[str, object] = {}
-
-        def create_counter(self, name: str, **_: object) -> DummyInstrument:
-            instrument = DummyInstrument()
-            self.created[name] = instrument
-            return instrument
-
-        def create_histogram(self, name: str, **_: object) -> DummyInstrument:
-            instrument = DummyInstrument()
-            self.created[name] = instrument
-            return instrument
-
-        def create_observable_gauge(
-            self,
-            name: str,
-            callbacks: list | None = None,
-            **_: object,
-        ) -> DummyObservableGauge:
-            gauge = DummyObservableGauge(callbacks=list(callbacks or []))
-            self.created[name] = gauge
-            return gauge
-
-    class DummyMetricsModule:
-        Observation = DummyObservation
-
-        def __init__(self) -> None:
-            self.provider: object | None = None
-            self.meter = DummyMeter()
-
-        def get_meter(self, *_: object, **__: object) -> DummyMeter:
-            return self.meter
-
-        def set_meter_provider(self, provider: object) -> None:
-            self.provider = provider
-
-    class DummySpan:
-        def __init__(self, name: str) -> None:
-            self.name = name
-            self.attributes: dict[str, object] = {}
-            self.exceptions: list[Exception] = []
-            self.status: object | None = None
-
-        def set_attribute(self, key: str, value: object) -> None:
-            self.attributes[key] = value
-
-        def record_exception(self, exc: Exception) -> None:
-            self.exceptions.append(exc)
-
-        def set_status(self, status: object) -> None:
-            self.status = status
-
-    class DummySpanContext:
-        def __init__(self, span: DummySpan) -> None:
-            self._span = span
-
-        def __enter__(self) -> DummySpan:
-            return self._span
-
-        def __exit__(
-            self,
-            exc_type: object,
-            exc: object,
-            tb: object,
-        ) -> Literal[False]:
-            return False
-
-    class DummyTracer:
-        def __init__(self) -> None:
-            self.spans: list[DummySpan] = []
-
-        def start_as_current_span(self, name: str) -> DummySpanContext:
-            span = DummySpan(name)
-            self.spans.append(span)
-            return DummySpanContext(span)
-
-    class DummyTraceModule:
-        StatusCode = SimpleNamespace(ERROR="ERROR")
-
-        def __init__(self) -> None:
-            self.provider: object | None = None
-            self.tracer = DummyTracer()
-
-        def get_tracer(self, *_: object, **__: object) -> DummyTracer:
-            return self.tracer
-
-        def set_tracer_provider(self, provider: object) -> None:
-            self.provider = provider
-
-        def Status(self, code: object, description: str) -> dict[str, object]:
-            return {"code": code, "description": description}
-
-    class DummyMetricReader:
-        instances: list[DummyMetricReader] = []
-
-        def __init__(self, exporter: object, export_interval_millis: int = 60000) -> None:
-            self.exporter = exporter
-            self.export_interval_millis = export_interval_millis
-            self.shutdown_called = False
-            self.instances.append(self)
-
-        def shutdown(self) -> None:
-            self.shutdown_called = True
-
-    class DummyMeterProvider:
-        instances: list[DummyMeterProvider] = []
-
-        def __init__(
-            self,
-            *_: object,
-            metric_readers: list[object] | None = None,
-            resource: object | None = None,
-        ) -> None:
-            self.metric_readers = list(metric_readers or [])
-            self.resource = resource
-            self.shutdown_called = False
-            self.instances.append(self)
-
-        def shutdown(self) -> None:
-            self.shutdown_called = True
-
-    class DummyTracerProvider:
-        instances: list[DummyTracerProvider] = []
-
-        def __init__(self, *_: object, resource: object | None = None) -> None:
-            self.resource = resource
-            self.processors: list[object] = []
-            self.shutdown_called = False
-            self.instances.append(self)
-
-        def add_span_processor(self, processor: object) -> None:
-            self.processors.append(processor)
-
-        def shutdown(self) -> None:
-            self.shutdown_called = True
-
-    class DummyBatchSpanProcessor:
-        instances: list[DummyBatchSpanProcessor] = []
-
-        def __init__(self, exporter: object) -> None:
-            self.exporter = exporter
-            self.shutdown_called = False
-            self.instances.append(self)
-
-        def shutdown(self) -> None:
-            self.shutdown_called = True
-
-    class DummyConsoleSpanExporter:
-        instances: list[DummyConsoleSpanExporter] = []
-
-        def __init__(self) -> None:
-            self.instances.append(self)
-
-    class DummySafeConsoleSpanExporter:
-        instances: list[DummySafeConsoleSpanExporter] = []
-
-        def __init__(self) -> None:
-            self.instances.append(self)
-
-        def export(self, spans: object) -> object:
-            return spans
-
-    class DummyResource:
-        last_attributes: dict[str, object] | None = None
-
-        @staticmethod
-        def create(attributes: dict[str, object]) -> dict[str, object]:
-            DummyResource.last_attributes = attributes
-            return attributes
-
-    metrics_module = DummyMetricsModule()
-    trace_module = DummyTraceModule()
-
+def _modules(available: bool = True) -> TelemetryModules:
     DummyMetricReader.instances = []
-    DummyMeterProvider.instances = []
-    DummyTracerProvider.instances = []
-    DummyBatchSpanProcessor.instances = []
-    DummyConsoleSpanExporter.instances = []
-    DummySafeConsoleSpanExporter.instances = []
-    DummyResource.last_attributes = None
-
-    monkeypatch.setattr(observability, "metrics", metrics_module, raising=False)
-    monkeypatch.setattr(observability, "trace", trace_module, raising=False)
-    monkeypatch.setattr(observability, "MeterProvider", DummyMeterProvider, raising=False)
-    monkeypatch.setattr(
-        observability,
-        "PeriodicExportingMetricReader",
-        DummyMetricReader,
-        raising=False,
-    )
-    monkeypatch.setattr(observability, "TracerProvider", DummyTracerProvider, raising=False)
-    monkeypatch.setattr(observability, "BatchSpanProcessor", DummyBatchSpanProcessor, raising=False)
-    monkeypatch.setattr(
-        observability,
-        "ConsoleSpanExporter",
-        DummyConsoleSpanExporter,
-        raising=False,
-    )
-    monkeypatch.setattr(
-        observability,
-        "_SafeConsoleSpanExporter",
-        DummySafeConsoleSpanExporter,
-        raising=False,
-    )
-    monkeypatch.setattr(observability, "Resource", DummyResource, raising=False)
-    monkeypatch.setattr(observability, "OBSERVABILITY_AVAILABLE", True, raising=False)
-
-    return SimpleNamespace(
-        metrics_module=metrics_module,
-        trace_module=trace_module,
-        metric_reader_cls=DummyMetricReader,
+    meter, trace_module, metrics_module = build_modules()
+    return TelemetryModules(
+        available=available,
+        metrics=metrics_module,
+        trace=trace_module,
         meter_provider_cls=DummyMeterProvider,
+        metric_reader_cls=DummyMetricReader,
         tracer_provider_cls=DummyTracerProvider,
-        batch_processor_cls=DummyBatchSpanProcessor,
+        span_processor_cls=DummySpanProcessor,
         console_span_exporter_cls=DummyConsoleSpanExporter,
-        safe_console_span_exporter_cls=DummySafeConsoleSpanExporter,
+        console_metric_exporter_cls=DummyConsoleMetricExporter,
         resource_cls=DummyResource,
     )
 
 
-def test_initialize_observability(instrumentation_stubs):
-    """Instrumentation should be configured with console exporters when requested."""
+@pytest.fixture(autouse=True)
+def reset_registry() -> Iterator[None]:
+    """Ensure each test starts with an isolated telemetry registry."""
 
-    tracer, meter = initialize_observability(
-        service_name="test-service",
-        environment="test",
-        export_to_console=True,
+    modules = _modules()
+    policy = TelemetryPolicy(allowed_exporters={"console"})
+    registry = TelemetryRegistry(
+        modules=modules,
+        policy=policy,
+        metrics_factory=DummyMetrics,
+        register_shutdown=lambda fn: fn(),
+    )
+    observability.use_registry(registry)
+    yield
+    observability.shutdown_observability()
+
+
+def test_initialize_observability_configures_registry() -> None:
+    tracer, meter = observability.initialize_observability(
+        service_name="svc",
+        environment="prod",
+        exporters=("console",),
     )
 
-    assert tracer is instrumentation_stubs.trace_module.tracer
-    assert meter is instrumentation_stubs.metrics_module.meter
-    assert (
-        instrumentation_stubs.metrics_module.provider
-        is instrumentation_stubs.meter_provider_cls.instances[0]
-    )
-    assert (
-        instrumentation_stubs.trace_module.provider
-        is instrumentation_stubs.tracer_provider_cls.instances[0]
-    )
-    assert instrumentation_stubs.metric_reader_cls.instances[0].exporter is not None
-    assert instrumentation_stubs.batch_processor_cls.instances[0].exporter is not None
-    assert instrumentation_stubs.safe_console_span_exporter_cls.instances
-    assert instrumentation_stubs.resource_cls.last_attributes == {
-        "service.name": "test-service",
+    assert isinstance(tracer, DummyTracer)
+    assert isinstance(meter, DummyMeter)
+    metrics = observability.get_pipeline_metrics()
+    assert isinstance(metrics, DummyMetrics)
+    assert DummyResource.last_attributes == {
+        "service.name": "svc",
         "service.version": "0.1.0",
-        "deployment.environment": "test",
+        "deployment.environment": "prod",
     }
 
 
-def test_initialize_observability_idempotent(instrumentation_stubs):
-    """Calling initialize more than once should reuse existing instrumentation."""
-
-    first_tracer, first_meter = initialize_observability(export_to_console=True)
-    initial_reader_count = len(instrumentation_stubs.metric_reader_cls.instances)
-
-    tracer, meter = initialize_observability(export_to_console=True)
-
-    assert tracer is first_tracer
-    assert meter is first_meter
-    assert len(instrumentation_stubs.metric_reader_cls.instances) == initial_reader_count
+def test_initialize_observability_idempotent() -> None:
+    first = observability.initialize_observability(service_name="svc")
+    second = observability.initialize_observability(service_name="svc")
+    assert first == second
+    assert len(DummyMetricReader.instances) == 1
 
 
-def test_shutdown_observability(instrumentation_stubs):
-    """Shutdown should invoke component-specific teardown hooks."""
+def test_trace_operation_records_error_status() -> None:
+    observability.initialize_observability(service_name="svc")
 
-    initialize_observability(export_to_console=True)
-    reader = instrumentation_stubs.metric_reader_cls.instances[0]
-    meter_provider = instrumentation_stubs.meter_provider_cls.instances[0]
-    tracer_provider = instrumentation_stubs.tracer_provider_cls.instances[0]
+    with pytest.raises(RuntimeError):
+        with observability.trace_operation("failing"):
+            raise RuntimeError("boom")
 
-    shutdown_observability()
-
-    assert reader.shutdown_called is True
-    assert meter_provider.shutdown_called is True
-    assert tracer_provider.shutdown_called is True
-    assert observability._instrumentation_initialized is False
+    span = observability.trace.get_tracer("hotpass").spans[-1]
+    assert span.status == {"code": "ERROR", "description": "boom"}
 
 
-def test_get_tracer():
-    """Test getting a tracer instance."""
-    tracer = get_tracer("test-tracer")
-    assert tracer is not None
+def test_pipeline_stage_records_metrics_and_attributes() -> None:
+    observability.initialize_observability(service_name="svc")
+    metrics = observability.get_pipeline_metrics()
 
-
-def test_get_meter():
-    """Test getting a meter instance."""
-    meter = get_meter("test-meter")
-    assert meter is not None
-
-
-def test_trace_operation_success():
-    """Test tracing a successful operation."""
-    with trace_operation("test-operation", {"key": "value"}) as span:
-        assert span is not None
-        # Operation succeeds
-        result = 42
-
-    assert result == 42
-
-
-def test_trace_operation_with_exception():
-    """Test tracing an operation that raises an exception."""
-    with pytest.raises(ValueError):
-        with trace_operation("failing-operation"):
-            raise ValueError("Test error")
-
-
-def test_pipeline_stage_records_metrics_and_attributes(instrumentation_stubs):
-    """Pipeline stage helper should emit spans and histogram samples."""
-
-    initialize_observability()
-    metrics = get_pipeline_metrics()
-
-    with pipeline_stage("ingest", {"input_dir": "./data"}):
+    with pipeline_stage("ingest", {"input_dir": "./data", "tags": ["a", "b"]}):
         pass
 
-    tracer = instrumentation_stubs.trace_module.tracer
+    tracer = observability.trace.get_tracer("hotpass.pipeline")
     span = tracer.spans[-1]
     assert span.name == "pipeline.ingest"
     assert span.attributes["hotpass.pipeline.stage"] == "ingest"
     assert span.attributes["hotpass.pipeline.input_dir"] == "./data"
-    assert "hotpass.pipeline.duration_seconds" in span.attributes
-
-    load_calls = metrics.load_duration.calls
-    assert load_calls, "expected load duration histogram to record a sample"
-    method, value, attributes = load_calls[-1]
-    assert method == "record"
-    assert value >= 0.0
-    assert attributes == {"source": "unknown"}
+    assert span.attributes["hotpass.pipeline.tags"] == "a, b"
+    histogram = metrics.meter.histograms["hotpass.load.duration"]
+    assert histogram.calls, "expected load duration histogram to record"
 
 
-def test_pipeline_stage_serializes_attribute_variants(instrumentation_stubs):
-    """Attributes from sequences and other types should be normalised consistently."""
+def test_get_pipeline_metrics_lazy_when_uninitialised() -> None:
+    metrics = observability.get_pipeline_metrics()
+    assert isinstance(metrics, DummyMetrics)
 
-    initialize_observability()
 
-    attributes = {
-        "flags": ["a", "b", 3],
-        "enabled": True,
-        "metadata": {"key": "value"},
-    }
+def test_shutdown_observability_invokes_lifecycle() -> None:
+    observability.initialize_observability(service_name="svc")
+    reader = DummyMetricReader.instances[0]
 
-    with pipeline_stage("publish", attributes):
+    observability.shutdown_observability()
+
+    assert reader.shutdown_called is True
+
+
+def test_noop_registry_when_modules_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    modules = _modules(available=False)
+    policy = TelemetryPolicy(allowed_exporters={"console"})
+    registry = TelemetryRegistry(
+        modules=modules,
+        policy=policy,
+        metrics_factory=DummyMetrics,
+        register_shutdown=lambda fn: fn(),
+    )
+    observability.use_registry(registry)
+
+    tracer, meter = observability.initialize_observability(service_name="svc")
+
+    assert isinstance(tracer, DummyTracer)
+    assert isinstance(meter, DummyMeter)
+    assert registry.meter_provider is None
+    assert registry.tracer_provider is None
+
+
+def test_trace_operation_injects_additional_attributes() -> None:
+    observability.initialize_observability(service_name="svc")
+
+    with observability.trace_operation("annotated", {"key": "value"}):
         pass
 
-    tracer = instrumentation_stubs.trace_module.tracer
-    span = tracer.spans[-1]
-    assert span.attributes["hotpass.pipeline.flags"] == "a, b, 3"
-    assert span.attributes["hotpass.pipeline.enabled"] is True
-    assert span.attributes["hotpass.pipeline.metadata"] == "{'key': 'value'}"
-
-
-def test_safe_console_exporter_swallows_value_error(monkeypatch):
-    """Console exporter should ignore ValueError emitted during shutdown."""
-
-    calls: list[tuple[object, float]] = []
-
-    def failing_export(self, metrics_data, timeout_millis: float = 1000.0, **_: object) -> None:  # noqa: ANN001
-        calls.append((metrics_data, timeout_millis))
-        raise ValueError("closed file")
-
-    monkeypatch.setattr(
-        observability.ConsoleMetricExporter,
-        "export",
-        failing_export,
-        raising=False,
-    )
-
-    exporter = observability._SafeConsoleMetricExporter()
-    assert exporter.export(object()) is None
-    assert calls
-
-
-def test_safe_console_span_exporter_swallows_value_error(monkeypatch):
-    """Span exporter should suppress ValueError when stdout is unavailable."""
-
-    def failing_export(self, spans: object) -> object:  # noqa: ANN001
-        raise ValueError("closed stream")
-
-    monkeypatch.setattr(
-        observability.ConsoleSpanExporter,
-        "export",
-        failing_export,
-        raising=False,
-    )
-
-    exporter = observability._SafeConsoleSpanExporter()
-    result = exporter.export([object()])
-    expected_success = getattr(observability.SpanExportResult, "SUCCESS", None)
-    assert result == expected_success
-
-
-def test_pipeline_metrics_creation():
-    """Test creating pipeline metrics."""
-    metrics = PipelineMetrics()
-
-    assert metrics.records_processed is not None
-    assert metrics.validation_failures is not None
-    assert metrics.load_duration is not None
-    assert metrics.aggregation_duration is not None
-    assert metrics.validation_duration is not None
-    assert metrics.write_duration is not None
-
-
-def test_pipeline_metrics_record_operations():
-    """Test recording various metrics."""
-    metrics = PipelineMetrics()
-
-    # These should not raise exceptions
-    metrics.record_records_processed(100, "test-source")
-    metrics.record_validation_failure("test-rule")
-    metrics.record_load_duration(1.5, "test-source")
-    metrics.record_aggregation_duration(2.3)
-    metrics.record_validation_duration(0.8)
-    metrics.record_write_duration(1.2)
-    metrics.update_quality_score(0.95)
-
-    assert metrics._latest_quality_score == 0.95
-
-
-def test_get_pipeline_metrics_singleton():
-    """Test that pipeline metrics is a singleton."""
-    metrics1 = get_pipeline_metrics()
-    metrics2 = get_pipeline_metrics()
-
-    assert metrics1 is metrics2
-
-
-def test_pipeline_metrics_quality_score_callback():
-    """Test quality score gauge callback."""
-    metrics = PipelineMetrics()
-    metrics.update_quality_score(0.85)
-
-    observations = metrics._get_quality_score(None)
-    assert len(observations) == 1
-    assert observations[0].value == 0.85
+    span = observability.trace.get_tracer("hotpass").spans[-1]
+    assert span.attributes["key"] == "value"

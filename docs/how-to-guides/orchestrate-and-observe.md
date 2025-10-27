@@ -90,7 +90,8 @@ unit tests offline-friendly.
 
 ## Enable telemetry
 
-Set the exporter variables before triggering a run:
+Set the exporter variables before triggering a run. The CLI now routes telemetry through the
+shared registry described in [Observability registry and policy](../observability/index.md):
 
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT="https://otel.example.com"
@@ -104,7 +105,9 @@ Then run the orchestrated pipeline:
 uv run hotpass-enhanced orchestrate --profile aviation --enable-observability
 ```
 
-Use the Prefect UI or the OTLP backend (Grafana, Datadog, etc.) to verify metrics such as `hotpass.pipeline.duration`, `hotpass.validation.failures`, and `hotpass.enrichment.coverage`.
+Use the Prefect UI or the OTLP backend (Grafana, Datadog, etc.) to verify metrics such as `hotpass.pipeline.duration`, `hotpass.validation.failures`, and `hotpass.enrichment.coverage`. When
+customising exporters, inject a bespoke `TelemetryRegistry` via `hotpass.observability.use_registry`
+and include a call to `shutdown_observability()` in CLI scripts to flush readers.
 
 ## Troubleshooting
 

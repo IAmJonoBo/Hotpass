@@ -1,0 +1,176 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Any, Literal
+
+
+@dataclass
+class DummyMetricsModule:
+    meter: Any
+
+    def __post_init__(self) -> None:
+        self.provider: Any | None = None
+        self.Observation = lambda value: SimpleNamespace(value=value)
+
+    def get_meter(self, *_: Any, **__: Any) -> Any:
+        return self.meter
+
+    def set_meter_provider(self, provider: Any) -> None:
+        self.provider = provider
+
+
+class DummyMeter:
+    def __init__(self) -> None:
+        self.counters: dict[str, Any] = {}
+        self.histograms: dict[str, Any] = {}
+        self.gauges: dict[str, Any] = {}
+
+    def create_counter(self, name: str, **_: Any) -> SimpleNamespace:
+        counter = SimpleNamespace(calls=[])
+        self.counters[name] = counter
+        return counter
+
+    def create_histogram(self, name: str, **_: Any) -> SimpleNamespace:
+        histogram = SimpleNamespace(calls=[])
+        self.histograms[name] = histogram
+        return histogram
+
+    def create_observable_gauge(self, name: str, callbacks: list[Any], **_: Any) -> SimpleNamespace:
+        gauge = SimpleNamespace(callbacks=list(callbacks))
+        self.gauges[name] = gauge
+        return gauge
+
+
+class DummyTraceModule:
+    StatusCode = SimpleNamespace(ERROR="ERROR")
+
+    def __init__(self) -> None:
+        self.provider: Any | None = None
+        self.tracer = DummyTracer()
+
+    def get_tracer(self, *_: Any, **__: Any) -> Any:
+        return self.tracer
+
+    def set_tracer_provider(self, provider: Any) -> None:
+        self.provider = provider
+
+    def Status(self, code: Any, description: str) -> dict[str, Any]:
+        return {"code": code, "description": description}
+
+
+class DummyTracer:
+    def __init__(self) -> None:
+        self.spans: list[DummySpan] = []
+
+    def start_as_current_span(self, name: str) -> DummySpanContext:
+        span = DummySpan(name)
+        self.spans.append(span)
+        return DummySpanContext(span)
+
+
+class DummySpan:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.attributes: dict[str, Any] = {}
+        self.exceptions: list[Exception] = []
+        self.status: Any | None = None
+
+    def set_attribute(self, key: str, value: Any) -> None:
+        self.attributes[key] = value
+
+    def record_exception(self, exc: Exception) -> None:
+        self.exceptions.append(exc)
+
+    def set_status(self, status: Any) -> None:
+        self.status = status
+
+
+class DummySpanContext:
+    def __init__(self, span: DummySpan) -> None:
+        self._span = span
+
+    def __enter__(self) -> DummySpan:
+        return self._span
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> Literal[False]:
+        return False
+
+
+class DummyMeterProvider:
+    def __init__(self, *, metric_readers: list[Any], resource: Any) -> None:
+        self.metric_readers = list(metric_readers)
+        self.resource = resource
+        self.shutdown_called = False
+
+    def shutdown(self) -> None:
+        self.shutdown_called = True
+
+
+class DummyMetricReader:
+    instances: list[DummyMetricReader] = []
+
+    def __init__(self, exporter: Any, export_interval_millis: int = 60000) -> None:
+        self.exporter = exporter
+        self.export_interval_millis = export_interval_millis
+        self.shutdown_called = False
+        self.__class__.instances.append(self)
+
+    def shutdown(self) -> None:
+        self.shutdown_called = True
+
+
+class DummyTracerProvider:
+    def __init__(self, *, resource: Any) -> None:
+        self.resource = resource
+        self.processors: list[Any] = []
+        self.shutdown_called = False
+
+    def add_span_processor(self, processor: Any) -> None:
+        self.processors.append(processor)
+
+    def shutdown(self) -> None:
+        self.shutdown_called = True
+
+
+class DummySpanProcessor:
+    def __init__(self, exporter: Any) -> None:
+        self.exporter = exporter
+
+
+class DummyConsoleSpanExporter:
+    def __init__(self) -> None:
+        self.exported: list[Any] = []
+
+    def export(self, spans: Any) -> Any:
+        self.exported.append(spans)
+        return spans
+
+
+class DummyConsoleMetricExporter:
+    def export(self, *_: Any, **__: Any) -> Any:
+        return None
+
+
+class DummyResource:
+    last_attributes: dict[str, Any] | None = None
+
+    @staticmethod
+    def create(attributes: dict[str, Any]) -> dict[str, Any]:
+        DummyResource.last_attributes = attributes
+        return attributes
+
+
+class DummyMetrics:
+    def __init__(self, meter: Any, observation_factory: Any) -> None:
+        self.meter = meter
+        self.observation_factory = observation_factory
+
+
+def build_modules(
+    available: bool = True,
+) -> tuple[DummyMeter, DummyTraceModule, DummyMetricsModule]:
+    meter = DummyMeter()
+    metrics_module = DummyMetricsModule(meter=meter)
+    trace_module = DummyTraceModule()
+    return meter, trace_module, metrics_module

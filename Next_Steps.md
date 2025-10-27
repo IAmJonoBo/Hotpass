@@ -45,6 +45,9 @@
 - [x] Expand regression coverage and documentation for input formatting and validation flows (Owner: QA & Docs, Due: 2025-12-27)
 - [x] Publish guidance for enabling Prefect runtime via `HOTPASS_ENABLE_PREFECT_RUNTIME` in orchestration docs (Owner: Platform, Due: 2025-11-30)
 - [x] Gate agent-triggered Prefect runs with MCP allowlists, audit logging, and operator docs (Owner: Engineering, Due: 2025-12-27)
+- [x] Modularise telemetry registry with policy enforcement and exporter lifecycle coverage (Owner: Engineering, Due: 2025-11-03)
+- [x] Document observability configuration changes and refresh governance metrics (Owner: Docs & Platform, Due: 2025-11-03)
+- [x] Restore QA gates after telemetry refactor (Owner: QA, Due: 2025-11-04)
 
 ## Steps
 
@@ -148,6 +151,9 @@
 - [x] Added MCP server/client configs, Prefect agent gating helpers, regression tests, and operator documentation (2025-10-26)【F:scripts/agents/mcp_server.yaml†L1-L38】【F:scripts/agents/mcp_client.yaml†L1-L24】【F:src/hotpass/orchestration.py†L58-L401】【F:tests/test_agentic_orchestration.py†L1-L119】【F:docs/how-to-guides/agentic-orchestration.md†L1-L76】
 - [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
 - [x] Replaced orchestrator `assert` with runtime guard and reran full QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, build) (2025-10-26)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
+- [x] Completed telemetry registry mypy cleanup and reran QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【48fd1e†L1-L66】【6c9938†L1-L2】【141570†L1-L2】【966aad†L1-L8】【48bfa5†L1-L33】【8706b2†L1-L58】【a7eea3†L1-L199】
+- [x] Baseline QA (2025-10-27) surfaced missing `frictionless` import coverage, Ruff UP038 lint, and mypy stub gaps prior to telemetry refactor【c063e4†L1-L23】【0d5a32†L1-L13】【c903ed†L1-L18】
+- [x] Plan telemetry registry extraction with policy enforcement, CLI/orchestrator integration, documentation refresh, and QA rerun for new observability lifecycle【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L86】
 
 ## Quality Gates
 

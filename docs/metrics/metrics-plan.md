@@ -40,6 +40,7 @@ This plan defines how Hotpass will measure delivery performance and developer ex
    - Enable Prefect Orion API for local telemetry; confirm authentication approach for CI runners.
    - Configure GitHub Actions workflow run exports to BigQuery or DuckDB via scheduled job.
    - Stand up temporary spreadsheet summarising manual metrics until automation is verified.
+   - Adopt the telemetry registry in CLI/Prefect code paths so all spans and histograms include service, environment, and exporter metadata. See [observability registry and policy](../observability/index.md) for configuration details.
 2. **Automation (Week 3–6)**
    - Deploy the [Four Keys](https://github.com/GoogleCloudPlatform/fourkeys) stack via Terraform or Docker Compose; feed GitHub and Prefect event streams.
    - Configure Prefect `result_storage` to emit JSON logs with run metadata (status, runtime, owner) to object storage for ingestion.

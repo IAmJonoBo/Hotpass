@@ -308,6 +308,10 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
                 if args.linkage_output_dir
                 else None,
                 linkage_match_threshold=match_threshold,
+                telemetry_attributes={
+                    "hotpass.profile": args.profile or "default",
+                    "hotpass.command": "hotpass-enhanced orchestrate",
+                },
             )
             runner = run_enhanced_pipeline
             runner_kwargs = {"enhanced_config": enhanced_config}
@@ -327,6 +331,13 @@ def cmd_orchestrate(args: argparse.Namespace) -> int:
     except PipelineOrchestrationError as exc:
         console.print(f"[bold red]✗[/bold red] Pipeline failed: {exc}")
         return 1
+    finally:
+        try:
+            from hotpass.observability import shutdown_observability
+
+            shutdown_observability()
+        except ModuleNotFoundError:
+            pass
 
     if summary.success:
         console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
