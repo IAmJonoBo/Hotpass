@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, ClassVar
@@ -17,6 +17,35 @@ from ..normalization import (
 )
 
 
+class CredentialStore:
+    """Lookup credentials for providers with simple in-memory caching."""
+
+    def __init__(self, credentials: Mapping[str, str] | None = None) -> None:
+        self._source: Mapping[str, str] = credentials or {}
+        self._cache: dict[str, str] = {}
+
+    def fetch(
+        self,
+        provider_name: str,
+        aliases: Iterable[str] | None = None,
+    ) -> tuple[str | None, bool, str | None]:
+        keys: list[str] = []
+        if aliases:
+            keys.extend(str(alias) for alias in aliases)
+        upper = provider_name.upper()
+        lower = provider_name.lower()
+        keys.extend([f"{upper}_API_KEY", f"{upper}_TOKEN", upper, lower])
+        for key in keys:
+            if key in self._cache:
+                return self._cache[key], True, key
+        for key in keys:
+            value = self._source.get(key)
+            if value is not None:
+                self._cache[key] = value
+                return value, False, key
+        return None, False, None
+
+
 @dataclass(slots=True)
 class ProviderContext:
     """Contextual information available to providers."""
@@ -24,6 +53,33 @@ class ProviderContext:
     country_code: str
     credentials: Mapping[str, str]
     issued_at: datetime
+    credential_store: CredentialStore | None = None
+
+
+def _credential_metadata(
+    context: ProviderContext,
+    provider_name: str,
+    options: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    store = context.credential_store
+    if store is None:
+        return None
+    aliases = options.get("credential_aliases") if isinstance(options, Mapping) else None
+    alias_iter: list[str] | None = None
+    if isinstance(aliases, Sequence) and not isinstance(aliases, (str, bytes)):
+        alias_iter = [str(alias) for alias in aliases]
+    value, cached, reference = store.fetch(provider_name, alias_iter)
+    if reference is None:
+        return None
+    return {"reference": reference, "cached": cached, "available": value is not None}
+
+
+def _compliance_metadata(policies: Mapping[str, Any] | None) -> dict[str, Any]:
+    policies = policies or {}
+    return {
+        "robots_allowed": policies.get("robots_allowed", True),
+        "terms_of_service": policies.get("tos_url"),
+    }
 
 
 @dataclass(slots=True)
@@ -87,6 +143,9 @@ class LinkedInProvider(BaseProvider):
         target_domain: str | None,
         context: ProviderContext,
     ) -> Iterable[ProviderPayload]:
+        policies = self.options.get("policies", {})
+        if policies.get("robots_allowed") is False or policies.get("tos_accepted") is False:
+            return []
         dataset = self.options.get("profiles", {})
         entry = dataset.get(target_identifier) or dataset.get(target_domain or "")
         if not entry:
@@ -94,6 +153,16 @@ class LinkedInProvider(BaseProvider):
         contacts = entry.get("contacts", [])
         records: list[ProviderPayload] = []
         organisation = clean_string(entry.get("organization")) or target_identifier
+        compliance = _compliance_metadata(policies)
+        credential_info = _credential_metadata(context, self.name, self.options)
+        base_provenance = {
+            "provider": self.name,
+            "retrieved_at": context.issued_at.isoformat(),
+            "source": "linkedin",
+            "compliance": compliance,
+        }
+        if credential_info:
+            base_provenance["credentials"] = credential_info
         for idx, contact in enumerate(contacts, start=1):
             name = clean_string(contact.get("name"))
             if not name:
@@ -106,12 +175,8 @@ class LinkedInProvider(BaseProvider):
             )
             role_value = clean_string(contact.get("title"))
             role_list = [role_value] if role_value else []
-            provenance = {
-                "provider": self.name,
-                "url": entry.get("profile_url"),
-                "retrieved_at": context.issued_at.isoformat(),
-                "source": "linkedin",
-            }
+            provenance = dict(base_provenance)
+            provenance["url"] = entry.get("profile_url")
             record = RawRecord(
                 organization_name=organisation,
                 source_dataset="LinkedIn",
@@ -149,17 +214,25 @@ class ClearbitProvider(BaseProvider):
         target_domain: str | None,
         context: ProviderContext,
     ) -> Iterable[ProviderPayload]:
+        policies = self.options.get("policies", {})
+        if policies.get("robots_allowed") is False or policies.get("tos_accepted") is False:
+            return []
         dataset = self.options.get("companies", {})
         entry = dataset.get(target_domain or target_identifier)
         if not entry:
             return []
         tags = entry.get("tags", [])
+        compliance = _compliance_metadata(policies)
+        credential_info = _credential_metadata(context, self.name, self.options)
         provenance = {
             "provider": self.name,
             "endpoint": "companies/find",
             "retrieved_at": context.issued_at.isoformat(),
             "source": "clearbit",
+            "compliance": compliance,
         }
+        if credential_info:
+            provenance["credentials"] = credential_info
         record = RawRecord(
             organization_name=clean_string(entry.get("name")) or target_identifier,
             source_dataset="Clearbit",
@@ -192,17 +265,25 @@ class AviationRegistryProvider(BaseProvider):
         target_domain: str | None,
         context: ProviderContext,
     ) -> Iterable[ProviderPayload]:
+        policies = self.options.get("policies", {})
+        if policies.get("robots_allowed") is False or policies.get("tos_accepted") is False:
+            return []
         dataset = self.options.get("fleets", {})
         entry = dataset.get(target_identifier)
         if not entry:
             return []
         planes = entry.get("fleet", [])
+        compliance = _compliance_metadata(policies)
+        credential_info = _credential_metadata(context, self.name, self.options)
         provenance = {
             "provider": self.name,
             "registry": entry.get("registry", "unknown"),
             "retrieved_at": context.issued_at.isoformat(),
             "source": "aviation",
+            "compliance": compliance,
         }
+        if credential_info:
+            provenance["credentials"] = credential_info
         record = RawRecord(
             organization_name=clean_string(entry.get("name")) or target_identifier,
             source_dataset="Aviation Registry",

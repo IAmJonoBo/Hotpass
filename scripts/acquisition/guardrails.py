@@ -23,7 +23,13 @@ __all__ = [
 
 
 def _default_fetcher(url: str) -> str:
-    with request.urlopen(url) as response:  # noqa: S310 - controlled domain from configuration
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError(f"Unsupported URL scheme for fetcher: {parsed.scheme or 'none'}")
+    if not parsed.netloc:
+        raise ValueError("Remote fetches require a hostname")
+
+    with request.urlopen(url) as response:  # noqa: S310 - validated scheme  # nosec B310
         content_bytes = response.read()
     return content_bytes.decode("utf-8")
 

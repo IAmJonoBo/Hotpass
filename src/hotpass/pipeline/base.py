@@ -51,6 +51,7 @@ from ..telemetry import pipeline_stage
 from ..transform.scoring import LeadScorer
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from ..data_sources.agents.runner import AgentTiming
     from ..linkage import LinkageResult
 from ..pipeline_reporting import (
     collect_unique,
@@ -213,6 +214,9 @@ class PipelineConfig:
     pii_redaction: PIIRedactionConfig = field(default_factory=PIIRedactionConfig)
     acquisition_plan: AcquisitionPlan | None = None
     agent_credentials: Mapping[str, str] = field(default_factory=dict)
+    preloaded_agent_frame: pd.DataFrame | None = None
+    preloaded_agent_timings: list[AgentTiming] = field(default_factory=list)
+    preloaded_agent_warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -887,16 +891,26 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
     loaders = [load_reachout_database, load_contact_database, load_sacaa_cleaned]
     frames: list[pd.DataFrame] = []
     timings: dict[str, float] = {}
-    if config.acquisition_plan and config.acquisition_plan.enabled:
-        agent_frame, agent_timings, _warnings = run_acquisition_plan(
+    agent_warnings: list[str] = list(config.preloaded_agent_warnings)
+    if config.preloaded_agent_frame is not None:
+        for timing in config.preloaded_agent_timings:
+            timings[f"agent:{timing.agent_name}"] = timing.seconds
+        if not config.preloaded_agent_frame.empty:
+            frames.append(config.preloaded_agent_frame.copy())
+    elif config.acquisition_plan and config.acquisition_plan.enabled:
+        agent_frame, agent_timings, plan_warnings = run_acquisition_plan(
             config.acquisition_plan,
             country_code=config.country_code,
             credentials=config.agent_credentials,
         )
+        agent_warnings.extend(plan_warnings)
         for timing in agent_timings:
             timings[f"agent:{timing.agent_name}"] = timing.seconds
         if not agent_frame.empty:
             frames.append(agent_frame)
+        config.preloaded_agent_frame = agent_frame
+        config.preloaded_agent_timings = list(agent_timings)
+    config.preloaded_agent_warnings = agent_warnings
     for loader in loaders:
         start = time.perf_counter()
         try:
@@ -1043,6 +1057,8 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         "load_rows_per_second": 0.0,
         "source_load_seconds": source_timings,
     }
+    if config.preloaded_agent_warnings:
+        metrics["agent_warnings"] = list(config.preloaded_agent_warnings)
     post_validation_redaction_events: list[dict[str, Any]] = []
     if load_seconds > 0:
         metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0

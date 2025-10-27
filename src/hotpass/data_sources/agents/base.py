@@ -30,11 +30,13 @@ class AgentResult:
     records: list[RawRecord] = field(default_factory=list)
     provenance: list[dict[str, object]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    targets: list[TargetDefinition] = field(default_factory=list)
 
     def extend(self, other: AgentResult) -> None:
         self.records.extend(other.records)
         self.provenance.extend(other.provenance)
         self.warnings.extend(other.warnings)
+        self.targets.extend(other.targets)
 
 
 class AcquisitionAgent(Protocol):

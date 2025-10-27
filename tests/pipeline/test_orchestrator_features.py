@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from typing import Any
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
 pytest.importorskip("frictionless")
 
+from hotpass.data_sources.agents import AcquisitionPlan
+from hotpass.data_sources.agents.runner import AgentTiming
 from hotpass.pipeline import (
     PIIRedactionConfig,
     PipelineConfig,
@@ -55,9 +58,11 @@ class StubExecutor:
         self.template = template
         self.events = events
         self.calls = 0
+        self.last_config: PipelineConfig | None = None
 
     def run(self, config: PipelineConfig) -> PipelineResult:  # pragma: no cover - simple helper
         self.calls += 1
+        self.last_config = config
         if config.progress_listener:
             for event in self.events:
                 config.progress_listener(event, {"event": event})
@@ -156,3 +161,50 @@ def test_orchestrator_skips_disabled_features(tmp_path):
     assert result.performance_metrics["feature_order"] == ["enrichment"]
     assert "enriched" in result.refined.columns
     assert "entity" not in result.refined.columns
+
+
+def test_orchestrator_preloads_acquisition_when_enabled(tmp_path):
+    metrics = RecordingMetrics()
+    config = PipelineConfig(
+        input_dir=tmp_path,
+        output_path=tmp_path / "refined.xlsx",
+        pii_redaction=PIIRedactionConfig(enabled=False),
+        acquisition_plan=AcquisitionPlan(enabled=True),
+    )
+    executor = StubExecutor(_base_result())
+    orchestrator = PipelineOrchestrator(base_executor=executor)
+    enhanced = EnhancedPipelineConfig(enable_acquisition=True)
+
+    fake_frame = pd.DataFrame(
+        {
+            "organization_name": ["Agent Org"],
+            "source_dataset": ["LinkedIn"],
+            "source_record_id": ["linkedin:prospector:1"],
+        }
+    )
+    fake_timings = [AgentTiming(agent_name="prospector", seconds=1.1, record_count=1)]
+
+    with (
+        patch(
+            "hotpass.pipeline.orchestrator.run_acquisition_plan",
+            return_value=(fake_frame, fake_timings, []),
+        ) as plan_call,
+        patch("hotpass.pipeline.base.run_acquisition_plan") as base_call,
+    ):
+        base_call.side_effect = AssertionError(
+            "pipeline should not invoke acquisition plan directly"
+        )
+        execution = PipelineExecutionConfig(
+            base_config=config,
+            enhanced_config=enhanced,
+            metrics=metrics,
+        )
+        orchestrator.run(execution)
+
+    plan_call.assert_called_once()
+    base_call.assert_not_called()
+    assert executor.last_config is not None
+    assert executor.last_config.preloaded_agent_frame is not None
+    assert executor.last_config.preloaded_agent_timings == fake_timings
+    assert executor.last_config.preloaded_agent_warnings == []
+    assert ("acquisition_agents", len(fake_frame)) in metrics.records
