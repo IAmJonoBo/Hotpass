@@ -166,6 +166,61 @@ class DummyMetrics:
         self.meter = meter
         self.observation_factory = observation_factory
 
+        self.records_processed = self._counter("hotpass.records.processed")
+        self.validation_failures = self._counter("hotpass.validation.failures")
+        self.load_duration = self._histogram("hotpass.load.duration")
+        self.aggregation_duration = self._histogram("hotpass.aggregation.duration")
+        self.validation_duration = self._histogram("hotpass.validation.duration")
+        self.write_duration = self._histogram("hotpass.write.duration")
+        self.data_quality_score = meter.create_observable_gauge(
+            name="hotpass.data.quality_score",
+            callbacks=[self._observe_quality_score],
+        )
+
+        self._latest_quality_score = 0.0
+
+    def _counter(self, name: str) -> SimpleNamespace:
+        counter = self.meter.create_counter(name)
+
+        def add(amount: int, attributes: dict[str, Any] | None = None) -> None:
+            counter.calls.append((amount, attributes or {}))
+
+        counter.add = add  # type: ignore[attr-defined]
+        return counter
+
+    def _histogram(self, name: str) -> SimpleNamespace:
+        histogram = self.meter.create_histogram(name)
+
+        def record(value: float, attributes: dict[str, Any] | None = None) -> None:
+            histogram.calls.append((value, attributes or {}))
+
+        histogram.record = record  # type: ignore[attr-defined]
+        return histogram
+
+    def _observe_quality_score(self, *_: Any) -> list[Any]:
+        return [self.observation_factory(self._latest_quality_score)]
+
+    def record_records_processed(self, count: int, source: str = "unknown") -> None:
+        self.records_processed.add(count, {"source": source})
+
+    def record_validation_failure(self, rule_name: str) -> None:
+        self.validation_failures.add(1, {"rule": rule_name})
+
+    def record_load_duration(self, seconds: float, source: str = "unknown") -> None:
+        self.load_duration.record(seconds, {"source": source})
+
+    def record_aggregation_duration(self, seconds: float) -> None:
+        self.aggregation_duration.record(seconds)
+
+    def record_validation_duration(self, seconds: float) -> None:
+        self.validation_duration.record(seconds)
+
+    def record_write_duration(self, seconds: float) -> None:
+        self.write_duration.record(seconds)
+
+    def update_quality_score(self, score: float) -> None:
+        self._latest_quality_score = score
+
 
 def build_modules(
     available: bool = True,

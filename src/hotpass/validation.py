@@ -5,14 +5,14 @@ from __future__ import annotations
 import json
 from importlib import resources
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from frictionless import Schema
-from frictionless.exception import FrictionlessException
-from frictionless.resources import TableResource
 
 from .error_handling import DataContractError
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from frictionless import Schema
 
 try:  # pragma: no cover - Great Expectations is an optional dependency
     from great_expectations.core.batch import Batch
@@ -58,6 +58,8 @@ def _resource_path(folder: str, name: str) -> Path:
 
 
 def _load_schema(name: str) -> Schema:
+    from frictionless import Schema
+
     schema_path = _resource_path("schemas", name)
     with schema_path.open("r", encoding="utf-8") as handle:
         descriptor = json.load(handle)
@@ -91,6 +93,9 @@ def validate_with_frictionless(
     table_name: str,
     source_file: str,
 ) -> None:
+    from frictionless.exception import FrictionlessException
+    from frictionless.resources import TableResource
+
     schema = _load_schema(schema_descriptor)
     sanitized = df.where(pd.notnull(df), None).copy()
     for field in schema.fields:

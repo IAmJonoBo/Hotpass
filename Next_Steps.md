@@ -117,15 +117,15 @@
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
-- [x] Pytest with coverage ≥ 80% (current: 88%; optional deps satisfied)【e8ff23†L1-L84】
+- [x] Pytest with coverage ≥ 80% (current: 84%; optional deps satisfied)【d6ce09†L1-L126】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【ca34ba†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【78ba8a†L1-L1】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【6fd282†L1-L22】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【bc752c†L1-L19】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【a40074†L1-L60】
-- [x] Package build succeeds (`uv run uv build`)【5e74d7†L1-L120】
+- [x] Ruff lint clean (`uv run ruff check`)【6f5771†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【c0fe6e†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【938a91†L1-L2】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【7dd145†L1-L34】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【ab152a†L1-L65】
+- [x] Package build succeeds (`uv run uv build`)【17d2bb†L1-L246】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【5a78d4†L1-L26】
 - [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【f029ee†L1-L24】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
@@ -170,13 +170,13 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 88%)【e8ff23†L1-L84】
-- [x] Ruff lint clean (`.venv/bin/ruff check`)【5d6446†L1-L2】
-- [x] Ruff formatting clean (`.venv/bin/ruff format --check`)【a01fa5†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【6fd282†L1-L22】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【ecaef5†L1-L20】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【1484ff†L1-L65】
-- [x] Package build succeeds (`uv run uv build`)【da2407†L1-L120】
+- [x] Pytest with coverage ≥ 80% (current: 84%)【d6ce09†L1-L126】
+- [x] Ruff lint clean (`uv run ruff check`)【6f5771†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【c0fe6e†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【938a91†L1-L2】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【7dd145†L1-L34】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【ab152a†L1-L65】
+- [x] Package build succeeds (`uv run uv build`)【17d2bb†L1-L246】
 - [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
@@ -197,14 +197,14 @@
 
 ## Links
 
-- Tests: `.venv/bin/pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `e8ff23`)
-- Lint: `.venv/bin/ruff check` (chunk `5d6446`)
-- Format: `.venv/bin/ruff format --check` (chunk `a01fa5`)
+- Tests: `.venv/bin/pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d6ce09`)
+- Lint: `.venv/bin/ruff check` (chunk `6f5771`)
+- Format: `.venv/bin/ruff format --check` (chunk `c0fe6e`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `.venv/bin/mypy src tests scripts` (chunk `cd1100`)
-- Security: `uv run bandit -r src scripts` (chunk `602aef`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `653187`)
-- Build: `uv run uv build` (chunk `f995b1`)
+- Types: `.venv/bin/mypy src tests scripts` (chunk `938a91`)
+- Security: `uv run bandit -r src scripts` (chunk `7dd145`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `ab152a`)
+- Build: `uv run uv build` (chunk `17d2bb`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)

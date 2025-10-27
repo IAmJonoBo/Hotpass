@@ -117,6 +117,7 @@ class TelemetryRegistry:
 
         self.meter_provider: Any | None = None
         self.tracer_provider: Any | None = None
+        self._shutdown_guard = False
 
     def configure(self, config: TelemetryConfig) -> TelemetryContext:
         """Initialise telemetry if not yet configured and return the context."""
@@ -136,10 +137,11 @@ class TelemetryRegistry:
                 meter=meter,
                 metrics=metrics,
             )
+            context = self._context
             if not self._shutdown_registered:
                 self._register_shutdown(self.shutdown)
                 self._shutdown_registered = True
-            return self._context
+            return context
 
         resource = self.modules.resource_cls.create(dict(validated.resource_attributes))
 
@@ -166,11 +168,17 @@ class TelemetryRegistry:
             metrics=metrics,
         )
 
+        context = self._context
+
         if not self._shutdown_registered:
-            self._register_shutdown(self.shutdown)
+            self._shutdown_guard = True
+            try:
+                self._register_shutdown(self.shutdown)
+            finally:
+                self._shutdown_guard = False
             self._shutdown_registered = True
 
-        return self._context
+        return context
 
     def get_tracer(self, name: str = "hotpass") -> Any:
         """Return a tracer instance for the supplied name."""
@@ -189,6 +197,9 @@ class TelemetryRegistry:
 
     def shutdown(self) -> None:
         """Shut down configured providers and exporters."""
+
+        if self._shutdown_guard:
+            return
 
         for reader in self._metric_readers:
             shutdown = getattr(reader, "shutdown", None)
