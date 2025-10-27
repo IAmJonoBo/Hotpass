@@ -3,6 +3,9 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
+
+pytest.importorskip("frictionless")
 
 from hotpass.pipeline import (
     PIIRedactionConfig,

@@ -4,6 +4,9 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 import pandas as pd
+import pytest
+
+pytest.importorskip("frictionless")
 
 from hotpass.pipeline import (
     PIIRedactionConfig,

@@ -55,6 +55,13 @@ def _initialize_observability(config: EnhancedPipelineConfig):
     if not config.enable_observability:
         return None
 
-    initialize_observability(service_name="hotpass", export_to_console=True)
+    attributes = dict(config.telemetry_attributes)
+    environment = attributes.get("deployment.environment")
+    initialize_observability(
+        service_name="hotpass",
+        environment=environment,
+        exporters=("console",),
+        resource_attributes=attributes,
+    )
     logger.info("Observability initialized")
     return get_pipeline_metrics()

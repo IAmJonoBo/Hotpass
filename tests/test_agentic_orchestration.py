@@ -8,6 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytest.importorskip("frictionless")
+
 import hotpass.orchestration as orchestration
 
 AgenticRequest = orchestration.AgenticRequest

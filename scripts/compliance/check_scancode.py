@@ -7,7 +7,7 @@ import json
 from collections.abc import Iterable
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from license_expression import Licensing
 
 

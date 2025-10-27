@@ -6,6 +6,8 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 
+pytest.importorskip("frictionless")
+
 import hotpass.pipeline_enhanced as pipeline_enhanced
 from hotpass.pipeline import (
     PIIRedactionConfig,
@@ -82,19 +84,27 @@ def test_initialize_observability_disabled_returns_none(monkeypatch):
 
 
 def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
-    config = EnhancedPipelineConfig(enable_observability=True)
+    config = EnhancedPipelineConfig(
+        enable_observability=True,
+        telemetry_attributes={"deployment.environment": "qa", "hotpass.profile": "aviation"},
+    )
     metrics_mock = Mock()
-    bootstrap_called = False
+    captured_kwargs: dict[str, object] | None = None
 
-    def _fake_initialize(*_args, **_kwargs):
-        nonlocal bootstrap_called
-        bootstrap_called = True
+    def _fake_initialize(*_args, **kwargs):
+        nonlocal captured_kwargs
+        captured_kwargs = kwargs
 
     monkeypatch.setattr(pipeline_enhanced, "initialize_observability", _fake_initialize)
     monkeypatch.setattr(pipeline_enhanced, "get_pipeline_metrics", lambda: metrics_mock)
 
     assert _initialize_observability(config) is metrics_mock
-    assert bootstrap_called is True
+    assert captured_kwargs == {
+        "service_name": "hotpass",
+        "environment": "qa",
+        "exporters": ("console",),
+        "resource_attributes": {"deployment.environment": "qa", "hotpass.profile": "aviation"},
+    }
 
 
 def test_run_enhanced_pipeline_uses_orchestrator(monkeypatch, base_pipeline_config, sample_result):
