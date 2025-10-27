@@ -2,52 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from importlib import import_module
+from typing import TYPE_CHECKING, Any
 
-from ..compliance import PIIRedactionConfig
 from ..quality import build_ssot_schema as _default_build_ssot_schema
-from .base import (
-    PIPELINE_EVENT_AGGREGATE_COMPLETED,
-    PIPELINE_EVENT_AGGREGATE_PROGRESS,
-    PIPELINE_EVENT_AGGREGATE_STARTED,
-    PIPELINE_EVENT_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_STARTED,
-    PIPELINE_EVENT_LOAD_COMPLETED,
-    PIPELINE_EVENT_LOAD_STARTED,
-    PIPELINE_EVENT_SCHEMA_COMPLETED,
-    PIPELINE_EVENT_SCHEMA_STARTED,
-    PIPELINE_EVENT_START,
-    PIPELINE_EVENT_WRITE_COMPLETED,
-    PIPELINE_EVENT_WRITE_STARTED,
-    SSOT_COLUMNS,
-    PipelineConfig,
-    PipelineResult,
-    QualityReport,
-    _aggregate_group,
-)
-from .features import EnhancedPipelineConfig
-from .orchestrator import (
-    PipelineExecutionConfig,
-    PipelineOrchestrator,
-    default_feature_bundle,
-)
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
-    from ..config_schema import HotpassConfig
+    from hotpass.config_schema import HotpassConfig
 
-
-def build_ssot_schema():
-    """Return the default SSOT schema descriptor."""
-
-    return _default_build_ssot_schema()
-
+    from .base import PipelineConfig, PipelineResult
 
 __all__ = [
     "PIIRedactionConfig",
     "PipelineConfig",
-    "QualityReport",
     "PipelineResult",
+    "QualityReport",
     "PipelineExecutionConfig",
     "PipelineOrchestrator",
     "EnhancedPipelineConfig",
@@ -71,16 +40,108 @@ __all__ = [
     "run_pipeline",
 ]
 
+_LAZY_ATTRS: dict[str, tuple[str, str]] = {
+    "PIIRedactionConfig": ("hotpass.compliance", "PIIRedactionConfig"),
+    "PipelineConfig": ("hotpass.pipeline.base", "PipelineConfig"),
+    "PipelineResult": ("hotpass.pipeline.base", "PipelineResult"),
+    "QualityReport": ("hotpass.pipeline.base", "QualityReport"),
+    "PipelineExecutionConfig": (
+        "hotpass.pipeline.orchestrator",
+        "PipelineExecutionConfig",
+    ),
+    "PipelineOrchestrator": ("hotpass.pipeline.orchestrator", "PipelineOrchestrator"),
+    "EnhancedPipelineConfig": (
+        "hotpass.pipeline.features",
+        "EnhancedPipelineConfig",
+    ),
+    "default_feature_bundle": ("hotpass.pipeline.orchestrator", "default_feature_bundle"),
+    "PIPELINE_EVENT_START": ("hotpass.pipeline.events", "PIPELINE_EVENT_START"),
+    "PIPELINE_EVENT_LOAD_STARTED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_LOAD_STARTED",
+    ),
+    "PIPELINE_EVENT_LOAD_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_LOAD_COMPLETED",
+    ),
+    "PIPELINE_EVENT_AGGREGATE_STARTED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_AGGREGATE_STARTED",
+    ),
+    "PIPELINE_EVENT_AGGREGATE_PROGRESS": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_AGGREGATE_PROGRESS",
+    ),
+    "PIPELINE_EVENT_AGGREGATE_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_AGGREGATE_COMPLETED",
+    ),
+    "PIPELINE_EVENT_SCHEMA_STARTED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_SCHEMA_STARTED",
+    ),
+    "PIPELINE_EVENT_SCHEMA_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_SCHEMA_COMPLETED",
+    ),
+    "PIPELINE_EVENT_EXPECTATIONS_STARTED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_EXPECTATIONS_STARTED",
+    ),
+    "PIPELINE_EVENT_EXPECTATIONS_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_EXPECTATIONS_COMPLETED",
+    ),
+    "PIPELINE_EVENT_WRITE_STARTED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_WRITE_STARTED",
+    ),
+    "PIPELINE_EVENT_WRITE_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_WRITE_COMPLETED",
+    ),
+    "PIPELINE_EVENT_COMPLETED": (
+        "hotpass.pipeline.events",
+        "PIPELINE_EVENT_COMPLETED",
+    ),
+    "SSOT_COLUMNS": ("hotpass.pipeline.base", "SSOT_COLUMNS"),
+    "_aggregate_group": ("hotpass.pipeline.base", "_aggregate_group"),
+    "run_pipeline": ("hotpass.pipeline.orchestrator", "run_pipeline"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Load pipeline exports lazily to avoid heavy optional imports."""
+
+    try:
+        module_name, attribute = _LAZY_ATTRS[name]
+    except KeyError as exc:  # pragma: no cover - mirrors default behaviour
+        raise AttributeError(f"module 'hotpass.pipeline' has no attribute {name!r}") from exc
+
+    module = import_module(module_name)
+    value = getattr(module, attribute)
+    globals()[name] = value
+    return value
+
+
+def build_ssot_schema() -> Any:
+    """Return the default SSOT schema descriptor."""
+
+    return _default_build_ssot_schema()
+
 
 def run_pipeline(config: PipelineConfig | HotpassConfig) -> PipelineResult:
-    """Execute the pipeline from either a legacy dataclass or canonical config."""
+    """Execute the pipeline using the orchestrator interface."""
+
+    from hotpass.config_schema import HotpassConfig as HotpassConfigType
+
+    from .base import PipelineConfig as PipelineConfigType
+    from .orchestrator import PipelineExecutionConfig, PipelineOrchestrator, default_feature_bundle
 
     orchestrator = PipelineOrchestrator()
 
-    if not isinstance(config, PipelineConfig):
-        from ..config_schema import HotpassConfig  # Local import to avoid circular dependency
-
-        if isinstance(config, HotpassConfig):
+    if not isinstance(config, PipelineConfigType):
+        if isinstance(config, HotpassConfigType):
             execution = PipelineExecutionConfig(
                 base_config=config.to_pipeline_config(),
                 enhanced_config=config.to_enhanced_config(),
