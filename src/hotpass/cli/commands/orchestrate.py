@@ -18,7 +18,6 @@ from ..shared import normalise_sensitive_fields
 from .run import RunOptions
 from .run import _resolve_options as resolve_run_options
 
-
 FEATURE_FLAG_NAMES = (
     "entity_resolution",
     "geospatial",
@@ -132,11 +131,14 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     logger = StructuredLogger(options.run.log_format, options.run.sensitive_fields)
     console = logger.console if options.run.log_format == "rich" else None
 
+    canonical = options.run.canonical_config
+    pipeline_runtime = canonical.pipeline
+
     if console:
         console.print("[bold cyan]Hotpass Prefect Orchestration[/bold cyan]")
         console.print(f"[dim]Industry profile:[/dim] {options.industry_profile_name}")
-        console.print(f"[dim]Input directory:[/dim] {options.run.input_dir}")
-        console.print(f"[dim]Output path:[/dim] {options.run.output_path}")
+        console.print(f"[dim]Input directory:[/dim] {pipeline_runtime.input_dir}")
+        console.print(f"[dim]Output path:[/dim] {pipeline_runtime.output_path}")
         enabled = [feature for feature, value in options.features.items() if value]
         if enabled:
             console.print(f"[dim]Enabled features:[/dim] {', '.join(sorted(enabled))}")
@@ -184,12 +186,8 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     try:
         summary = run_pipeline_once(
             PipelineRunOptions(
-                input_dir=options.run.input_dir,
-                output_path=options.run.output_path,
+                config=canonical,
                 profile_name=options.industry_profile_name,
-                excel_chunk_size=options.run.excel_chunk_size,
-                archive=options.run.archive,
-                archive_dir=options.run.dist_dir if options.run.archive else None,
                 runner=runner,
                 runner_kwargs=runner_kwargs,
             )
@@ -223,6 +221,7 @@ def _resolve_orchestrate_options(
     namespace: argparse.Namespace, profile: CLIProfile | None
 ) -> OrchestrateOptions:
     run_options = resolve_run_options(namespace, profile)
+    config = run_options.canonical_config
 
     industry_profile_name = namespace.industry_profile
     if profile and profile.industry_profile:
@@ -230,11 +229,12 @@ def _resolve_orchestrate_options(
     if not industry_profile_name:
         industry_profile_name = "aviation"
 
-    features = {name: False for name in FEATURE_FLAG_NAMES}
+    base_features = config.features.model_dump()
+    features = {name: bool(base_features.get(name, False)) for name in FEATURE_FLAG_NAMES}
+    if config.pipeline.observability is not None:
+        features["observability"] = bool(config.pipeline.observability)
     if profile:
         features.update(profile.feature_payload())
-    if run_options.observability is not None:
-        features["observability"] = bool(run_options.observability)
 
     if getattr(namespace, "enable_all", False):
         for name in features:
@@ -258,15 +258,22 @@ def _resolve_orchestrate_options(
     if isinstance(sensitive_field_values, str):
         sensitive_field_iter = [sensitive_field_values]
     elif isinstance(sensitive_field_values, Iterable):
-        sensitive_field_iter = [
-            str(value) for value in sensitive_field_values if value is not None
-        ]
+        sensitive_field_iter = [str(value) for value in sensitive_field_values if value is not None]
     elif sensitive_field_values is not None:
         sensitive_field_iter = [str(sensitive_field_values)]
     run_sensitive_fields = normalise_sensitive_fields(
         sensitive_field_iter, DEFAULT_SENSITIVE_FIELD_TOKENS
     )
-    run_options = replace(run_options, sensitive_fields=run_sensitive_fields)
+    updated_config = config.merge({"features": features})
+    if features.get("observability") is not None:
+        updated_config = updated_config.merge(
+            {"pipeline": {"observability": bool(features["observability"])}}
+        )
+    run_options = replace(
+        run_options,
+        canonical_config=updated_config,
+        sensitive_fields=run_sensitive_fields,
+    )
 
     linkage_output_dir = (
         Path(namespace.linkage_output_dir) if namespace.linkage_output_dir else None
@@ -307,13 +314,15 @@ def _build_linkage_config(options: OrchestrateOptions) -> LinkageConfig | None:
             label_studio=label_studio,
         )
 
+    output_root = options.linkage_output_dir
+    if output_root is None:
+        output_root = options.run.canonical_config.pipeline.output_path.parent / "linkage"
+
     return LinkageConfig(
         use_splink=options.linkage_use_splink or options.features.get("entity_resolution", False),
         thresholds=thresholds,
         label_studio=label_studio,
-    ).with_output_root(
-        (options.linkage_output_dir or (options.run.output_path.parent / "linkage")).resolve()
-    )
+    ).with_output_root(output_root.resolve())
 
 
 def _add_feature_flag(

@@ -34,6 +34,9 @@
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
 - [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20)
 - [ ] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30)
+- [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31)
+- [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31)
+- [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15)
 - [x] Refactor storage transforms to Polars with DuckDB adapters and benchmark guardrails (Owner: Engineering, Due: 2026-02-14)
 - [x] Instrument ingest→publish pipeline stages with OpenTelemetry spans and dashboard surfacing (Owner: Engineering, Due: 2026-02-14)
 - [x] Refresh UV tooling, pre-commit hooks, and observability documentation (Owner: Platform & Docs, Due: 2026-02-14)
@@ -100,6 +103,7 @@
 - [x] Implemented ingestion-time Presidio redaction with append-only provenance ledgers and acquisition guardrails (2025-10-26)
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 - [x] Re-ran modular CLI QA sweep (pytest, ruff check, ruff format, mypy, bandit, detect-secrets, uv build) after finalising builder migration (2025-10-26)【a97987†L1-L79】【38d75c†L1-L3】【72fd2a†L1-L3】【53fe2f†L1-L16】【821e3e†L1-L34】【48103c†L1-L64】【c97c1d†L1-L240】
+- [x] Canonicalised CLI and Prefect configuration via `HotpassConfig`, refreshed docs, and added migration tooling coverage (2025-10-27)
 - [ ] Extend orchestrate/resolve CLI integration coverage for advanced profile and feature permutations (Owner: QA & Engineering, Due: 2026-01-15)
 - [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
 - [x] Executed baseline QA suite prior to CLI consolidation (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-26)【bd696d†L1-L88】【0a62a4†L1-L3】【53bc1d†L1-L2】【cb6a4e†L1-L17】【baee01†L1-L36】【167873†L1-L74】【3c322d†L1-L120】
@@ -159,6 +163,7 @@
 - [x] Added MCP server/client configs, Prefect agent gating helpers, regression tests, and operator documentation (2025-10-26)【F:scripts/agents/mcp_server.yaml†L1-L38】【F:scripts/agents/mcp_client.yaml†L1-L24】【F:src/hotpass/orchestration.py†L58-L401】【F:tests/test_agentic_orchestration.py†L1-L119】【F:docs/how-to-guides/agentic-orchestration.md†L1-L76】
 - [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
 - [x] Replaced orchestrator `assert` with runtime guard and reran full QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, build) (2025-10-26)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
+- [x] Canonical configuration refactor regression suite (pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【057336†L1-L121】【bdfff8†L1-L2】【adec4c†L1-L2】【3e5b7e†L1-L14】【9c9345†L1-L32】【f1c670†L1-L53】【788b2a†L1-L220】
 - [x] Completed telemetry registry mypy cleanup and reran QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【48fd1e†L1-L66】【6c9938†L1-L2】【141570†L1-L2】【966aad†L1-L8】【48bfa5†L1-L33】【8706b2†L1-L58】【a7eea3†L1-L199】
 - [x] Baseline QA (2025-10-27) surfaced missing `frictionless` import coverage, Ruff UP038 lint, and mypy stub gaps prior to telemetry refactor【c063e4†L1-L23】【0d5a32†L1-L13】【c903ed†L1-L18】
 - [x] Plan telemetry registry extraction with policy enforcement, CLI/orchestrator integration, documentation refresh, and QA rerun for new observability lifecycle【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L86】
@@ -228,6 +233,7 @@
 - Docs link checking ignores selected external domains because of certificate issues in the sandbox; confirm connectivity in GitHub-hosted runners.
 - Metrics instrumentation relies on access to Prefect Orion API, Slack webhooks, and optional Four Keys stack—validate connectivity and compliance approvals before rollout.
 - Trust-boundary updates highlight new follow-ups (dashboard auth, secrets handling, CI artefact retention, Docker distribution); track owners above.
+- Canonical configuration schema now powers CLI/Prefect flows; monitor downstream consumers for assumptions about legacy option dictionaries.
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
 - Gap analysis surfaced orchestration duplication, logging shims, entity history parsing, geospatial scaling, and audit logging coverage gaps—see new tasks for mitigation sequencing.
 - Evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) now ship with READMEs; confirm retention SLAs with Compliance and Platform owners.

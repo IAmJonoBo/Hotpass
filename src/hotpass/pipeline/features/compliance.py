@@ -40,7 +40,10 @@ class ComplianceFeature(PipelineFeatureStrategy):
             logger.info("Running compliance checks...")
             policy = POPIAPolicy()
             try:
-                result.refined = add_provenance_columns(df, source_name="hotpass_pipeline")
+                if config.audit_log_enabled:
+                    result.refined = add_provenance_columns(df, source_name="hotpass_pipeline")
+                else:
+                    result.refined = df
 
                 if config.consent_overrides:
                     _apply_consent_overrides(
@@ -62,7 +65,8 @@ class ComplianceFeature(PipelineFeatureStrategy):
                     )
 
                 compliance_report = policy.generate_compliance_report(result.refined)
-                policy.enforce_consent(compliance_report)
+                if config.consent_required:
+                    policy.enforce_consent(compliance_report)
                 logger.info("Compliance report generated: %s", compliance_report)
                 result.compliance_report = compliance_report
             except ConsentValidationError as consent_error:

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import argparse
 import importlib
-import argparse
-import importlib
 import ipaddress
 import re
 from collections.abc import Iterable

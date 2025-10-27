@@ -9,6 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
+from hotpass.config_schema import HotpassConfig
+
 yaml: Any | None
 try:  # pragma: no cover - optional dependency for YAML profiles
     import yaml
@@ -121,6 +123,31 @@ class CLIProfile(BaseModel):
         """Expose feature toggles as a plain dictionary for downstream consumers."""
 
         return self.features.model_dump()
+
+    def apply_to_config(self, config: HotpassConfig) -> HotpassConfig:
+        """Merge profile-defined defaults into a canonical configuration object."""
+
+        pipeline_updates: dict[str, Any] = {}
+        if self.expectation_suite is not None:
+            pipeline_updates["expectation_suite"] = self.expectation_suite
+        if self.country_code is not None:
+            pipeline_updates["country_code"] = self.country_code
+        if self.log_format is not None:
+            pipeline_updates["log_format"] = self.log_format
+        if self.qa_mode is not None:
+            pipeline_updates["qa_mode"] = self.qa_mode
+        if self.observability is not None:
+            pipeline_updates["observability"] = self.observability
+
+        updates: dict[str, Any] = {}
+        if pipeline_updates:
+            updates["pipeline"] = pipeline_updates
+        if self.features is not None:
+            updates["features"] = self.features.model_dump()
+
+        if updates:
+            config = config.merge(updates)
+        return config
 
 
 DEFAULT_PROFILE_DIRS: tuple[Path, ...] = (

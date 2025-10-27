@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the unified `hotpass` CLI entry point and its subcommands.
-last_updated: 2025-10-26
+last_updated: 2025-10-27
 ---
 
 # Reference — command-line interface
@@ -21,6 +21,59 @@ Shared flags such as `--profile`, `--config`, `--log-format`, and `--sensitive-f
 may be supplied before the subcommand or repeated per subcommand thanks to the parser's
 parent structure. Profiles defined in TOML or YAML load via `--profile` and can merge
 additional configuration files and feature toggles.
+
+## Canonical configuration schema
+
+The CLI now materialises every run from the canonical `HotpassConfig` schema defined in
+[`src/hotpass/config_schema.py`](../../src/hotpass/config_schema.py). Profiles, config files,
+and CLI flags are normalised into that schema before any pipeline code executes, ensuring
+consistent behaviour across CLI, Prefect flows, and agent-triggered runs.
+
+```toml
+# config/pipeline.canonical.toml
+[profile]
+name = "aviation"
+display_name = "Aviation & Flight Training"
+
+[pipeline]
+input_dir = "./data"
+output_path = "./dist/refined.xlsx"
+archive = true
+dist_dir = "./dist"
+log_format = "json"
+
+[features]
+compliance = true
+geospatial = true
+
+[governance]
+intent = ["Process POPIA regulated dataset"]
+data_owner = "Data Governance"
+classification = "sensitive_pii"
+
+[compliance]
+detect_pii = true
+
+[data_contract]
+dataset = "aviation_ssot"
+expectation_suite = "aviation"
+schema_descriptor = "ssot.schema.json"
+```
+
+Merge the file with `--config config/pipeline.canonical.toml` or place it under a CLI profile.
+Legacy configuration payloads can be upgraded via the `ConfigDoctor` helper:
+
+```python
+from hotpass.config_doctor import ConfigDoctor
+
+doctor = ConfigDoctor()
+config, notices = doctor.upgrade_payload(legacy_payload)
+doctor.diagnose()
+doctor.autofix()
+```
+
+The doctor flags missing governance intent or data owners and injects safe defaults such as
+`Data Governance` when autofixable.
 
 ## Shared options
 
