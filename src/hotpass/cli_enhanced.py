@@ -30,9 +30,6 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 _UNIFIED_ENTRYPOINT: Callable[[Sequence[str] | None], int] = _cli_main
 
-    return parser
-
-
 def cmd_orchestrate(args: argparse.Namespace) -> int:
     """Execute orchestrated pipeline run with optional enhanced features.
 
