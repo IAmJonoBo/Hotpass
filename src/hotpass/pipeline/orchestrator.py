@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ..data_sources.agents import run_plan as run_acquisition_plan
 from ..observability import PipelineMetrics
 from .base import BasePipelineExecutor, PipelineConfig, PipelineResult
 from .features import (
@@ -45,6 +46,24 @@ class PipelineOrchestrator:
     def run(self, execution: PipelineExecutionConfig) -> PipelineResult:
         execution = execution.with_default_trace_factory()
         execution.features = ensure_feature_sequence(execution.features)
+
+        if (
+            execution.enhanced_config.enable_acquisition
+            and execution.base_config.acquisition_plan
+            and execution.base_config.acquisition_plan.enabled
+        ):
+            agent_frame, agent_timings, agent_warnings = run_acquisition_plan(
+                execution.base_config.acquisition_plan,
+                country_code=execution.base_config.country_code,
+                credentials=execution.base_config.agent_credentials,
+            )
+            execution.base_config.preloaded_agent_frame = agent_frame.copy(deep=True)
+            execution.base_config.preloaded_agent_timings = list(agent_timings)
+            execution.base_config.preloaded_agent_warnings.extend(agent_warnings)
+            if execution.metrics and not agent_frame.empty:
+                execution.metrics.record_records_processed(
+                    len(agent_frame), source="acquisition_agents"
+                )
 
         result = self._base_executor.run(execution.base_config)
 

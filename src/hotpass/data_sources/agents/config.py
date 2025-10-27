@@ -4,7 +4,34 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
+
+
+class AgentTaskKind(StrEnum):
+    """Supported task stages for acquisition agents."""
+
+    SEARCH = "search"
+    CRAWL = "crawl"
+    API = "api"
+
+
+@dataclass(frozen=True, slots=True)
+class AgentTaskDefinition:
+    """Configuration describing a single task executed by an agent."""
+
+    name: str
+    kind: AgentTaskKind
+    provider: str | None = None
+    options: Mapping[str, Any] = field(default_factory=dict)
+    enabled: bool = True
+
+    def merged_options(self, overrides: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
+        if not overrides:
+            return self.options
+        merged: dict[str, Any] = dict(self.options)
+        merged.update(overrides)
+        return merged
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +71,7 @@ class AgentDefinition:
     region: str | None = None
     targets: Sequence[TargetDefinition] = field(default_factory=tuple)
     providers: Sequence[ProviderDefinition] = field(default_factory=tuple)
+    tasks: Sequence[AgentTaskDefinition] = field(default_factory=tuple)
     concurrency: int = 1
     enabled: bool = True
 
@@ -52,6 +80,16 @@ class AgentDefinition:
 
     def active_targets(self) -> tuple[TargetDefinition, ...]:
         return tuple(target for target in self.targets if target.identifier)
+
+    def active_tasks(self) -> tuple[AgentTaskDefinition, ...]:
+        return tuple(task for task in self.tasks if task.enabled)
+
+    def provider_by_name(self, name: str) -> ProviderDefinition | None:
+        lowered = name.lower()
+        for provider in self.providers:
+            if provider.name.lower() == lowered:
+                return provider
+        return None
 
 
 @dataclass(frozen=True, slots=True)

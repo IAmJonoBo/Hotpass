@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 import pandas as pd
 
 from ...enrichment.providers import REGISTRY as provider_registry
-from ...enrichment.providers import BaseProvider, ProviderContext, ProviderPayload
-from ...normalization import clean_string
+from ...enrichment.providers import CredentialStore
 from .. import RawRecord
 from .base import AgentContext, AgentResult, normalise_records
-from .config import AcquisitionPlan, AgentDefinition, ProviderDefinition, TargetDefinition
+from .config import AcquisitionPlan, AgentDefinition
+from .tasks import execute_agent_tasks
 
 
 @dataclass(slots=True)
@@ -70,64 +70,15 @@ class AcquisitionManager:
             credentials=self.credentials,
             country_code=country_code,
         )
-        result = AgentResult(agent_name=agent.name)
-        targets = agent.active_targets()
-        if not targets:
-            fallback_targets = [
-                TargetDefinition(identifier=term)
-                for term in agent.search_terms
-                if clean_string(term)
-            ]
-            targets = tuple(fallback_targets)
-        for provider_definition in agent.active_providers():
-            provider = self._create_provider(provider_definition)
-            payloads = self._execute_provider(provider, provider_definition, targets, context)
-            for payload in payloads:
-                self._apply_provenance(payload, agent, result)
+        credential_store = CredentialStore(context.credentials)
+        result = execute_agent_tasks(agent, context, provider_registry, credential_store)
+        for provenance in result.provenance:
+            provenance.setdefault("agent", agent.name)
+        for record in result.records:
+            if record.provenance:
+                for entry in record.provenance:
+                    entry.setdefault("agent", agent.name)
         return result
-
-    def _execute_provider(
-        self,
-        provider: BaseProvider,
-        definition: ProviderDefinition,
-        targets: Sequence[object],
-        context: AgentContext,
-    ) -> Iterable[ProviderPayload]:
-        provider_context = ProviderContext(
-            country_code=context.country_code,
-            credentials=context.credentials,
-            issued_at=context.issued_at,
-        )
-        payloads: list[ProviderPayload] = []
-        for target in targets:
-            identifier = clean_string(getattr(target, "identifier", ""))
-            domain = clean_string(getattr(target, "domain", None)) or None
-            if not identifier and not domain:
-                continue
-            for payload in provider.lookup(identifier or domain or "", domain, provider_context):
-                payloads.append(payload)
-        return payloads
-
-    def _apply_provenance(
-        self,
-        payload: ProviderPayload,
-        agent: AgentDefinition,
-        result: AgentResult,
-    ) -> None:
-        record = payload.record
-        provenance = dict(payload.provenance)
-        provenance.update(
-            {
-                "agent": agent.name,
-                "confidence": payload.confidence,
-            }
-        )
-        record.provenance = [provenance]
-        result.records.append(record)
-        result.provenance.append(provenance)
-
-    def _create_provider(self, definition: ProviderDefinition) -> BaseProvider:
-        return provider_registry.create(definition.name, definition.options)
 
 
 def run_plan(

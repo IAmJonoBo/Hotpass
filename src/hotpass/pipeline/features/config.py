@@ -18,6 +18,7 @@ class EnhancedPipelineConfig:
     enable_enrichment: bool = False
     enable_compliance: bool = False
     enable_observability: bool = False
+    enable_acquisition: bool = False
     entity_resolution_threshold: float = 0.75
     use_splink: bool = False
     geocode_addresses: bool = False

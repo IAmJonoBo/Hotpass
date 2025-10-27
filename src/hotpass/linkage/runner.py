@@ -134,7 +134,7 @@ def _link_with_splink(
     try:
         connection.close()
     except Exception:  # pragma: no cover - best effort cleanup
-        pass
+        logger.debug("Failed to close linkage connection cleanly", exc_info=True)
 
     return LinkageResult(
         deduplicated=deduplicated,
