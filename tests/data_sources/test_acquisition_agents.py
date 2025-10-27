@@ -78,6 +78,12 @@ def test_run_plan_collects_records_with_provenance() -> None:
     flattened_provenance = [
         entry for records in frame["provenance"] if isinstance(records, list) for entry in records
     ]
+    # Check for unexpected provenance types
+    unexpected_provenance = [
+        records for records in frame["provenance"]
+        if records is not None and not isinstance(records, list)
+    ]
+    assert not unexpected_provenance, f"Found non-list provenance values: {unexpected_provenance}"
     assert flattened_provenance
     assert any(entry.get("provider") == "linkedin" for entry in flattened_provenance)
     assert any(
