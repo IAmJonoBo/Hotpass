@@ -40,38 +40,82 @@ Key options:
 
 ## Govern ingest schemas and expectations
 
-Every workbook consumed by the pipeline now carries a Frictionless Table Schema contract under `schemas/` and a matching Great Expectations suite under `data_expectations/`. Contracts ship with the package and are exercised automatically during `ingest_sources()`.
+Every workbook consumed by the pipeline carries a Frictionless Table Schema contract under `schemas/` and a matching Great Expectations suite under `data_expectations/suites/`. Contracts ship with the package and are exercised automatically during `ingest_sources()`.
 
-To introduce a new sheet, add the schema/expectation pair:
+### Directory structure
 
-```bash
-cp schemas/reachout_organisation.schema.json schemas/my_feed.schema.json
-cp data_expectations/reachout/organisation.json data_expectations/my_feed/source.json
+```
+data_expectations/
+├── suites/           # Canonical expectation suite definitions
+│   ├── reachout_organisation.json
+│   ├── reachout_contact_info.json
+│   ├── sacaa_cleaned.json
+│   ├── contact_company_cat.json
+│   ├── contact_company_contacts.json
+│   ├── contact_company_addresses.json
+│   └── contact_capture.json
+└── checkpoints/      # Checkpoint configurations
+    ├── reachout_organisation.json
+    ├── reachout_contact_info.json
+    └── ...
 ```
 
-Update the descriptors with your column names, then reference them from a data source loader. If the workbook drifts from the schema, `DataContractError` raises with the missing/extra fields and blocks the run.
+### Using checkpoints with Data Docs
 
-To dry-run a contract locally, use the helper APIs:
+The new checkpoint-based validation infrastructure enables automated Data Docs generation:
 
 ```python
 from pathlib import Path
 import pandas as pd
 
-from hotpass.validation import validate_with_frictionless, validate_with_expectations
+from hotpass.validation import run_checkpoint
 
 frame = pd.read_excel(Path("data/Reachout Database.xlsx"), sheet_name="Organisation")
-validate_with_frictionless(
+
+# Run checkpoint with Data Docs generation
+result = run_checkpoint(
     frame,
-    schema_descriptor="reachout_organisation.schema.json",
-    table_name="Reachout Organisation",
+    checkpoint_name="reachout_organisation",
     source_file="Reachout Database.xlsx#Organisation",
+    data_docs_dir=Path("dist/data-docs"),
 )
+
+# Access validation results
+print(f"Validation successful: {result.success}")
+print(f"Data Docs published to: dist/data-docs/")
+```
+
+Data Docs provide an interactive HTML view of validation results, making it easy to explore failures and understand data quality issues.
+
+### Legacy validation API
+
+For backward compatibility, the original validation API remains available:
+
+```python
+from hotpass.validation import validate_with_expectations
+
 validate_with_expectations(
     frame,
-    suite_descriptor="reachout/organisation.json",
+    suite_descriptor="reachout_organisation.json",
     source_file="Reachout Database.xlsx#Organisation",
 )
 ```
+
+### Adding new validation suites
+
+To introduce a new sheet, add both the schema and expectation suite:
+
+```bash
+# Create new suite
+cp data_expectations/suites/reachout_organisation.json \
+   data_expectations/suites/my_feed_source.json
+
+# Create checkpoint configuration
+cp data_expectations/checkpoints/reachout_organisation.json \
+   data_expectations/checkpoints/my_feed_source.json
+```
+
+Update the suite and checkpoint files with your dataset name and column expectations, then reference them from a data source loader. If the workbook drifts from the schema, `DataContractError` raises with the missing/extra fields and blocks the run.
 
 ## Customise validation thresholds
 

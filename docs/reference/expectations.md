@@ -1,12 +1,36 @@
 ---
 title: Reference — data quality expectations
 summary: Catalogue of Great Expectations suites enforced by the Hotpass pipeline.
-last_updated: 2025-10-25
+last_updated: 2025-10-28
 ---
 
 # Reference — data quality expectations
 
-Hotpass uses [Great Expectations](https://greatexpectations.io/) to protect downstream consumers. Expectations are grouped by domain and run during validation and orchestration.
+Hotpass uses [Great Expectations](https://greatexpectations.io/) to protect downstream consumers. Expectations are grouped by domain and run during validation and orchestration using checkpoints with automated Data Docs publishing.
+
+## Suite and checkpoint structure
+
+Expectation suites are stored in `data_expectations/suites/` with canonical dataset names:
+
+- `reachout_organisation.json` — Validates Reachout organisation records
+- `reachout_contact_info.json` — Validates Reachout contact information
+- `sacaa_cleaned.json` — Validates SACAA cleaned export data
+- `contact_company_cat.json` — Validates Contact Database company catalogue
+- `contact_company_contacts.json` — Validates Contact Database contact roster
+- `contact_company_addresses.json` — Validates Contact Database addresses
+- `contact_capture.json` — Validates Contact Database capture logs
+
+Each suite has a matching checkpoint configuration in `data_expectations/checkpoints/` that defines validation actions including Data Docs publishing.
+
+## Data Docs
+
+Validation results are automatically published to Data Docs (HTML reports) when running checkpoints with the `data_docs_dir` parameter. The generated documentation includes:
+
+- Visual summaries of validation results
+- Detailed failure information with sample data
+- Historical validation trends (when configured with persistent stores)
+
+Access Data Docs at `dist/data-docs/index.html` after running validation.
 
 ## Core dataset checks
 
