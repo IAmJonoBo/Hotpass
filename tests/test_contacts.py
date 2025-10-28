@@ -42,6 +42,7 @@ def test_contact_to_dict_roundtrip():
         role="Manager",
     )
     contact.lead_score = 0.42
+    contact.verification_score = 0.55
     contact.validation_flags = ["email:risky"]
     contact.email_validation = EmailValidationResult(
         address="john@example.com",
@@ -63,6 +64,7 @@ def test_contact_to_dict_roundtrip():
     assert restored.phone == contact.phone
     assert restored.role == contact.role
     assert restored.lead_score == contact.lead_score
+    assert restored.verification_score == contact.verification_score
     assert restored.validation_flags == contact.validation_flags
     assert restored.email_validation is not None
     assert restored.phone_validation is not None
@@ -70,20 +72,28 @@ def test_contact_to_dict_roundtrip():
 
 def test_contact_validation_adjusts_completeness():
     """Deliverability signals should boost or penalise completeness."""
-    base = Contact(name="Valid", email="valid@example.com")
+    base = Contact(name="Valid", email="valid@hotpass.example")
     base.email_validation = EmailValidationResult(
-        address="valid@example.com",
+        address="valid@hotpass.example",
         status=ValidationStatus.DELIVERABLE,
         confidence=0.9,
     )
-    risky = Contact(name="Risky", email="risky@example.com")
+    risky = Contact(name="Risky", email="risky@hotpass.example")
     risky.email_validation = EmailValidationResult(
-        address="risky@example.com",
+        address="risky@hotpass.example",
+        status=ValidationStatus.RISKY,
+        confidence=0.6,
+    )
+    blocked = Contact(name="Blocked", email="blocked@hotpass.example")
+    blocked.email_validation = EmailValidationResult(
+        address="blocked@hotpass.example",
         status=ValidationStatus.UNDELIVERABLE,
-        confidence=0.8,
+        confidence=0.85,
+        reason="smtp_failure",
     )
 
     assert base.calculate_completeness() > risky.calculate_completeness()
+    assert risky.calculate_completeness() > blocked.calculate_completeness()
 
 
 def test_organization_contacts_add_contact():
@@ -166,6 +176,8 @@ def test_organization_contacts_calculate_preference_scores():
 
     # CEO should have higher preference score than assistant
     assert contact1.preference_score > contact2.preference_score
+    assert contact1.verification_score >= 0.0
+    assert org.contacts[0].lead_score is not None
 
 
 def test_organization_contacts_to_flat_dict():
@@ -208,6 +220,10 @@ def test_organization_contacts_to_flat_dict():
     assert flat["contact_primary_email_confidence"] == primary.email_validation.confidence
     assert "jane@example.com" in flat["contact_secondary_emails"]
     assert flat["total_contacts"] == 2
+    assert flat["contact_email_confidence_avg"] == pytest.approx(0.9)
+    assert flat["contact_phone_confidence_avg"] == pytest.approx(0.8)
+    assert flat["contact_lead_score_avg"] is None  # no lead scores set yet
+    assert flat["contact_verification_score_avg"] is None
 
 
 def test_consolidate_contacts_from_rows():
@@ -234,6 +250,7 @@ def test_consolidate_contacts_from_rows():
     assert org.contacts[0].preference_score > 0  # Scores were calculated
     assert all(contact.email_validation for contact in org.contacts)
     assert all(contact.email and "@" in contact.email for contact in org.contacts)
+    assert all(contact.verification_score >= 0 for contact in org.contacts)
 
 
 def test_contact_validation_service_caches_results():

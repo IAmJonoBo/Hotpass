@@ -32,6 +32,10 @@ def _with_validation_defaults(df: pd.DataFrame) -> pd.DataFrame:
         "contact_primary_phone_status": None,
         "contact_primary_lead_score": None,
         "contact_validation_flags": None,
+        "contact_email_confidence_avg": None,
+        "contact_phone_confidence_avg": None,
+        "contact_verification_score_avg": None,
+        "contact_lead_score_avg": None,
     }
     for column, value in defaults.items():
         if column not in df.columns:

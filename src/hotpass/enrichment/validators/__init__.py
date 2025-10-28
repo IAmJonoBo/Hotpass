@@ -42,6 +42,15 @@ class ValidationStatus(str, Enum):
 
 
 @dataclass(slots=True)
+class SMTPProbeResult:
+    """Describe the outcome of an SMTP deliverability probe."""
+
+    status: ValidationStatus
+    confidence: float
+    reason: str | None = None
+
+
+@dataclass(slots=True)
 class EmailValidationResult:
     """Outcome of an email validation run."""
 
@@ -50,6 +59,8 @@ class EmailValidationResult:
     confidence: float
     reason: str | None = None
     mx_hosts: tuple[str, ...] = ()
+    smtp_status: ValidationStatus | None = None
+    smtp_reason: str | None = None
     checked_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
     def as_dict(self) -> dict[str, object | None]:
@@ -59,6 +70,8 @@ class EmailValidationResult:
             "confidence": float(self.confidence),
             "reason": self.reason,
             "mx_hosts": list(self.mx_hosts),
+            "smtp_status": self.smtp_status.value if self.smtp_status else None,
+            "smtp_reason": self.smtp_reason,
             "checked_at": self.checked_at.isoformat(),
         }
 
@@ -97,10 +110,12 @@ class EmailValidator:
         *,
         dns_lookup: Callable[[str], Iterable[str]] | None = None,
         cache_ttl: timedelta = DEFAULT_CACHE_TTL,
+        smtp_probe: Callable[[str, str, tuple[str, ...]], SMTPProbeResult | None] | None = None,
     ) -> None:
         self._dns_lookup = dns_lookup or self._default_dns_lookup
         self._cache_ttl = cache_ttl
         self._domain_cache: dict[str, tuple[datetime, tuple[str, ...]]] = {}
+        self._smtp_probe = smtp_probe
 
     def _default_dns_lookup(self, domain: str) -> Iterable[str]:
         if domain in TRUSTED_TEST_DOMAINS:
@@ -152,12 +167,39 @@ class EmailValidator:
             status = ValidationStatus.RISKY
             confidence = 0.35
             reason = "missing_mx_records"
+
+        smtp_status: ValidationStatus | None = None
+        smtp_reason: str | None = None
+        if self._smtp_probe is not None:
+            try:
+                probe_result = self._smtp_probe(candidate.lower(), domain, mx_hosts)
+            except Exception:  # pragma: no cover - defensive
+                probe_result = None
+            if probe_result is not None:
+                smtp_status = probe_result.status
+                smtp_reason = probe_result.reason
+                confidence = max(confidence, probe_result.confidence)
+                if probe_result.status is ValidationStatus.UNDELIVERABLE:
+                    status = ValidationStatus.UNDELIVERABLE
+                    reason = probe_result.reason or reason or "smtp_rejected"
+                    confidence = probe_result.confidence
+                elif probe_result.status is ValidationStatus.RISKY:
+                    status = ValidationStatus.RISKY
+                    reason = probe_result.reason or reason
+                    confidence = max(confidence, probe_result.confidence)
+                elif probe_result.status is ValidationStatus.DELIVERABLE:
+                    status = ValidationStatus.DELIVERABLE
+                    reason = probe_result.reason or reason
+                    confidence = max(confidence, probe_result.confidence)
+
         return EmailValidationResult(
             address=candidate.lower(),
             status=status,
             confidence=confidence,
             reason=reason,
             mx_hosts=mx_hosts,
+            smtp_status=smtp_status,
+            smtp_reason=smtp_reason,
         )
 
 
@@ -253,6 +295,25 @@ class ContactValidationSummary:
         if not confidences:
             return 0.0
         return sum(confidences) / len(confidences)
+
+    def deliverability_score(self) -> float:
+        """Combine channel confidence into a single deliverability score."""
+
+        base = logistic_scale(self.overall_confidence())
+        if base == 0.0:
+            return 0.0
+        adjustment = 1.0
+        if self.email:
+            if self.email.status is ValidationStatus.UNDELIVERABLE:
+                adjustment *= 0.2
+            elif self.email.status is ValidationStatus.RISKY:
+                adjustment *= 0.6
+        if self.phone:
+            if self.phone.status is ValidationStatus.UNDELIVERABLE:
+                adjustment *= 0.35
+            elif self.phone.status is ValidationStatus.RISKY:
+                adjustment *= 0.7
+        return max(0.0, min(1.0, base * adjustment))
 
 
 class ContactValidationService:

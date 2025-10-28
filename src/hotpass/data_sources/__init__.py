@@ -10,6 +10,7 @@ from typing import Any
 
 import pandas as pd
 
+from ..enrichment.validators import ContactValidationService
 from ..normalization import (
     clean_string,
     join_non_empty,
@@ -19,6 +20,8 @@ from ..normalization import (
     normalize_website,
 )
 from ..validation import validate_with_expectations, validate_with_frictionless
+
+_CONTACT_VALIDATOR = ContactValidationService()
 
 
 @dataclass(frozen=True)
@@ -355,6 +358,7 @@ def load_contact_database(
         table_name="Contact Company Contacts",
         source_file=f"{path.name}#Company_Contacts",
     )
+    contacts_df = _annotate_contact_verification(contacts_df, country_code=country_code)
     validate_with_expectations(
         contacts_df,
         suite_descriptor="contact/company_contacts.json",
@@ -445,6 +449,41 @@ def load_contact_database(
             )
         )
     return pd.DataFrame([record.as_dict() for record in records])
+
+
+def _annotate_contact_verification(df: pd.DataFrame, *, country_code: str) -> pd.DataFrame:
+    if df.empty:
+        return df
+
+    email_status: list[str | None] = []
+    email_confidence: list[float | None] = []
+    phone_status: list[str | None] = []
+    phone_confidence: list[float | None] = []
+    phone_carrier: list[str | None] = []
+
+    for _, row in df.iterrows():
+        email_value = clean_string(row.get("Email"))
+        phone_value = clean_string(row.get("Cellnumber"))
+        summary = _CONTACT_VALIDATOR.validate_contact(
+            email=email_value,
+            phone=phone_value,
+            country_code=country_code,
+        )
+        email_result = summary.email
+        phone_result = summary.phone
+        email_status.append(email_result.status.value if email_result else None)
+        email_confidence.append(email_result.confidence if email_result else None)
+        phone_status.append(phone_result.status.value if phone_result else None)
+        phone_confidence.append(phone_result.confidence if phone_result else None)
+        phone_carrier.append(phone_result.carrier_name if phone_result else None)
+
+    enriched = df.copy()
+    enriched["EmailValidationStatus"] = email_status
+    enriched["EmailValidationConfidence"] = email_confidence
+    enriched["PhoneValidationStatus"] = phone_status
+    enriched["PhoneValidationConfidence"] = phone_confidence
+    enriched["PhoneCarrier"] = phone_carrier
+    return enriched
 
 
 def load_sacaa_cleaned(

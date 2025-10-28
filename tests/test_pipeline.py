@@ -330,9 +330,16 @@ def test_run_expectations_fallback_pass(monkeypatch: pytest.MonkeyPatch) -> None
             "organization_slug": ["valid-org", "blank-org"],
             "data_quality_score": [0.9, 0.8],
             "contact_primary_email": ["valid@example.com", ""],
+            "contact_primary_email_status": ["deliverable", None],
+            "contact_primary_email_confidence": [0.92, None],
             "contact_primary_phone": ["+27123456789", ""],
+            "contact_primary_phone_status": ["deliverable", None],
+            "contact_primary_phone_confidence": [0.88, None],
             "website": ["https://valid.example", ""],
             "country": ["South Africa", "South Africa"],
+            "contact_email_confidence_avg": [0.92, None],
+            "contact_phone_confidence_avg": [0.88, None],
+            "contact_verification_score_avg": [0.9, None],
         }
     )
 
@@ -351,9 +358,16 @@ def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> 
             "organization_slug": ["org-a", "org-b"],
             "data_quality_score": [0.7, 0.6],
             "contact_primary_email": ["invalid", "also_invalid"],
+            "contact_primary_email_status": ["undeliverable", "risky"],
+            "contact_primary_email_confidence": [0.2, 0.4],
             "contact_primary_phone": ["+27123456789", "+27123456780"],
+            "contact_primary_phone_status": ["deliverable", "deliverable"],
+            "contact_primary_phone_confidence": [0.9, 0.85],
             "website": ["https://org-a.example", "https://org-b.example"],
             "country": ["South Africa", "South Africa"],
+            "contact_email_confidence_avg": [0.3, 0.4],
+            "contact_phone_confidence_avg": [0.9, 0.85],
+            "contact_verification_score_avg": [0.55, 0.62],
         }
     )
 

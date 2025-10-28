@@ -11,6 +11,8 @@ import pandas as pd
 import pandera.pandas as pa
 from pandera.pandas import Column, DataFrameSchema
 
+from hotpass.enrichment.validators import ValidationStatus
+
 try:  # pragma: no cover - import guard exercised via unit tests
     from great_expectations.core.batch import Batch
     from great_expectations.core.expectation_suite import ExpectationSuite
@@ -138,6 +140,28 @@ def _run_with_great_expectations(
                 "website", r"^https?://", mostly=website_mostly
             )
             validator.expect_column_values_to_be_in_set("country", {"South Africa"})
+            allowed_statuses = {status.value for status in ValidationStatus}
+            validator.expect_column_values_to_be_in_set(
+                "contact_primary_email_status", allowed_statuses
+            )
+            validator.expect_column_values_to_be_in_set(
+                "contact_primary_phone_status", allowed_statuses
+            )
+            validator.expect_column_values_to_be_between(
+                "contact_primary_email_confidence", min_value=0.0, max_value=1.0, mostly=1.0
+            )
+            validator.expect_column_values_to_be_between(
+                "contact_primary_phone_confidence", min_value=0.0, max_value=1.0, mostly=1.0
+            )
+            validator.expect_column_values_to_be_between(
+                "contact_email_confidence_avg", min_value=0.0, max_value=1.0, mostly=1.0
+            )
+            validator.expect_column_values_to_be_between(
+                "contact_phone_confidence_avg", min_value=0.0, max_value=1.0, mostly=1.0
+            )
+            validator.expect_column_values_to_be_between(
+                "contact_verification_score_avg", min_value=0.0, max_value=1.0, mostly=1.0
+            )
 
             validation = validator.validate()
         finally:
@@ -204,6 +228,10 @@ def build_ssot_schema() -> DataFrameSchema:
             "contact_validation_flags": string_col(),
             "contact_secondary_emails": string_col(),
             "contact_secondary_phones": string_col(),
+            "contact_email_confidence_avg": Column(pa.Float, nullable=True),
+            "contact_phone_confidence_avg": Column(pa.Float, nullable=True),
+            "contact_verification_score_avg": Column(pa.Float, nullable=True),
+            "contact_lead_score_avg": Column(pa.Float, nullable=True),
             "data_quality_score": Column(pa.Float, nullable=False),
             "data_quality_flags": Column(pa.String, nullable=False),
             "selection_provenance": Column(pa.String, nullable=False),
@@ -292,5 +320,28 @@ def run_expectations(
     _record_mostly(sanitized["website"], r"^https?://", website_mostly, "website scheme")
 
     _record_failure((sanitized["country"] == "South Africa").all(), "country constraint")
+    allowed_statuses = {status.value for status in ValidationStatus}
+    _record_failure(
+        sanitized["contact_primary_email_status"].dropna().isin(allowed_statuses).all(),
+        "contact_primary_email_status set",
+    )
+    _record_failure(
+        sanitized["contact_primary_phone_status"].dropna().isin(allowed_statuses).all(),
+        "contact_primary_phone_status set",
+    )
+    for column in (
+        "contact_primary_email_confidence",
+        "contact_primary_phone_confidence",
+        "contact_email_confidence_avg",
+        "contact_phone_confidence_avg",
+        "contact_verification_score_avg",
+    ):
+        if column in sanitized:
+            series = sanitized[column].dropna()
+            if not series.empty:
+                _record_failure(
+                    series.between(0.0, 1.0).all(),
+                    f"{column} bounds",
+                )
 
     return ExpectationSummary(success=success, failures=failures)
