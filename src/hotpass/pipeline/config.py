@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -100,6 +101,10 @@ class PipelineConfig:
     preloaded_agent_frame: pd.DataFrame | None = None
     preloaded_agent_timings: list[AgentTiming] = field(default_factory=list)
     preloaded_agent_warnings: list[str] = field(default_factory=list)
+    backfill: bool = False
+    incremental: bool = False
+    since: datetime | None = None
+    run_id: str | None = None
 
 
 @dataclass

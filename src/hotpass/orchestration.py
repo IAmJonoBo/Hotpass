@@ -626,6 +626,22 @@ def _coerce_run_date(raw: str | date) -> date:
         raise PipelineOrchestrationError(msg) from exc
 
 
+def _coerce_since(raw: datetime | str | None) -> datetime | None:
+    if raw is None:
+        return None
+    if isinstance(raw, datetime):
+        candidate = raw
+    else:
+        try:
+            candidate = datetime.fromisoformat(str(raw))
+        except ValueError as exc:
+            msg = f"Invalid since value: {raw}"
+            raise PipelineOrchestrationError(msg) from exc
+    if candidate.tzinfo is None:
+        candidate = candidate.replace(tzinfo=UTC)
+    return candidate
+
+
 @flow(name="hotpass-backfill", log_prints=True, validate_parameters=False)
 def backfill_pipeline_flow(
     runs: Sequence[Mapping[str, Any]] | Sequence[dict[str, Any]],
@@ -715,10 +731,17 @@ def backfill_pipeline_flow(
                 "input_dir": extracted,
                 "output_path": output_path,
                 "dist_dir": outputs_root,
+                "backfill": True,
+                "incremental": False,
+                "run_id": f"backfill-{iso_date}-{_sanitise_component(version)}",
             }
         }
         if _lookup_nested(parameters, ("pipeline", "archive")) is None:
             run_updates["pipeline"]["archive"] = False
+        if _lookup_nested(parameters, ("pipeline", "since")) is None:
+            run_updates["pipeline"]["since"] = datetime.combine(
+                run_date_value, datetime.min.time(), tzinfo=UTC
+            )
 
         config_model = config_model.merge(run_updates)
 
@@ -774,6 +797,9 @@ def refinement_pipeline_flow(
     excel_chunk_size: int | None = None,
     archive: bool = False,
     dist_dir: str = "./dist",
+    backfill: bool = False,
+    incremental: bool = False,
+    since: datetime | str | None = None,
 ) -> dict[str, Any]:
     """Main Hotpass refinement pipeline as a Prefect flow.
 
@@ -792,11 +818,36 @@ def refinement_pipeline_flow(
     _safe_log(
         logger,
         logging.INFO,
-        "Starting Hotpass refinement pipeline (profile: %s)",
+        "Starting Hotpass refinement pipeline (profile=%s, backfill=%s, incremental=%s, since=%s)",
         profile_name,
+        backfill,
+        incremental,
+        since,
     )
 
     from hotpass.config_schema import HotpassConfig
+
+    resolved_since = _coerce_since(since)
+
+    run_id = None
+    flow_run_name = None
+    scheduled_start_time = None
+    try:
+        from prefect.runtime import flow_run
+
+        run_id = getattr(flow_run, "id", None)
+        flow_run_name = getattr(flow_run, "name", None)
+        scheduled_start_time = getattr(flow_run, "expected_start_time", None)
+        _safe_log(
+            logger,
+            logging.DEBUG,
+            "Prefect runtime resolved (run_id=%s, name=%s, scheduled=%s)",
+            run_id,
+            flow_run_name,
+            scheduled_start_time,
+        )
+    except Exception:  # pragma: no cover - runtime availability only
+        pass
 
     config_updates: dict[str, Any] = {
         "pipeline": {
@@ -804,8 +855,17 @@ def refinement_pipeline_flow(
             "output_path": Path(output_path),
             "archive": archive,
             "dist_dir": Path(dist_dir),
+            "backfill": bool(backfill),
+            "incremental": bool(incremental),
         }
     }
+    if resolved_since is not None:
+        config_updates["pipeline"]["since"] = resolved_since
+    if run_id:
+        config_updates["pipeline"]["run_id"] = run_id
+    if flow_run_name:
+        config_updates.setdefault("orchestrator", {})["run_name_template"] = flow_run_name
+
     if excel_chunk_size is not None:
         config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size)
 
@@ -832,6 +892,14 @@ def refinement_pipeline_flow(
         PipelineRunOptions(config=config, profile_name=profile_name)
     )
 
+    payload = summary.to_payload()
+    if run_id:
+        payload["run_id"] = run_id
+    if resolved_since is not None:
+        payload["since"] = resolved_since.isoformat()
+    payload["backfill"] = bool(backfill)
+    payload["incremental"] = bool(incremental)
+
     _safe_log(
         logger,
         logging.INFO,
@@ -839,7 +907,7 @@ def refinement_pipeline_flow(
         "SUCCESS" if summary.success else "VALIDATION_FAILED",
     )
 
-    return summary.to_payload()
+    return payload
 
 
 def deploy_pipeline(

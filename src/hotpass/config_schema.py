@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -225,6 +225,10 @@ class PipelineRuntimeConfig(BaseModel):
     )
     dist_dir: Path = Field(default_factory=lambda: Path.cwd() / "dist")
     archive: bool = False
+    backfill: bool = False
+    incremental: bool = False
+    since: datetime | None = None
+    run_id: str | None = None
     expectation_suite: str = "default"
     country_code: str = "ZA"
     qa_mode: str = Field(default="default", pattern=r"^(default|strict|relaxed)$")
@@ -477,6 +481,10 @@ class HotpassConfig(BaseModel):
             industry_profile=industry_profile,
             progress_listener=progress_listener,
             pii_redaction=self.compliance.to_redaction_config(),
+            backfill=self.pipeline.backfill,
+            incremental=self.pipeline.incremental,
+            since=self.pipeline.since,
+            run_id=self.pipeline.run_id,
         )
 
         config.automation_http = self.pipeline.automation_http.to_dataclass()

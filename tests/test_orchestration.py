@@ -120,6 +120,9 @@ def test_run_pipeline_task_success(mock_pipeline_result, tmp_path):
         assert result["success"] is True
         assert result["total_records"] == 3
         assert "elapsed_seconds" in result
+        assert result["backfill"] is False
+        assert result["incremental"] is False
+        assert result.get("since") is None
         assert "quality_report" in result
 
 
@@ -213,6 +216,9 @@ def test_refinement_pipeline_flow_with_options(mock_pipeline_result, tmp_path):
         # Verify config was built with correct options
         config_arg = mock_run.call_args[0][0]
         assert config_arg.excel_options.chunk_size == 1000
+        assert config_arg.backfill is False
+        assert config_arg.incremental is False
+        assert config_arg.since is None
 
 
 def test_deploy_pipeline_without_prefect(monkeypatch):
