@@ -88,7 +88,7 @@ We restructured the Great Expectations validation infrastructure around checkpoi
 
 - [Great Expectations Checkpoints](https://docs.greatexpectations.io/docs/terms/checkpoint/)
 - [Data Docs](https://docs.greatexpectations.io/docs/terms/data_docs/)
-- Implementation PR: #[TBD]
+- Implementation: PR copilot/restructure-great-expectations-assets
 
 **Notes:**
 

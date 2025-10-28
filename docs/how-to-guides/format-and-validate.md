@@ -108,11 +108,11 @@ To introduce a new sheet, add both the schema and expectation suite:
 ```bash
 # Create new suite
 cp data_expectations/suites/reachout_organisation.json \
-   data_expectations/suites/my_feed_source.json
+   data_expectations/suites/my_feed.json
 
 # Create checkpoint configuration
 cp data_expectations/checkpoints/reachout_organisation.json \
-   data_expectations/checkpoints/my_feed_source.json
+   data_expectations/checkpoints/my_feed.json
 ```
 
 Update the suite and checkpoint files with your dataset name and column expectations, then reference them from a data source loader. If the workbook drifts from the schema, `DataContractError` raises with the missing/extra fields and blocks the run.
