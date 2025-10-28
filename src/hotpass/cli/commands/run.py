@@ -7,9 +7,10 @@ import json
 import os
 import sys
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import pandas as pd
 from rich.prompt import Confirm
@@ -20,8 +21,14 @@ from hotpass.automation.http import AutomationHTTPClient, DeadLetterQueue
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
 from hotpass.error_handling import DataContractError
+from hotpass.lineage import (
+    build_output_datasets,
+    create_emitter,
+    discover_input_datasets,
+)
 from hotpass.pipeline import default_feature_bundle
 from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
+from hotpass.orchestration import build_pipeline_job_name
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -103,6 +110,11 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     config = options.canonical_config
 
+    if config.pipeline.run_id is None:
+        generated_run_id = uuid4().hex
+        config = config.merge({"pipeline": {"run_id": generated_run_id}})
+        options = replace(options, canonical_config=config)
+
     interactive = options.interactive
     if interactive is None:
         interactive = console is not None and sys.stdin.isatty()
@@ -149,116 +161,153 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             features=default_feature_bundle(),
         )
 
+        emitter = create_emitter(
+            build_pipeline_job_name(base_config),
+            run_id=base_config.run_id,
+        )
+        emitter.emit_start(
+            inputs=discover_input_datasets(base_config.input_dir)
+        )
+
+        lineage_outputs = build_output_datasets(base_config.output_path)
+        archive_path: Path | None = None
+
         try:
             result = orchestrator.run(execution)
+
+            report = result.quality_report
+            logger.log_summary(report)
+
+            if console:
+                console.print()
+                console.print(
+                    "[bold green]✓[/bold green] Pipeline completed successfully!"
+                )
+                console.print(
+                    f"[dim]Refined data written to:[/dim] {output_path}"
+                )
+
+            if interactive and console and report.recommendations:
+                console.print()
+                if Confirm.ask("View top recommendations now?", default=True):
+                    console.print("[bold]Top recommendations:[/bold]")
+                    for recommendation in report.recommendations[:3]:
+                        console.print(f"  • {recommendation}")
+
+            if options.report_path is not None:
+                options.report_path.parent.mkdir(parents=True, exist_ok=True)
+                if options.report_format == "html":
+                    options.report_path.write_text(
+                        report.to_html(), encoding="utf-8"
+                    )
+                else:
+                    options.report_path.write_text(
+                        report.to_markdown(), encoding="utf-8"
+                    )
+                logger.log_report_write(options.report_path, options.report_format)
+
+            if (
+                options.party_store_path is not None
+                and result.party_store is not None
+            ):
+                options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
+                payload = result.party_store.as_dict()
+                options.party_store_path.write_text(
+                    json.dumps(payload, indent=2), encoding="utf-8"
+                )
+                logger.log_party_store(options.party_store_path)
+
+            if (
+                config.pipeline.intent_digest_path is not None
+                and result.intent_digest is not None
+            ):
+                logger.log_intent_digest(
+                    config.pipeline.intent_digest_path,
+                    int(result.intent_digest.shape[0]),
+                )
+
+            digest_df = result.intent_digest
+            daily_list_df = result.daily_list
+
+            automation_http_config = base_config.automation_http
+            http_client = AutomationHTTPClient(automation_http_config)
+            dead_letter_queue: DeadLetterQueue | None = None
+            if (
+                automation_http_config.dead_letter_enabled
+                and automation_http_config.dead_letter_path is not None
+            ):
+                dead_letter_queue = DeadLetterQueue(
+                    automation_http_config.dead_letter_path
+                )
+
+            effective_digest = digest_df
+            if effective_digest is None:
+                if daily_list_df is not None:
+                    effective_digest = daily_list_df
+                else:
+                    effective_digest = pd.DataFrame()
+
+            if config.pipeline.intent_webhooks:
+                dispatch_webhooks(
+                    effective_digest,
+                    webhooks=config.pipeline.intent_webhooks,
+                    daily_list=daily_list_df,
+                    logger=logger,
+                    http_client=http_client,
+                    dead_letter=dead_letter_queue,
+                )
+
+            if daily_list_df is not None and config.pipeline.crm_endpoint:
+                push_crm_updates(
+                    daily_list_df,
+                    config.pipeline.crm_endpoint,
+                    token=config.pipeline.crm_token,
+                    logger=logger,
+                    http_client=http_client,
+                    dead_letter=dead_letter_queue,
+                )
+
+            store_path = config.pipeline.intent_signal_store_path
+            if store_path is not None and not store_path.exists():
+                store_path.parent.mkdir(parents=True, exist_ok=True)
+                store_path.write_text("[]\n", encoding="utf-8")
+
+            if config.pipeline.archive:
+                config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
+                archive_path = create_refined_archive(
+                    output_path, config.pipeline.dist_dir
+                )
+                logger.log_archive(archive_path)
+                lineage_outputs = build_output_datasets(
+                    base_config.output_path, archive_path
+                )
         except DataContractError as exc:
-            logger.log_error(f"Data contract validation failed: {exc.context.message}")
+            context = getattr(exc, "context", None)
+            message = context.message if context is not None else str(exc)
+            emitter.emit_fail(message, outputs=lineage_outputs)
+            logger.log_error(f"Data contract validation failed: {message}")
             if console:
                 console.print("[bold red]✗ Data contract validation failed[/bold red]")
-                console.print(
-                    f"[dim]Source:[/dim] {exc.context.source_file or 'unknown'}"
+                source_hint = (
+                    context.source_file if context and context.source_file else "unknown"
                 )
-                console.print(f"[dim]Details:[/dim] {exc.context.details}")
-                if exc.context.suggested_fix:
+                console.print(f"[dim]Source:[/dim] {source_hint}")
+                details = context.details if context else "Unavailable"
+                console.print(f"[dim]Details:[/dim] {details}")
+                if context and context.suggested_fix:
                     console.print(
-                        f"[yellow]Suggested fix:[/yellow] {exc.context.suggested_fix}"
+                        f"[yellow]Suggested fix:[/yellow] {context.suggested_fix}"
                     )
             return 2
         except Exception as exc:  # pragma: no cover - defensive guard
+            emitter.emit_fail(str(exc), outputs=lineage_outputs)
             logger.log_error(str(exc))
             if console:
                 console.print("[bold red]Pipeline failed with error:[/bold red]")
                 console.print_exception()
             return 1
-
-    report = result.quality_report
-    logger.log_summary(report)
-
-    if console:
-        console.print()
-        console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
-        console.print(f"[dim]Refined data written to:[/dim] {output_path}")
-
-    if interactive and console and report.recommendations:
-        console.print()
-        if Confirm.ask("View top recommendations now?", default=True):
-            console.print("[bold]Top recommendations:[/bold]")
-            for recommendation in report.recommendations[:3]:
-                console.print(f"  • {recommendation}")
-
-    if options.report_path is not None:
-        options.report_path.parent.mkdir(parents=True, exist_ok=True)
-        if options.report_format == "html":
-            options.report_path.write_text(report.to_html(), encoding="utf-8")
         else:
-            options.report_path.write_text(report.to_markdown(), encoding="utf-8")
-        logger.log_report_write(options.report_path, options.report_format)
-
-    if options.party_store_path is not None and result.party_store is not None:
-        options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = result.party_store.as_dict()
-        options.party_store_path.write_text(
-            json.dumps(payload, indent=2), encoding="utf-8"
-        )
-        logger.log_party_store(options.party_store_path)
-
-    if (
-        config.pipeline.intent_digest_path is not None
-        and result.intent_digest is not None
-    ):
-        logger.log_intent_digest(
-            config.pipeline.intent_digest_path,
-            int(result.intent_digest.shape[0]),
-        )
-
-    digest_df = result.intent_digest
-    daily_list_df = result.daily_list
-
-    automation_http_config = base_config.automation_http
-    http_client = AutomationHTTPClient(automation_http_config)
-    dead_letter_queue: DeadLetterQueue | None = None
-    if (
-        automation_http_config.dead_letter_enabled
-        and automation_http_config.dead_letter_path is not None
-    ):
-        dead_letter_queue = DeadLetterQueue(automation_http_config.dead_letter_path)
-
-    effective_digest = digest_df
-    if effective_digest is None:
-        if daily_list_df is not None:
-            effective_digest = daily_list_df
-        else:
-            effective_digest = pd.DataFrame()
-
-    if config.pipeline.intent_webhooks:
-        dispatch_webhooks(
-            effective_digest,
-            webhooks=config.pipeline.intent_webhooks,
-            daily_list=daily_list_df,
-            logger=logger,
-            http_client=http_client,
-            dead_letter=dead_letter_queue,
-        )
-
-    if daily_list_df is not None and config.pipeline.crm_endpoint:
-        push_crm_updates(
-            daily_list_df,
-            config.pipeline.crm_endpoint,
-            token=config.pipeline.crm_token,
-            logger=logger,
-            http_client=http_client,
-            dead_letter=dead_letter_queue,
-        )
-
-    store_path = config.pipeline.intent_signal_store_path
-    if store_path is not None and not store_path.exists():
-        store_path.parent.mkdir(parents=True, exist_ok=True)
-        store_path.write_text("[]\n", encoding="utf-8")
-
-    if config.pipeline.archive:
-        config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
-        archive_path = create_refined_archive(output_path, config.pipeline.dist_dir)
-        logger.log_archive(archive_path)
+            emitter.emit_complete(outputs=lineage_outputs)
 
     return 0
 

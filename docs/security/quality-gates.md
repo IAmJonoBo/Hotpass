@@ -15,6 +15,8 @@ last_updated: 2025-10-28
 | Security                 | Bandit                 | `uv run bandit -r src scripts`                                                    | QA job                      |
 | Secrets                  | detect-secrets         | `uv run detect-secrets scan src tests scripts`                                    | QA job                      |
 | Build                    | uv build               | `uv run uv build`                                                                 | QA job                      |
+| Lineage coverage         | pytest                 | `uv run pytest tests/test_orchestration_lineage.py tests/cli/test_run_lineage_integration.py`
+                | QA job                      |
 | Accessibility            | pytest marker          | `uv run pytest -m accessibility`                                                  | Accessibility job           |
 | Mutation testing         | mutmut                 | `uv run python scripts/qa/run_mutation_tests.py`                                  | Mutation job                |
 | Contract testing         | pytest contract suite  | `uv run pytest tests/contracts`                                                   | QA job                      |

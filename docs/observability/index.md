@@ -22,6 +22,12 @@ The registry enforces a `TelemetryConfig` schema that requires a service name, e
 and at least one exporter. By default Hotpass instantiates the safe console exporters that
 were previously hand-rolled in `observability.py`.
 
+## Lineage exploration
+
+Hotpass ships a Docker Compose stack for [Marquez](marquez.md) so you can visualise the
+OpenLineage events emitted by CLI runs and Prefect deployments. Launch the stack during
+local development to confirm datasets, jobs, and runs are captured end-to-end.
+
 ## Configuration examples
 
 ### CLI (hotpass-enhanced orchestrate)
