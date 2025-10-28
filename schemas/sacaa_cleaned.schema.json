@@ -5,12 +5,16 @@
   "description": "Schema for Cleaned sheet in SACAA Flight Schools workbook",
   "primaryKey": ["Name of Organisation"],
   "fields": [
-    {"name": "Name of Organisation", "type": "string", "constraints": {"required": true}},
-    {"name": "Province", "type": "string"},
-    {"name": "Status", "type": "string"},
-    {"name": "Website URL", "type": "string"},
-    {"name": "Contact Person", "type": "string"},
-    {"name": "Contact Number", "type": "string"},
-    {"name": "Contact Email Address", "type": "string"}
+    {
+      "name": "Name of Organisation",
+      "type": "string",
+      "constraints": { "required": true }
+    },
+    { "name": "Province", "type": "string" },
+    { "name": "Status", "type": "string" },
+    { "name": "Website URL", "type": "string" },
+    { "name": "Contact Person", "type": "string" },
+    { "name": "Contact Number", "type": "string" },
+    { "name": "Contact Email Address", "type": "string" }
   ]
 }

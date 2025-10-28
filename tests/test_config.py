@@ -4,7 +4,11 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile  # noqa: E402
+from hotpass.config import (  # noqa: E402
+    IndustryProfile,
+    get_default_profile,
+    load_industry_profile,
+)
 
 
 def test_industry_profile_to_dict_roundtrip():

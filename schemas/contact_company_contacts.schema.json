@@ -5,14 +5,18 @@
   "description": "Schema for Company_Contacts sheet in Contact Database.xlsx",
   "primaryKey": ["C_ID", "Email", "Cellnumber", "Landline"],
   "fields": [
-    {"name": "C_ID", "type": "number", "constraints": {"required": true}},
-    {"name": "Company", "type": "string", "constraints": {"required": true}},
-    {"name": "Status", "type": "string"},
-    {"name": "FirstName", "type": "string"},
-    {"name": "Surname", "type": "string"},
-    {"name": "Position", "type": "string"},
-    {"name": "Cellnumber", "type": "string"},
-    {"name": "Email", "type": "string"},
-    {"name": "Landline", "type": "string"}
+    { "name": "C_ID", "type": "number", "constraints": { "required": true } },
+    {
+      "name": "Company",
+      "type": "string",
+      "constraints": { "required": true }
+    },
+    { "name": "Status", "type": "string" },
+    { "name": "FirstName", "type": "string" },
+    { "name": "Surname", "type": "string" },
+    { "name": "Position", "type": "string" },
+    { "name": "Cellnumber", "type": "string" },
+    { "name": "Email", "type": "string" },
+    { "name": "Landline", "type": "string" }
   ]
 }

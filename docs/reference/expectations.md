@@ -54,9 +54,9 @@ Probabilistic linkage runs emit scored pairs and review queues alongside the
 refined dataset. A synthetic 600-record benchmark (300 unique entities, 300
 duplicates) produced the following metrics using RapidFuzz-backed blocking:
 
-| Scenario | Total records | Unique entities | Matches scored | Review queue | Runtime |
-| --- | --- | --- | --- | --- | --- |
-| Rule-based linkage (0.9 match, 0.7 review) | 600 | 300 | 300 | 0 | 0.2s |
+| Scenario                                   | Total records | Unique entities | Matches scored | Review queue | Runtime |
+| ------------------------------------------ | ------------- | --------------- | -------------- | ------------ | ------- |
+| Rule-based linkage (0.9 match, 0.7 review) | 600           | 300             | 300            | 0            | 0.2s    |
 
 Persisted artefacts contain match probabilities, review routing thresholds, and
 any reviewer decisions retrieved from Label Studio to support retraining and

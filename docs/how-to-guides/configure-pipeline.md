@@ -199,8 +199,8 @@ Hotpass includes helper functions that:
   `crm_token`.
 
 Enable daily list exports by setting `daily_list_path` and `daily_list_size`. The
-  pipeline writes the CSV (or Parquet when using a `.parquet` suffix) and returns the
-  dataframe so automation hooks can send it downstream.
+pipeline writes the CSV (or Parquet when using a `.parquet` suffix) and returns the
+dataframe so automation hooks can send it downstream.
 
 ```bash
 uv run hotpass \
@@ -240,16 +240,16 @@ circuit-breaking policies. Each delivery emits structured events (`automation.we
 - Equivalent environment variables ensure Prefect deployments and automated agents pick
   up the same configuration:
 
-| Variable | Meaning |
-| --- | --- |
-| `HOTPASS_AUTOMATION_HTTP_TIMEOUT` | Delivery timeout in seconds. |
-| `HOTPASS_AUTOMATION_HTTP_RETRIES` | Maximum retry attempts. |
-| `HOTPASS_AUTOMATION_HTTP_BACKOFF` | Exponential backoff factor. |
-| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX` | Maximum backoff interval in seconds. |
-| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD` | Consecutive failures before the circuit opens. |
-| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET` | Seconds to wait before half-opening the circuit. |
-| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER` | Override the generated idempotency header. |
-| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER` | Destination path for the NDJSON dead-letter queue. |
+| Variable                                      | Meaning                                            |
+| --------------------------------------------- | -------------------------------------------------- |
+| `HOTPASS_AUTOMATION_HTTP_TIMEOUT`             | Delivery timeout in seconds.                       |
+| `HOTPASS_AUTOMATION_HTTP_RETRIES`             | Maximum retry attempts.                            |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF`             | Exponential backoff factor.                        |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX`         | Maximum backoff interval in seconds.               |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD`   | Consecutive failures before the circuit opens.     |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET`       | Seconds to wait before half-opening the circuit.   |
+| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER`  | Override the generated idempotency header.         |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER`         | Destination path for the NDJSON dead-letter queue. |
 | `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED` | `true`/`false` toggle for dead-letter persistence. |
 
 Delivery reports return the status, idempotency key, attempt count, and latency for each
@@ -501,14 +501,14 @@ Hotpass now validates primary email and phone contacts during aggregation. The d
 validators perform MX lookups for well-known domains and use `phonenumbers` to parse and
 classify phone numbers. Verification results are exposed via new SSOT columns:
 
-| Column | Description |
-| --- | --- |
-| `contact_primary_email_confidence` | Float confidence score returned by the email validator. |
-| `contact_primary_email_status` | Enum (`deliverable`, `risky`, `undeliverable`, `unknown`). |
-| `contact_primary_phone_confidence` | Confidence score produced by the phone validator. |
-| `contact_primary_phone_status` | Enum mirroring the email status values. |
-| `contact_primary_lead_score` | Logistic-scaled lead score combining completeness, verification, and source priority. |
-| `contact_validation_flags` | Semicolon-delimited list of warnings (for example `email:risky`). |
+| Column                             | Description                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------- |
+| `contact_primary_email_confidence` | Float confidence score returned by the email validator.                               |
+| `contact_primary_email_status`     | Enum (`deliverable`, `risky`, `undeliverable`, `unknown`).                            |
+| `contact_primary_phone_confidence` | Confidence score produced by the phone validator.                                     |
+| `contact_primary_phone_status`     | Enum mirroring the email status values.                                               |
+| `contact_primary_lead_score`       | Logistic-scaled lead score combining completeness, verification, and source priority. |
+| `contact_validation_flags`         | Semicolon-delimited list of warnings (for example `email:risky`).                     |
 
 To customise behaviour instantiate `ContactValidationService` with bespoke provider logic:
 

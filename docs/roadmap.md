@@ -32,15 +32,15 @@ Hotpass has delivered every phase in the modernisation programme. The enhanced p
 
 | Gate                    | Target                                                                                   | Latest                                                         |
 | ----------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Test coverage           | ≥ 80%                                                                                    | 89% (pytest `c0cc84`)                                       |
-| Linting                 | Ruff, no warnings                                                                        | ✅ Pass (`ruff check` chunk `2265fd`)                       |
-| Formatting              | `ruff format --check`                                                                    | ✅ Pass (`adb92b`)                                          |
-| Type checks             | mypy                                                                                     | ✅ Pass (`caf6d1`)                                          |
-| Security                | Bandit                                                                                   | ✅ Pass (`d489e9`)                                          |
-| Secrets                 | detect-secrets                                                                           | ✅ Pass (`1fe040`)                                          |
-| Build                   | `uv build`                                                                               | ✅ Pass (`8c3a29`)                                          |
-| Static analysis         | `semgrep --config=auto`                                                                  | ⚠️ Blocked (SSL failure; chunk `ea97d4`)                    |
-| Docs                    | `sphinx-build -n -W` & linkcheck                                                         | ✅ Pass                                                      |
+| Test coverage           | ≥ 80%                                                                                    | 89% (pytest `c0cc84`)                                          |
+| Linting                 | Ruff, no warnings                                                                        | ✅ Pass (`ruff check` chunk `2265fd`)                          |
+| Formatting              | `ruff format --check`                                                                    | ✅ Pass (`adb92b`)                                             |
+| Type checks             | mypy                                                                                     | ✅ Pass (`caf6d1`)                                             |
+| Security                | Bandit                                                                                   | ✅ Pass (`d489e9`)                                             |
+| Secrets                 | detect-secrets                                                                           | ✅ Pass (`1fe040`)                                             |
+| Build                   | `uv build`                                                                               | ✅ Pass (`8c3a29`)                                             |
+| Static analysis         | `semgrep --config=auto`                                                                  | ⚠️ Blocked (SSL failure; chunk `ea97d4`)                       |
+| Docs                    | `sphinx-build -n -W` & linkcheck                                                         | ✅ Pass                                                        |
 | Compliance verification | Quarterly POPIA/ISO/SOC reviews per [verification plan](compliance/verification-plan.md) | Cadence defined; first review sprint scheduled for 2025-Q1     |
 | Compliance evidence     | Evidence catalog current with quarterly refresh                                          | New catalog published; initial evidence refresh due 2025-01-15 |
 

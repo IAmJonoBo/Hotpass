@@ -80,7 +80,9 @@ def main(argv: list[str] | None = None) -> int:
     robots_guard = RobotsTxtGuard(args.robots, user_agent=args.user_agent)
     ledger = ProvenanceLedger(args.ledger)
 
-    guards = CollectionGuards(robots_guard=robots_guard, ledger=ledger, tos_policy=tos_policy)
+    guards = CollectionGuards(
+        robots_guard=robots_guard, ledger=ledger, tos_policy=tos_policy
+    )
 
     records = load_records(args.records)
     guards.guard_many(records, source_url=args.source_url, license=args.license)

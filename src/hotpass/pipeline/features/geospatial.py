@@ -35,7 +35,9 @@ class GeospatialFeature(PipelineFeatureStrategy):
             try:
                 with pipeline_stage("geospatial", {"records": len(df)}):
                     if "address_primary" in df.columns:
-                        df["address_primary"] = df["address_primary"].apply(normalize_address)
+                        df["address_primary"] = df["address_primary"].apply(
+                            normalize_address
+                        )
                     result.refined = geocode_dataframe(
                         df,
                         address_column="address_primary",

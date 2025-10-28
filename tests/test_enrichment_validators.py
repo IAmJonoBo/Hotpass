@@ -19,7 +19,9 @@ def smtp_validator() -> EmailValidator:
     def fake_dns(domain: str):
         return (f"mx.{domain}",)
 
-    def fake_probe(address: str, domain: str, hosts: tuple[str, ...]) -> SMTPProbeResult:
+    def fake_probe(
+        address: str, domain: str, hosts: tuple[str, ...]
+    ) -> SMTPProbeResult:
         return SMTPProbeResult(
             status=ValidationStatus.UNDELIVERABLE,
             confidence=0.25,
@@ -41,7 +43,9 @@ def test_email_validator_prefers_smtp_probe(smtp_validator: EmailValidator) -> N
     assert pytest.approx(result.confidence, rel=1e-3) == 0.25
 
 
-def test_contact_validation_service_combines_channels(smtp_validator: EmailValidator) -> None:
+def test_contact_validation_service_combines_channels(
+    smtp_validator: EmailValidator,
+) -> None:
     """Contact service should return cached summary with composite confidence."""
 
     service = ContactValidationService(email_validator=smtp_validator)

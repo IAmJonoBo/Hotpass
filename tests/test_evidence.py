@@ -7,7 +7,10 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.evidence import record_consent_audit_log, record_export_access_event  # noqa: E402
+from hotpass.evidence import (  # noqa: E402
+    record_consent_audit_log,
+    record_export_access_event,
+)
 
 
 def test_record_consent_audit_log_deterministic(tmp_path):

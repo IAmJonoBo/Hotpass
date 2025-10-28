@@ -17,11 +17,11 @@ last_updated: 2025-10-26
 
 ## Trial
 
-| Technology            | Domain        | Experiment                                       |
-| --------------------- | ------------- | ------------------------------------------------ |
-| Mutmut                | Testing       | Evaluate mutation coverage for core modules.     |
-| Playwright + axe-core | Accessibility | Browser-based accessibility scans for dashboard. |
-| Sigstore              | Supply-chain  | Keyless signing for artefacts.                   |
+| Technology                   | Domain           | Experiment                                            |
+| ---------------------------- | ---------------- | ----------------------------------------------------- |
+| Mutmut                       | Testing          | Evaluate mutation coverage for core modules.          |
+| Playwright + axe-core        | Accessibility    | Browser-based accessibility scans for dashboard.      |
+| Sigstore                     | Supply-chain     | Keyless signing for artefacts.                        |
 | Model Context Protocol (MCP) | Agent governance | Validate gating of agentic orchestration via Prefect. |
 
 ## Assess

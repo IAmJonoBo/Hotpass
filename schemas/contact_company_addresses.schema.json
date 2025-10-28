@@ -5,10 +5,14 @@
   "description": "Schema for Company_Addresses sheet in Contact Database.xlsx",
   "primaryKey": ["C_ID", "Type"],
   "fields": [
-    {"name": "C_ID", "type": "number", "constraints": {"required": true}},
-    {"name": "Company", "type": "string", "constraints": {"required": true}},
-    {"name": "Type", "type": "string"},
-    {"name": "Airport", "type": "string"},
-    {"name": "Unnamed: 4", "type": "string"}
+    { "name": "C_ID", "type": "number", "constraints": { "required": true } },
+    {
+      "name": "Company",
+      "type": "string",
+      "constraints": { "required": true }
+    },
+    { "name": "Type", "type": "string" },
+    { "name": "Airport", "type": "string" },
+    { "name": "Unnamed: 4", "type": "string" }
   ]
 }

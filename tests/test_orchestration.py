@@ -154,7 +154,10 @@ def test_run_pipeline_once_archiving_error(mock_pipeline_result, tmp_path):
 
     with (
         patch("hotpass.orchestration.run_pipeline") as mock_run,
-        patch("hotpass.orchestration.create_refined_archive", side_effect=ValueError("boom")),
+        patch(
+            "hotpass.orchestration.create_refined_archive",
+            side_effect=ValueError("boom"),
+        ),
     ):
         mock_run.return_value = mock_pipeline_result
 
@@ -246,12 +249,18 @@ def test_deploy_pipeline_invokes_prefect_serve(monkeypatch):
                 schedule=None,
             )
 
-    monkeypatch.setattr(orchestration, "refinement_pipeline_flow", DummyFlow(), raising=False)
+    monkeypatch.setattr(
+        orchestration, "refinement_pipeline_flow", DummyFlow(), raising=False
+    )
 
     schedule_module = types.SimpleNamespace(CronSchedule=SimpleNamespace)
-    monkeypatch.setitem(sys.modules, "prefect.server.schemas.schedules", schedule_module)
+    monkeypatch.setitem(
+        sys.modules, "prefect.server.schemas.schedules", schedule_module
+    )
 
-    orchestration.deploy_pipeline(name="demo", work_pool="inbox", cron_schedule="0 12 * * *")
+    orchestration.deploy_pipeline(
+        name="demo", work_pool="inbox", cron_schedule="0 12 * * *"
+    )
 
     assert serve_calls
     deployment = serve_calls[0]
@@ -280,7 +289,12 @@ def test_backfill_flow_processes_multiple_runs(
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     base_config = HotpassConfig().merge(
-        {"pipeline": {"output_path": tmp_path / "outputs" / "refined.xlsx", "archive": False}}
+        {
+            "pipeline": {
+                "output_path": tmp_path / "outputs" / "refined.xlsx",
+                "archive": False,
+            }
+        }
     )
     runs = [
         {"run_date": "2024-01-01", "version": "v1"},
@@ -328,14 +342,18 @@ def test_backfill_flow_processes_multiple_runs(
         assert config.pipeline.input_dir == extracted
         assert (extracted / "input.csv").read_text() == run["version"]
         expected_output = (
-            restore_root / "outputs" / f"refined-{run['run_date']}-{run['version']}.xlsx"
+            restore_root
+            / "outputs"
+            / f"refined-{run['run_date']}-{run['version']}.xlsx"
         )
         assert config.pipeline.output_path == expected_output
 
     assert all(run_entry["success"] for run_entry in result["runs"])
 
 
-def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_backfill_flow_is_idempotent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-02-01", "version": "baseline"}
@@ -375,7 +393,10 @@ def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
     # Update archive payload to ensure rehydration refreshes content
     _write_archive(
-        archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"], payload="fresh"
+        archive_root,
+        date.fromisoformat(run_info["run_date"]),
+        run_info["version"],
+        payload="fresh",
     )
 
     backfill_pipeline_flow(
@@ -408,7 +429,9 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-04-01", "version": "replay"}
-    _write_archive(archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"])
+    _write_archive(
+        archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"]
+    )
 
     calls: list[Path] = []
 
@@ -430,7 +453,9 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
         yield
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
-    monkeypatch.setattr(orchestration, "prefect_concurrency", _failing_concurrency, raising=False)
+    monkeypatch.setattr(
+        orchestration, "prefect_concurrency", _failing_concurrency, raising=False
+    )
 
     result = backfill_pipeline_flow(
         runs=[run_info],

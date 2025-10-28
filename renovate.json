@@ -1,14 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "schedule:weekends"
-  ],
+  "extends": ["config:recommended", "schedule:weekends"],
   "dependencyDashboard": true,
-  "labels": [
-    "scope:dependencies",
-    "type:chore"
-  ],
+  "labels": ["scope:dependencies", "type:chore"],
   "packageRules": [
     {
       "description": "Group uv CLI and Prefect extra updates for synchronized rollouts.",
@@ -18,16 +12,8 @@
       "matchPackagePatterns": ["^uv", "^prefect"],
       "groupName": "uv and Prefect extras",
       "additionalBranchPrefix": "uv-prefect-",
-      "labels": [
-        "scope:dependencies",
-        "type:chore",
-        "prefect",
-        "uv"
-      ],
-      "schedule": [
-        "after 21:00 on friday",
-        "before 06:00 on monday"
-      ],
+      "labels": ["scope:dependencies", "type:chore", "prefect", "uv"],
+      "schedule": ["after 21:00 on friday", "before 06:00 on monday"],
       "automerge": true,
       "automergeType": "pr",
       "stabilityDays": 1
@@ -36,10 +22,7 @@
       "description": "Surface automerge ready dependency bumps outside the uv/Prefect extras.",
       "matchManagers": ["pep621", "pip_requirements", "github-actions"],
       "excludePackagePatterns": ["^uv", "^prefect"],
-      "labels": [
-        "scope:dependencies",
-        "type:chore"
-      ],
+      "labels": ["scope:dependencies", "type:chore"],
       "automerge": false
     }
   ]

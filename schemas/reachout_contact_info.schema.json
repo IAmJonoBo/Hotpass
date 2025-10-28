@@ -5,16 +5,20 @@
   "description": "Contract defining the Contact Info sheet in Reachout Database.xlsx",
   "primaryKey": ["ID", "Email", "Phone"],
   "fields": [
-    {"name": "ID", "type": "number", "constraints": {"required": true}},
-    {"name": "Organisation Name", "type": "string", "constraints": {"required": true}},
-    {"name": "Reachout Date", "type": "string"},
-    {"name": "Firstname", "type": "string"},
-    {"name": "Surname", "type": "string"},
-    {"name": "Position", "type": "string"},
-    {"name": "Phone", "type": "string"},
-    {"name": "WhatsApp", "type": "string"},
-    {"name": "Email", "type": "string"},
-    {"name": "Invalid", "type": "string"},
-    {"name": "Unnamed: 10", "type": "string"}
+    { "name": "ID", "type": "number", "constraints": { "required": true } },
+    {
+      "name": "Organisation Name",
+      "type": "string",
+      "constraints": { "required": true }
+    },
+    { "name": "Reachout Date", "type": "string" },
+    { "name": "Firstname", "type": "string" },
+    { "name": "Surname", "type": "string" },
+    { "name": "Position", "type": "string" },
+    { "name": "Phone", "type": "string" },
+    { "name": "WhatsApp", "type": "string" },
+    { "name": "Email", "type": "string" },
+    { "name": "Invalid", "type": "string" },
+    { "name": "Unnamed: 10", "type": "string" }
   ]
 }

@@ -244,11 +244,14 @@ def test_dashboard_main_without_history(tmp_path, monkeypatch, fake_streamlit):
     dashboard.main()
 
     assert any(
-        "No execution history available" in message for message in fake_streamlit.info_messages
+        "No execution history available" in message
+        for message in fake_streamlit.info_messages
     )
 
 
-def test_dashboard_main_runs_pipeline_and_persists_history(tmp_path, monkeypatch, fake_streamlit):
+def test_dashboard_main_runs_pipeline_and_persists_history(
+    tmp_path, monkeypatch, fake_streamlit
+):
     """Executing the dashboard should trigger the pipeline and persist history."""
 
     fake_streamlit.set_button_response(RUN_BUTTON_LABEL, True)
@@ -263,7 +266,9 @@ def test_dashboard_main_runs_pipeline_and_persists_history(tmp_path, monkeypatch
             return {"status": "ok"}
 
     refined_df = pd.DataFrame({"data_quality_score": [0.9, 0.8]})
-    run_result = SimpleNamespace(refined=refined_df, quality_report=DummyQualityReport())
+    run_result = SimpleNamespace(
+        refined=refined_df, quality_report=DummyQualityReport()
+    )
 
     monkeypatch.setattr(
         dashboard,
@@ -287,10 +292,15 @@ def test_dashboard_main_runs_pipeline_and_persists_history(tmp_path, monkeypatch
     ]
     assert preview_expanders, "Expected data preview expander to be registered"
     preview = preview_expanders[-1]
-    assert any("Preview of the first 20 refined records" in msg for msg in preview.caption_messages)
+    assert any(
+        "Preview of the first 20 refined records" in msg
+        for msg in preview.caption_messages
+    )
     assert any("data model glossary" in msg for msg in preview.markdown_messages)
 
-    footer_messages = [msg for msg in fake_streamlit.markdown_messages if "Last updated:" in msg]
+    footer_messages = [
+        msg for msg in fake_streamlit.markdown_messages if "Last updated:" in msg
+    ]
     assert footer_messages, "Expected footer message with last updated timestamp"
     assert "operations guide" in footer_messages[-1]
 
@@ -316,10 +326,15 @@ def test_dashboard_authentication_required(monkeypatch, tmp_path, fake_streamlit
     dashboard.main()
 
     assert not pipeline_called
-    assert any("Authentication required" in message for message in fake_streamlit.warning_messages)
+    assert any(
+        "Authentication required" in message
+        for message in fake_streamlit.warning_messages
+    )
 
 
-def test_dashboard_authentication_unlocks_session(monkeypatch, tmp_path, fake_streamlit):
+def test_dashboard_authentication_unlocks_session(
+    monkeypatch, tmp_path, fake_streamlit
+):
     """Providing the correct password unlocks the dashboard for the session."""
 
     monkeypatch.chdir(tmp_path)
@@ -337,7 +352,9 @@ def test_dashboard_authentication_unlocks_session(monkeypatch, tmp_path, fake_st
             return {"status": "ok"}
 
     refined_df = pd.DataFrame({"data_quality_score": [1.0]})
-    run_result = SimpleNamespace(refined=refined_df, quality_report=DummyQualityReport())
+    run_result = SimpleNamespace(
+        refined=refined_df, quality_report=DummyQualityReport()
+    )
 
     monkeypatch.setattr(
         dashboard,
@@ -352,12 +369,16 @@ def test_dashboard_authentication_unlocks_session(monkeypatch, tmp_path, fake_st
     assert fake_streamlit.session_state[dashboard.AUTH_STATE_KEY] is True
 
 
-def test_dashboard_blocks_paths_outside_allowlist(monkeypatch, tmp_path, fake_streamlit):
+def test_dashboard_blocks_paths_outside_allowlist(
+    monkeypatch, tmp_path, fake_streamlit
+):
     """Input and output paths must stay within the configured allowlist."""
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv(dashboard.ALLOWED_ROOTS_ENV, str(tmp_path / "allowed"))
-    fake_streamlit.set_sidebar_text_input_value("Input Directory", str(tmp_path / "forbidden"))
+    fake_streamlit.set_sidebar_text_input_value(
+        "Input Directory", str(tmp_path / "forbidden")
+    )
     fake_streamlit.set_sidebar_text_input_value(
         "Output Path", str(tmp_path.parent / "refined.xlsx")
     )

@@ -10,14 +10,14 @@ Hotpass ships several optional dependency “extras” (docs, geospatial, compli
 
 ## Quick reference
 
-| Profile             | Extras string                                     | Includes                                               |
-| ------------------- | ------------------------------------------------- | -------------------------------------------------------|
-| `core` (default)    | `dev orchestration`                               | CLI, Prefect orchestration, QA tooling.                |
-| `docs`              | `dev docs`                                        | Sphinx, MyST, linkcheck dependencies.                  |
-| `geospatial`        | `dev orchestration geospatial`                    | GeoPandas, Geopy, spatial utilities.                   |
-| `compliance`        | `dev orchestration compliance`                    | Presidio analyzers/anonymisers and helpers.            |
-| `enrichment`        | `dev orchestration enrichment`                    | Crawling/browser extras for enrichment flows.          |
-| `full`              | `dev orchestration enrichment geospatial compliance dashboards` | Full stack for governance and demos.          |
+| Profile          | Extras string                                                   | Includes                                      |
+| ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| `core` (default) | `dev orchestration`                                             | CLI, Prefect orchestration, QA tooling.       |
+| `docs`           | `dev docs`                                                      | Sphinx, MyST, linkcheck dependencies.         |
+| `geospatial`     | `dev orchestration geospatial`                                  | GeoPandas, Geopy, spatial utilities.          |
+| `compliance`     | `dev orchestration compliance`                                  | Presidio analyzers/anonymisers and helpers.   |
+| `enrichment`     | `dev orchestration enrichment`                                  | Crawling/browser extras for enrichment flows. |
+| `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Full stack for governance and demos.          |
 
 Each profile is a space-separated string that the helper script converts into `uv sync --extra …` flags.
 

@@ -79,10 +79,7 @@
           "description": "Aviation analytics",
           "category": "aviation",
           "type": "Private",
-          "tags": [
-            "Aviation",
-            "Analytics"
-          ],
+          "tags": ["Aviation", "Analytics"],
           "confidence": 0.88
         }
       }
@@ -96,10 +93,7 @@
         "Hotpass Aero": {
           "name": "Hotpass Aero",
           "registry": "SACAA",
-          "fleet": [
-            "ZS-ABC",
-            "ZS-XYZ"
-          ],
+          "fleet": ["ZS-ABC", "ZS-XYZ"],
           "notes": "Operator of light aircraft",
           "confidence": 0.5
         }

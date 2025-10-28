@@ -20,7 +20,7 @@ last_updated: 2025-10-28
 | Accessibility            | pytest marker          | `uv run pytest -m accessibility`                                                  | Accessibility job           |
 | Mutation testing         | mutmut                 | `uv run python scripts/qa/run_mutation_tests.py`                                  | Mutation job                |
 | Contract testing         | pytest contract suite  | `uv run pytest tests/contracts`                                                   | QA job                      |
-| Static analysis          | Semgrep                | `uv run semgrep --config=policy/semgrep/hotpass.yml`                                                    | Static-analysis job         |
+| Static analysis          | Semgrep                | `uv run semgrep --config=policy/semgrep/hotpass.yml`                              | Static-analysis job         |
 | Supply-chain             | CycloneDX + provenance | `uv run python scripts/supply_chain/generate_sbom.py`                             | Supply-chain job            |
 | Policy-as-code           | OPA                    | `opa eval --data policy --input dist/sbom/hotpass-sbom.json "data.hotpass.allow"` | Supply-chain job            |
 

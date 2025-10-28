@@ -153,7 +153,9 @@ def test_backfill_command_errors_without_windows(
     assert exit_code == 1
     assert not calls
     captured = capsys.readouterr()
-    assert "No backfill windows" in captured.err or "No backfill windows" in captured.out
+    assert (
+        "No backfill windows" in captured.err or "No backfill windows" in captured.out
+    )
 
 
 def test_backfill_command_overrides_concurrency(

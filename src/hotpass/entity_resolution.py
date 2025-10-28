@@ -88,7 +88,10 @@ def _derive_slug_keys(df: pd.DataFrame) -> pd.Series:
             .astype(str)
             .str.strip()
             + " "
-            + df.get("province", pd.Series("", index=df.index)).fillna("").astype(str).str.strip()
+            + df.get("province", pd.Series("", index=df.index))
+            .fillna("")
+            .astype(str)
+            .str.strip()
             + " "
             + df.get("address_primary", pd.Series("", index=df.index))
             .fillna("")
@@ -182,7 +185,9 @@ def _load_entity_history(history_file: str) -> pd.DataFrame:
         return entries
 
     if "status_history" in history_df.columns:
-        history_df["status_history"] = history_df["status_history"].apply(_ensure_status_history)
+        history_df["status_history"] = history_df["status_history"].apply(
+            _ensure_status_history
+        )
     else:
         history_df["status_history"] = [[] for _ in range(len(history_df))]
 
@@ -281,7 +286,9 @@ def build_entity_registry(
         match_indices: list[int] = []
         for key in _row_match_keys(row_data):
             if key in history_key_index:
-                match_indices = [i for i in history_key_index[key] if i not in used_history_rows]
+                match_indices = [
+                    i for i in history_key_index[key] if i not in used_history_rows
+                ]
                 if match_indices:
                     break
 
@@ -308,7 +315,10 @@ def build_entity_registry(
             current_status = row_data.get("status")
             if pd.notna(current_status):
                 status_entry = {"status": current_status, "date": now.isoformat()}
-                if not status_history or status_history[-1].get("status") != current_status:
+                if (
+                    not status_history
+                    or status_history[-1].get("status") != current_status
+                ):
                     status_history.append(status_entry)
 
             combined = {**hist_row.to_dict(), **row_data}
@@ -345,14 +355,16 @@ def build_entity_registry(
             registry_records.append(record)
 
     if not history_df.empty:
-        remaining_history = history_df.loc[~history_df.index.isin(used_history_rows)].copy()
+        remaining_history = history_df.loc[
+            ~history_df.index.isin(used_history_rows)
+        ].copy()
         if not remaining_history.empty:
-            remaining_history["name_variants"] = remaining_history["name_variants"].apply(
-                lambda x: x if isinstance(x, list) else []
-            )
-            remaining_history["status_history"] = remaining_history["status_history"].apply(
-                lambda x: x if isinstance(x, list) else []
-            )
+            remaining_history["name_variants"] = remaining_history[
+                "name_variants"
+            ].apply(lambda x: x if isinstance(x, list) else [])
+            remaining_history["status_history"] = remaining_history[
+                "status_history"
+            ].apply(lambda x: x if isinstance(x, list) else [])
             registry_records.extend(remaining_history.to_dict(orient="records"))
 
     registry = pd.DataFrame(registry_records)
@@ -387,7 +399,9 @@ def calculate_completeness_score(row: pd.Series) -> float:
 
     # Count non-null, non-empty fields
     filled = sum(
-        1 for field in fields if field in row and pd.notna(row[field]) and str(row[field]).strip()
+        1
+        for field in fields
+        if field in row and pd.notna(row[field]) and str(row[field]).strip()
     )
 
     return filled / len(fields) if fields else 0.0
@@ -408,10 +422,14 @@ def add_ml_priority_scores(df: pd.DataFrame) -> pd.DataFrame:
     # Priority score combines completeness with quality score
     # If quality score doesn't exist, use completeness only
     if "data_quality_score" in df.columns:
-        df["priority_score"] = df["completeness_score"] * 0.5 + df["data_quality_score"] * 0.5
+        df["priority_score"] = (
+            df["completeness_score"] * 0.5 + df["data_quality_score"] * 0.5
+        )
     else:
         df["priority_score"] = df["completeness_score"]
-        logger.warning("data_quality_score column not found, using completeness_score only")
+        logger.warning(
+            "data_quality_score column not found, using completeness_score only"
+        )
 
     logger.info(f"Added ML priority scores to {len(df)} records")
 

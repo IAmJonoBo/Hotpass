@@ -3,11 +3,11 @@
   "expectations": [
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": {"column": "Company"}
+      "kwargs": { "column": "Company" }
     },
     {
       "expectation_type": "expect_column_to_exist",
-      "kwargs": {"column": "Category"}
+      "kwargs": { "column": "Category" }
     }
   ],
   "meta": {

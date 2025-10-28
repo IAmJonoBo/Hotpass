@@ -27,7 +27,10 @@ def _type_name(annotation: Any) -> str:
         if len(args) == 2:
             return f"dict[{_type_name(args[0])}, {_type_name(args[1])}]"
         return "dict"
-    if origin in {Union, getattr(types, "UnionType", Union)}:  # pragma: no cover - Py<3.10
+    if origin in {
+        Union,
+        getattr(types, "UnionType", Union),
+    }:  # pragma: no cover - Py<3.10
         return " | ".join(_type_name(arg) for arg in args)
     return str(annotation)
 

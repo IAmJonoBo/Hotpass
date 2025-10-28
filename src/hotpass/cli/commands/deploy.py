@@ -24,7 +24,8 @@ class DeployOptions:
 
 
 def build(
-    subparsers: argparse._SubParsersAction[argparse.ArgumentParser], shared: SharedParsers
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    shared: SharedParsers,
 ) -> argparse.ArgumentParser:
     parser = subparsers.add_parser(
         "deploy",
@@ -33,8 +34,12 @@ def build(
         parents=[shared.base],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--name", default="hotpass-refinement", help="Prefect deployment name")
-    parser.add_argument("--schedule", help="Cron schedule (e.g., '0 2 * * *' for daily at 2am)")
+    parser.add_argument(
+        "--name", default="hotpass-refinement", help="Prefect deployment name"
+    )
+    parser.add_argument(
+        "--schedule", help="Cron schedule (e.g., '0 2 * * *' for daily at 2am)"
+    )
     parser.add_argument("--work-pool", help="Prefect work pool name")
     return parser
 
@@ -63,7 +68,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     try:
         deploy_pipeline(
-            name=options.name, cron_schedule=options.schedule, work_pool=options.work_pool
+            name=options.name,
+            cron_schedule=options.schedule,
+            work_pool=options.work_pool,
         )
     except Exception as exc:  # pragma: no cover - defensive guard
         logger.log_error(f"Deployment failed: {exc}")
@@ -82,7 +89,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     return 0
 
 
-def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) -> DeployOptions:
+def _resolve_options(
+    namespace: argparse.Namespace, profile: CLIProfile | None
+) -> DeployOptions:
     log_format_value: str | None = getattr(namespace, "log_format", None)
     if log_format_value is None and profile is not None:
         log_format_value = profile.log_format
@@ -101,7 +110,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         sensitive_iter = [str(value) for value in raw_sensitive if value is not None]
     elif raw_sensitive is not None:
         sensitive_iter = [str(raw_sensitive)]
-    sensitive_fields = normalise_sensitive_fields(sensitive_iter, DEFAULT_SENSITIVE_FIELD_TOKENS)
+    sensitive_fields = normalise_sensitive_fields(
+        sensitive_iter, DEFAULT_SENSITIVE_FIELD_TOKENS
+    )
 
     return DeployOptions(
         name=str(namespace.name),

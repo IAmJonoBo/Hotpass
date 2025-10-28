@@ -39,7 +39,9 @@ class DummySession:
         if self._error is not None:
             raise self._error
         key = (url, tuple(sorted((params or {}).items())) if params else None)
-        self.calls.append({"url": url, "params": params, "headers": headers, "timeout": timeout})
+        self.calls.append(
+            {"url": url, "params": params, "headers": headers, "timeout": timeout}
+        )
         try:
             payload = self._responses[key]
         except KeyError as exc:  # pragma: no cover - defensive
@@ -86,7 +88,12 @@ def test_cipc_lookup_success(tmp_path: Path) -> None:
 def test_cipc_not_found_returns_structured_error(tmp_path: Path) -> None:
     base_url = "https://cipc.example/api"
     dummy_session = DummySession(
-        {(base_url, (("search", "Unknown"),)): {"status": 404, "body": {"message": "No match"}}}
+        {
+            (base_url, (("search", "Unknown"),)): {
+                "status": 404,
+                "body": {"message": "No match"},
+            }
+        }
     )
     session = cast(requests.Session, dummy_session)
     cache = CacheManager(db_path=str(tmp_path / "cache.db"), ttl_hours=1)

@@ -5,7 +5,11 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.column_mapping import ColumnMapper, infer_column_types, profile_dataframe  # noqa: E402
+from hotpass.column_mapping import (  # noqa: E402
+    ColumnMapper,
+    infer_column_types,
+    profile_dataframe,
+)
 
 
 def test_column_mapper_exact_match():

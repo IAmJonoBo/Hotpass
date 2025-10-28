@@ -191,7 +191,9 @@ class QualityReport:
                 source = conflict.get("chosen_source", "Unknown")
                 value = str(conflict.get("value", ""))[:50]
                 alt_count = len(conflict.get("alternatives", []))
-                lines.append(f"| {field} | {source} | {value} | {alt_count} alternatives |")
+                lines.append(
+                    f"| {field} | {source} | {value} | {alt_count} alternatives |"
+                )
             if len(self.conflict_resolutions) > 10:
                 remaining = len(self.conflict_resolutions) - 10
                 lines.append(f"| ... | ... | ... | {remaining} more conflicts |")
@@ -203,12 +205,21 @@ class QualityReport:
             lines.extend(["| Metric | Value |", "| --- | ---: |"])
             primary_metrics = [
                 ("Load seconds", self.performance_metrics.get("load_seconds")),
-                ("Aggregation seconds", self.performance_metrics.get("aggregation_seconds")),
-                ("Expectations seconds", self.performance_metrics.get("expectations_seconds")),
+                (
+                    "Aggregation seconds",
+                    self.performance_metrics.get("aggregation_seconds"),
+                ),
+                (
+                    "Expectations seconds",
+                    self.performance_metrics.get("expectations_seconds"),
+                ),
                 ("Write seconds", self.performance_metrics.get("write_seconds")),
                 ("Total seconds", self.performance_metrics.get("total_seconds")),
                 ("Rows per second", self.performance_metrics.get("rows_per_second")),
-                ("Load rows per second", self.performance_metrics.get("load_rows_per_second")),
+                (
+                    "Load rows per second",
+                    self.performance_metrics.get("load_rows_per_second"),
+                ),
             ]
             for label, raw_value in primary_metrics:
                 if raw_value is None:
@@ -236,22 +247,25 @@ class QualityReport:
 
     def to_html(self) -> str:
         def _metrics_row(label: str, value: str) -> str:
-            return (
-                f'<tr><th scope="row">{html.escape(label)}</th><td>{html.escape(value)}</td></tr>'
-            )
+            return f'<tr><th scope="row">{html.escape(label)}</th><td>{html.escape(value)}</td></tr>'
 
         quality_rows = [
             _metrics_row("Total records", str(self.total_records)),
             _metrics_row("Invalid records", str(self.invalid_records)),
-            _metrics_row("Expectations passed", "Yes" if self.expectations_passed else "No"),
             _metrics_row(
-                "Mean quality score", f"{self.data_quality_distribution.get('mean', 0.0):.2f}"
+                "Expectations passed", "Yes" if self.expectations_passed else "No"
             ),
             _metrics_row(
-                "Min quality score", f"{self.data_quality_distribution.get('min', 0.0):.2f}"
+                "Mean quality score",
+                f"{self.data_quality_distribution.get('mean', 0.0):.2f}",
             ),
             _metrics_row(
-                "Max quality score", f"{self.data_quality_distribution.get('max', 0.0):.2f}"
+                "Min quality score",
+                f"{self.data_quality_distribution.get('min', 0.0):.2f}",
+            ),
+            _metrics_row(
+                "Max quality score",
+                f"{self.data_quality_distribution.get('max', 0.0):.2f}",
             ),
         ]
 
@@ -263,11 +277,17 @@ class QualityReport:
             source_rows = '<tr><td colspan="2">No source data recorded.</td></tr>'
 
         schema_items = (
-            "".join(f"<li>{html.escape(error)}</li>" for error in self.schema_validation_errors)
+            "".join(
+                f"<li>{html.escape(error)}</li>"
+                for error in self.schema_validation_errors
+            )
             or "<li>None</li>"
         )
         expectation_items = (
-            "".join(f"<li>{html.escape(failure)}</li>" for failure in self.expectation_failures)
+            "".join(
+                f"<li>{html.escape(failure)}</li>"
+                for failure in self.expectation_failures
+            )
             or "<li>None</li>"
         )
 

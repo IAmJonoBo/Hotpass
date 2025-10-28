@@ -56,7 +56,9 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         "load_rows_per_second": 0.0,
         "source_load_seconds": {},
     }
-    profile_name = config.industry_profile.name if config.industry_profile else "default"
+    profile_name = (
+        config.industry_profile.name if config.industry_profile else "default"
+    )
     if config.preloaded_agent_warnings:
         metrics["agent_warnings"] = list(config.preloaded_agent_warnings)
 
@@ -107,7 +109,9 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
                         "timestamp": time.time(),
                         "event": "pii_redacted",
                         "details": {
-                            "columns": sorted({event["column"] for event in initial_redactions}),
+                            "columns": sorted(
+                                {event["column"] for event in initial_redactions}
+                            ),
                             "redacted_cells": len(initial_redactions),
                             "operator": config.pii_redaction.operator,
                         },
@@ -158,7 +162,8 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             collector_names = []
             if config.intent_plan is not None:
                 collector_names = [
-                    collector.name for collector in config.intent_plan.active_collectors()
+                    collector.name
+                    for collector in config.intent_plan.active_collectors()
                 ]
             audit_trail.append(
                 {
@@ -197,7 +202,9 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             },
         ),
     )
-    metrics.update({k: v for k, v in aggregation_result.metrics.items() if v is not None})
+    metrics.update(
+        {k: v for k, v in aggregation_result.metrics.items() if v is not None}
+    )
 
     if config.enable_audit_trail:
         audit_trail.append(
@@ -251,18 +258,24 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         )
 
     if config.pii_redaction.enabled:
-        validated_df, post_redaction = apply_redaction(config, validation_result.validated_df)
+        validated_df, post_redaction = apply_redaction(
+            config, validation_result.validated_df
+        )
         validation_result.validated_df = validated_df
         if post_redaction:
             redaction_events.extend(post_redaction)
-            metrics["redacted_cells"] = metrics.get("redacted_cells", 0) + len(post_redaction)
+            metrics["redacted_cells"] = metrics.get("redacted_cells", 0) + len(
+                post_redaction
+            )
             if config.enable_audit_trail:
                 audit_trail.append(
                     {
                         "timestamp": time.time(),
                         "event": "pii_redacted_output",
                         "details": {
-                            "columns": sorted({event["column"] for event in post_redaction}),
+                            "columns": sorted(
+                                {event["column"] for event in post_redaction}
+                            ),
                             "redacted_cells": len(post_redaction),
                             "operator": config.pii_redaction.operator,
                         },

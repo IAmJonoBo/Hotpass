@@ -16,15 +16,15 @@ This report captures repository context, current QA posture, and critical gaps t
 
 ## Baseline QA status (2025-10-26)
 
-| Check | Command | Status |
-| --- | --- | --- |
+| Check            | Command                                                         | Status                                                            |
+| ---------------- | --------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Tests + coverage | `uv run pytest --cov=src --cov=tests --cov-report=term-missing` | ✅ (277 passed, 2 skipped; overall coverage 87%)【3c25ae†L1-L63】 |
-| Lint | `uv run ruff check` | ✅【1eb8af†L1-L2】 |
-| Format | `uv run ruff format --check` | ✅ (already formatted)【3b2dd9†L1-L2】 |
-| Type-check | `uv run mypy src tests scripts` | ✅ (advisory notes only)【cefa64†L1-L24】 |
-| Security | `uv run bandit -r src scripts` | ✅ (no issues)【826adc†L1-L25】 |
-| Secrets | `uv run detect-secrets scan src tests scripts` | ✅ (no findings)【febc0f†L1-L69】 |
-| Build | `uv run uv build` | ✅ (sdist + wheel succeed)【de0834†L1-L94】 |
+| Lint             | `uv run ruff check`                                             | ✅【1eb8af†L1-L2】                                                |
+| Format           | `uv run ruff format --check`                                    | ✅ (already formatted)【3b2dd9†L1-L2】                            |
+| Type-check       | `uv run mypy src tests scripts`                                 | ✅ (advisory notes only)【cefa64†L1-L24】                         |
+| Security         | `uv run bandit -r src scripts`                                  | ✅ (no issues)【826adc†L1-L25】                                   |
+| Secrets          | `uv run detect-secrets scan src tests scripts`                  | ✅ (no findings)【febc0f†L1-L69】                                 |
+| Build            | `uv run uv build`                                               | ✅ (sdist + wheel succeed)【de0834†L1-L94】                       |
 
 Skips: Parquet-related tests remain skipped when `pyarrow` is unavailable, so coverage for Parquet code paths depends on optional extras being installed locally.【3c25ae†L39-L56】
 

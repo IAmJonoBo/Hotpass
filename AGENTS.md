@@ -49,13 +49,13 @@ Codex runners start with a lean `dev orchestration` profile. To add or remove ex
 
 1. Choose the extras your task needs (space-separated):
 
-   | Profile             | Extras string                                     | Notes                                          |
-   | ------------------- | ------------------------------------------------- | ---------------------------------------------- |
-   | `core` (default)    | `dev orchestration`                               | Installs CLI + Prefect orchestration support.  |
-   | `docs`              | `dev docs`                                        | Adds Sphinx + Diátaxis toolchain.              |
-   | `geospatial`        | `dev orchestration geospatial`                    | Adds GeoPandas/Geopy extras.                   |
-   | `compliance`        | `dev orchestration compliance`                    | Adds Presidio-based compliance stack.          |
-   | `full`              | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.       |
+   | Profile          | Extras string                                                   | Notes                                         |
+   | ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
+   | `core` (default) | `dev orchestration`                                             | Installs CLI + Prefect orchestration support. |
+   | `docs`           | `dev docs`                                                      | Adds Sphinx + Diátaxis toolchain.             |
+   | `geospatial`     | `dev orchestration geospatial`                                  | Adds GeoPandas/Geopy extras.                  |
+   | `compliance`     | `dev orchestration compliance`                                  | Adds Presidio-based compliance stack.         |
+   | `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.                |
 
 2. Export the selection before running `uv sync` (Codex setup script):
 
@@ -74,7 +74,6 @@ python -m pip install -e ".[dev,orchestration,geospatial]"
 ```
 
 For local development you can also run `make sync EXTRAS="dev orchestration"` (or another extras string). The make target wraps the same helper script so CLI, Codex agents, and CI stay aligned.
-
 
 ### 1.4 Agent run command (what Codex should execute)
 

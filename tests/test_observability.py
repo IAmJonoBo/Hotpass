@@ -8,6 +8,7 @@ import pytest
 
 pytest.importorskip("frictionless")
 
+import hotpass.observability as observability  # noqa: E402
 from hotpass.telemetry import pipeline_stage
 from hotpass.telemetry.registry import (
     TelemetryModules,
@@ -15,15 +16,13 @@ from hotpass.telemetry.registry import (
     TelemetryRegistry,
 )
 
-import hotpass.observability as observability  # noqa: E402
-
 from ._telemetry_stubs import (
     DummyConsoleMetricExporter,
     DummyConsoleSpanExporter,
-    DummyMetricReader,
-    DummyMetrics,
     DummyMeter,
     DummyMeterProvider,
+    DummyMetricReader,
+    DummyMetrics,
     DummyResource,
     DummySpanProcessor,
     DummyTracer,
@@ -124,8 +123,6 @@ def test_get_pipeline_metrics_lazy_when_uninitialised() -> None:
     assert isinstance(metrics, DummyMetrics)
 
 
-
-
 def test_record_automation_delivery_tracks_requests() -> None:
     observability.initialize_observability(service_name="svc")
     metrics = observability.get_pipeline_metrics()
@@ -154,6 +151,7 @@ def test_record_automation_delivery_tracks_requests() -> None:
     assert latency_calls[0][0] == 1.5
     assert latency_calls[0][1]["target"] == "crm"
 
+
 def test_shutdown_observability_invokes_lifecycle() -> None:
     observability.initialize_observability(service_name="svc")
     reader = DummyMetricReader.instances[0]
@@ -163,7 +161,9 @@ def test_shutdown_observability_invokes_lifecycle() -> None:
     assert reader.shutdown_called is True
 
 
-def test_noop_registry_when_modules_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_noop_registry_when_modules_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     modules = _modules(available=False)
     policy = TelemetryPolicy(allowed_exporters={"console"})
     registry = TelemetryRegistry(

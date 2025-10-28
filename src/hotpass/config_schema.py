@@ -220,7 +220,9 @@ class PipelineRuntimeConfig(BaseModel):
     """Input/output, reporting, and runtime options for the refinement pipeline."""
 
     input_dir: Path = Field(default_factory=lambda: Path.cwd() / "data")
-    output_path: Path = Field(default_factory=lambda: Path.cwd() / "dist" / "refined.xlsx")
+    output_path: Path = Field(
+        default_factory=lambda: Path.cwd() / "dist" / "refined.xlsx"
+    )
     dist_dir: Path = Field(default_factory=lambda: Path.cwd() / "dist")
     archive: bool = False
     expectation_suite: str = "default"
@@ -244,7 +246,9 @@ class PipelineRuntimeConfig(BaseModel):
     intent_webhooks: tuple[str, ...] = Field(default_factory=tuple)
     crm_endpoint: str | None = None
     crm_token: str | None = None
-    automation_http: AutomationHTTPSettings = Field(default_factory=AutomationHTTPSettings)
+    automation_http: AutomationHTTPSettings = Field(
+        default_factory=AutomationHTTPSettings
+    )
 
     @field_validator("sensitive_fields", mode="before")
     @classmethod
@@ -288,7 +292,9 @@ class PIIRedactionSettings(BaseModel):
     """Structured configuration for Presidio-based redaction."""
 
     enabled: bool = True
-    columns: tuple[str, ...] = Field(default_factory=lambda: PIIRedactionConfig().columns)
+    columns: tuple[str, ...] = Field(
+        default_factory=lambda: PIIRedactionConfig().columns
+    )
     language: str = "en"
     score_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
     operator: str = "redact"
@@ -379,7 +385,9 @@ class BackfillWindow(BaseModel):
 class BackfillSettings(BaseModel):
     """Backfill-specific orchestration configuration."""
 
-    archive_root: Path = Field(default_factory=lambda: Path.cwd() / "dist" / "input-archives")
+    archive_root: Path = Field(
+        default_factory=lambda: Path.cwd() / "dist" / "input-archives"
+    )
     restore_root: Path = Field(default_factory=lambda: Path.cwd() / "dist" / "backfill")
     archive_pattern: str = "hotpass-inputs-{date:%Y%m%d}-v{version}.zip"
     windows: tuple[BackfillWindow, ...] = Field(default_factory=tuple)
@@ -429,7 +437,9 @@ class HotpassConfig(BaseModel):
 
     @model_validator(mode="after")
     def _require_intent_for_sensitive_features(self) -> HotpassConfig:
-        if (self.features.compliance or self.compliance.detect_pii) and not self.governance.intent:
+        if (
+            self.features.compliance or self.compliance.detect_pii
+        ) and not self.governance.intent:
             msg = "Compliance features require at least one declared governance intent"
             raise ValueError(msg)
         return self
@@ -603,7 +613,9 @@ class HotpassConfig(BaseModel):
         enhanced.consent_required = self.compliance.consent_required
         enhanced.governance_intent = tuple(self.governance.intent)
         enhanced.governance_classification = self.governance.classification
-        enhanced.lawful_basis = self.compliance.lawful_basis or self.governance.lawful_basis
+        enhanced.lawful_basis = (
+            self.compliance.lawful_basis or self.governance.lawful_basis
+        )
         enhanced.telemetry_attributes = {
             "governance_classification": self.governance.classification.value,
             "data_owner": self.governance.data_owner,
@@ -619,7 +631,9 @@ class HotpassConfig(BaseModel):
         return HotpassConfig.model_validate(merged)
 
 
-def _deep_update(original: Mapping[str, Any], updates: Mapping[str, Any]) -> dict[str, Any]:
+def _deep_update(
+    original: Mapping[str, Any], updates: Mapping[str, Any]
+) -> dict[str, Any]:
     """Recursively merge dictionaries while preserving original values."""
 
     result: dict[str, Any] = dict(original)

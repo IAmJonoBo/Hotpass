@@ -16,7 +16,9 @@ def default_blocking_rules() -> list[str]:
     ]
 
 
-def review_payload_fields(default_fields: Iterable[str] | None = None) -> tuple[str, ...]:
+def review_payload_fields(
+    default_fields: Iterable[str] | None = None,
+) -> tuple[str, ...]:
     """Return fields that should accompany review tasks."""
 
     baseline = (

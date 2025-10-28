@@ -7,7 +7,9 @@ import argparse
 from hotpass import cli
 
 
-def _get_subcommands(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
+def _get_subcommands(
+    parser: argparse.ArgumentParser,
+) -> dict[str, argparse.ArgumentParser]:
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
             return action.choices  # type: ignore[return-value]
@@ -26,7 +28,9 @@ def test_build_parser_registers_expected_commands() -> None:
     parser = cli.build_parser()
     subcommands = _get_subcommands(parser)
 
-    assert {"run", "orchestrate", "resolve", "dashboard", "deploy"}.issubset(set(subcommands))
+    assert {"run", "orchestrate", "resolve", "dashboard", "deploy"}.issubset(
+        set(subcommands)
+    )
 
 
 def test_build_parser_sets_run_as_default_command() -> None:

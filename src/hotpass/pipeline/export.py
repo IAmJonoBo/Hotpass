@@ -86,7 +86,9 @@ def publish_outputs(
         validated_df.to_csv(config.output_path, index=False)
         _write_csvw_metadata(config.output_path)
     elif suffix == ".parquet":
-        pl.from_pandas(validated_df, include_index=False).write_parquet(config.output_path)
+        pl.from_pandas(validated_df, include_index=False).write_parquet(
+            config.output_path
+        )
     else:
         validated_df.to_excel(config.output_path, index=False)
 
@@ -102,7 +104,9 @@ def publish_outputs(
 
     daily_list_df: pd.DataFrame | None = None
     if config.daily_list_path is not None or config.daily_list_size:
-        digest_frame = intent_result.digest if intent_result is not None else pd.DataFrame()
+        digest_frame = (
+            intent_result.digest if intent_result is not None else pd.DataFrame()
+        )
         daily_list_df = build_daily_list(
             refined_df=validated_df,
             intent_digest=digest_frame,

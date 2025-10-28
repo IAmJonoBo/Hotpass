@@ -1,55 +1,55 @@
 # Label configuration aligned with Conventional Commits taxonomy.
 "type:feature":
   - head-branch:
-      - '^feat'
-      - '^feature'
+      - "^feat"
+      - "^feature"
   - changed-files:
-      - any-glob-to-any-file: 'src/**'
-      - any-glob-to-any-file: 'tests/**'
+      - any-glob-to-any-file: "src/**"
+      - any-glob-to-any-file: "tests/**"
 
 "type:fix":
   - head-branch:
-      - '^fix'
-      - '^hotfix'
+      - "^fix"
+      - "^hotfix"
   - changed-files:
-      - any-glob-to-any-file: 'src/**'
-      - any-glob-to-any-file: 'tests/**'
+      - any-glob-to-any-file: "src/**"
+      - any-glob-to-any-file: "tests/**"
 
 "type:docs":
   - head-branch:
-      - '^docs'
+      - "^docs"
   - changed-files:
-      - any-glob-to-any-file: 'docs/**'
-      - any-glob-to-any-file: 'README.md'
-      - any-glob-to-any-file: 'templates/**'
+      - any-glob-to-any-file: "docs/**"
+      - any-glob-to-any-file: "README.md"
+      - any-glob-to-any-file: "templates/**"
 
 "type:ci":
   - head-branch:
-      - '^ci'
+      - "^ci"
   - changed-files:
-      - any-glob-to-any-file: '.github/workflows/**'
-      - any-glob-to-any-file: 'scripts/**'
+      - any-glob-to-any-file: ".github/workflows/**"
+      - any-glob-to-any-file: "scripts/**"
 
 "type:chore":
   - head-branch:
-      - '^chore'
+      - "^chore"
   - changed-files:
-      - any-glob-to-any-file: '.github/**'
-      - any-glob-to-any-file: 'Makefile'
-      - any-glob-to-any-file: 'templates/**'
+      - any-glob-to-any-file: ".github/**"
+      - any-glob-to-any-file: "Makefile"
+      - any-glob-to-any-file: "templates/**"
 
 "scope:dependencies":
   - head-branch:
-      - '^deps'
-      - '^renovate'
+      - "^deps"
+      - "^renovate"
   - changed-files:
-      - any-glob-to-any-file: 'renovate.json'
-      - any-glob-to-any-file: 'uv.lock'
-      - any-glob-to-any-file: 'requirements*.txt'
-      - any-glob-to-any-file: 'pyproject.toml'
+      - any-glob-to-any-file: "renovate.json"
+      - any-glob-to-any-file: "uv.lock"
+      - any-glob-to-any-file: "requirements*.txt"
+      - any-glob-to-any-file: "pyproject.toml"
 
 "scope:governance":
   - changed-files:
-      - any-glob-to-any-file: 'docs/governance/**'
-      - any-glob-to-any-file: 'docs/adr/**'
-      - any-glob-to-any-file: 'Next_Steps.md'
+      - any-glob-to-any-file: "docs/governance/**"
+      - any-glob-to-any-file: "docs/adr/**"
+      - any-glob-to-any-file: "Next_Steps.md"

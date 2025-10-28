@@ -3,7 +3,7 @@
   "expectations": [
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": {"column": "Name of Organisation"}
+      "kwargs": { "column": "Name of Organisation" }
     },
     {
       "expectation_type": "expect_column_values_to_match_regex",
@@ -15,6 +15,8 @@
     }
   ],
   "meta": {
-    "notes": ["SACAA cleansed export must supply organisation name and mostly valid contact emails"]
+    "notes": [
+      "SACAA cleansed export must supply organisation name and mostly valid contact emails"
+    ]
   }
 }

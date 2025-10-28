@@ -22,22 +22,22 @@ checklist when verifying a deployment, refreshing evidence, or onboarding a new 
 
 ## Feature toggles and defaults
 
-| Toggle                            | Location                                   | Default | Notes |
-| --------------------------------- | ------------------------------------------ | ------- | ----- |
-| `pipeline.acquisition.enabled`    | `hotpass.toml` / `PipelineConfig`          | `false` | Enable to run agent-based acquisition before spreadsheet ingestion. |
-| `pipeline.intent.enabled`         | `hotpass.toml` / `PipelineConfig`          | `false` | Controls daily intent digests and SSOT enrichment columns. |
-| `features` bundle                 | [`default_feature_bundle`](../../src/hotpass/pipeline/base.py) | `entity_resolution, geospatial, enrichment, compliance` | Adjust with care; document deviations in `Next_Steps.md`. |
-| CLI progress JSON logging         | `--json-logs` flag (`src/hotpass/cli/commands/run.py`) | `false` | Emits structured `pipeline.*` and `intent.digest` events. |
-| Observability exporters           | [`observability.initialize_observability`](../../src/hotpass/observability.py) | `console` | Use environment variables or config to swap OTLP/OTLPg exporters. |
+| Toggle                         | Location                                                                       | Default                                                 | Notes                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------- |
+| `pipeline.acquisition.enabled` | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Enable to run agent-based acquisition before spreadsheet ingestion. |
+| `pipeline.intent.enabled`      | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Controls daily intent digests and SSOT enrichment columns.          |
+| `features` bundle              | [`default_feature_bundle`](../../src/hotpass/pipeline/base.py)                 | `entity_resolution, geospatial, enrichment, compliance` | Adjust with care; document deviations in `Next_Steps.md`.           |
+| CLI progress JSON logging      | `--json-logs` flag (`src/hotpass/cli/commands/run.py`)                         | `false`                                                 | Emits structured `pipeline.*` and `intent.digest` events.           |
+| Observability exporters        | [`observability.initialize_observability`](../../src/hotpass/observability.py) | `console`                                               | Use environment variables or config to swap OTLP/OTLPg exporters.   |
 
 ## Expectation suites
 
-| Dataset                        | Suite path                                         | Purpose |
-| ------------------------------ | -------------------------------------------------- | ------- |
-| Contact capture                | `data_expectations/contact/capture.json`           | Structural validation for ingestion CSV/Excel inputs. |
-| Contact organisation           | `data_expectations/contact/company_contacts.json`  | Ensures enriched contacts meet minimum field completeness. |
-| Reachout organisation          | `data_expectations/reachout/organisation.json`     | Governs outbound-ready datasets published to partners. |
-| SACAA cleaned registry         | `data_expectations/sacaa/cleaned.json`             | Validates registry cleanses before compliance export. |
+| Dataset                | Suite path                                        | Purpose                                                    |
+| ---------------------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| Contact capture        | `data_expectations/contact/capture.json`          | Structural validation for ingestion CSV/Excel inputs.      |
+| Contact organisation   | `data_expectations/contact/company_contacts.json` | Ensures enriched contacts meet minimum field completeness. |
+| Reachout organisation  | `data_expectations/reachout/organisation.json`    | Governs outbound-ready datasets published to partners.     |
+| SACAA cleaned registry | `data_expectations/sacaa/cleaned.json`            | Validates registry cleanses before compliance export.      |
 
 Update suites when schemas change and re-run `uv run pytest --cov=src --cov=tests --cov-report=term-missing`
 to capture expectation coverage in the quality report.

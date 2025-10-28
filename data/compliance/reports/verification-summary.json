@@ -5,27 +5,21 @@
     "POPIA": {
       "latest_run_at": "2025-10-26T07:51:10.654526+00:00",
       "due": false,
-      "reviewers": [
-        "Compliance Bot"
-      ],
+      "reviewers": ["Compliance Bot"],
       "findings": [],
       "notes": "Initial automation baseline"
     },
     "ISO 27001": {
       "latest_run_at": "2025-10-26T07:51:10.654526+00:00",
       "due": false,
-      "reviewers": [
-        "Compliance Bot"
-      ],
+      "reviewers": ["Compliance Bot"],
       "findings": [],
       "notes": "Initial automation baseline"
     },
     "SOC 2": {
       "latest_run_at": "2025-10-26T07:51:10.654526+00:00",
       "due": false,
-      "reviewers": [
-        "Compliance Bot"
-      ],
+      "reviewers": ["Compliance Bot"],
       "findings": [],
       "notes": "Initial automation baseline"
     }

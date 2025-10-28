@@ -3,26 +3,28 @@
   "expectations": [
     {
       "expectation_type": "expect_column_to_exist",
-      "kwargs": {"column": "Organisation Name"}
+      "kwargs": { "column": "Organisation Name" }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": {"column": "Organisation Name"}
+      "kwargs": { "column": "Organisation Name" }
     },
     {
       "expectation_type": "expect_column_to_exist",
-      "kwargs": {"column": "ID"}
+      "kwargs": { "column": "ID" }
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": {"column": "ID"}
+      "kwargs": { "column": "ID" }
     },
     {
       "expectation_type": "expect_column_to_exist",
-      "kwargs": {"column": "Type"}
+      "kwargs": { "column": "Type" }
     }
   ],
   "meta": {
-    "notes": ["Ensures Organisation sheet carries key identifiers and descriptors"]
+    "notes": [
+      "Ensures Organisation sheet carries key identifiers and descriptors"
+    ]
   }
 }

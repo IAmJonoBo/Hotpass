@@ -77,16 +77,16 @@ The doctor flags missing governance intent or data owners and injects safe defau
 
 ## Shared options
 
-| Option | Description |
-| --- | --- |
-| `--profile NAME` | Named profile (TOML/YAML) to apply before CLI flags. |
-| `--profile-search-path PATH` | Additional directory to search when resolving named profiles. Repeat the flag to merge multiple locations. |
-| `--config FILE` | TOML or JSON configuration file merged before CLI flags. Repeat to layer multiple files. |
-| `--log-format [rich \| json]` | Structured logging format. Rich enables interactive output and progress bars. |
-| `--sensitive-field FIELD` | Field name to mask in structured logs. Repeat for multiple masks. |
-| `--interactive` / `--no-interactive` | Control inline prompts when rich logging is enabled. |
-| `--qa-mode [default \| strict \| relaxed]` | Apply guardrail presets (strict enables additional validation; relaxed disables audit prompts). |
-| `--observability` / `--no-observability` | Toggle OpenTelemetry exporters regardless of profile defaults. |
+| Option                                     | Description                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `--profile NAME`                           | Named profile (TOML/YAML) to apply before CLI flags.                                                       |
+| `--profile-search-path PATH`               | Additional directory to search when resolving named profiles. Repeat the flag to merge multiple locations. |
+| `--config FILE`                            | TOML or JSON configuration file merged before CLI flags. Repeat to layer multiple files.                   |
+| `--log-format [rich \| json]`              | Structured logging format. Rich enables interactive output and progress bars.                              |
+| `--sensitive-field FIELD`                  | Field name to mask in structured logs. Repeat for multiple masks.                                          |
+| `--interactive` / `--no-interactive`       | Control inline prompts when rich logging is enabled.                                                       |
+| `--qa-mode [default \| strict \| relaxed]` | Apply guardrail presets (strict enables additional validation; relaxed disables audit prompts).            |
+| `--observability` / `--no-observability`   | Toggle OpenTelemetry exporters regardless of profile defaults.                                             |
 
 ## Subcommands
 
@@ -98,29 +98,29 @@ Validate, normalise, and publish the refined workbook.
 uv run hotpass run [OPTIONS]
 ```
 
-| Option | Description |
-| --- | --- |
-| `--input-dir PATH` | Directory containing raw spreadsheets (default: `./data`). |
-| `--output-path PATH` | Destination path for the refined workbook (default: `<input-dir>/refined_data.xlsx`). |
-| `--expectation-suite NAME` | Great Expectations suite to execute (default: `default`). |
-| `--country-code CODE` | ISO country code applied when normalising phone numbers (default: `ZA`). |
-| `--archive` / `--no-archive` | Enable or disable creation of a timestamped `.zip` archive. |
-| `--dist-dir PATH` | Directory used for archive output when `--archive` is enabled (default: `./dist`). |
-| `--report-path PATH` | Optional path for the quality report (Markdown or HTML). |
-| `--report-format [markdown \| html]` | Explicit report format override. When omitted the format is inferred from the path. |
-| `--party-store-path PATH` | Path to serialise the canonical Party/Role/Alias/Contact store. |
-| `--excel-chunk-size INTEGER` | Chunk size for streaming Excel reads; must be greater than zero when supplied. |
-| `--excel-engine TEXT` | Explicit pandas Excel engine (for example `openpyxl`). |
-| `--excel-stage-dir PATH` | Directory for staging chunked Excel reads to parquet for reuse. |
-| `--automation-http-timeout FLOAT` | Timeout in seconds for webhook and CRM deliveries. |
-| `--automation-http-retries INTEGER` | Maximum retry attempts for automation deliveries. |
-| `--automation-http-backoff FLOAT` | Exponential backoff factor applied between automation retries. |
-| `--automation-http-backoff-max FLOAT` | Upper bound for the backoff interval (seconds). |
-| `--automation-http-circuit-threshold INTEGER` | Consecutive failures that open the automation circuit breaker. |
-| `--automation-http-circuit-reset FLOAT` | Seconds to wait before half-opening the automation circuit. |
-| `--automation-http-idempotency-header TEXT` | Override the `Idempotency-Key` header when generating idempotency keys. |
-| `--automation-http-dead-letter PATH` | Append failed automation payloads to the given NDJSON file. |
-| `--automation-http-dead-letter-enabled` / `--no-automation-http-dead-letter` | Toggle dead-letter persistence for automation failures. |
+| Option                                                                       | Description                                                                           |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `--input-dir PATH`                                                           | Directory containing raw spreadsheets (default: `./data`).                            |
+| `--output-path PATH`                                                         | Destination path for the refined workbook (default: `<input-dir>/refined_data.xlsx`). |
+| `--expectation-suite NAME`                                                   | Great Expectations suite to execute (default: `default`).                             |
+| `--country-code CODE`                                                        | ISO country code applied when normalising phone numbers (default: `ZA`).              |
+| `--archive` / `--no-archive`                                                 | Enable or disable creation of a timestamped `.zip` archive.                           |
+| `--dist-dir PATH`                                                            | Directory used for archive output when `--archive` is enabled (default: `./dist`).    |
+| `--report-path PATH`                                                         | Optional path for the quality report (Markdown or HTML).                              |
+| `--report-format [markdown \| html]`                                         | Explicit report format override. When omitted the format is inferred from the path.   |
+| `--party-store-path PATH`                                                    | Path to serialise the canonical Party/Role/Alias/Contact store.                       |
+| `--excel-chunk-size INTEGER`                                                 | Chunk size for streaming Excel reads; must be greater than zero when supplied.        |
+| `--excel-engine TEXT`                                                        | Explicit pandas Excel engine (for example `openpyxl`).                                |
+| `--excel-stage-dir PATH`                                                     | Directory for staging chunked Excel reads to parquet for reuse.                       |
+| `--automation-http-timeout FLOAT`                                            | Timeout in seconds for webhook and CRM deliveries.                                    |
+| `--automation-http-retries INTEGER`                                          | Maximum retry attempts for automation deliveries.                                     |
+| `--automation-http-backoff FLOAT`                                            | Exponential backoff factor applied between automation retries.                        |
+| `--automation-http-backoff-max FLOAT`                                        | Upper bound for the backoff interval (seconds).                                       |
+| `--automation-http-circuit-threshold INTEGER`                                | Consecutive failures that open the automation circuit breaker.                        |
+| `--automation-http-circuit-reset FLOAT`                                      | Seconds to wait before half-opening the automation circuit.                           |
+| `--automation-http-idempotency-header TEXT`                                  | Override the `Idempotency-Key` header when generating idempotency keys.               |
+| `--automation-http-dead-letter PATH`                                         | Append failed automation payloads to the given NDJSON file.                           |
+| `--automation-http-dead-letter-enabled` / `--no-automation-http-dead-letter` | Toggle dead-letter persistence for automation failures.                               |
 
 ### `orchestrate`
 
@@ -130,22 +130,22 @@ Execute the pipeline under Prefect with optional enhanced features.
 uv run hotpass orchestrate [OPTIONS]
 ```
 
-| Option | Description |
-| --- | --- |
-| `--industry-profile NAME` | Prefect profile used when loading orchestrator presets (default: `aviation`). |
-| `--enable-all` | Enable all enhanced features in one flag. |
-| `--enable-entity-resolution` / `--disable-entity-resolution` | Control probabilistic entity resolution. |
-| `--enable-geospatial` / `--disable-geospatial` | Control geospatial enrichment (geocoding). |
-| `--enable-enrichment` / `--disable-enrichment` | Control web enrichment workflows. |
-| `--enable-compliance` / `--disable-compliance` | Control compliance tracking and PII detection. |
-| `--enable-observability` / `--disable-observability` | Control observability exporters during orchestrated runs. |
-| `--linkage-match-threshold FLOAT` | Probability considered an automatic match (default: `0.9`). |
-| `--linkage-review-threshold FLOAT` | Probability routed to human review (default: `0.7`). |
-| `--linkage-output-dir PATH` | Directory to persist linkage artefacts. |
-| `--linkage-use-splink` | Force Splink for probabilistic linkage even when profiles disable it. |
-| `--label-studio-url URL` | Label Studio base URL for review queues. |
-| `--label-studio-token TOKEN` | Label Studio API token. |
-| `--label-studio-project INTEGER` | Label Studio project identifier. |
+| Option                                                       | Description                                                                   |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `--industry-profile NAME`                                    | Prefect profile used when loading orchestrator presets (default: `aviation`). |
+| `--enable-all`                                               | Enable all enhanced features in one flag.                                     |
+| `--enable-entity-resolution` / `--disable-entity-resolution` | Control probabilistic entity resolution.                                      |
+| `--enable-geospatial` / `--disable-geospatial`               | Control geospatial enrichment (geocoding).                                    |
+| `--enable-enrichment` / `--disable-enrichment`               | Control web enrichment workflows.                                             |
+| `--enable-compliance` / `--disable-compliance`               | Control compliance tracking and PII detection.                                |
+| `--enable-observability` / `--disable-observability`         | Control observability exporters during orchestrated runs.                     |
+| `--linkage-match-threshold FLOAT`                            | Probability considered an automatic match (default: `0.9`).                   |
+| `--linkage-review-threshold FLOAT`                           | Probability routed to human review (default: `0.7`).                          |
+| `--linkage-output-dir PATH`                                  | Directory to persist linkage artefacts.                                       |
+| `--linkage-use-splink`                                       | Force Splink for probabilistic linkage even when profiles disable it.         |
+| `--label-studio-url URL`                                     | Label Studio base URL for review queues.                                      |
+| `--label-studio-token TOKEN`                                 | Label Studio API token.                                                       |
+| `--label-studio-project INTEGER`                             | Label Studio project identifier.                                              |
 
 Profiles enabling enrichment or compliance must declare intent statements (`intent = [...]`) to
 enforce guardrails such as consent capture and audit logging.
@@ -158,17 +158,17 @@ Deduplicate existing datasets using rule-based or probabilistic linkage.
 uv run hotpass resolve --input-file data/raw.xlsx --output-file data/deduplicated.xlsx
 ```
 
-| Option | Description |
-| --- | --- |
-| `--input-file PATH` | Source CSV or Excel file with potential duplicates. |
-| `--output-file PATH` | Destination path for deduplicated results. |
-| `--threshold FLOAT` | Baseline match probability threshold (default: `0.75`). |
+| Option                             | Description                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `--input-file PATH`                | Source CSV or Excel file with potential duplicates.                                              |
+| `--output-file PATH`               | Destination path for deduplicated results.                                                       |
+| `--threshold FLOAT`                | Baseline match probability threshold (default: `0.75`).                                          |
 | `--use-splink` / `--no-use-splink` | Toggle Splink for probabilistic matching. Profiles enabling entity resolution default to `True`. |
-| `--match-threshold FLOAT` | Threshold treated as an automatic match (default: `0.9`). |
-| `--review-threshold FLOAT` | Threshold that routes pairs to human review (default: `0.7`). |
-| `--label-studio-url URL` | Label Studio base URL for review queues. |
-| `--label-studio-token TOKEN` | Label Studio API token. |
-| `--label-studio-project INTEGER` | Label Studio project identifier. |
+| `--match-threshold FLOAT`          | Threshold treated as an automatic match (default: `0.9`).                                        |
+| `--review-threshold FLOAT`         | Threshold that routes pairs to human review (default: `0.7`).                                    |
+| `--label-studio-url URL`           | Label Studio base URL for review queues.                                                         |
+| `--label-studio-token TOKEN`       | Label Studio API token.                                                                          |
+| `--label-studio-project INTEGER`   | Label Studio project identifier.                                                                 |
 
 ### `deploy`
 
@@ -178,11 +178,11 @@ Create or update Prefect deployments for the refinement pipeline.
 uv run hotpass deploy --name hotpass-refinement --schedule "0 2 * * *"
 ```
 
-| Option | Description |
-| --- | --- |
-| `--name TEXT` | Prefect deployment name (default: `hotpass-refinement`). |
-| `--schedule CRON` | Optional cron schedule (`"0 2 * * *"` for daily at 02:00). |
-| `--work-pool TEXT` | Prefect work pool name. |
+| Option             | Description                                                |
+| ------------------ | ---------------------------------------------------------- |
+| `--name TEXT`      | Prefect deployment name (default: `hotpass-refinement`).   |
+| `--schedule CRON`  | Optional cron schedule (`"0 2 * * *"` for daily at 02:00). |
+| `--work-pool TEXT` | Prefect work pool name.                                    |
 
 ### `dashboard`
 
@@ -193,35 +193,35 @@ subcommand.
 uv run hotpass dashboard --host localhost --port 8501
 ```
 
-| Option | Description |
-| --- | --- |
-| `--host HOST` | Bind address for the dashboard server (default: `localhost`). |
-| `--port INTEGER` | Port for the Streamlit dashboard (default: `8501`). |
+| Option           | Description                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| `--host HOST`    | Bind address for the dashboard server (default: `localhost`). |
+| `--port INTEGER` | Port for the Streamlit dashboard (default: `8501`).           |
 
 ### Automation delivery environment variables
 
 The CLI and Prefect flows read the following environment variables when CLI flags are not
 provided. All values are optional.
 
-| Variable | Purpose |
-| --- | --- |
-| `HOTPASS_AUTOMATION_HTTP_TIMEOUT` | Override the automation timeout (seconds). |
-| `HOTPASS_AUTOMATION_HTTP_RETRIES` | Override the retry count. |
-| `HOTPASS_AUTOMATION_HTTP_BACKOFF` | Override the backoff factor. |
-| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX` | Override the maximum backoff interval (seconds). |
-| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD` | Override the failure threshold before the circuit opens. |
-| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET` | Override the circuit recovery window (seconds). |
-| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER` | Override the idempotency header name. |
-| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER` | Write failed deliveries to the specified NDJSON file. |
+| Variable                                      | Purpose                                                     |
+| --------------------------------------------- | ----------------------------------------------------------- |
+| `HOTPASS_AUTOMATION_HTTP_TIMEOUT`             | Override the automation timeout (seconds).                  |
+| `HOTPASS_AUTOMATION_HTTP_RETRIES`             | Override the retry count.                                   |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF`             | Override the backoff factor.                                |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX`         | Override the maximum backoff interval (seconds).            |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD`   | Override the failure threshold before the circuit opens.    |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET`       | Override the circuit recovery window (seconds).             |
+| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER`  | Override the idempotency header name.                       |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER`         | Write failed deliveries to the specified NDJSON file.       |
 | `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED` | Enable or disable dead-letter persistence (`true`/`false`). |
 
 ## Exit codes
 
-| Code | Meaning |
-| --- | --- |
-| `0` | Success. |
-| `1` | Unrecoverable failure (for example missing input files, orchestration failure). |
-| `2` | Validation failure when loading profiles or configuration. |
+| Code | Meaning                                                                         |
+| ---- | ------------------------------------------------------------------------------- |
+| `0`  | Success.                                                                        |
+| `1`  | Unrecoverable failure (for example missing input files, orchestration failure). |
+| `2`  | Validation failure when loading profiles or configuration.                      |
 
 ## See also
 

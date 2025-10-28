@@ -28,7 +28,9 @@ def reset_observability(monkeypatch):
 
     import hotpass.observability as observability
 
-    monkeypatch.setattr(observability, "_instrumentation_initialized", False, raising=False)
+    monkeypatch.setattr(
+        observability, "_instrumentation_initialized", False, raising=False
+    )
     monkeypatch.setattr(observability, "_pipeline_metrics", None, raising=False)
 
 
@@ -86,7 +88,10 @@ def test_initialize_observability_disabled_returns_none(monkeypatch):
 def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
     config = EnhancedPipelineConfig(
         enable_observability=True,
-        telemetry_attributes={"deployment.environment": "qa", "hotpass.profile": "aviation"},
+        telemetry_attributes={
+            "deployment.environment": "qa",
+            "hotpass.profile": "aviation",
+        },
     )
     metrics_mock = Mock()
     captured_kwargs: dict[str, object] | None = None
@@ -103,14 +108,21 @@ def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
         "service_name": "hotpass",
         "environment": "qa",
         "exporters": ("console",),
-        "resource_attributes": {"deployment.environment": "qa", "hotpass.profile": "aviation"},
+        "resource_attributes": {
+            "deployment.environment": "qa",
+            "hotpass.profile": "aviation",
+        },
     }
 
 
-def test_run_enhanced_pipeline_uses_orchestrator(monkeypatch, base_pipeline_config, sample_result):
+def test_run_enhanced_pipeline_uses_orchestrator(
+    monkeypatch, base_pipeline_config, sample_result
+):
     orchestrator_mock = Mock(spec=PipelineOrchestrator)
     orchestrator_mock.run.return_value = sample_result
-    monkeypatch.setattr(pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock)
+    monkeypatch.setattr(
+        pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock
+    )
     monkeypatch.setattr(pipeline_enhanced, "_initialize_observability", lambda *_: None)
 
     enhanced_config = EnhancedPipelineConfig(enable_entity_resolution=True)
@@ -125,10 +137,14 @@ def test_run_enhanced_pipeline_uses_orchestrator(monkeypatch, base_pipeline_conf
     assert execution_config.features == default_feature_bundle()
 
 
-def test_run_enhanced_pipeline_sets_default_linkage_dir(monkeypatch, tmp_path, sample_result):
+def test_run_enhanced_pipeline_sets_default_linkage_dir(
+    monkeypatch, tmp_path, sample_result
+):
     orchestrator_mock = Mock(spec=PipelineOrchestrator)
     orchestrator_mock.run.return_value = sample_result
-    monkeypatch.setattr(pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock)
+    monkeypatch.setattr(
+        pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock
+    )
     monkeypatch.setattr(pipeline_enhanced, "_initialize_observability", lambda *_: None)
 
     config = PipelineConfig(
@@ -146,11 +162,15 @@ def test_run_enhanced_pipeline_sets_default_linkage_dir(monkeypatch, tmp_path, s
     )
 
 
-def test_run_enhanced_pipeline_initializes_observability(monkeypatch, base_pipeline_config):
+def test_run_enhanced_pipeline_initializes_observability(
+    monkeypatch, base_pipeline_config
+):
     metrics_mock = Mock()
     orchestrator_mock = Mock(spec=PipelineOrchestrator)
     orchestrator_mock.run.return_value = Mock(spec=PipelineResult)
-    monkeypatch.setattr(pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock)
+    monkeypatch.setattr(
+        pipeline_enhanced, "PipelineOrchestrator", lambda: orchestrator_mock
+    )
     monkeypatch.setattr(
         pipeline_enhanced,
         "_initialize_observability",

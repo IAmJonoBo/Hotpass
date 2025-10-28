@@ -41,7 +41,9 @@ class ComplianceFeature(PipelineFeatureStrategy):
             policy = POPIAPolicy()
             try:
                 if config.audit_log_enabled:
-                    result.refined = add_provenance_columns(df, source_name="hotpass_pipeline")
+                    result.refined = add_provenance_columns(
+                        df, source_name="hotpass_pipeline"
+                    )
                 else:
                     result.refined = df
 
