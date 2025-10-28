@@ -9,6 +9,13 @@ import pytest
 from hotpass import lineage
 
 
+def expect(condition: bool, message: str) -> None:
+    """Fail the test with a descriptive message when condition is false."""
+
+    if not condition:
+        pytest.fail(message)
+
+
 class _StubDataset:
     def __init__(self, *, namespace: str, name: str, facets: Mapping[str, object]) -> None:
         self.namespace = namespace
@@ -75,8 +82,11 @@ def test_create_emitter_returns_null_when_openlineage_unavailable(
 
     emitter = lineage.create_emitter("noop-job")
 
-    assert isinstance(emitter, lineage.NullLineageEmitter)
-    assert emitter.is_enabled is False
+    expect(
+        isinstance(emitter, lineage.NullLineageEmitter),
+        "Expected NullLineageEmitter when OpenLineage is unavailable.",
+    )
+    expect(emitter.is_enabled is False, "Emitter should be disabled without OpenLineage.")
 
 
 def test_lineage_emitter_emits_events_with_stubbed_client(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -92,18 +102,36 @@ def test_lineage_emitter_emits_events_with_stubbed_client(monkeypatch: pytest.Mo
 
     emitter = lineage.create_emitter("active-job", run_id="run-123")
 
-    assert emitter.is_enabled is True
+    expect(emitter.is_enabled is True, "Emitter should be enabled with a configured client.")
 
     emitter.emit_start(inputs=["input-a"])
     emitter.emit_complete(outputs=["output-b"])
 
-    assert len(_StubClient.emitted) == 2
-    assert _StubClient.emitted[0].eventType == _StubRunState.START
-    assert _StubClient.emitted[1].eventType == _StubRunState.COMPLETE
-    assert _StubClient.emitted[0].inputs[0].name.endswith("input-a")
-    assert _StubClient.emitted[1].outputs[0].name.endswith("output-b")
+    expect(len(_StubClient.emitted) == 2, "Expected start and complete events to emit.")
+    expect(
+        _StubClient.emitted[0].eventType == _StubRunState.START,
+        "First event should signal a START state.",
+    )
+    expect(
+        _StubClient.emitted[1].eventType == _StubRunState.COMPLETE,
+        "Second event should signal a COMPLETE state.",
+    )
+    expect(
+        _StubClient.emitted[0].inputs[0].name.endswith("input-a"),
+        "Input dataset name should include the provided alias.",
+    )
+    expect(
+        _StubClient.emitted[1].outputs[0].name.endswith("output-b"),
+        "Output dataset name should include the provided alias.",
+    )
 
     emitter.emit_fail("boom", outputs=["output-c"])
-    assert len(_StubClient.emitted) == 3
-    assert _StubClient.emitted[-1].eventType == _StubRunState.FAIL
-    assert _StubClient.emitted[-1].outputs[0].name.endswith("output-c")
+    expect(len(_StubClient.emitted) == 3, "Expected failure event to append to the log.")
+    expect(
+        _StubClient.emitted[-1].eventType == _StubRunState.FAIL,
+        "Final event should signal a FAIL state.",
+    )
+    expect(
+        _StubClient.emitted[-1].outputs[0].name.endswith("output-c"),
+        "Failure event output dataset should match the provided alias.",
+    )

@@ -150,7 +150,13 @@ If this is blocked, expand the allowlist or allowed methods and retry.
 
 ---
 
-## 6) Local use with Codex CLI (optional)
+## 6) Test authoring guardrail
+
+- When generating or modifying pytest suites, avoid bare `assert` statements. Use the shared `expect(..., message)` helper pattern documented in `docs/how-to-guides/assert-free-pytest.md` so Bandit rule **B101** stays green without waivers.
+
+---
+
+## 7) Local use with Codex CLI (optional)
 
 If running locally, enable network in the `workspace-write` sandbox and reuse the commands above.
 Example `~/.codex/config.toml` snippet:

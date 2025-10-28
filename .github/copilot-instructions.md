@@ -21,6 +21,7 @@
 - Typical refinement run: `uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive`. CLI options resolve through `_resolve_options` and are mirrored in `contracts/hotpass-cli-contract.yaml`.
 - When adding pipeline features, update the matching pytest suites: `tests/test_pipeline*.py`, `tests/test_cli*.py`, `tests/test_pipeline_enhanced.py`, plus extras-specific suites (`test_compliance*.py`, `test_geospatial.py`, `test_enrichment.py`).
 - Local QA mirrors `.github/workflows/process-data.yml`: run `uv run pytest`, `uv run ruff check`, `uv run mypy src scripts`, and `uv run python scripts/quality/fitness_functions.py` (guards LOC and observability imports). Add `uv run bandit -r src scripts` and `uv run detect-secrets scan src tests scripts` when touching security-sensitive paths.
+- Pytest files must avoid bare `assert`; reuse the shared `expect(..., message)` helper (see `docs/how-to-guides/assert-free-pytest.md`) so Bandit rule **B101** stays green without waivers.
 - Documentation is generated with `uv run sphinx-build docs docs/_build`; keep `docs/architecture/fitness-functions.md` and relevant how-to guides in sync with behavioural or threshold changes.
 
 ## Conventions & Invariants

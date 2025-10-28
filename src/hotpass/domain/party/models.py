@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from enum import Enum
+from typing import cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,9 +14,11 @@ from pydantic import BaseModel, ConfigDict, Field
 def generate_uuid7() -> uuid.UUID:
     """Generate a sortable UUID using the UUIDv7 algorithm."""
 
-    generator = getattr(uuid, "uuid7", None)
-    if callable(generator):
-        return generator()
+    if hasattr(uuid, "uuid7"):
+        maybe_generator = getattr(uuid, "uuid7", None)  # noqa: B009
+        if callable(maybe_generator):
+            generator = cast(Callable[[], uuid.UUID], maybe_generator)
+            return generator()
     # uuid7 is available in Python 3.13 used by the project, but this guard keeps the
     # helper resilient when executed from earlier interpreters.
     return uuid.UUID(int=uuid.uuid1().int)

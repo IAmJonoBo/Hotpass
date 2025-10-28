@@ -4,8 +4,6 @@ summary: Workflow and expectations for updating the Hotpass documentation set.
 last_updated: 2025-12-01
 ---
 
-# Contributing to the documentation
-
 Thank you for improving Hotpass docs. Follow this lightweight workflow to keep contributions consistent.
 
 > 💡 Working on application code instead? Run `make qa` from the repository root to execute Ruff lint/format, pytest with coverage, mypy (strict for pipeline configuration and QA tooling), Bandit, detect-secrets, and pre-commit hooks before submitting your pull request.
@@ -22,6 +20,7 @@ uv run pre-commit install
 - Use the Diátaxis structure: tutorials, how-to guides, reference, explanations.
 - Update or create pages under `docs/` with YAML front matter (`title`, `summary`, `last_updated`).
 - Keep README changes minimal—link out to full documentation when possible.
+- When touching pytest suites, follow the [assert-free pattern](./how-to-guides/assert-free-pytest.md) (`expect(..., message)`) so Bandit stays green without waivers.
 - Apply the Conventional Commit label taxonomy when opening PRs: automation attaches `type:*` (feature/fix/docs/ci/chore) and `scope:*` (dependencies/governance) labels plus `prefect`/`uv` for orchestrator extras. Double-check the labeler output so Release Drafter summarises your work accurately.
 
 ## 3. Run quality checks

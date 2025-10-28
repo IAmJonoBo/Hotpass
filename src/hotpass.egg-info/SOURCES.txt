@@ -152,6 +152,7 @@ tests/test_error_handling.py
 tests/test_evidence.py
 tests/test_formatting.py
 tests/test_geospatial.py
+tests/test_lineage.py
 tests/test_linkage.py
 tests/test_observability.py
 tests/test_orchestration.py

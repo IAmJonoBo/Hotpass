@@ -7,6 +7,7 @@
 ## Testing
 
 - [ ] `uv run pytest --cov=src --cov=tests`
+- [ ] Tests avoid bare `assert` (use `expect(..., message)` per `docs/how-to-guides/assert-free-pytest.md`)
 - [ ] `uv run ruff check`
 - [ ] `uv run ruff format --check`
 - [ ] `uv run mypy src tests scripts`
