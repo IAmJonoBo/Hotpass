@@ -8,12 +8,14 @@ This module provides functionality for:
 """
 
 import asyncio
+import json
 import logging
+import os
 import sqlite3
 import warnings
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +27,7 @@ try:
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
+    requests = None  # type: ignore[assignment]
 
 try:
     import trafilatura
@@ -33,7 +36,68 @@ try:
 except ImportError:
     TRAFILATURA_AVAILABLE = False
 
+from .registries import (
+    RegistryConfigurationError,
+    RegistryError,
+    RegistryRateLimitError,
+    RegistryResponse,
+    RegistryTransportError,
+    get_registry_adapter,
+)
+
 logger = logging.getLogger(__name__)
+
+
+class RegistryLookupError(RuntimeError):
+    """Raised when registry enrichment fails due to configuration or transport errors."""
+
+
+def _load_registry_options(
+    registry: str, overrides: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    """Merge environment configuration with optional overrides."""
+
+    prefix = f"HOTPASS_{registry.upper()}_"
+    config: dict[str, Any] = {}
+
+    base_url = os.getenv(f"{prefix}BASE_URL")
+    if base_url:
+        config["base_url"] = base_url
+
+    api_key = os.getenv(f"{prefix}API_KEY")
+    if api_key:
+        config["api_key"] = api_key
+
+    api_key_header = os.getenv(f"{prefix}API_KEY_HEADER")
+    if api_key_header:
+        config["api_key_header"] = api_key_header
+
+    throttle = os.getenv(f"{prefix}THROTTLE_SECONDS")
+    if throttle:
+        try:
+            config["throttle_seconds"] = float(throttle)
+        except ValueError:
+            logger.warning("Invalid %sTHROTTLE_SECONDS value: %s", prefix, throttle)
+
+    timeout = os.getenv(f"{prefix}TIMEOUT_SECONDS")
+    if timeout:
+        try:
+            config["timeout"] = float(timeout)
+        except ValueError:
+            logger.warning("Invalid %sTIMEOUT_SECONDS value: %s", prefix, timeout)
+
+    search_param = os.getenv(f"{prefix}SEARCH_PARAM")
+    if search_param:
+        config["search_param"] = search_param
+
+    query_param = os.getenv(f"{prefix}QUERY_PARAM")
+    if query_param:
+        config["query_param"] = query_param
+
+    if overrides:
+        config.update({k: v for k, v in overrides.items() if v not in (None, "")})
+
+    return config
 
 
 def _initialise_website_enrichment(df: pd.DataFrame, website_column: str) -> pd.DataFrame | None:
@@ -238,8 +302,6 @@ def extract_website_content(url: str, cache: CacheManager | None = None) -> dict
         cached = cache.get(cache_key)
         if cached:
             logger.debug(f"Cache hit for {url}")
-            import json
-
             return json.loads(cached)
 
     try:
@@ -270,8 +332,6 @@ def extract_website_content(url: str, cache: CacheManager | None = None) -> dict
 
         # Store in cache
         if cache:
-            import json
-
             cache.set(cache_key, json.dumps(result))
 
         return result
@@ -290,54 +350,55 @@ def enrich_from_registry(
     org_name: str,
     registry_type: str = "cipc",
     cache: CacheManager | None = None,
+    *,
+    session: requests.Session | None = None,
+    config: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Fetch organization data from external registries.
+    """Fetch organization data from external registries."""
 
-    This is a stub implementation that provides the extensibility framework
-    for integrating with CIPC, SACAA, and other registries.
+    if not REQUESTS_AVAILABLE:
+        raise RegistryLookupError("The 'requests' dependency is required for registry lookups")
 
-    Args:
-        org_name: Organization name to look up
-        registry_type: Type of registry (cipc, sacaa, etc.)
-        cache: Optional cache manager
-
-    Returns:
-        Dictionary with registry data or error information
-    """
     cache_key = f"registry:{registry_type}:{org_name}"
-
-    # Check cache
     if cache:
         cached = cache.get(cache_key)
         if cached:
-            logger.debug(f"Cache hit for registry lookup: {org_name}")
-            import json
-
+            logger.debug("Cache hit for registry lookup: %s", org_name)
             return json.loads(cached)
 
-    logger.info(f"Looking up {org_name} in {registry_type} registry")
+    logger.info("Looking up %s in %s registry", org_name, registry_type)
 
-    # This is a stub that returns a framework for integration
-    result: dict[str, Any] = {
-        "org_name": org_name,
-        "registry_type": registry_type,
-        "status": "not_implemented",
-        "message": f"{registry_type.upper()} integration is a stub. "
-        f"Extend this function to integrate with actual registry API.",
-        "looked_up_at": datetime.now().isoformat(),
-        # Placeholder fields for actual registry data
-        "registration_number": None,
-        "registered_address": None,
-        "registration_date": None,
-        "status_code": None,
-        "directors": [],
-        "contact_info": {},
-    }
+    options = _load_registry_options(registry_type, config)
+    if session is not None:
+        options["session"] = session
 
-    # Cache the result
+    try:
+        adapter = get_registry_adapter(registry_type, **options)
+    except RegistryConfigurationError as exc:  # pragma: no cover - defensive
+        raise RegistryLookupError(str(exc)) from exc
+
+    try:
+        response: RegistryResponse = adapter.lookup(org_name)
+    except RegistryRateLimitError as exc:
+        raise RegistryLookupError(f"{registry_type} rate limit exceeded: {exc}") from exc
+    except RegistryTransportError as exc:
+        raise RegistryLookupError(str(exc)) from exc
+    except RegistryError as exc:
+        raise RegistryLookupError(str(exc)) from exc
+
+    result = response.to_dict()
+    meta = result.setdefault("meta", {})
+    meta.setdefault("looked_up_at", datetime.now(UTC).isoformat())
+    result.setdefault("registry_type", result.get("registry"))
+    result.setdefault("org_name", result.get("organization"))
+    payload = result.get("payload") or {}
+    if isinstance(payload, Mapping):
+        if "status" in payload:
+            result.setdefault("status", payload.get("status"))
+        if "registration_number" in payload:
+            result.setdefault("registration_number", payload.get("registration_number"))
+
     if cache:
-        import json
-
         cache.set(cache_key, json.dumps(result))
 
     return result
@@ -495,11 +556,13 @@ def enrich_dataframe_with_registries(
             continue
 
         registry_data = enrich_from_registry(org_name, registry_type, cache=cache)
+        payload_obj = registry_data.get("payload")
+        payload = payload_obj if isinstance(payload_obj, Mapping) else {}
 
-        enriched_df.at[idx, "registry_type"] = registry_type
-        enriched_df.at[idx, "registry_status"] = registry_data.get("status")
-        enriched_df.at[idx, "registry_number"] = registry_data.get("registration_number")
-        enriched_df.at[idx, "registry_enriched"] = registry_data.get("status") != "not_implemented"
+        enriched_df.at[idx, "registry_type"] = registry_data.get("registry", registry_type)
+        enriched_df.at[idx, "registry_status"] = payload.get("status")
+        enriched_df.at[idx, "registry_number"] = payload.get("registration_number")
+        enriched_df.at[idx, "registry_enriched"] = bool(registry_data.get("success") and payload)
 
     enriched_count = enriched_df["registry_enriched"].sum()
     logger.info(

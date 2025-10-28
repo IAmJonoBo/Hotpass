@@ -21,7 +21,6 @@ from hotpass.enrichment import (
     enrich_dataframe_with_registries,
     enrich_dataframe_with_websites,
     enrich_dataframe_with_websites_concurrent,
-    enrich_from_registry,
     extract_website_content,
 )
 from hotpass.enrichment.intent import (
@@ -197,33 +196,6 @@ def test_extract_website_content_caching(temp_cache):
         assert mock_requests.get.call_count == 1
 
 
-def test_enrich_from_registry_stub(temp_cache):
-    """Test registry enrichment stub."""
-    result = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
-
-    assert result["org_name"] == "Test Company"
-    assert result["registry_type"] == "cipc"
-    assert result["status"] == "not_implemented"
-    assert "registration_number" in result
-
-
-def test_enrich_from_registry_caching(temp_cache):
-    """Test that registry lookups are cached."""
-    # First call
-    result1 = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
-
-    # Second call should use cache
-    result2 = enrich_from_registry("Test Company", registry_type="cipc", cache=temp_cache)
-
-    # Both should return same data
-    assert result1 == result2
-
-    # Check cache stats
-    stats = temp_cache.stats()
-    assert stats["total_entries"] == 1
-    assert stats["total_hits"] == 1
-
-
 @patch("hotpass.enrichment.extract_website_content")
 def test_enrich_dataframe_with_websites(mock_extract, temp_cache):
     """Test enriching dataframe with website content."""
@@ -363,12 +335,14 @@ def test_enrich_dataframe_with_registries(mock_enrich_registry, temp_cache):
     # Mock registry responses
     mock_enrich_registry.side_effect = [
         {
-            "status": "found",
-            "registration_number": "REG123",
+            "success": True,
+            "registry": "cipc",
+            "payload": {"status": "found", "registration_number": "REG123"},
         },
         {
-            "status": "not_found",
-            "registration_number": None,
+            "success": False,
+            "registry": "cipc",
+            "payload": {"status": "not_found", "registration_number": None},
         },
     ]
 
@@ -395,7 +369,8 @@ def test_enrich_dataframe_with_registries_missing_column(mock_enrich_registry):
     assert "registry_type" not in result_df.columns
 
 
-def test_enrich_dataframe_with_registries_null_names(temp_cache):
+@patch("hotpass.enrichment.enrich_from_registry")
+def test_enrich_dataframe_with_registries_null_names(mock_enrich_registry, temp_cache):
     """Test registry enrichment with null organization names."""
     df = pd.DataFrame(
         {
@@ -403,10 +378,17 @@ def test_enrich_dataframe_with_registries_null_names(temp_cache):
         }
     )
 
+    mock_enrich_registry.return_value = {
+        "success": True,
+        "registry": "cipc",
+        "payload": {"status": "active", "registration_number": "REG456"},
+    }
+
     result_df = enrich_dataframe_with_registries(df, cache=temp_cache)
 
-    # Only one should be queried
-    assert result_df["registry_enriched"].sum() == 0  # Stub returns not_implemented
+    # Only one organisation should result in a lookup
+    mock_enrich_registry.assert_called_once_with("Company A", "cipc", cache=temp_cache)
+    assert result_df["registry_enriched"].sum() == 1
 
 
 @pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
