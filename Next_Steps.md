@@ -72,6 +72,8 @@
 - [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
 - [x] Deliver lead scoring validation metrics persistence and documentation guidance (Owner: Engineering & Docs, Due: 2025-12-05)
 - [ ] Add regression coverage for modular pipeline stages (Owner: QA & Engineering, Due: 2025-12-13)
+- [ ] Seed Conventional Commit label set (`type:*`, `scope:*`, `prefect`, `uv`, `skip-changelog`) in GitHub repo settings (Owner: Platform, Due: 2025-12-05)
+- [ ] Monitor commitlint/labeler/release-drafter workflow runs post-merge and capture findings in governance docs (Owner: Platform, Due: 2025-12-12)
 
 ## Steps
 
@@ -145,6 +147,7 @@
 
 ## Deliverables
 
+- [ ] Governance automation in place: commitlint, PR labeler, Release Drafter template, Renovate uv/Prefect grouping, docs + ADR (Owner: Platform, Due: 2025-12-05)
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
 - [x] Documented uv.core.build migration and QA entrypoint (`make qa`)【F:README.md†L36-L47】【F:docs/adr/0001-qa-tooling.md†L1-L40】
 - [x] Registry adapters for CIPC/SACAA with caching, structured responses, fixtures, documentation, and policy updates landed【F:src/hotpass/enrichment/registries/base.py†L1-L208】【F:src/hotpass/enrichment/registries/cipc.py†L19-L140】【F:src/hotpass/enrichment/registries/sacaa.py†L19-L133】【F:tests/enrichment/test_registries.py†L1-L175】【F:docs/how-to-guides/configure-pipeline.md†L184-L225】【F:policy/acquisition/providers.json†L24-L36】
@@ -198,6 +201,7 @@
 - [x] Brought acquisition guardrail and ScanCode compliance tooling back within lint/type style expectations (2025-10-26)【F:scripts/acquisition/guardrails.py†L1-L134】【F:scripts/compliance/check_scancode.py†L1-L120】【F:tests/test_acquisition_guardrails.py†L1-L120】
 - [x] Added MCP server/client configs, Prefect agent gating helpers, regression tests, and operator documentation (2025-10-26)【F:scripts/agents/mcp_server.yaml†L1-L38】【F:scripts/agents/mcp_client.yaml†L1-L24】【F:src/hotpass/orchestration.py†L58-L401】【F:tests/test_agentic_orchestration.py†L1-L119】【F:docs/how-to-guides/agentic-orchestration.md†L1-L76】
 - [x] Implemented acquisition agent plan with provider adapters, config schema integration, and regression coverage (2025-10-28)【F:src/hotpass/data_sources/agents/runner.py†L1-L140】【F:src/hotpass/enrichment/providers.py†L1-L131】【F:src/hotpass/config_schema.py†L1-L280】【F:tests/data_sources/test_acquisition_agents.py†L1-L64】
+- [ ] Baseline QA blocked: `uv.core.build` module missing prevents `uv run`/`uv sync`; investigate alternate bootstrap before marking gates green (Owner: Platform, Due: 2025-12-05)
 - [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
 - [x] Replaced orchestrator `assert` with runtime guard and reran full QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, build) (2025-10-26)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 - [x] Canonical configuration refactor regression suite (pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【057336†L1-L121】【bdfff8†L1-L2】【adec4c†L1-L2】【3e5b7e†L1-L14】【9c9345†L1-L32】【f1c670†L1-L53】【788b2a†L1-L220】

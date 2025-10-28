@@ -1,0 +1,60 @@
+name-template: 'Hotpass v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+change-template: '- ${{TITLE}} (#${{NUMBER}}) by @${{AUTHOR}}'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'type:feature'
+  - title: '🐛 Bug fixes'
+    labels:
+      - 'type:fix'
+  - title: '📝 Documentation'
+    labels:
+      - 'type:docs'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'type:ci'
+      - 'scope:dependencies'
+      - 'type:chore'
+
+version-resolver:
+  major:
+    labels:
+      - 'breaking-change'
+  minor:
+    labels:
+      - 'type:feature'
+  patch:
+    labels:
+      - 'type:fix'
+      - 'type:docs'
+      - 'type:ci'
+      - 'scope:dependencies'
+
+exclude-labels:
+  - 'skip-changelog'
+
+autolabeler:
+  - label: 'type:feature'
+    title:
+      - '/^feat/i'
+  - label: 'type:fix'
+    title:
+      - '/^fix/i'
+  - label: 'type:docs'
+    title:
+      - '/^docs/i'
+  - label: 'type:ci'
+    title:
+      - '/^ci/i'
+  - label: 'scope:dependencies'
+    title:
+      - '/deps?\b/i'
+
+template: |
+  ## Changes
+  $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS

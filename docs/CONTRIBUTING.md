@@ -1,7 +1,7 @@
 ---
 title: Contributing to the documentation
 summary: Workflow and expectations for updating the Hotpass documentation set.
-last_updated: 2025-10-25
+last_updated: 2025-12-01
 ---
 
 # Contributing to the documentation
@@ -22,6 +22,7 @@ uv run pre-commit install
 - Use the Diátaxis structure: tutorials, how-to guides, reference, explanations.
 - Update or create pages under `docs/` with YAML front matter (`title`, `summary`, `last_updated`).
 - Keep README changes minimal—link out to full documentation when possible.
+- Apply the Conventional Commit label taxonomy when opening PRs: automation attaches `type:*` (feature/fix/docs/ci/chore) and `scope:*` (dependencies/governance) labels plus `prefect`/`uv` for orchestrator extras. Double-check the labeler output so Release Drafter summarises your work accurately.
 
 ## 3. Run quality checks
 
