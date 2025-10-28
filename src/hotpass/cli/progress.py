@@ -217,6 +217,19 @@ class StructuredLogger:
 
         self._get_console().print(f"[bold red]Error:[/bold red] {message}")
 
+    def log_validation_artifact(self, artifact_type: str, artifact_path: Path) -> None:
+        """Log the creation of a validation artifact like Data Docs."""
+        if self.log_format == "json":
+            self._emit_json(
+                "validation.artifact",
+                {"artifact_type": artifact_type, "artifact_path": str(artifact_path)},
+            )
+            return
+
+        self._get_console().print(
+            f"[green]Validation artifact ({artifact_type}):[/green] {artifact_path}"
+        )
+
     def log_event(self, event: str, data: Mapping[str, Any]) -> None:
         payload = dict(data)
         if self.log_format == "json":
