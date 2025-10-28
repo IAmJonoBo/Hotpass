@@ -440,7 +440,7 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
     )
 
     interactive = getattr(namespace, "interactive", None)
-    if not isinstance(interactive, (bool, type(None))):
+    if not isinstance(interactive, bool | type(None)):
         interactive = bool(interactive)
 
     report_path = canonical.pipeline.report_path

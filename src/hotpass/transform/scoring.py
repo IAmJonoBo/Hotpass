@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -91,17 +92,34 @@ class LeadScoringModel:
         return series.clip(0.0, 1.0)
 
 
+@dataclass(slots=True)
+class LeadScoringTrainingResult:
+    """Container for a trained model alongside evaluation artefacts."""
+
+    model: LeadScoringModel
+    metrics: dict[str, float]
+    metadata: dict[str, Any]
+
+
+DEFAULT_METRICS_PATH = Path("dist/metrics/lead_scoring.json")
+
+
 def train_lead_scoring_model(
     dataset: pd.DataFrame,
     *,
     target_column: str,
     feature_columns: Sequence[str] | None = None,
     random_state: int = 7,
-) -> LeadScoringModel:
-    """Train a logistic regression model for prospect prioritisation."""
+    validation_size: float = 0.2,
+    metric_thresholds: Mapping[str, float] | None = None,
+    metrics_path: Path | None = None,
+) -> LeadScoringTrainingResult:
+    """Train a logistic regression model and evaluate it on a validation split."""
 
     try:  # pragma: no cover - dependency import guarded at runtime
         from sklearn.linear_model import LogisticRegression
+        from sklearn.metrics import precision_score, recall_score, roc_auc_score
+        from sklearn.model_selection import train_test_split
     except ImportError as exc:  # pragma: no cover - informative error
         msg = (
             "scikit-learn is required to train lead scoring models. Install the"
@@ -126,22 +144,87 @@ def train_lead_scoring_model(
         msg = "No usable feature columns available for lead scoring"
         raise ValueError(msg)
 
+    if validation_size <= 0 or validation_size >= 1:
+        msg = "validation_size must be between 0 and 1"
+        raise ValueError(msg)
+
     training_frame = dataset[list(usable) + [target_column]].dropna()
     if training_frame.empty:
         msg = "Training dataset is empty after dropping null values"
+        raise ValueError(msg)
+    if len(training_frame) < 2:
+        msg = "At least two samples are required to train a model"
         raise ValueError(msg)
 
     X = training_frame[list(usable)].astype("float64")
     y = training_frame[target_column].astype("int64")
 
-    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
-    estimator.fit(X, y)
+    stratify = y if y.nunique() > 1 else None
+    X_train, X_valid, y_train, y_valid = train_test_split(
+        X,
+        y,
+        test_size=validation_size,
+        random_state=random_state,
+        stratify=stratify,
+    )
 
-    return LeadScoringModel(
+    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
+    estimator.fit(X_train, y_train)
+
+    validation_probabilities = estimator.predict_proba(X_valid)[:, 1]
+    try:
+        roc_auc = float(roc_auc_score(y_valid, validation_probabilities))
+    except ValueError:
+        roc_auc = 0.0
+    predictions = (validation_probabilities >= 0.5).astype(int)
+    precision = float(precision_score(y_valid, predictions, zero_division=0))
+    recall = float(recall_score(y_valid, predictions, zero_division=0))
+
+    metrics = {
+        "roc_auc": roc_auc,
+        "precision": precision,
+        "recall": recall,
+    }
+
+    trained_at = datetime.now(tz=UTC)
+    metadata: dict[str, Any] = {
+        "target_column": target_column,
+        "feature_names": tuple(usable),
+        "random_state": random_state,
+        "trained_at": trained_at.isoformat(),
+        "dataset_rows": int(len(training_frame)),
+        "train_rows": int(len(X_train)),
+        "validation_rows": int(len(X_valid)),
+        "validation_size": validation_size,
+    }
+
+    destination = metrics_path or DEFAULT_METRICS_PATH
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    serializable_metadata = dict(metadata)
+    serializable_metadata["feature_names"] = list(metadata["feature_names"])
+    payload = {"metrics": metrics, "metadata": serializable_metadata}
+    destination.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    if metric_thresholds:
+        failures = {
+            name: threshold
+            for name, threshold in metric_thresholds.items()
+            if metrics.get(name, 0.0) < threshold
+        }
+        if failures:
+            details = ", ".join(
+                f"{metric}={metrics.get(metric, 0.0):.3f} < {threshold:.3f}"
+                for metric, threshold in failures.items()
+            )
+            msg = f"Validation metrics below required thresholds: {details}"
+            raise RuntimeError(msg)
+
+    model = LeadScoringModel(
         estimator=estimator,
         feature_names=tuple(usable),
-        trained_at=datetime.now(tz=UTC),
+        trained_at=trained_at,
     )
+    return LeadScoringTrainingResult(model=model, metrics=metrics, metadata=metadata)
 
 
 def score_prospects(model: LeadScoringModel, frame: pd.DataFrame) -> pd.DataFrame:
