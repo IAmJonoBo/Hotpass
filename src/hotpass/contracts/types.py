@@ -245,11 +245,18 @@ class DatasetContract:
     def to_markdown_table(self) -> str:
         """Render the contract columns as a Markdown table."""
 
+        # Handle empty fields case
+        if not self.fields:
+            return (
+                "| Column | Type | Required | Description |\n"
+                "| ------ | ---- | -------- | ----------- |"
+            )
+
         # Calculate column widths for proper alignment
         col_widths = {
             "column": max(len(f"`{f.name}`") for f in self.fields),
             "type": max(len(f.field_type.title()) for f in self.fields),
-            "required": 8,  # Length of "Required"
+            "required": len("Required"),
             "description": max(len(f.description or "") for f in self.fields),
         }
 
