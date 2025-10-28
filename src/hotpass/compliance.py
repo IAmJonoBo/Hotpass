@@ -10,42 +10,81 @@ This module provides functionality for:
 
 import logging
 from collections import Counter
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol, cast
 
 import pandas as pd
+
+
+class AnalyzerResultProtocol(Protocol):
+    entity_type: str
+    start: int
+    end: int
+    score: float
+
+
+class AnalyzerProtocol(Protocol):
+    def analyze(
+        self,
+        *,
+        text: str,
+        language: str,
+        score_threshold: float | None = ...,
+    ) -> Sequence[AnalyzerResultProtocol]:
+        """Return detected entities for a text payload."""
+
+
+class AnonymizeResultProtocol(Protocol):
+    text: str
+
+
+class AnonymizerProtocol(Protocol):
+    def anonymize(
+        self,
+        *,
+        text: str,
+        analyzer_results: Sequence[AnalyzerResultProtocol],
+        operators: Mapping[str, Any],
+    ) -> AnonymizeResultProtocol:
+        """Return anonymised text when given analyzer outputs."""
+
+
+AnalyzerFactory = Callable[..., AnalyzerProtocol]
+AnonymizerFactory = Callable[..., AnonymizerProtocol]
+OperatorFactory = Callable[..., Any]
 
 # Runtime references that degrade gracefully when Presidio is unavailable. The
 # explicit annotations avoid mypy "Cannot assign to a type" errors when we
 # replace the imported classes with fallback implementations.
-AnalyzerEngine: type[Any] | None
-AnonymizerEngine: type[Any] | None
-OperatorConfig: type[Any]
+AnalyzerEngine: AnalyzerFactory | None
+AnonymizerEngine: AnonymizerFactory | None
+OperatorConfig: OperatorFactory
+PRESIDIO_AVAILABLE: bool
 
 try:
     from presidio_analyzer import AnalyzerEngine as _AnalyzerEngine
     from presidio_anonymizer import AnonymizerEngine as _AnonymizerEngine
     from presidio_anonymizer.entities import OperatorConfig as _OperatorConfig
 
-    AnalyzerEngine = _AnalyzerEngine
-    AnonymizerEngine = _AnonymizerEngine
-    OperatorConfig = _OperatorConfig
+    AnalyzerEngine = cast(AnalyzerFactory, _AnalyzerEngine)
+    AnonymizerEngine = cast(AnonymizerFactory, _AnonymizerEngine)
+    OperatorConfig = cast(OperatorFactory, _OperatorConfig)
     PRESIDIO_AVAILABLE = True
 except ImportError:
 
     class _OperatorConfigStub:  # pragma: no cover - only used when Presidio missing
         """Fallback operator config when Presidio is unavailable."""
 
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            self.args = args
-            self.kwargs = kwargs
+        def __init__(self, operation: str, params: Mapping[str, Any] | None = None) -> None:
+            self.operation = operation
+            self.params = dict(params or {})
 
     AnalyzerEngine = None
     AnonymizerEngine = None
-    OperatorConfig = _OperatorConfigStub
+    OperatorConfig = cast(OperatorFactory, _OperatorConfigStub)
     PRESIDIO_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -114,23 +153,29 @@ class LawfulBasis(Enum):
 class PIIDetector:
     """PII detection service using Presidio."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PII detector."""
-        if not PRESIDIO_AVAILABLE:
+
+        self.analyzer: AnalyzerProtocol | None = None
+        self.anonymizer: AnonymizerProtocol | None = None
+
+        analyzer_factory = AnalyzerEngine
+        anonymizer_factory = AnonymizerEngine
+
+        if not PRESIDIO_AVAILABLE or analyzer_factory is None or anonymizer_factory is None:
             logger.warning("Presidio not available, PII detection will not work")
+            return
+
+        try:
+            self.analyzer = analyzer_factory()
+            self.anonymizer = anonymizer_factory()
+        except Exception as exc:  # pragma: no cover - defensive initialisation
+            logger.warning("Failed to initialise Presidio engines: %s", exc)
             self.analyzer = None
             self.anonymizer = None
-        else:
-            try:
-                self.analyzer = AnalyzerEngine()
-                self.anonymizer = AnonymizerEngine()
-            except Exception as exc:  # pragma: no cover - defensive initialisation
-                logger.warning("Failed to initialise Presidio engines: %s", exc)
-                self.analyzer = None
-                self.anonymizer = None
 
     def detect_pii(
-        self, text: str, language: str = "en", threshold: float = 0.5
+        self, text: str | None, language: str = "en", threshold: float = 0.5
     ) -> list[dict[str, Any]]:
         """Detect PII entities in text.
 
@@ -433,10 +478,27 @@ class POPIAPolicy:
         Args:
             policy_config: Policy configuration dictionary
         """
-        self.config = policy_config or {}
-        self.field_classifications = self.config.get("field_classifications", {})
-        self.retention_policies = self.config.get("retention_policies", {})
-        self.consent_requirements = self.config.get("consent_requirements", {})
+        self.config = dict(policy_config or {})
+
+        raw_field_classifications = self.config.get("field_classifications", {})
+        self.field_classifications: dict[str, Any] = dict(
+            cast(Mapping[str, Any], raw_field_classifications)
+        )
+
+        raw_retention = self.config.get("retention_policies", {})
+        self.retention_policies: dict[str, int] = (
+            dict(cast(Mapping[str, int], raw_retention))
+            if isinstance(raw_retention, Mapping)
+            else {}
+        )
+
+        raw_consent_requirements = self.config.get("consent_requirements", {})
+        self.consent_requirements: dict[str, bool] = (
+            dict(cast(Mapping[str, bool], raw_consent_requirements))
+            if isinstance(raw_consent_requirements, Mapping)
+            else {}
+        )
+
         if not self.consent_requirements:
             self.consent_requirements = {
                 "contact_primary_email": True,
@@ -489,7 +551,9 @@ class POPIAPolicy:
         Returns:
             Retention period in days, or None if not specified
         """
-        return self.retention_policies.get(field_name)
+        if field_name in self.retention_policies:
+            return self.retention_policies[field_name]
+        return None
 
     def requires_consent(self, field_name: str) -> bool:
         """Check if field requires explicit consent.
@@ -500,7 +564,9 @@ class POPIAPolicy:
         Returns:
             True if consent is required
         """
-        return self.consent_requirements.get(field_name, False)
+        if field_name in self.consent_requirements:
+            return self.consent_requirements[field_name]
+        return False
 
     def get_lawful_basis(self, field_name: str) -> LawfulBasis | None:
         """Get lawful basis for processing a field.
@@ -680,6 +746,6 @@ def add_provenance_columns(
         enriched_df["consent_date"] = None
     enriched_df["retention_until"] = None  # To be calculated based on policy
 
-    logger.info(f"Added provenance columns for source: {source_name}")
+    logger.info("Added provenance columns for source: %s", source_name)
 
     return enriched_df

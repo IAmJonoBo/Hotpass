@@ -9,11 +9,12 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import pandera as pa
 from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic.fields import FieldInfo
 
 __all__ = [
     "FieldContract",
@@ -108,11 +109,11 @@ class DatasetContract:
     def row_model(self) -> type[ContractRowModel]:
         """Return a cached Pydantic model for a single dataset row."""
 
-        cached = object.__getattribute__(self, "_row_model")
+        cached = cast(type[ContractRowModel] | None, object.__getattribute__(self, "_row_model"))
         if cached is not None:
             return cached
 
-        field_definitions: dict[str, tuple[Any, Field]] = {}
+        field_definitions: dict[str, tuple[Any, FieldInfo]] = {}
         seen_names: set[str] = set()
 
         for field_contract in self.fields:
@@ -123,8 +124,9 @@ class DatasetContract:
 
             python_type = _PYTHON_TYPE_BY_FRICTIONLESS.get(field_contract.field_type, str)
             default: Any = ... if field_contract.required else None
+            annotation: Any = python_type
             if not field_contract.required:
-                python_type = python_type | None
+                annotation = cast(Any, python_type | type(None))
 
             examples = [field_contract.example] if field_contract.example is not None else None
 
@@ -134,12 +136,15 @@ class DatasetContract:
                 description=field_contract.description,
                 examples=examples,
             )
-            field_definitions[python_name] = (python_type, field_info)
+            field_definitions[python_name] = (annotation, field_info)
 
-        model = create_model(
-            f"{_to_pascal_case(self.name)}Row",
-            __base__=ContractRowModel,
-            **field_definitions,
+        model = cast(
+            type[ContractRowModel],
+            create_model(
+                f"{_to_pascal_case(self.name)}Row",
+                __base__=ContractRowModel,
+                **cast(dict[str, Any], field_definitions),
+            ),
         )
         object.__setattr__(self, "_row_model", model)
         return model
@@ -257,9 +262,9 @@ class DatasetContract:
 
         examples = list(self.examples)
         if not examples:
-            payload = {field.name: None for field in self.fields}
+            payload = cast(dict[str, Any], {field.name: None for field in self.fields})
         else:
-            payload = examples[min(index, len(examples) - 1)]
+            payload = dict(examples[min(index, len(examples) - 1)])
         return json.dumps(payload, indent=2, ensure_ascii=False)
 
 

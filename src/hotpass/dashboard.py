@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import os
 import secrets
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 import streamlit as st
@@ -120,7 +121,7 @@ def _require_authentication() -> bool:
     return False
 
 
-def load_pipeline_history(history_file: Path) -> list[dict]:
+def load_pipeline_history(history_file: Path) -> list[dict[str, Any]]:
     """Load pipeline execution history from file.
 
     Args:
@@ -133,10 +134,19 @@ def load_pipeline_history(history_file: Path) -> list[dict]:
         return []
 
     with open(history_file) as f:
-        return json.load(f)
+        history_data = json.load(f)
+
+    if not isinstance(history_data, list):
+        return []
+
+    typed_history: list[dict[str, Any]] = []
+    for entry in history_data:
+        if isinstance(entry, dict):
+            typed_history.append(dict(cast(Mapping[str, Any], entry)))
+    return typed_history
 
 
-def save_pipeline_run(history_file: Path, run_data: dict) -> None:
+def save_pipeline_run(history_file: Path, run_data: Mapping[str, Any]) -> None:
     """Save a pipeline run to history.
 
     Args:
@@ -144,14 +154,14 @@ def save_pipeline_run(history_file: Path, run_data: dict) -> None:
         run_data: Run metadata to save
     """
     history = load_pipeline_history(history_file)
-    history.append(run_data)
+    history.append(dict(run_data))
 
     history_file.parent.mkdir(parents=True, exist_ok=True)
     with open(history_file, "w") as f:
         json.dump(history, f, indent=2, default=str)
 
 
-def main():
+def main() -> None:
     """Main Streamlit dashboard application."""
     st.set_page_config(
         page_title="Hotpass Pipeline Dashboard",
