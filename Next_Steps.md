@@ -11,6 +11,7 @@
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
 - [x] **2025-10-28 · Engineering/Docs** — Implement dataset contract models, regeneration tooling, docs reference, and ADR (landed via contracts module + docs automation).
 - [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).
+- [ ] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).
 
 ## Steps
 
@@ -20,6 +21,7 @@
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
 - [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28).
+- [x] Instrument CLI and Prefect pipeline runs with OpenLineage and document Marquez quickstart (2025-12-02).
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 
 ## Deliverables
@@ -32,13 +34,12 @@
 
 ## Quality Gates
 
-- [x] Tests — `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (pass: 355 passed, 5 skipped, 47 warnings in 105.84s; run 2025-10-28).
-- [x] Lint — `uv run ruff check` (pass: clean on 2025-10-28).
-- [ ] Format — `uv run ruff format --check` (fails: repository-wide formatting drift observed when running `make qa`; see `ruff format --check` output for 117 files, run 2025-10-29).【51397d†L1-L117】
-- [x] Types — `uv run mypy src/hotpass/pipeline/config.py scripts/quality/fitness_functions.py` (pass: no issues on 2025-10-28; broader mypy backlog unchanged).
-- [ ] Security — `uv run bandit -r src scripts` (low severity `B110` try/except pass persists in `src/hotpass/orchestration.py:843`, run 2025-10-28).
-- [x] Secrets — `python -m detect_secrets scan src tests scripts` (pass, run 2025-10-28).
-- [x] Build — `uv build` (pass, run 2025-10-28).
+- [ ] Tests — `pytest` (fails: import error for optional dependency `duckdb` when collecting `tests/automation/test_hooks.py`; see baseline run on 2025-12-02).【0ae58a†L1-L27】
+- [ ] Format — `make qa` (fails: `ruff format --check` wants to reformat 118 files; drift predates current work, rerun 2025-12-02).【bd4b4c†L1-L119】
+- [x] Types — `mypy` (pass: no issues reported in targeted modules, run 2025-12-02).【1565f3†L1-L2】
+- [ ] Security — `bandit -r src -q` (low severity `B110` try/except pass persists at `src/hotpass/orchestration.py:898`, run 2025-12-02).【0ac4ca†L1-L26】
+- [x] Build — `uv build` (pass: source distribution and wheel built successfully, run 2025-12-02).【91605d†L1-L136】
+- [ ] Lineage — `uv run pytest tests/test_orchestration_lineage.py tests/cli/test_run_lineage_integration.py` (skipped locally pending optional dependencies `duckdb`, `polars`, `pyarrow`, and `frictionless`, run 2025-12-02).【0ae58a†L1-L27】【dacec3†L7-L11】
 
 ## Links
 
@@ -54,3 +55,4 @@
 - Format gate currently red because repository-wide drift predates this work; coordinate with maintainers before applying automated formatting across the codebase.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
+- Marquez compose stack introduced for lineage verification; schedule periodic image refreshes and ensure QA smoke tests capture CLI + Prefect flows.

@@ -8,6 +8,8 @@ import pandas as pd
 import pytest
 from marshmallow.warnings import ChangedInMarshmallow4Warning
 
+pytest_plugins = ["tests.fixtures.lineage"]
+
 
 def _install_warning_filters() -> None:
     warnings.filterwarnings(

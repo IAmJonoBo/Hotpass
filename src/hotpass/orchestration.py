@@ -22,6 +22,11 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from .artifacts import create_refined_archive
 from .config import get_default_profile
 from .pipeline import PipelineConfig, run_pipeline
+from .lineage import (
+    build_output_datasets,
+    create_emitter,
+    discover_input_datasets,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - typing aids
     from hotpass.config_schema import HotpassConfig
@@ -434,6 +439,16 @@ def _safe_log(logger_: logging.Logger, level: int, message: str, *args: Any) -> 
         return None
 
 
+def build_pipeline_job_name(config: PipelineConfig) -> str:
+    """Construct a stable OpenLineage job name for pipeline executions."""
+
+    profile = getattr(config, "industry_profile", None)
+    profile_name = getattr(profile, "name", None)
+    candidate = profile_name or config.expectation_suite_name or config.output_path.stem
+    component = _sanitise_component(str(candidate)) or "refinement"
+    return ".".join(("hotpass", "pipeline", component.lower()))
+
+
 def _execute_pipeline(
     config: PipelineConfig,
     *,
@@ -444,37 +459,48 @@ def _execute_pipeline(
 ) -> PipelineRunSummary:
     """Execute the pipeline runner and return a structured summary."""
 
-    start_time = time.time()
-    result = runner(config, **(runner_kwargs or {}))
-    elapsed = time.time() - start_time
-
-    quality_report_dict: dict[str, Any] = {}
-    success = True
-    quality_report = getattr(result, "quality_report", None)
-    if quality_report is not None:
-        to_dict = getattr(quality_report, "to_dict", None)
-        if callable(to_dict):
-            quality_report_dict = cast(dict[str, Any], to_dict())
-        success = bool(getattr(quality_report, "expectations_passed", True))
+    emitter = create_emitter(
+        build_pipeline_job_name(config),
+        run_id=config.run_id,
+    )
+    input_datasets = discover_input_datasets(config.input_dir)
+    emitter.emit_start(inputs=input_datasets)
 
     archive_path: Path | None = None
-    if archive:
-        archive_root = archive_dir or config.output_path.parent
-        try:
-            archive_root = Path(archive_root)
-            archive_root.mkdir(parents=True, exist_ok=True)
-            archive_path = create_refined_archive(
-                excel_path=config.output_path,
-                archive_dir=archive_root,
-            )
-        except Exception as exc:  # pragma: no cover - exercised via unit tests
-            raise PipelineOrchestrationError(
-                f"Failed to create archive: {exc}"
-            ) from exc
+    try:
+        start_time = time.time()
+        result = runner(config, **(runner_kwargs or {}))
+        elapsed = time.time() - start_time
 
-    total_records = len(getattr(result, "refined", []))
+        quality_report_dict: dict[str, Any] = {}
+        success = True
+        quality_report = getattr(result, "quality_report", None)
+        if quality_report is not None:
+            to_dict = getattr(quality_report, "to_dict", None)
+            if callable(to_dict):
+                quality_report_dict = cast(dict[str, Any], to_dict())
+            success = bool(getattr(quality_report, "expectations_passed", True))
 
-    return PipelineRunSummary(
+        if archive:
+            archive_root = archive_dir or config.output_path.parent
+            try:
+                archive_root = Path(archive_root)
+                archive_root.mkdir(parents=True, exist_ok=True)
+                archive_path = create_refined_archive(
+                    excel_path=config.output_path,
+                    archive_dir=archive_root,
+                )
+            except Exception as exc:  # pragma: no cover - exercised via unit tests
+                raise PipelineOrchestrationError(
+                    f"Failed to create archive: {exc}"
+                ) from exc
+
+        total_records = len(getattr(result, "refined", []))
+    except Exception as exc:
+        emitter.emit_fail(str(exc), outputs=build_output_datasets(config.output_path))
+        raise
+
+    summary = PipelineRunSummary(
         success=success,
         total_records=total_records,
         elapsed_seconds=elapsed,
@@ -482,6 +508,11 @@ def _execute_pipeline(
         quality_report=quality_report_dict,
         archive_path=archive_path,
     )
+
+    emitter.emit_complete(
+        outputs=build_output_datasets(config.output_path, archive_path)
+    )
+    return summary
 
 
 def run_pipeline_once(options: PipelineRunOptions) -> PipelineRunSummary:

@@ -235,6 +235,51 @@ class LineageEmitter:
         return None
 
 
+def discover_input_datasets(
+    input_dir: Path, patterns: Sequence[str] | None = None
+) -> list[DatasetSpec]:
+    """Return the datasets that describe pipeline inputs for lineage."""
+
+    datasets: list[DatasetSpec] = []
+    seen: set[str] = set()
+    search_patterns = patterns or ("*.parquet", "*.csv", "*.xlsx", "*.xls")
+
+    try:
+        for pattern in search_patterns:
+            for candidate in sorted(input_dir.glob(pattern)):
+                if not candidate.is_file():
+                    continue
+                try:
+                    normalised = str(candidate.expanduser().resolve())
+                except Exception:  # pragma: no cover - filesystem edge case
+                    normalised = str(candidate)
+                if normalised in seen:
+                    continue
+                seen.add(normalised)
+                datasets.append(candidate)
+    except Exception:  # pragma: no cover - defensive guard
+        logger.debug(
+            "Unable to enumerate input datasets in %s for lineage emission",
+            input_dir,
+            exc_info=True,
+        )
+
+    if not datasets:
+        datasets.append(input_dir)
+    return datasets
+
+
+def build_output_datasets(*paths: DatasetSpec | None) -> list[DatasetSpec]:
+    """Normalise pipeline outputs into lineage dataset specifications."""
+
+    datasets: list[DatasetSpec] = []
+    for path in paths:
+        if path is None:
+            continue
+        datasets.append(path)
+    return datasets
+
+
 class NullLineageEmitter(LineageEmitter):
     """No-op variant used when OpenLineage is unavailable."""
 
@@ -296,4 +341,10 @@ def _normalise_path_string(value: str) -> str:
     return str(Path(value).expanduser())
 
 
-__all__ = ["create_emitter", "LineageEmitter", "NullLineageEmitter"]
+__all__ = [
+    "build_output_datasets",
+    "create_emitter",
+    "discover_input_datasets",
+    "LineageEmitter",
+    "NullLineageEmitter",
+]
