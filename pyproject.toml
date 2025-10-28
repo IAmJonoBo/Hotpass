@@ -237,6 +237,8 @@ include-package-data = true
 "hotpass/data_expectations/reachout" = ["data_expectations/reachout/*.json"]
 "hotpass/data_expectations/contact" = ["data_expectations/contact/*.json"]
 "hotpass/data_expectations/sacaa" = ["data_expectations/sacaa/*.json"]
+"hotpass/data_expectations/suites" = ["data_expectations/suites/*.json"]
+"hotpass/data_expectations/checkpoints" = ["data_expectations/checkpoints/*.json"]
 
 [dependency-groups]
 dev = ["types-requests>=2.32.4.20250913"]

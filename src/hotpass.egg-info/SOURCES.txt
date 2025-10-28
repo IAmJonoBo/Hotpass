@@ -1,5 +1,12 @@
 README.md
 pyproject.toml
+data_expectations/checkpoints/contact_capture.json
+data_expectations/checkpoints/contact_company_addresses.json
+data_expectations/checkpoints/contact_company_cat.json
+data_expectations/checkpoints/contact_company_contacts.json
+data_expectations/checkpoints/reachout_contact_info.json
+data_expectations/checkpoints/reachout_organisation.json
+data_expectations/checkpoints/sacaa_cleaned.json
 data_expectations/contact/capture.json
 data_expectations/contact/company_addresses.json
 data_expectations/contact/company_cat.json
@@ -7,6 +14,13 @@ data_expectations/contact/company_contacts.json
 data_expectations/reachout/contact_info.json
 data_expectations/reachout/organisation.json
 data_expectations/sacaa/cleaned.json
+data_expectations/suites/contact_capture.json
+data_expectations/suites/contact_company_addresses.json
+data_expectations/suites/contact_company_cat.json
+data_expectations/suites/contact_company_contacts.json
+data_expectations/suites/reachout_contact_info.json
+data_expectations/suites/reachout_organisation.json
+data_expectations/suites/sacaa_cleaned.json
 schemas/contact_capture.schema.json
 schemas/contact_company_addresses.schema.json
 schemas/contact_company_cat.schema.json
@@ -166,3 +180,4 @@ tests/test_scancode_policy.py
 tests/test_scoring.py
 tests/test_secrets.py
 tests/test_telemetry_registry.py
+tests/test_validation_checkpoints.py
