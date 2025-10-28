@@ -98,12 +98,8 @@ class DatasetContract:
     fields: tuple[FieldContract, ...]
     examples: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
     schema_filename: str | None = None
-    _row_model: type[ContractRowModel] | None = field(
-        init=False, default=None, repr=False
-    )
-    _dataframe_schema: pa.DataFrameSchema | None = field(
-        init=False, default=None, repr=False
-    )
+    _row_model: type[ContractRowModel] | None = field(init=False, default=None, repr=False)
+    _dataframe_schema: pa.DataFrameSchema | None = field(init=False, default=None, repr=False)
 
     def __post_init__(self) -> None:
         if not self.schema_filename:
@@ -113,9 +109,7 @@ class DatasetContract:
     def row_model(self) -> type[ContractRowModel]:
         """Return a cached Pydantic model for a single dataset row."""
 
-        cached = cast(
-            type[ContractRowModel] | None, object.__getattribute__(self, "_row_model")
-        )
+        cached = cast(type[ContractRowModel] | None, object.__getattribute__(self, "_row_model"))
         if cached is not None:
             return cached
 
@@ -128,17 +122,13 @@ class DatasetContract:
                 python_name = f"{python_name}_"
             seen_names.add(python_name)
 
-            python_type = _PYTHON_TYPE_BY_FRICTIONLESS.get(
-                field_contract.field_type, str
-            )
+            python_type = _PYTHON_TYPE_BY_FRICTIONLESS.get(field_contract.field_type, str)
             default: Any = ... if field_contract.required else None
             annotation: Any = python_type
             if not field_contract.required:
                 annotation = cast(Any, python_type | type(None))
 
-            examples = (
-                [field_contract.example] if field_contract.example is not None else None
-            )
+            examples = [field_contract.example] if field_contract.example is not None else None
 
             field_info = Field(
                 default,
@@ -255,16 +245,52 @@ class DatasetContract:
     def to_markdown_table(self) -> str:
         """Render the contract columns as a Markdown table."""
 
-        lines = [
-            "| Column | Type | Required | Description |",
-            "| --- | --- | --- | --- |",
-        ]
-        for field_contract in self.fields:
-            description = field_contract.description or ""
-            lines.append(
-                f"| `{field_contract.name}` | {field_contract.field_type.title()} | "
-                f"{'Yes' if field_contract.required else 'No'} | {description} |"
+        # Handle empty fields case
+        if not self.fields:
+            return (
+                "| Column | Type | Required | Description |\n"
+                "| ------ | ---- | -------- | ----------- |"
             )
+
+        # Calculate column widths for proper alignment
+        col_widths = {
+            "column": max(len(f"`{f.name}`") for f in self.fields),
+            "type": max(len(f.field_type.title()) for f in self.fields),
+            "required": len("Required"),
+            "description": max(len(f.description or "") for f in self.fields),
+        }
+
+        # Ensure minimum widths match the header text
+        col_widths["column"] = max(col_widths["column"], len("Column"))
+        col_widths["type"] = max(col_widths["type"], len("Type"))
+        col_widths["description"] = max(col_widths["description"], len("Description"))
+
+        # Build header
+        lines = [
+            f"| {'Column'.ljust(col_widths['column'])} | "
+            f"{'Type'.ljust(col_widths['type'])} | "
+            f"{'Required'.ljust(col_widths['required'])} | "
+            f"{'Description'.ljust(col_widths['description'])} |",
+            f"| {'-' * col_widths['column']} | "
+            f"{'-' * col_widths['type']} | "
+            f"{'-' * col_widths['required']} | "
+            f"{'-' * col_widths['description']} |",
+        ]
+
+        # Build data rows
+        for field_contract in self.fields:
+            column_name = f"`{field_contract.name}`"
+            field_type = field_contract.field_type.title()
+            required = "Yes" if field_contract.required else "No"
+            description = field_contract.description or ""
+
+            lines.append(
+                f"| {column_name.ljust(col_widths['column'])} | "
+                f"{field_type.ljust(col_widths['type'])} | "
+                f"{required.ljust(col_widths['required'])} | "
+                f"{description.ljust(col_widths['description'])} |"
+            )
+
         return "\n".join(lines)
 
     def example_block(self, index: int = 0) -> str:
@@ -278,9 +304,7 @@ class DatasetContract:
         return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
-def render_reference_markdown(
-    contracts: Sequence[DatasetContract], *, last_updated: date
-) -> str:
+def render_reference_markdown(contracts: Sequence[DatasetContract], *, last_updated: date) -> str:
     """Generate the reference documentation page for all dataset contracts."""
 
     lines: list[str] = [

@@ -44,8 +44,12 @@ def test_apply_excel_formatting_preserves_unicode(values: list[str]) -> None:
     observed_column = next(
         sheet.iter_cols(min_row=2, max_row=len(values) + 1, min_col=1, max_col=1)
     )
-    observed = [cell.value if cell.value is not None else "" for cell in observed_column]
-    expect(observed == values, "Unicode cell values should survive formatting round-trip")
+    observed = [
+        cell.value if cell.value is not None else "" for cell in observed_column
+    ]
+    expect(
+        observed == values, "Unicode cell values should survive formatting round-trip"
+    )
 
 
 @st.composite
@@ -63,7 +67,9 @@ def _formatting_frames(draw: st.DrawFn) -> pd.DataFrame:
     if draw(st.booleans()):
         scores = draw(
             st.lists(
-                st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
+                ),
                 min_size=row_count,
                 max_size=row_count,
             )
@@ -73,7 +79,9 @@ def _formatting_frames(draw: st.DrawFn) -> pd.DataFrame:
     if draw(st.booleans()):
         timestamps = draw(
             st.lists(
-                st.datetimes(min_value=datetime(2018, 1, 1), max_value=datetime(2035, 12, 31)),
+                st.datetimes(
+                    min_value=datetime(2018, 1, 1), max_value=datetime(2035, 12, 31)
+                ),
                 min_size=row_count,
                 max_size=row_count,
             )
@@ -94,7 +102,10 @@ def test_apply_excel_formatting_handles_optional_columns(frame: pd.DataFrame) ->
     workbook = openpyxl.load_workbook(io.BytesIO(buffer.getvalue()))
     sheet = workbook["Data"]
 
-    expect(sheet.max_row == len(frame) + 1, "Row count should be preserved after formatting")
+    expect(
+        sheet.max_row == len(frame) + 1,
+        "Row count should be preserved after formatting",
+    )
 
     if "observed_at" in frame.columns:
         col_index = frame.columns.get_loc("observed_at") + 1
@@ -113,4 +124,7 @@ def test_apply_excel_formatting_handles_optional_columns(frame: pd.DataFrame) ->
             pd.Timestamp(value).round("ms").to_pydatetime() if pd.notna(value) else None
             for value in frame["observed_at"]
         ]
-        expect(observed_cells == expected, "Datetime cells must remain intact after formatting")
+        expect(
+            observed_cells == expected,
+            "Datetime cells must remain intact after formatting",
+        )
