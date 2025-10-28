@@ -928,43 +928,6 @@ def refinement_pipeline_flow(
     )
 
     return payload
-
-
-def deploy_pipeline(
-    name: str = "hotpass-refinement",
-    cron_schedule: str | None = None,
-    work_pool: str | None = None,
-) -> None:
-    """Deploy the Hotpass pipeline to Prefect.
-
-    Args:
-        name: Deployment name
-        cron_schedule: Optional cron schedule (e.g., "0 2 * * *" for daily at 2am)
-        work_pool: Optional work pool name for execution
-    """
-    if not PREFECT_AVAILABLE:
-        msg = "Prefect is not installed; deployment functionality is unavailable"
-        logger.warning(msg)
-        raise RuntimeError(msg)
-
-    from prefect.deployments import serve
-
-    # Note: deployment API may require adjustments based on Prefect version
-    deployment = cast(Any, refinement_pipeline_flow).to_deployment(name=name)
-    if work_pool:
-        deployment.work_pool_name = work_pool  # type: ignore
-
-    if cron_schedule:
-        try:
-            from prefect.server.schemas.schedules import CronSchedule
-        except ImportError as exc:  # pragma: no cover - depends on Prefect extras
-            raise RuntimeError("Prefect scheduling components are unavailable") from exc
-
-        deployment.schedule = CronSchedule(cron=cron_schedule, timezone="UTC")  # type: ignore[attr-defined]
-
-    serve(deployment)  # type: ignore
-
-
 if __name__ == "__main__":
     # Run the flow directly for testing
     result = refinement_pipeline_flow()

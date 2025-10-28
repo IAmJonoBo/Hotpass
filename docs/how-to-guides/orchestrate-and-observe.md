@@ -14,14 +14,21 @@ Use this guide when you need to promote Hotpass from ad-hoc execution to a sched
 
 ## Create a deployment
 
+Prefect deployments now live as version-controlled manifests under `prefect/`. Apply them with the CLI when you
+need to register or refresh deployments:
+
 ```bash
-uv run hotpass deploy \
-  --name hotpass-prod \
-  --profile aviation \
-  --schedule "0 2 * * *"
+uv run hotpass deploy --flow refinement
 ```
 
-The deployment packages the repository, registers it with Prefect, and schedules nightly runs. Use the `--tag` flag to group deployments by environment.
+The command loads `prefect/refinement.yaml`, builds a `RunnerDeployment`, and registers it with Prefect without rebuilding or
+pushing container images. Specify multiple `--flow` flags to register several manifests in a single run, or omit the flag to
+apply every manifest in the directory. Use `--manifest-dir` if you maintain environment-specific overlays (for example,
+`prefect/prod/`).
+
+Each manifest encodes the schedule, tags, work pool, and parameter defaults for the flow. The refinement manifest defaults to
+incremental execution (`incremental: true`) and exposes a `since` parameter so runs can resume from a saved checkpoint.
+Backfill manifests mark `active: false` and inherit the `paused` state automatically, avoiding accidental replays in production.
 
 ## Manage secrets and configuration
 
@@ -38,7 +45,7 @@ datasources:
 3. Update the Prefect deployment to pull secrets at runtime:
 
 ```bash
-uv run prefect deployment run hotpass-prod --params '{"refresh_contacts": true}'
+uv run prefect deployment run hotpass-refinement --params '{"since": "2024-11-01"}'
 ```
 
 ## Review probabilistic linkage

@@ -5,8 +5,9 @@ from __future__ import annotations
 import argparse
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
-from hotpass.orchestration import deploy_pipeline
+from hotpass.prefect import deployments as prefect_deployments
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -16,9 +17,10 @@ from ..shared import normalise_sensitive_fields
 
 @dataclass(slots=True)
 class DeployOptions:
-    name: str
-    schedule: str | None
-    work_pool: str | None
+    flows: tuple[str, ...]
+    manifest_dir: Path | None
+    build_image: bool
+    push_image: bool
     log_format: str
     sensitive_fields: tuple[str, ...]
 
@@ -30,17 +32,32 @@ def build(
     parser = subparsers.add_parser(
         "deploy",
         help="Deploy the Hotpass pipeline to Prefect",
-        description="Create or update a Prefect deployment for the refinement pipeline.",
+        description="Apply Prefect deployment manifests shipped with the repository.",
         parents=[shared.base],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--name", default="hotpass-refinement", help="Prefect deployment name"
+        "--flow",
+        dest="flows",
+        action="append",
+        help="Identifier of a Prefect deployment manifest to apply (may be repeated).",
     )
     parser.add_argument(
-        "--schedule", help="Cron schedule (e.g., '0 2 * * *' for daily at 2am)"
+        "--manifest-dir",
+        type=Path,
+        default=None,
+        help="Directory containing Prefect deployment manifests (defaults to ./prefect).",
     )
-    parser.add_argument("--work-pool", help="Prefect work pool name")
+    parser.add_argument(
+        "--build-image",
+        action="store_true",
+        help="Build the Prefect deployment image before registering.",
+    )
+    parser.add_argument(
+        "--push-image",
+        action="store_true",
+        help="Push the built image to the configured registry.",
+    )
     return parser
 
 
@@ -59,18 +76,26 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     console = logger.console if options.log_format == "rich" else None
 
     if console:
-        console.print("[bold cyan]Deploying pipeline to Prefect...[/bold cyan]")
-        console.print(f"[dim]Deployment name:[/dim] {options.name}")
-        if options.schedule:
-            console.print(f"[dim]Schedule:[/dim] {options.schedule}")
-        if options.work_pool:
-            console.print(f"[dim]Work pool:[/dim] {options.work_pool}")
+        console.print("[bold cyan]Applying Prefect deployments...[/bold cyan]")
+        if options.flows:
+            console.print(
+                f"[dim]Selected flows:[/dim] {', '.join(sorted(options.flows))}"
+            )
+        if options.manifest_dir:
+            console.print(f"[dim]Manifest directory:[/dim] {options.manifest_dir}")
+        console.print(
+            f"[dim]Build image:[/dim] {'yes' if options.build_image else 'no'}",
+        )
+        console.print(
+            f"[dim]Push image:[/dim] {'yes' if options.push_image else 'no'}",
+        )
 
     try:
-        deploy_pipeline(
-            name=options.name,
-            cron_schedule=options.schedule,
-            work_pool=options.work_pool,
+        deployment_ids = prefect_deployments.deploy_pipeline(
+            flows=options.flows or None,
+            base_dir=options.manifest_dir,
+            build_image=options.build_image,
+            push_image=options.push_image,
         )
     except Exception as exc:  # pragma: no cover - defensive guard
         logger.log_error(f"Deployment failed: {exc}")
@@ -79,13 +104,23 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     logger.log_event(
         "deploy.completed",
         {
-            "name": options.name,
-            "schedule": options.schedule,
-            "work_pool": options.work_pool,
+            "flows": options.flows,
+            "manifest_dir": str(options.manifest_dir) if options.manifest_dir else None,
+            "build_image": options.build_image,
+            "push_image": options.push_image,
+            "deployment_ids": deployment_ids,
         },
     )
     if console:
-        console.print("[bold green]✓[/bold green] Pipeline deployed successfully!")
+        if deployment_ids:
+            console.print(
+                "[bold green]✓[/bold green] Prefect deployments registered: "
+                + ", ".join(str(value) for value in deployment_ids)
+            )
+        else:
+            console.print(
+                "[bold yellow]No deployments matched the provided filters.[/bold yellow]"
+            )
     return 0
 
 
@@ -114,10 +149,19 @@ def _resolve_options(
         sensitive_iter, DEFAULT_SENSITIVE_FIELD_TOKENS
     )
 
+    flows_value = getattr(namespace, "flows", None)
+    flows: tuple[str, ...] = tuple(str(value) for value in flows_value or ())
+
+    manifest_dir = getattr(namespace, "manifest_dir", None)
+    manifest_path: Path | None = None
+    if manifest_dir:
+        manifest_path = Path(manifest_dir)
+
     return DeployOptions(
-        name=str(namespace.name),
-        schedule=namespace.schedule,
-        work_pool=namespace.work_pool,
+        flows=flows,
+        manifest_dir=manifest_path,
+        build_image=bool(getattr(namespace, "build_image", False)),
+        push_image=bool(getattr(namespace, "push_image", False)),
         log_format=log_format,
         sensitive_fields=sensitive_fields,
     )
