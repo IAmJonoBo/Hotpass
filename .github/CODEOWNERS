@@ -11,3 +11,6 @@ scripts/supply_chain/ @security-team
 
 # Workflows
 .github/workflows/ @platform-eng
+.github/labeler.yml @platform-eng
+.github/release-drafter.yml @platform-eng
+renovate.json @platform-eng

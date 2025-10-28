@@ -84,6 +84,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 :caption: Architecture decisions
 
 /adr/0001-qa-tooling
+/adr/0002-governance-automation
 ```
 
 ```{toctree}

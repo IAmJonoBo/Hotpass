@@ -1,7 +1,7 @@
 ---
 title: Pull request playbook
 summary: Expectations, quality gates, and waiver process for Hotpass pull requests.
-last_updated: 2025-10-25
+last_updated: 2025-12-01
 ---
 
 # Pull request playbook
@@ -11,9 +11,10 @@ last_updated: 2025-10-25
 1. Reference roadmap item or issue.
 2. Update documentation (Diátaxis) and `Next_Steps.md`.
 3. Run QA suite locally (tests, lint, type, security, secrets, build, accessibility, mutation, fitness functions).
-4. Confirm Prefect configuration changes respect concurrency guardrails (e.g. `orchestrator.backfill.concurrency_limit`, deployment work pools) and document overrides or sequential fallbacks.
-5. Attach artefacts (SBOM, provenance, accessibility report) as PR uploads if relevant.
-6. Tag code owners (`@platform-eng`, `@security`, `@docs`) per affected areas.
+4. Ensure commits follow Conventional Commits; the `commitlint` workflow blocks merges on violations.
+5. Confirm Prefect configuration changes respect concurrency guardrails (e.g. `orchestrator.backfill.concurrency_limit`, deployment work pools) and document overrides or sequential fallbacks.
+6. Attach artefacts (SBOM, provenance, accessibility report) as PR uploads if relevant.
+7. Tag code owners (`@platform-eng`, `@security`, `@docs`) per affected areas and confirm label automation applied the correct taxonomy (`type:*`, `scope:*`, `prefect`, `uv`).
 
 ## Quality gate waivers
 
@@ -29,9 +30,15 @@ Waivers require documented approval comment and entry in `Next_Steps.md` Quality
 ## Review workflow
 
 - **Author** ensures PR template completed, attaches test evidence.
-- **Reviewers** inspect code, docs, and artefacts; confirm automation success.
+- **Reviewers** inspect code, docs, and artefacts; confirm automation success (commitlint, labeler, Release Drafter status).
 - **Security reviewer** validates supply-chain outputs and policy evaluations.
 - **Docs reviewer** ensures TechDocs/Diátaxis updates align with style guide.
+
+## Automation guardrails
+
+- **Commit message linting**: `commitlint` workflow enforces Conventional Commits on every PR update. Fix failures by amending commits before requesting review.
+- **PR labelling**: `pr-labeler` workflow synchronises labels with file patterns and branch prefixes. Manually adjust labels if automation misses an edge case.
+- **Release notes**: `release-drafter` workflow assembles notes from Conventional Commit-aligned labels. Keep the `type:*`, `scope:*`, `prefect`, and `uv` labels accurate so the release outline remains trustworthy. Use `skip-changelog` for build-only noise.
 
 ## Rollback procedure
 
