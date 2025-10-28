@@ -34,6 +34,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /reference/cli
 /reference/data-model
 /reference/expectations
+/reference/repo-inventory
 /reference/source-mapping
 /reference/research-log
 ```
@@ -96,6 +97,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /compliance/verification-plan
 /compliance/remediation-backlog
 /compliance/evidence-catalog
+/compliance/presidio-redaction
 ```
 
 ```{toctree}
