@@ -11,6 +11,7 @@ This roadmap is the single source of truth for the Hotpass programme. It capture
 ## Executive summary
 
 Focus areas for the upcoming iterations:
+
 - **Contracts & validation**: canonical dataset models (Pydantic/Pandera), JSON Schemas in `schemas/`, and Great Expectations (GX) gates that block publishes on failure.
 - **Pipelines**: Prefect 3 deployments with idempotent/resumable runs and explicit `backfill` / `incremental` parameters; OpenLineage emission with a local Marquez viewer; refined outputs written as Parquet with data versioning.
 - **CI/CD & runners**: uv-based quality gates (ruff, mypy, pytest+coverage, SARIF), CodeQL/detect-secrets/bandit, Docker buildx with cache, SBOM + SLSA attestations, and ephemeral self-hosted runners via Actions Runner Controller (ARC) with OIDC→AWS.
@@ -19,27 +20,26 @@ Focus areas for the upcoming iterations:
 ## Iteration plan (date-free)
 
 **Iteration A – safety rails first**
+
 1. Phase 2 tasks (contracts, GX, property tests).
 2. Phase 5 tasks T5.1–T5.4 (quality CI, security, build, provenance).
 3. Phase 6 task T6.1 (docs skeleton and links).
 
-**Iteration B – orchestration, observability, and data versioning**
-4. Phase 3 tasks (Prefect deployments, OpenLineage/Marquez, Parquet + DVC).
-5. Phase 5 tasks T5.5–T5.6 (ephemeral runners + OpenTelemetry instrumentation).
-6. Phase 6 task T6.2 (CLI UX: `doctor` and `init`).
-7. Phase 4 task (MLflow) **only if** training is in scope; otherwise record an ADR and defer.
+**Iteration B – orchestration, observability, and data versioning** 4. Phase 3 tasks (Prefect deployments, OpenLineage/Marquez, Parquet + DVC). 5. Phase 5 tasks T5.5–T5.6 (ephemeral runners + OpenTelemetry instrumentation). 6. Phase 6 task T6.2 (CLI UX: `doctor` and `init`). 7. Phase 4 task (MLflow) **only if** training is in scope; otherwise record an ADR and defer.
 
 ---
 
 ## Phase 2 — Contracts, validation, and data hygiene
 
 - [ ] **T2.1 Canonical dataset contracts**
+
   - [ ] Add row-level models with **Pydantic** under `contracts/<dataset>.py`. Optionally add table-level **Pandera** `DataFrameModel`s for whole-table checks.
   - [ ] Export **JSON Schema** files to `schemas/<dataset>.schema.json` for every canonical dataset.
   - [ ] Autogenerate `docs/reference/schemas.md` with a field table per dataset.
   - **Acceptance:** sample records validate; schemas exist under `schemas/`; the reference page builds and links correctly.
 
 - [ ] **T2.2 Great Expectations gates**
+
   - [ ] Create **Expectation Suites** per dataset and store under `data_expectations/`.
   - [ ] Add **Checkpoints** that run before publish steps; failing validation must block publish.
   - [ ] Render **Data Docs** to `dist/data-docs/` and link from `docs/index`.
@@ -53,11 +53,13 @@ Focus areas for the upcoming iterations:
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)
 
 - [ ] **T3.1 Prefect 3 deployments**
+
   - [ ] Add `prefect.yaml` defining per-flow deployments, schedules, and tags.
   - [ ] Define parameters `backfill: bool`, `incremental: bool`, `since: datetime|None` and ensure flows are idempotent and resumable.
   - **Acceptance:** `prefect deploy` produces deployments; the UI shows schedules; re-running is idempotent.
 
 - [ ] **T3.2 OpenLineage + Marquez**
+
   - [ ] Add `infra/marquez/docker-compose.yml` to run Marquez locally; document `make marquez-up`.
   - [ ] Emit **OpenLineage** events from flows; record datasets/jobs/runs; link the UI from docs.
   - **Acceptance:** lineage appears in Marquez for a demo flow; screenshot in PR.
@@ -77,22 +79,27 @@ Focus areas for the upcoming iterations:
 ## Phase 5 — CI/CD & ephemeral runners
 
 - [ ] **T5.1 `ci.yml` – quality gates**
+
   - [ ] Use **uv** with caching; run **ruff**, **mypy**, **pytest** with coverage gates; upload SARIF where applicable.
   - **Acceptance:** CI green; coverage ≥ baseline.
 
 - [ ] **T5.2 `security.yml` – CodeQL, secrets, Bandit**
+
   - [ ] Enable **CodeQL**; run **detect-secrets** in diff mode; run **bandit**.
   - **Acceptance:** CodeQL results in Security tab; secrets baseline present; Bandit SARIF uploaded.
 
 - [ ] **T5.3 `build.yml` – Docker buildx + cache**
+
   - [ ] Use `docker/build-push-action` with `cache-from/to: gha`; publish image artefacts.
   - **Acceptance:** builds hit cache across PRs; image digest attached.
 
 - [ ] **T5.4 `provenance.yml` – SBOM + SLSA**
+
   - [ ] Generate **SBOM** via Syft; add **build-provenance** attestations.
   - **Acceptance:** SBOM artefact attached; provenance attestation verifiable.
 
 - [ ] **T5.5 Ephemeral runners – ARC + OIDC→AWS**
+
   - [ ] Commit `infra/arc/` manifests for **Actions Runner Controller** runner scale sets; default to ephemeral pods.
   - [ ] Configure **OIDC** → AWS roles for temporary credentials (no long-lived secrets).
   - **Acceptance:** workflows execute on ephemeral runners; AWS access uses OIDC.
@@ -104,6 +111,7 @@ Focus areas for the upcoming iterations:
 ## Phase 6 — Documentation & UX
 
 - [ ] **T6.1 Diátaxis docs structure**
+
   - [ ] Ensure `docs/` uses Tutorials, How‑tos, Reference, and Explanations; link Data Docs and the lineage UI from the docs home.
   - **Acceptance:** landing page shows the four doc types; "How‑to: run a backfill" and "How‑to: read Data Docs" exist.
 
