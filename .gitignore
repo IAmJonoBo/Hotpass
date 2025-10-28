@@ -19,5 +19,12 @@ dist/*.zip
 docs/_build/
 mutants/
 
+# DVC
+/data/**/*.dvc
+/dist/**/*.dvc
+.dvc/tmp
+.dvc/cache
+.dvc/plots
+
 # Allow distribution archives to be generated under dist/
 !/dist/
