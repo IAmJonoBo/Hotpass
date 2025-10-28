@@ -3,7 +3,9 @@
   "name": "sacaa_cleaned",
   "title": "SACAA cleaned sheet",
   "description": "Schema for Cleaned sheet in SACAA Flight Schools workbook",
-  "primaryKey": ["Name of Organisation"],
+  "primaryKey": [
+    "Name of Organisation"
+  ],
   "fields": [
     {
       "name": "Name of Organisation",

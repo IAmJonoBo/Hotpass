@@ -2,28 +2,41 @@
 
 from __future__ import annotations
 
+import importlib
 import logging
 import os
-from collections.abc import Iterable, Mapping, Sequence
-from datetime import datetime
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 from uuid import uuid4
 
+OpenLineageClient: Any | None
+set_lineage_producer: Callable[[str], None] | None
+InputDataset: Any
+OutputDataset: Any
+Job: Any
+Run: Any
+RunEvent: Any
+RunState: Any
+
 try:
-    from openlineage.client import OpenLineageClient
-    from openlineage.client import set_producer as set_lineage_producer
-    from openlineage.client.event_v2 import (
-        InputDataset,
-        Job,
-        OutputDataset,
-        Run,
-        RunEvent,
-        RunState,
-    )
+    _client_module = importlib.import_module("openlineage.client")
+    _events_module = importlib.import_module("openlineage.client.event_v2")
 except Exception:  # pragma: no cover - optional dependency
-    OpenLineageClient = None  # type: ignore[assignment]
-    set_lineage_producer = None  # type: ignore[assignment]
-    InputDataset = OutputDataset = Job = Run = RunEvent = RunState = None  # type: ignore[assignment]
+    OpenLineageClient = None
+    set_lineage_producer = None
+    InputDataset = OutputDataset = Job = Run = RunEvent = None
+    RunState = None
+else:
+    OpenLineageClient = getattr(_client_module, "OpenLineageClient", None)
+    set_lineage_producer = getattr(_client_module, "set_producer", None)
+    InputDataset = getattr(_events_module, "InputDataset", None)
+    OutputDataset = getattr(_events_module, "OutputDataset", None)
+    Job = getattr(_events_module, "Job", None)
+    Run = getattr(_events_module, "Run", None)
+    RunEvent = getattr(_events_module, "RunEvent", None)
+    RunState = getattr(_events_module, "RunState", None)
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +60,11 @@ class LineageEmitter:
         self.job_name = job_name
         self.namespace = namespace or os.getenv("HOTPASS_LINEAGE_NAMESPACE", DEFAULT_NAMESPACE)
         self.run_id = str(run_id or uuid4())
-        self.producer = producer or os.getenv("HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER)
-        self._inputs: Sequence[InputDataset] | None = None  # type: ignore[assignment]
+        resolved_producer = producer or os.getenv("HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER)
+        self.producer = str(resolved_producer)
+        self._inputs: Sequence[Any] | None = None
 
-        self._client = self._initialise_client()
+        self._client: Any | None = self._initialise_client()
         self._active = self._client is not None
         if self._active and set_lineage_producer is not None:
             try:
@@ -67,7 +81,14 @@ class LineageEmitter:
         *,
         inputs: Iterable[DatasetSpec] | None = None,
     ) -> None:
-        if not self._active:
+        if (
+            not self._active
+            or InputDataset is None
+            or RunEvent is None
+            or RunState is None
+            or Job is None
+            or Run is None
+        ):
             return
         self._inputs = self._build_datasets(inputs or (), InputDataset)
         event = RunEvent(
@@ -86,7 +107,14 @@ class LineageEmitter:
         *,
         outputs: Iterable[DatasetSpec] | None = None,
     ) -> None:
-        if not self._active:
+        if (
+            not self._active
+            or OutputDataset is None
+            or RunEvent is None
+            or RunState is None
+            or Job is None
+            or Run is None
+        ):
             return
         event = RunEvent(
             eventTime=_now(),
@@ -105,7 +133,14 @@ class LineageEmitter:
         *,
         outputs: Iterable[DatasetSpec] | None = None,
     ) -> None:
-        if not self._active:
+        if (
+            not self._active
+            or OutputDataset is None
+            or RunEvent is None
+            or RunState is None
+            or Job is None
+            or Run is None
+        ):
             return
         event = RunEvent(
             eventTime=_now(),
@@ -119,7 +154,7 @@ class LineageEmitter:
         logger.debug("Emitting OpenLineage FAIL event for %s: %s", self.job_name, message)
         self._emit(event)
 
-    def _initialise_client(self) -> OpenLineageClient | None:
+    def _initialise_client(self) -> Any | None:
         if OpenLineageClient is None:
             return None
         if os.getenv("HOTPASS_DISABLE_LINEAGE", "0") == "1":
@@ -130,7 +165,7 @@ class LineageEmitter:
             logger.warning("OpenLineage client unavailable", exc_info=True)
             return None
 
-    def _emit(self, event: RunEvent) -> None:  # type: ignore[valid-type]
+    def _emit(self, event: Any) -> None:
         if not self._active or self._client is None:
             return
         try:
@@ -141,9 +176,11 @@ class LineageEmitter:
     def _build_datasets(
         self,
         specs: Iterable[DatasetSpec],
-        dataset_cls: type[InputDataset] | type[OutputDataset],  # type: ignore[valid-type]
-    ) -> list[InputDataset] | list[OutputDataset]:  # type: ignore[valid-type]
-        datasets: list[InputDataset] | list[OutputDataset] = []
+        dataset_cls: type[Any] | None,
+    ) -> list[Any]:
+        datasets: list[Any] = []
+        if dataset_cls is None:
+            return datasets
         for spec in specs:
             dataset = self._normalise_dataset(spec, dataset_cls)
             if dataset is not None:
@@ -153,8 +190,8 @@ class LineageEmitter:
     def _normalise_dataset(
         self,
         spec: DatasetSpec,
-        dataset_cls: type[InputDataset] | type[OutputDataset],  # type: ignore[valid-type]
-    ) -> InputDataset | OutputDataset | None:  # type: ignore[valid-type]
+        dataset_cls: type[Any],
+    ) -> Any | None:
         namespace = self.namespace
         facets: Mapping[str, object] | None = None
         name: str | None = None
@@ -163,7 +200,7 @@ class LineageEmitter:
             if isinstance(spec, Mapping):
                 name = str(spec.get("name") or "").strip() or None
                 namespace = str(spec.get("namespace") or namespace)
-                facets = spec.get("facets")  # type: ignore[assignment]
+                facets = cast(Mapping[str, object] | None, spec.get("facets"))
             elif isinstance(spec, Path):
                 name = str(spec.expanduser().resolve())
             else:
@@ -242,7 +279,7 @@ def create_emitter(
 
 
 def _now() -> str:
-    return datetime.now(datetime.UTC).isoformat()
+    return datetime.now(tz=UTC).isoformat()
 
 
 def _normalise_path_string(value: str) -> str:

@@ -3,7 +3,10 @@
   "name": "contact_company_addresses",
   "title": "Contact Database addresses",
   "description": "Schema for Company_Addresses sheet in Contact Database.xlsx",
-  "primaryKey": ["C_ID", "Type"],
+  "primaryKey": [
+    "C_ID",
+    "Type"
+  ],
   "fields": [
     {
       "name": "C_ID",

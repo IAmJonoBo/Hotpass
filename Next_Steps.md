@@ -10,6 +10,7 @@
 - [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads (run benchmarks alongside December integration tests; feed results into January ADR updates).
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
 - [x] **2025-10-28 · Engineering/Docs** — Implement dataset contract models, regeneration tooling, docs reference, and ADR (landed via contracts module + docs automation).
+- [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).
 
 ## Steps
 
@@ -30,9 +31,9 @@
 ## Quality Gates
 
 - [x] Tests — `pytest --cov=src --cov=tests --cov-report=term-missing` (pass: 341 passed, 5 skipped, 38 warnings in 93.88s; run 2025-10-28).
-- [ ] Lint — `ruff check` (fails: extensive legacy violations across CLI/pipeline modules; latest run 2025-10-28 still reports 100+ issues despite contracts cleanup).
-- [ ] Format — `ruff format --check` (fails: 111 files require formatting, run 2025-10-28).
-- [ ] Types — `mypy src tests scripts` (fails: 219 errors across repo, run 2025-10-28).
+- [x] Lint — `ruff check` (pass: repo-wide run clean on 2025-10-28 after lineage and test updates).
+- [x] Format — `ruff format --check` (pass: repo already formatted as of 2025-10-28).
+- [ ] Types — `mypy src tests scripts` (fails: 204 errors across 64 files, run 2025-10-28).
 - [ ] Security — `bandit -r src scripts` (low severity `B110` try/except pass in `src/hotpass/orchestration.py:849`, run 2025-10-28).
 - [x] Secrets — `python -m detect_secrets scan src tests scripts` (pass, run 2025-10-28).
 - [x] Build — `uv build` (pass, run 2025-10-28).
@@ -47,6 +48,6 @@
 ## Risks/Notes
 
 - Prefect pipeline task payload fix merged; continue monitoring downstream Prefect deployments for regressions when toggling `backfill`/`incremental` flags.
-- Repository-wide Ruff formatting and mypy checks are failing pre-change; large remediation backlog may require phased plan.
+- Ruff formatting gate now green; continue tackling the remaining mypy backlog via feature-focused clusters.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
