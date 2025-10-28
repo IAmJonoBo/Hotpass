@@ -3,9 +3,7 @@
   "name": "contact_capture",
   "title": "Contact Database capture log",
   "description": "Schema for 10-10-25 Capture sheet in Contact Database.xlsx",
-  "primaryKey": [
-    "School"
-  ],
+  "primaryKey": ["School"],
   "fields": [
     {
       "name": "Unnamed: 0",

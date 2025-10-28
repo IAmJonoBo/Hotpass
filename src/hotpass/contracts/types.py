@@ -97,8 +97,12 @@ class DatasetContract:
     fields: tuple[FieldContract, ...]
     examples: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
     schema_filename: str | None = None
-    _row_model: type[ContractRowModel] | None = field(init=False, default=None, repr=False)
-    _dataframe_schema: pa.DataFrameSchema | None = field(init=False, default=None, repr=False)
+    _row_model: type[ContractRowModel] | None = field(
+        init=False, default=None, repr=False
+    )
+    _dataframe_schema: pa.DataFrameSchema | None = field(
+        init=False, default=None, repr=False
+    )
 
     def __post_init__(self) -> None:
         if not self.schema_filename:
@@ -121,15 +125,15 @@ class DatasetContract:
                 python_name = f"{python_name}_"
             seen_names.add(python_name)
 
-            python_type = _PYTHON_TYPE_BY_FRICTIONLESS.get(field_contract.field_type, str)
+            python_type = _PYTHON_TYPE_BY_FRICTIONLESS.get(
+                field_contract.field_type, str
+            )
             default: Any = ... if field_contract.required else None
             if not field_contract.required:
                 python_type = python_type | None
 
             examples = (
-                [field_contract.example]
-                if field_contract.example is not None
-                else None
+                [field_contract.example] if field_contract.example is not None else None
             )
 
             field_info = Field(
@@ -244,7 +248,10 @@ class DatasetContract:
     def to_markdown_table(self) -> str:
         """Render the contract columns as a Markdown table."""
 
-        lines = ["| Column | Type | Required | Description |", "| --- | --- | --- | --- |"]
+        lines = [
+            "| Column | Type | Required | Description |",
+            "| --- | --- | --- | --- |",
+        ]
         for field_contract in self.fields:
             description = field_contract.description or ""
             lines.append(

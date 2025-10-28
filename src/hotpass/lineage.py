@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timezone
+from collections.abc import Iterable, Mapping, Sequence
+from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
 from uuid import uuid4
 
 try:
-    from openlineage.client import OpenLineageClient, set_producer as set_lineage_producer
+    from openlineage.client import OpenLineageClient
+    from openlineage.client import set_producer as set_lineage_producer
     from openlineage.client.event_v2 import (
         InputDataset,
         Job,
@@ -44,9 +45,13 @@ class LineageEmitter:
         producer: str | None = None,
     ) -> None:
         self.job_name = job_name
-        self.namespace = namespace or os.getenv("HOTPASS_LINEAGE_NAMESPACE", DEFAULT_NAMESPACE)
+        self.namespace = namespace or os.getenv(
+            "HOTPASS_LINEAGE_NAMESPACE", DEFAULT_NAMESPACE
+        )
         self.run_id = str(run_id or uuid4())
-        self.producer = producer or os.getenv("HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER)
+        self.producer = producer or os.getenv(
+            "HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER
+        )
         self._inputs: Sequence[InputDataset] | None = None  # type: ignore[assignment]
 
         self._client = self._initialise_client()
@@ -115,7 +120,9 @@ class LineageEmitter:
             inputs=list(self._inputs or []),
             outputs=self._build_datasets(outputs or (), OutputDataset),
         )
-        logger.debug("Emitting OpenLineage FAIL event for %s: %s", self.job_name, message)
+        logger.debug(
+            "Emitting OpenLineage FAIL event for %s: %s", self.job_name, message
+        )
         self._emit(event)
 
     def _initialise_client(self) -> OpenLineageClient | None:
@@ -170,7 +177,11 @@ class LineageEmitter:
                 if candidate:
                     name = _normalise_path_string(candidate)
         except Exception:  # pragma: no cover - defensive guard
-            logger.debug("Unable to convert dataset spec '%s' into OpenLineage dataset", spec, exc_info=True)
+            logger.debug(
+                "Unable to convert dataset spec '%s' into OpenLineage dataset",
+                spec,
+                exc_info=True,
+            )
             return None
 
         if not name:
@@ -178,7 +189,12 @@ class LineageEmitter:
         try:
             return dataset_cls(namespace=namespace, name=name, facets=facets or {})
         except Exception:  # pragma: no cover - defensive guard
-            logger.debug("Failed to instantiate %s for %s", dataset_cls.__name__, name, exc_info=True)
+            logger.debug(
+                "Failed to instantiate %s for %s",
+                dataset_cls.__name__,
+                name,
+                exc_info=True,
+            )
         return None
 
 
@@ -194,7 +210,9 @@ class NullLineageEmitter(LineageEmitter):
         self._client = None
         self._active = False
 
-    def emit_start(self, *, inputs: Iterable[DatasetSpec] | None = None) -> None:  # noqa: D401, ARG002
+    def emit_start(
+        self, *, inputs: Iterable[DatasetSpec] | None = None
+    ) -> None:  # noqa: D401, ARG002
         return
 
     def emit_complete(
@@ -232,7 +250,7 @@ def create_emitter(
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(datetime.UTC).isoformat()
 
 
 def _normalise_path_string(value: str) -> str:

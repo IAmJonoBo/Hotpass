@@ -882,7 +882,9 @@ def refinement_pipeline_flow(
     if run_id:
         config_updates["pipeline"]["run_id"] = run_id
     if flow_run_name:
-        config_updates.setdefault("orchestrator", {})["run_name_template"] = flow_run_name
+        config_updates.setdefault("orchestrator", {})[
+            "run_name_template"
+        ] = flow_run_name
 
     if excel_chunk_size is not None:
         config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size)
