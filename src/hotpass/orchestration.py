@@ -538,7 +538,7 @@ def run_pipeline_task(
     def _coerce_flag(value: Any) -> bool:
         if isinstance(value, bool):
             return value
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return bool(value)
         return False
 

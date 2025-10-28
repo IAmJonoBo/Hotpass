@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import html
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +18,22 @@ from ..data_sources.agents import AcquisitionPlan
 from ..enrichment.intent import IntentPlan
 from ..pipeline_reporting import html_performance_rows, html_source_performance
 from ..transform.scoring import LeadScorer
+
+
+def _default_datetime_factory() -> datetime:
+    """Return a timezone-aware timestamp aligned with prior behaviour."""
+
+    return datetime.now(tz=UTC)
+
+
+@dataclass
+class PipelineRuntimeHooks:
+    """Injectable runtime hooks for deterministic pipeline execution."""
+
+    time_fn: Callable[[], float] = time.time
+    perf_counter: Callable[[], float] = time.perf_counter
+    datetime_factory: Callable[[], datetime] = _default_datetime_factory
+
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ..data_sources.agents.runner import AgentTiming
@@ -85,6 +102,7 @@ class PipelineConfig:
     enable_audit_trail: bool = True
     enable_recommendations: bool = True
     progress_listener: ProgressListener | None = None
+    runtime_hooks: PipelineRuntimeHooks = field(default_factory=PipelineRuntimeHooks)
     pii_redaction: PIIRedactionConfig = field(default_factory=PIIRedactionConfig)
     acquisition_plan: AcquisitionPlan | None = None
     agent_credentials: Mapping[str, str] = field(default_factory=dict)
@@ -104,6 +122,7 @@ class PipelineConfig:
     backfill: bool = False
     incremental: bool = False
     since: datetime | None = None
+    random_seed: int | None = None
     run_id: str | None = None
 
 

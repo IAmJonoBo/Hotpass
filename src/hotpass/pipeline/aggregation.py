@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -603,6 +602,9 @@ def aggregate_records(
     intent_summaries: Mapping[str, Any] | None,
     notify_progress: Callable[[str, dict[str, Any]], None],
 ) -> AggregationResult:
+    hooks = config.runtime_hooks
+    perf_counter = hooks.perf_counter
+
     combined_polars = pl.from_pandas(combined, include_index=False)
     combined_polars = combined_polars.with_row_count("_row_index")
     null_slug = "__HOTPASS_NULL_SLUG__"
@@ -629,7 +631,7 @@ def aggregate_records(
     notify_progress("aggregate_started", {"total": group_total})
 
     metrics: dict[str, Any] = {}
-    aggregation_start = time.perf_counter()
+    aggregation_start = perf_counter()
     with pipeline_stage(
         "canonicalise",
         {
@@ -675,13 +677,13 @@ def aggregate_records(
 
         dataset = PolarsDataset.from_rows(aggregated_rows, SSOT_COLUMNS)
         dataset.sort("organization_name")
-        pandas_sort_start = time.perf_counter()
+        pandas_sort_start = perf_counter()
         _ = (
             pd.DataFrame(aggregated_rows, columns=SSOT_COLUMNS)
             .sort_values("organization_name")
             .reset_index(drop=True)
         )
-        pandas_sort_seconds = time.perf_counter() - pandas_sort_start
+        pandas_sort_seconds = perf_counter() - pandas_sort_start
         metrics["pandas_sort_seconds"] = pandas_sort_seconds
         metrics["polars_transform_seconds"] = (
             dataset.timings.construction_seconds + dataset.timings.sort_seconds
@@ -695,11 +697,11 @@ def aggregate_records(
                 float("inf") if pandas_sort_seconds > 0 else 0.0
             )
 
-        materialize_start = time.perf_counter()
+        materialize_start = perf_counter()
         refined_df = dataset.to_pandas().reset_index(drop=True)
-        metrics["polars_materialize_seconds"] = time.perf_counter() - materialize_start
+        metrics["polars_materialize_seconds"] = perf_counter() - materialize_start
 
-    metrics["aggregation_seconds"] = time.perf_counter() - aggregation_start
+    metrics["aggregation_seconds"] = perf_counter() - aggregation_start
 
     notify_progress(
         "aggregate_completed",

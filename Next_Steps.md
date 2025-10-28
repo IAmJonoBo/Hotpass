@@ -15,10 +15,11 @@
 ## Steps
 
 - [x] Bootstrap environment with `pip install -e .[dev]` (2025-10-28).
-- [ ] Baseline QA audit (`pytest`, `ruff`, `mypy`, `bandit`, `detect-secrets`, `uv build`) — failing due to pre-existing defects (see Quality Gates).
+- [x] Baseline QA audit (`pytest`, `ruff`, `mypy`, `bandit`, `detect-secrets`, `uv build`) — commands rerun on 2025-10-28 with current branch; see Quality Gates for updated status notes.
 - [x] Design dataset contract specification layer and registry.
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
+- [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28).
 
 ## Deliverables
 
@@ -30,11 +31,11 @@
 
 ## Quality Gates
 
-- [x] Tests — `pytest --cov=src --cov=tests --cov-report=term-missing` (pass: 341 passed, 5 skipped, 38 warnings in 93.88s; run 2025-10-28).
-- [x] Lint — `ruff check` (pass: repo-wide run clean on 2025-10-28 after lineage and test updates).
-- [x] Format — `ruff format --check` (pass: repo already formatted as of 2025-10-28).
-- [ ] Types — `mypy src tests scripts` (fails: 204 errors across 64 files, run 2025-10-28).
-- [ ] Security — `bandit -r src scripts` (low severity `B110` try/except pass in `src/hotpass/orchestration.py:849`, run 2025-10-28).
+- [x] Tests — `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (pass: 355 passed, 5 skipped, 47 warnings in 105.84s; run 2025-10-28).
+- [x] Lint — `uv run ruff check` (pass: clean on 2025-10-28).
+- [x] Format — `uv run ruff format --check` (pass: no reformat needed on 2025-10-28).
+- [x] Types — `uv run mypy src/hotpass/pipeline/config.py scripts/quality/fitness_functions.py` (pass: no issues on 2025-10-28; broader mypy backlog unchanged).
+- [ ] Security — `uv run bandit -r src scripts` (low severity `B110` try/except pass persists in `src/hotpass/orchestration.py:843`, run 2025-10-28).
 - [x] Secrets — `python -m detect_secrets scan src tests scripts` (pass, run 2025-10-28).
 - [x] Build — `uv build` (pass, run 2025-10-28).
 

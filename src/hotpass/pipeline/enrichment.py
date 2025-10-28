@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
 from pathlib import Path
 
 from ..enrichment.intent import (
@@ -31,7 +30,7 @@ def collect_intent_signals(
         config.intent_plan,
         country_code=config.country_code,
         credentials=config.intent_credentials,
-        issued_at=datetime.now(tz=UTC),
+        issued_at=config.runtime_hooks.datetime_factory(),
         storage=store,
     )
     return result, result.summary

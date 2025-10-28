@@ -1,7 +1,7 @@
 ---
 title: Assert-free pytest patterns
 summary: Maintain Bandit compliance without sacrificing test clarity
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 ---
 
 Bandit runs as part of the Hotpass quality gates and raises finding **B101** when tests rely on bare `assert` statements.
@@ -58,6 +58,23 @@ The `expect` helper is the default, but these patterns remain acceptable without
 
 If you believe a bare `assert` is required (for example, interacting with third-party assertion helpers), discuss it with
 the maintainers and document the decision in the test module to avoid accidental edits later.
+
+## Property-based coverage expectations
+
+Hotpass exercises critical pipeline behaviours with [Hypothesis](https://hypothesis.readthedocs.io/) so edge cases stay covered
+without maintaining an ever-growing set of fixtures. New suites should follow these guardrails:
+
+- Scope property tests to directories that own the behaviour. The pipeline property suite (`tests/pipeline/test_pipeline_properties.py`)
+  verifies date parsing, missing column handling, and deterministic runs; the formatting property suite (`tests/formatting/test_formatting_properties.py`)
+  guards encoding and optional column behaviour.
+- Keep runs fast. Constrain `max_examples` and disable Hypothesis deadlines when tests interact with disk or Excel writers so
+  `uv run qa` stays responsive. Aim for sub-minute execution across the property suites.
+- Inject deterministic hooks when touching time- or randomness-sensitive code. The pipeline configuration exposes
+  `PipelineRuntimeHooks` and a `random_seed` field so tests can freeze clocks and RNG state without monkeypatching globals.
+- Prefer shared helpers such as `expect(...)` for readable failures while keeping Bandit happy.
+
+Document new property suites in the relevant module README or how-to guide. The testing gate expects property coverage for
+encodings, date formats, missing columns, and idempotent pipeline behaviour going forward.
 
 ## Quality gate reminder
 
