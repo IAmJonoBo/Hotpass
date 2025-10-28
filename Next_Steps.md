@@ -70,6 +70,7 @@
 - [x] Introduce Pydantic-validated configuration profiles with opt-in guardrails (Owner: Engineering, Due: 2026-02-28)
 - [x] Refresh CLI documentation, tutorials, and retire legacy commands (Owner: Docs, Due: 2026-03-07)
 - [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
+- [x] Deliver lead scoring validation metrics persistence and documentation guidance (Owner: Engineering & Docs, Due: 2025-12-05)
 
 ## Steps
 
@@ -84,6 +85,7 @@
 - [x] Restore lint/type gates after refactoring observability and orchestration modules
 - [x] Delivered interactive CLI progress reporting and bootstrap plan via `scripts/idp/bootstrap.py`
 - [x] Implement entity registry history merge flow and regression coverage
+- [x] Baseline QA check: investigate pytest polars wheel fallback, existing ruff UP038 lint, and missing requests/PyYAML type stubs before marking gates green
 - [x] Introduced contact validation services, lead scoring, and SSOT confidence exports (2025-10-29)【F:src/hotpass/enrichment/validators/__init__.py†L1-L214】【F:src/hotpass/pipeline/base.py†L92-L930】
 - [x] Delivered intent collectors, pipeline integration, CLI logging, and documentation updates with full QA rerun (pytest, ruff, mypy, bandit, detect-secrets, build) (2025-10-30)【F:src/hotpass/enrichment/intent/runner.py†L1-L226】【F:src/hotpass/pipeline/base.py†L80-L159】【F:docs/how-to-guides/configure-pipeline.md†L1-L210】【622b26†L1-L122】【b1dde6†L1-L2】【6425f3†L1-L2】【5b6dd7†L1-L9】【444a41†L1-L19】【41a163†L1-L68】【10061d†L1-L244】
 - [x] Resolved automation HTTP client/test mypy issues and reran QA suite (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-28)【dc9cad†L1-L159】【c2bfbc†L1-L2】【a3aa76†L1-L2】【b5caad†L1-L8】【116ea0†L1-L21】【b4206a†L1-L63】【de89c8†L1-L216】
@@ -274,6 +276,7 @@
 - Compliance matrices highlight outstanding DSAR automation, supplier assessments, and storage hardening—monitor backlog deadlines and update evidence catalog after each delivery.
 - Gap analysis surfaced orchestration duplication, logging shims, entity history parsing, geospatial scaling, and audit logging coverage gaps—see new tasks for mitigation sequencing.
 - Evidence paths (`data/logs/prefect/`, `data/compliance/dsar/`, `data/inventory/`, `dist/logs/access/`) now ship with READMEs; confirm retention SLAs with Compliance and Platform owners.
+- Baseline QA run (2025-10-28) now green after installing `polars` wheels compatible with CPython 3.13, resolving UP038 lint, and ensuring mypy picks up bundled stubs; training-specific tests skip when `scikit-learn` extra is absent.
 - Vault strategy published; next step is implementing Vault-backed delivery for CI and Prefect plus monitoring audit logs post-cutover.
 - Local Semgrep ruleset focuses on high-risk patterns (eval, shell=True); expand coverage with additional rules as the backlog evolves.
 - Mutation suite now exercises observability toggles in `pipeline_enhanced`; rerun kill rate report after next mutation sweep.

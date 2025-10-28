@@ -46,7 +46,7 @@ def _credential_metadata(
         return None
     aliases = options.get("credential_aliases") if isinstance(options, Mapping) else None
     alias_iter: list[str] | None = None
-    if isinstance(aliases, Sequence) and not isinstance(aliases, (str, bytes)):
+    if isinstance(aliases, Sequence) and not isinstance(aliases, str | bytes):
         alias_iter = [str(alias) for alias in aliases]
     value, cached, reference = store.fetch(provider_name, alias_iter)
     if reference is None:

@@ -37,7 +37,7 @@ def _as_optional_string(value: object | None) -> str | None:
 def _as_float(value: object | None) -> float:
     if value is None:
         return 0.0
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return float(value)
     try:
         return float(str(value))

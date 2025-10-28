@@ -68,6 +68,43 @@ Install the scoring dependencies before running the automation workflow:
 uv sync --extra dev --extra enrichment --extra orchestration --extra ml_scoring
 ```
 
+### Train and evaluate the lead scoring model
+
+The scoring workflow expects a binary target column (for example `won`) and feature
+columns aligned with the `LeadScoringModel` defaults. Train the model on a curated
+dataset and capture evaluation metrics before you enable automation hooks:
+
+```python
+from pathlib import Path
+
+import pandas as pd
+
+from hotpass.transform.scoring import train_lead_scoring_model
+
+dataset = pd.read_csv("./data/training/leads.csv")
+result = train_lead_scoring_model(
+    dataset,
+    target_column="won",
+    metrics_path=Path("./dist/metrics/lead_scoring.json"),
+    metric_thresholds={"roc_auc": 0.7, "recall": 0.6},
+)
+
+print(result.metrics)
+```
+
+Hotpass automatically writes the metrics and metadata payload to
+`dist/metrics/lead_scoring.json` (or the path you provide). The metadata includes the
+feature list, dataset sizes, and the timestamp used for the training run. Downstream
+automation (for example CI jobs or Prefect flows) can parse the JSON artefact and halt
+deployments when a metric drops below the configured threshold. Treat the artefact as a
+living record—commit significant runs alongside code changes so you can monitor model
+drift over time.
+
+When you attach the trained model to daily list generation, the scoring pipeline applies
+the same logistic calibration used by manual lead scoring. The calibration keeps scores
+between 0 and 1 and emphasises separation around 0.5 so operators can compare pipeline
+outputs with historical exports.
+
 ### Canonical schema and migration
 
 Behind the scenes the CLI now converts every profile, config file, and CLI flag into the
