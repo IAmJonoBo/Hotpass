@@ -1,0 +1,30 @@
+id: backfill
+name: hotpass-backfill
+flow: hotpass.orchestration:backfill_pipeline_flow
+description: Weekly archive replay restoring historical input bundles and outputs.
+tags:
+  - hotpass
+  - backfill
+work_pool: default-agent-pool
+parameters:
+  runs: []
+  archive_root: dist/input-archives
+  restore_root: dist/backfill
+  archive_pattern: hotpass-inputs-{date:%Y%m%d}-v{version}.zip
+  base_config:
+    pipeline:
+      dist_dir: dist
+      archive: false
+  parameters:
+    pipeline:
+      backfill: true
+      incremental: false
+      since: null
+  concurrency_limit: 2
+  concurrency_key: hotpass/backfill
+schedule:
+  kind: interval
+  value: 604800
+  timezone: UTC
+  active: false
+concurrency_limit: 2

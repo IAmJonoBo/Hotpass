@@ -24,6 +24,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /how-to-guides/agentic-orchestration
 /how-to-guides/bootstrap-execute-mode
 /how-to-guides/dependency-profiles
+/how-to-guides/manage-prefect-deployments
 ```
 
 ```{toctree}
@@ -86,6 +87,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /adr/0001-qa-tooling
 /adr/0002-governance-automation
 /adr/0003-data-contracts
+/adr/0005-prefect-deployment-manifests
 ```
 
 ```{toctree}

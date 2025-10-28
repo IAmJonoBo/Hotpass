@@ -1,55 +1,6 @@
 prefect-version: "3.4.7"
 name: "hotpass"
-
-deployments:
-  - name: "refinement-daily"
-    description: "Daily refinement pipeline for Hotpass refined dataset."
-    tags:
-      - "hotpass"
-      - "refinement"
-      - "daily"
-    entrypoint: "src/hotpass/orchestration.py:refinement_pipeline_flow"
-    parameters:
-      input_dir: "./data"
-      output_path: "dist/refined/latest.parquet"
-      profile_name: "aviation"
-      archive: true
-      dist_dir: "dist"
-      backfill: false
-      incremental: false
-      since: null
-    schedule:
-      cron: "0 6 * * *"
-      timezone: "UTC"
-      active: true
-    work_pool:
-      name: "default-agent-pool"
-
-  - name: "backfill-weekly"
-    description: "Weekly backfill deployment to restore archived input bundles and regenerate refined outputs."
-    tags:
-      - "hotpass"
-      - "backfill"
-    entrypoint: "src/hotpass/orchestration.py:backfill_pipeline_flow"
-    parameters:
-      runs: []
-      archive_root: "dist/input-archives"
-      restore_root: "dist/backfill"
-      archive_pattern: "hotpass-inputs-{date:%Y%m%d}-v{version}.zip"
-      base_config:
-        pipeline:
-          dist_dir: "dist"
-          archive: false
-      parameters:
-        pipeline:
-          backfill: true
-          incremental: false
-          since: null
-      concurrency_limit: 2
-      concurrency_key: "hotpass/backfill"
-    schedule:
-      interval: 604800
-      timezone: "UTC"
-      active: false
-    work_pool:
-      name: "default-agent-pool"
+description: |
+  Deployment manifests live under ./prefect/*.yaml. Use `uv run hotpass deploy`
+  to apply them. The manifests encode schedules, tags, work pools, and parameter
+  defaults for refinement and backfill flows.

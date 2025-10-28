@@ -170,17 +170,18 @@ uv run hotpass resolve --input-file data/raw.xlsx --output-file data/deduplicate
 
 ### `deploy`
 
-Create or update Prefect deployments for the refinement pipeline.
+Create or update Prefect deployments defined in the repository manifests.
 
 ```bash
-uv run hotpass deploy --name hotpass-refinement --schedule "0 2 * * *"
+uv run hotpass deploy --flow refinement
 ```
 
-| Option             | Description                                                |
-| ------------------ | ---------------------------------------------------------- |
-| `--name TEXT`      | Prefect deployment name (default: `hotpass-refinement`).   |
-| `--schedule CRON`  | Optional cron schedule (`"0 2 * * *"` for daily at 02:00). |
-| `--work-pool TEXT` | Prefect work pool name.                                    |
+| Option               | Description                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| `--flow TEXT`        | Deployment manifest identifier (repeat to register multiple manifests; default registers all). |
+| `--manifest-dir DIR` | Directory containing manifest files (default: `prefect/`).                                 |
+| `--build-image`      | Build the deployment image before registration.                                            |
+| `--push-image`       | Push the built image to the configured registry.                                           |
 
 ### `dashboard`
 

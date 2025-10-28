@@ -20,6 +20,7 @@
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
 - [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28).
+- [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 
 ## Deliverables
 
@@ -33,7 +34,7 @@
 
 - [x] Tests — `uv run pytest --cov=src --cov=tests --cov-report=term-missing` (pass: 355 passed, 5 skipped, 47 warnings in 105.84s; run 2025-10-28).
 - [x] Lint — `uv run ruff check` (pass: clean on 2025-10-28).
-- [x] Format — `uv run ruff format --check` (pass: no reformat needed on 2025-10-28).
+- [ ] Format — `uv run ruff format --check` (fails: repository-wide formatting drift observed when running `make qa`; see `ruff format --check` output for 117 files, run 2025-10-29).【51397d†L1-L117】
 - [x] Types — `uv run mypy src/hotpass/pipeline/config.py scripts/quality/fitness_functions.py` (pass: no issues on 2025-10-28; broader mypy backlog unchanged).
 - [ ] Security — `uv run bandit -r src scripts` (low severity `B110` try/except pass persists in `src/hotpass/orchestration.py:843`, run 2025-10-28).
 - [x] Secrets — `python -m detect_secrets scan src tests scripts` (pass, run 2025-10-28).
@@ -45,10 +46,11 @@
 - `src/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
 - `docs/index.md` — toctree needing schema reference registration.
 - `docs/adr/` — ADR catalog for contract strategy addition.
+- `prefect/` — manifest library consumed by the revamped deployment loader.
 
 ## Risks/Notes
 
 - Prefect pipeline task payload fix merged; continue monitoring downstream Prefect deployments for regressions when toggling `backfill`/`incremental` flags.
-- Ruff formatting gate now green; continue tackling the remaining mypy backlog via feature-focused clusters.
+- Format gate currently red because repository-wide drift predates this work; coordinate with maintainers before applying automated formatting across the codebase.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).

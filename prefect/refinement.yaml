@@ -1,0 +1,23 @@
+id: refinement
+name: hotpass-refinement
+flow: hotpass.orchestration:refinement_pipeline_flow
+description: Daily incremental Hotpass refinement flow.
+tags:
+  - hotpass
+  - refinement
+  - incremental
+work_pool: default-agent-pool
+parameters:
+  input_dir: ./data
+  output_path: dist/refined/latest.parquet
+  profile_name: aviation
+  archive: true
+  dist_dir: dist
+  backfill: false
+  incremental: true
+  since: null
+schedule:
+  kind: cron
+  value: 0 6 * * *
+  timezone: UTC
+  active: true
