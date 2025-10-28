@@ -46,6 +46,7 @@ class DummySession:
             raise AssertionError(f"Unexpected request: {key}") from exc
         response = Response()
         response.status_code = payload["status"]
+        # Direct assignment to _content is necessary here to mock the response body for tests.
         response._content = json.dumps(payload["body"]).encode("utf-8")
         response.headers = CaseInsensitiveDict({"Content-Type": "application/json"})
         response.url = url
