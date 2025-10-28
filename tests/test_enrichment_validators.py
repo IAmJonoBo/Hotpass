@@ -19,9 +19,7 @@ def smtp_validator() -> EmailValidator:
     def fake_dns(domain: str):
         return (f"mx.{domain}",)
 
-    def fake_probe(
-        address: str, domain: str, hosts: tuple[str, ...]
-    ) -> SMTPProbeResult:
+    def fake_probe(address: str, domain: str, hosts: tuple[str, ...]) -> SMTPProbeResult:
         return SMTPProbeResult(
             status=ValidationStatus.UNDELIVERABLE,
             confidence=0.25,

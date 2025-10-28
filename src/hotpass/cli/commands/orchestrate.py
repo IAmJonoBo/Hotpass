@@ -73,14 +73,10 @@ def build(
             "compliance, observability)"
         ),
     )
-    _add_feature_flag(
-        parser, "entity_resolution", "Enable probabilistic entity resolution"
-    )
+    _add_feature_flag(parser, "entity_resolution", "Enable probabilistic entity resolution")
     _add_feature_flag(parser, "geospatial", "Enable geospatial enrichment (geocoding)")
     _add_feature_flag(parser, "enrichment", "Enable web enrichment workflows")
-    _add_feature_flag(
-        parser, "compliance", "Enable compliance tracking and PII detection"
-    )
+    _add_feature_flag(parser, "compliance", "Enable compliance tracking and PII detection")
     _add_feature_flag(
         parser,
         "observability",
@@ -109,12 +105,8 @@ def build(
         action="store_true",
         help="Use Splink for probabilistic linkage (default: rule-based)",
     )
-    parser.add_argument(
-        "--label-studio-url", help="Label Studio base URL for review tasks"
-    )
-    parser.add_argument(
-        "--label-studio-token", help="Label Studio API token for task submission"
-    )
+    parser.add_argument("--label-studio-url", help="Label Studio base URL for review tasks")
+    parser.add_argument("--label-studio-token", help="Label Studio API token for task submission")
     parser.add_argument(
         "--label-studio-project",
         type=int,
@@ -251,9 +243,7 @@ def _resolve_orchestrate_options(
         industry_profile_name = "aviation"
 
     base_features = config.features.model_dump()
-    features = {
-        name: bool(base_features.get(name, False)) for name in FEATURE_FLAG_NAMES
-    }
+    features = {name: bool(base_features.get(name, False)) for name in FEATURE_FLAG_NAMES}
     if config.pipeline.observability is not None:
         features["observability"] = bool(config.pipeline.observability)
     if profile:
@@ -281,9 +271,7 @@ def _resolve_orchestrate_options(
     if isinstance(sensitive_field_values, str):
         sensitive_field_iter = [sensitive_field_values]
     elif isinstance(sensitive_field_values, Iterable):
-        sensitive_field_iter = [
-            str(value) for value in sensitive_field_values if value is not None
-        ]
+        sensitive_field_iter = [str(value) for value in sensitive_field_values if value is not None]
     elif sensitive_field_values is not None:
         sensitive_field_iter = [str(sensitive_field_values)]
     run_sensitive_fields = normalise_sensitive_fields(
@@ -325,11 +313,7 @@ def _build_linkage_config(options: OrchestrateOptions) -> LinkageConfig | None:
     )
 
     label_studio = None
-    if (
-        options.label_studio_url
-        and options.label_studio_token
-        and options.label_studio_project
-    ):
+    if options.label_studio_url and options.label_studio_token and options.label_studio_project:
         label_studio = LabelStudioConfig(
             api_url=options.label_studio_url,
             api_token=options.label_studio_token,
@@ -345,13 +329,10 @@ def _build_linkage_config(options: OrchestrateOptions) -> LinkageConfig | None:
 
     output_root = options.linkage_output_dir
     if output_root is None:
-        output_root = (
-            options.run.canonical_config.pipeline.output_path.parent / "linkage"
-        )
+        output_root = options.run.canonical_config.pipeline.output_path.parent / "linkage"
 
     return LinkageConfig(
-        use_splink=options.linkage_use_splink
-        or options.features.get("entity_resolution", False),
+        use_splink=options.linkage_use_splink or options.features.get("entity_resolution", False),
         thresholds=thresholds,
         label_studio=label_studio,
     ).with_output_root(output_root.resolve())

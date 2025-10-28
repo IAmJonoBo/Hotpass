@@ -60,9 +60,7 @@ class StubExecutor:
         self.calls = 0
         self.last_config: PipelineConfig | None = None
 
-    def run(
-        self, config: PipelineConfig
-    ) -> PipelineResult:  # pragma: no cover - simple helper
+    def run(self, config: PipelineConfig) -> PipelineResult:  # pragma: no cover - simple helper
         self.calls += 1
         self.last_config = config
         if config.progress_listener:
@@ -100,9 +98,7 @@ def test_orchestrator_base_only_records_metrics(tmp_path):
         pii_redaction=PIIRedactionConfig(enabled=False),
         progress_listener=lambda name, payload: events.append((name, payload)),
     )
-    executor = StubExecutor(
-        _base_result(), events=("pipeline.start", "pipeline.completed")
-    )
+    executor = StubExecutor(_base_result(), events=("pipeline.start", "pipeline.completed"))
     orchestrator = PipelineOrchestrator(base_executor=executor)
 
     execution = PipelineExecutionConfig(base_config=config, metrics=metrics)
@@ -195,9 +191,7 @@ def test_orchestrator_preloads_acquisition_when_enabled(tmp_path):
         ) as plan_call,
         patch("hotpass.pipeline.ingestion.run_acquisition_plan") as ingest_call,
     ):
-        ingest_call.side_effect = AssertionError(
-            "ingestion should use preloaded acquisition frame"
-        )
+        ingest_call.side_effect = AssertionError("ingestion should use preloaded acquisition frame")
         execution = PipelineExecutionConfig(
             base_config=config,
             enhanced_config=enhanced,

@@ -45,13 +45,9 @@ class LineageEmitter:
         producer: str | None = None,
     ) -> None:
         self.job_name = job_name
-        self.namespace = namespace or os.getenv(
-            "HOTPASS_LINEAGE_NAMESPACE", DEFAULT_NAMESPACE
-        )
+        self.namespace = namespace or os.getenv("HOTPASS_LINEAGE_NAMESPACE", DEFAULT_NAMESPACE)
         self.run_id = str(run_id or uuid4())
-        self.producer = producer or os.getenv(
-            "HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER
-        )
+        self.producer = producer or os.getenv("HOTPASS_LINEAGE_PRODUCER", DEFAULT_PRODUCER)
         self._inputs: Sequence[InputDataset] | None = None  # type: ignore[assignment]
 
         self._client = self._initialise_client()
@@ -120,9 +116,7 @@ class LineageEmitter:
             inputs=list(self._inputs or []),
             outputs=self._build_datasets(outputs or (), OutputDataset),
         )
-        logger.debug(
-            "Emitting OpenLineage FAIL event for %s: %s", self.job_name, message
-        )
+        logger.debug("Emitting OpenLineage FAIL event for %s: %s", self.job_name, message)
         self._emit(event)
 
     def _initialise_client(self) -> OpenLineageClient | None:
@@ -210,9 +204,7 @@ class NullLineageEmitter(LineageEmitter):
         self._client = None
         self._active = False
 
-    def emit_start(
-        self, *, inputs: Iterable[DatasetSpec] | None = None
-    ) -> None:  # noqa: D401, ARG002
+    def emit_start(self, *, inputs: Iterable[DatasetSpec] | None = None) -> None:  # noqa: D401, ARG002
         return
 
     def emit_complete(

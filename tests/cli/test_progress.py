@@ -24,18 +24,14 @@ class _RecordingTask:
 
 
 class _RecordingProgress:
-    def __init__(
-        self, *args: Any, **kwargs: Any
-    ) -> None:  # noqa: D401 - parity with Progress
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - parity with Progress
         self.tasks: list[_RecordingTask] = []
         self.log_messages: list[str] = []
 
     def __enter__(self) -> _RecordingProgress:
         return self
 
-    def __exit__(
-        self, exc_type, exc, tb
-    ) -> None:  # pragma: no cover - no cleanup needed
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - no cleanup needed
         return None
 
     def add_task(self, description: str, total: int = 1) -> int:
@@ -84,12 +80,8 @@ def test_pipeline_progress_throttles_high_volume_events() -> None:
 
     recording_progress: _RecordingProgress = progress._progress  # type: ignore[assignment]
     aggregate_task = next(
-        task
-        for task in recording_progress.tasks
-        if task.description == "Aggregating organisations"
+        task for task in recording_progress.tasks if task.description == "Aggregating organisations"
     )
     assert aggregate_task.completed == aggregate_task.total
-    suppression_logs = [
-        msg for msg in recording_progress.log_messages if "Suppressed" in msg
-    ]
+    suppression_logs = [msg for msg in recording_progress.log_messages if "Suppressed" in msg]
     assert suppression_logs, "high volume updates should emit suppression summary"

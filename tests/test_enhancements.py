@@ -52,9 +52,7 @@ def test_generate_recommendations_poor_quality():
 
     assert len(recommendations) > 0
     # Should have critical or warning recommendations
-    assert any(
-        "critical" in rec.lower() or "warning" in rec.lower() for rec in recommendations
-    )
+    assert any("critical" in rec.lower() or "warning" in rec.lower() for rec in recommendations)
 
 
 def test_pipeline_with_formatting(sample_data_dir: Path, tmp_path: Path):

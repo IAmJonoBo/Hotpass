@@ -30,9 +30,7 @@ def add_normalized_columns(df: pd.DataFrame) -> pd.DataFrame:
     working["linkage_slug"] = working.get("organization_slug")
     working["linkage_slug"] = working["linkage_slug"].apply(slugify)
 
-    def _norm_or_fallback(
-        series: pd.Series, func: Callable[[str | None], str | None]
-    ) -> pd.Series:
+    def _norm_or_fallback(series: pd.Series, func: Callable[[str | None], str | None]) -> pd.Series:
         return series.apply(lambda value: func(value) if pd.notna(value) else None)
 
     working["linkage_name"] = working.get(NAME_COLUMN, pd.Series(dtype="object")).apply(
@@ -99,9 +97,7 @@ def register_duckdb_functions(api: object) -> None:
         if create_function is None:
             return
 
-        def register(
-            name: str, func: Callable[[str | None, str | None], float]
-        ) -> None:
+        def register(name: str, func: Callable[[str | None, str | None], float]) -> None:
             create_function(name, func, return_type="DOUBLE")
 
     try:

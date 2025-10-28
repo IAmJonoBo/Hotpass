@@ -20,9 +20,7 @@ class FeatureContext:
 
     base_config: PipelineConfig
     enhanced_config: EnhancedPipelineConfig
-    trace_factory: TraceFactory = field(
-        default_factory=lambda: (lambda _name: nullcontext())
-    )
+    trace_factory: TraceFactory = field(default_factory=lambda: (lambda _name: nullcontext()))
     metrics: PipelineMetrics | None = None
 
 

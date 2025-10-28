@@ -150,9 +150,7 @@ class PIIDetector:
             return []
 
         try:
-            results = self.analyzer.analyze(
-                text=text, language=language, score_threshold=threshold
-            )
+            results = self.analyzer.analyze(text=text, language=language, score_threshold=threshold)
 
             return [
                 {
@@ -445,9 +443,7 @@ class POPIAPolicy:
                 "contact_primary_phone": True,
                 "contact_primary_name": True,
             }
-        self.consent_status_field = self.config.get(
-            "consent_status_field", "consent_status"
-        )
+        self.consent_status_field = self.config.get("consent_status_field", "consent_status")
         self.consent_granted_statuses = {
             status.lower()
             for status in self.config.get(
@@ -555,9 +551,7 @@ class POPIAPolicy:
 
         # Check for compliance issues
         if pii_fields and not consent_required_fields:
-            compliance_issues.append(
-                "PII fields present but no consent requirements configured"
-            )
+            compliance_issues.append("PII fields present but no consent requirements configured")
 
         if not retention_policies:
             compliance_issues.append("No retention policies configured for any fields")
@@ -577,8 +571,7 @@ class POPIAPolicy:
                     applicable_fields = [
                         field
                         for field in consent_required_fields
-                        if field in df.columns
-                        and self._value_requires_consent(row.get(field))
+                        if field in df.columns and self._value_requires_consent(row.get(field))
                     ]
 
                     if not applicable_fields:
@@ -606,9 +599,7 @@ class POPIAPolicy:
             compliance_issues.append(
                 f"{len(consent_violations)} records require consent without a granted status"
             )
-            logger.error(
-                "Detected %s consent validation violations", len(consent_violations)
-            )
+            logger.error("Detected %s consent validation violations", len(consent_violations))
 
         return {
             "generated_at": datetime.now().isoformat(),

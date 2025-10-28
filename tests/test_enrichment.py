@@ -307,9 +307,7 @@ def test_enrich_dataframe_with_websites_concurrent_runs_tasks_in_parallel(monkey
 
     monkeypatch.setattr(enrichment, "extract_website_content", fake_extract)
 
-    result = enrich_dataframe_with_websites_concurrent(
-        df, website_column="website", concurrency=4
-    )
+    result = enrich_dataframe_with_websites_concurrent(df, website_column="website", concurrency=4)
 
     assert peak_active >= 2, "Expected concurrent execution for website enrichment"
     assert result["website_enriched"].sum() == 4
@@ -348,9 +346,7 @@ def test_enrich_dataframe_with_registries(mock_enrich_registry, temp_cache):
         },
     ]
 
-    result_df = enrich_dataframe_with_registries(
-        df, registry_type="cipc", cache=temp_cache
-    )
+    result_df = enrich_dataframe_with_registries(df, registry_type="cipc", cache=temp_cache)
 
     assert "registry_type" in result_df.columns
     assert "registry_status" in result_df.columns
@@ -395,9 +391,7 @@ def test_enrich_dataframe_with_registries_null_names(mock_enrich_registry, temp_
     assert result_df["registry_enriched"].sum() == 1
 
 
-@pytest.mark.parametrize(
-    "collector_name", ["news", "hiring", "traffic", "tech-adoption"]
-)
+@pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
 def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
     """Each built-in collector should emit at least one signal."""
 
@@ -516,12 +510,8 @@ def test_run_intent_plan_generates_digest() -> None:
     assert isinstance(digest, pd.DataFrame)
     assert not digest.empty
     assert "intent_signal_score" in digest.columns
-    aero_score = digest.loc[
-        digest["target_slug"] == "aero-school", "intent_signal_score"
-    ].iloc[0]
-    heli_score = digest.loc[
-        digest["target_slug"] == "heli-ops", "intent_signal_score"
-    ].iloc[0]
+    aero_score = digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
+    heli_score = digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0]
     assert aero_score > heli_score
 
 
@@ -581,9 +571,7 @@ def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
                             {
                                 "headline": "Aero School modernises ops",
                                 "intent": 0.4,
-                                "timestamp": (
-                                    issued + timedelta(minutes=5)
-                                ).isoformat(),
+                                "timestamp": (issued + timedelta(minutes=5)).isoformat(),
                                 "url": "https://example.test/aero/modern",
                             }
                         ]

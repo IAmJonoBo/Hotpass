@@ -4,6 +4,17 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from tests._telemetry_stubs import (
+    DummyConsoleMetricExporter,
+    DummyConsoleSpanExporter,
+    DummyMeterProvider,
+    DummyMetricReader,
+    DummyMetrics,
+    DummyResource,
+    DummySpanProcessor,
+    DummyTracerProvider,
+    build_modules,
+)
 
 import hotpass.observability as observability
 from hotpass.data_sources.agents import (
@@ -19,17 +30,6 @@ from hotpass.telemetry.registry import (
     TelemetryModules,
     TelemetryPolicy,
     TelemetryRegistry,
-)
-from tests._telemetry_stubs import (
-    DummyConsoleMetricExporter,
-    DummyConsoleSpanExporter,
-    DummyMeterProvider,
-    DummyMetricReader,
-    DummyMetrics,
-    DummyResource,
-    DummySpanProcessor,
-    DummyTracerProvider,
-    build_modules,
 )
 
 
@@ -103,9 +103,7 @@ def _build_sample_plan() -> AcquisitionPlan:
                     ProviderDefinition(name="linkedin", options=linkedin_options),
                     ProviderDefinition(name="clearbit", options=clearbit_options),
                 ),
-                targets=(
-                    TargetDefinition(identifier="hotpass", domain="hotpass.example"),
-                ),
+                targets=(TargetDefinition(identifier="hotpass", domain="hotpass.example"),),
             ),
         ),
     )
@@ -160,13 +158,9 @@ def test_run_plan_emits_telemetry() -> None:
     assert agent_span.attributes["hotpass.acquisition.agent"] == "prospector"
     assert agent_span.attributes["hotpass.acquisition.records"] >= 1
 
-    provider_spans = [
-        span for span in tracer.spans if span.name == "acquisition.provider"
-    ]
+    provider_spans = [span for span in tracer.spans if span.name == "acquisition.provider"]
     assert provider_spans
-    providers_seen = {
-        span.attributes["hotpass.acquisition.provider"] for span in provider_spans
-    }
+    providers_seen = {span.attributes["hotpass.acquisition.provider"] for span in provider_spans}
     assert providers_seen == {"linkedin", "clearbit"}
 
     metrics = observability.get_pipeline_metrics()

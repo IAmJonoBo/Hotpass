@@ -161,9 +161,7 @@ def sample_data_dir(tmp_path: Path) -> Path:
         }
     )
 
-    with pd.ExcelWriter(
-        data_dir / "SACAA Flight Schools - Refined copy__CLEANED.xlsx"
-    ) as writer:
+    with pd.ExcelWriter(data_dir / "SACAA Flight Schools - Refined copy__CLEANED.xlsx") as writer:
         sacaa_cleaned.to_excel(writer, sheet_name="Cleaned", index=False)
 
     return data_dir

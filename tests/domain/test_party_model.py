@@ -125,8 +125,7 @@ def test_build_party_store_from_refined_creates_entities() -> None:
         if method.party_id == contact.party_id
     )
     assert any(
-        role.object_party_id == org.party_id
-        and role.subject_party_id == contact.party_id
+        role.object_party_id == org.party_id and role.subject_party_id == contact.party_id
         for role in store.roles
     )
 

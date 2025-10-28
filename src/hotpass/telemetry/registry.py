@@ -66,15 +66,11 @@ class TelemetryPolicy:
             errors.append("service_name is required")
 
         exporters = config.exporters or ("console",)
-        invalid = [
-            exporter for exporter in exporters if exporter not in self.allowed_exporters
-        ]
+        invalid = [exporter for exporter in exporters if exporter not in self.allowed_exporters]
         if invalid:
             errors.append(f"unsupported exporters: {', '.join(sorted(invalid))}")
 
-        env_source = (
-            config.environment or os.getenv("HOTPASS_ENVIRONMENT") or "development"
-        )
+        env_source = config.environment or os.getenv("HOTPASS_ENVIRONMENT") or "development"
         environment = env_source.strip()
         if not environment:
             errors.append("environment is required")
@@ -107,9 +103,7 @@ class TelemetryRegistry:
         modules: TelemetryModules,
         policy: TelemetryPolicy | None = None,
         metrics_factory: Callable[[Any, Callable[[float], Any]], Any],
-        register_shutdown: Callable[
-            [Callable[[], None]], None
-        ] = _default_register_shutdown,
+        register_shutdown: Callable[[Callable[[], None]], None] = _default_register_shutdown,
     ) -> None:
         self.modules = modules
         self._policy = policy or TelemetryPolicy()
@@ -238,9 +232,7 @@ class TelemetryRegistry:
             if name == "console":
                 exporter = self._safe_metric_exporter()
                 readers.append(
-                    self.modules.metric_reader_cls(
-                        exporter, export_interval_millis=60000
-                    )
+                    self.modules.metric_reader_cls(exporter, export_interval_millis=60000)
                 )
         return readers
 
@@ -283,9 +275,7 @@ class _SafeExporterProxy:
         self._delegate = delegate
         self._fallback = fallback
 
-    def export(
-        self, *args: Any, **kwargs: Any
-    ) -> Any:  # pragma: no cover - runtime guard
+    def export(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - runtime guard
         try:
             return self._delegate.export(*args, **kwargs)
         except ValueError as exc:
@@ -337,18 +327,14 @@ def _build_noop_modules() -> TelemetryModules:
         def set_attribute(self, *_: Any, **__: Any) -> None:  # pragma: no cover - noop
             return None
 
-        def record_exception(
-            self, *_: Any, **__: Any
-        ) -> None:  # pragma: no cover - noop
+        def record_exception(self, *_: Any, **__: Any) -> None:  # pragma: no cover - noop
             return None
 
         def set_status(self, *_: Any, **__: Any) -> None:  # pragma: no cover - noop
             return None
 
     class _NoopTracer:
-        def start_as_current_span(
-            self, *_: Any, **__: Any
-        ) -> Any:  # pragma: no cover - noop
+        def start_as_current_span(self, *_: Any, **__: Any) -> Any:  # pragma: no cover - noop
             span = _NoopSpan()
             return SimpleNamespace(
                 __enter__=lambda: span,
