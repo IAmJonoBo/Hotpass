@@ -5,8 +5,12 @@
 import importlib
 import sys
 import types
+import zipfile
+from contextlib import asynccontextmanager
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -14,15 +18,25 @@ import pytest
 
 from hotpass.config_schema import HotpassConfig
 
+if TYPE_CHECKING:
+    from hotpass.orchestration import PipelineRunOptions as PipelineRunOptionsType
+    from hotpass.orchestration import PipelineRunSummary as PipelineRunSummaryType
+
 pytest.importorskip("frictionless")
 
 orchestration = importlib.import_module("hotpass.orchestration")
 
 PipelineOrchestrationError = orchestration.PipelineOrchestrationError
 PipelineRunOptions = orchestration.PipelineRunOptions
+PipelineRunSummary = orchestration.PipelineRunSummary
+backfill_pipeline_flow = orchestration.backfill_pipeline_flow
 refinement_pipeline_flow = orchestration.refinement_pipeline_flow
 run_pipeline_once = orchestration.run_pipeline_once
 run_pipeline_task = orchestration.run_pipeline_task
+
+if not TYPE_CHECKING:
+    PipelineRunOptionsType = PipelineRunOptions  # type: ignore[assignment]
+    PipelineRunSummaryType = PipelineRunSummary  # type: ignore[assignment]
 
 
 @pytest.fixture(autouse=True)
@@ -31,6 +45,22 @@ def reset_orchestration(monkeypatch):
 
     monkeypatch.setattr(orchestration, "flow", orchestration.flow, raising=False)
     monkeypatch.setattr(orchestration, "task", orchestration.task, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def disable_prefect_concurrency(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Prevent tests from starting ephemeral Prefect servers."""
+
+    @asynccontextmanager
+    async def _noop_concurrency(*_args, **_kwargs):  # pragma: no cover - helper
+        yield
+
+    monkeypatch.setattr(
+        orchestration,
+        "prefect_concurrency",
+        _noop_concurrency,
+        raising=False,
+    )
 
 
 @pytest.fixture
@@ -228,3 +258,186 @@ def test_deploy_pipeline_invokes_prefect_serve(monkeypatch):
     assert deployment.name == "demo"
     assert deployment.work_pool_name == "inbox"
     assert deployment.schedule.cron == "0 12 * * *"
+
+
+def _write_archive(
+    archive_root: Path, run_date: date, version: str, payload: str = "sample"
+) -> Path:
+    archive_root.mkdir(parents=True, exist_ok=True)
+    archive_path = archive_root / f"hotpass-inputs-{run_date:%Y%m%d}-v{version}.zip"
+    staging_dir = archive_root / f"staging-{run_date:%Y%m%d}-{version}"
+    staging_dir.mkdir(exist_ok=True)
+    source_file = staging_dir / "input.csv"
+    source_file.write_text(payload)
+    with zipfile.ZipFile(archive_path, "w") as zip_handle:
+        zip_handle.write(source_file, arcname="input.csv")
+    return archive_path
+
+
+def test_backfill_flow_processes_multiple_runs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    archive_root = tmp_path / "archives"
+    restore_root = tmp_path / "rehydrated"
+    base_config = HotpassConfig().merge(
+        {"pipeline": {"output_path": tmp_path / "outputs" / "refined.xlsx", "archive": False}}
+    )
+    runs = [
+        {"run_date": "2024-01-01", "version": "v1"},
+        {"run_date": "2024-01-02", "version": "v2"},
+    ]
+    for run in runs:
+        _write_archive(
+            archive_root,
+            date.fromisoformat(run["run_date"]),
+            run["version"],
+            payload=run["version"],
+        )
+
+    captured_configs: list[HotpassConfig] = []
+
+    def fake_run_pipeline_once(
+        options: PipelineRunOptionsType,
+    ) -> PipelineRunSummaryType:
+        captured_configs.append(options.config)
+        pipeline_output = options.config.pipeline.output_path
+        return PipelineRunSummary(
+            success=True,
+            total_records=5,
+            elapsed_seconds=1.5,
+            output_path=pipeline_output,
+            quality_report={"rows": 5},
+        )
+
+    monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
+
+    result = backfill_pipeline_flow(
+        runs=runs,
+        archive_root=str(archive_root),
+        restore_root=str(restore_root),
+        base_config=base_config.model_dump(mode="python"),
+    )
+
+    assert len(captured_configs) == 2
+    assert result["metrics"]["total_runs"] == 2
+    assert result["metrics"]["successful_runs"] == 2
+    assert result["metrics"]["total_records"] == 10
+
+    for run, config in zip(runs, captured_configs, strict=True):
+        extracted = restore_root / f"{run['run_date']}--{run['version']}"
+        assert config.pipeline.input_dir == extracted
+        assert (extracted / "input.csv").read_text() == run["version"]
+        expected_output = (
+            restore_root / "outputs" / f"refined-{run['run_date']}-{run['version']}.xlsx"
+        )
+        assert config.pipeline.output_path == expected_output
+
+    assert all(run_entry["success"] for run_entry in result["runs"])
+
+
+def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    archive_root = tmp_path / "archives"
+    restore_root = tmp_path / "rehydrated"
+    run_info = {"run_date": "2024-02-01", "version": "baseline"}
+    _write_archive(
+        archive_root,
+        date.fromisoformat(run_info["run_date"]),
+        run_info["version"],
+        payload="initial",
+    )
+
+    call_paths: list[Path] = []
+
+    def fake_run_pipeline_once(
+        options: PipelineRunOptionsType,
+    ) -> PipelineRunSummaryType:
+        call_paths.append(options.config.pipeline.input_dir)
+        return PipelineRunSummary(
+            success=True,
+            total_records=3,
+            elapsed_seconds=1.0,
+            output_path=options.config.pipeline.output_path,
+            quality_report={"rows": 3},
+        )
+
+    monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
+
+    backfill_pipeline_flow(
+        runs=[run_info],
+        archive_root=str(archive_root),
+        restore_root=str(restore_root),
+        base_config=HotpassConfig().model_dump(mode="python"),
+    )
+
+    extracted = call_paths[0]
+    marker = extracted / "leftover.txt"
+    marker.write_text("stale")
+
+    # Update archive payload to ensure rehydration refreshes content
+    _write_archive(
+        archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"], payload="fresh"
+    )
+
+    backfill_pipeline_flow(
+        runs=[run_info],
+        archive_root=str(archive_root),
+        restore_root=str(restore_root),
+        base_config=HotpassConfig().model_dump(mode="python"),
+    )
+
+    assert marker.exists() is False
+    assert (extracted / "input.csv").read_text() == "fresh"
+    assert len(call_paths) == 2
+
+
+def test_backfill_flow_missing_archive(tmp_path: Path) -> None:
+    restore_root = tmp_path / "rehydrated"
+
+    with pytest.raises(PipelineOrchestrationError):
+        backfill_pipeline_flow(
+            runs=[{"run_date": "2024-03-01", "version": "unknown"}],
+            archive_root=str(tmp_path / "archives"),
+            restore_root=str(restore_root),
+        )
+
+
+def test_backfill_flow_falls_back_when_concurrency_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    archive_root = tmp_path / "archives"
+    restore_root = tmp_path / "rehydrated"
+    run_info = {"run_date": "2024-04-01", "version": "replay"}
+    _write_archive(archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"])
+
+    calls: list[Path] = []
+
+    def fake_run_pipeline_once(
+        options: PipelineRunOptionsType,
+    ) -> PipelineRunSummaryType:
+        calls.append(options.config.pipeline.input_dir)
+        return PipelineRunSummary(
+            success=True,
+            total_records=2,
+            elapsed_seconds=0.5,
+            output_path=options.config.pipeline.output_path,
+            quality_report={"rows": 2},
+        )
+
+    @asynccontextmanager
+    async def _failing_concurrency(*_args, **_kwargs):
+        raise RuntimeError("test concurrency failure")
+        yield
+
+    monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _failing_concurrency, raising=False)
+
+    result = backfill_pipeline_flow(
+        runs=[run_info],
+        archive_root=str(archive_root),
+        restore_root=str(restore_root),
+        concurrency_limit=1,
+    )
+
+    assert len(calls) == 1
+    assert result["metrics"]["total_runs"] == 1

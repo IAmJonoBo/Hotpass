@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import time
-from collections.abc import Callable, Mapping, MutableSequence
+import zipfile
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
@@ -75,6 +77,16 @@ else:
 
     def task(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
         return _noop_prefect_decorator(*_args, **_kwargs)
+
+
+prefect_concurrency: Callable[..., Any] | None
+
+try:  # pragma: no cover - optional Prefect feature
+    from prefect.concurrency.asyncio import concurrency as _prefect_concurrency
+except Exception:  # pragma: no cover - Prefect may be unavailable in tests
+    prefect_concurrency = None
+else:
+    prefect_concurrency = cast(Callable[..., Any], _prefect_concurrency)
 
 
 if _prefect_get_run_logger is not None:
@@ -506,6 +518,226 @@ def run_pipeline_task(
     )
 
     return summary.to_payload()
+
+
+def _lookup_nested(mapping: Mapping[str, Any] | None, keys: tuple[str, ...]) -> Any | None:
+    current: Any = mapping
+    for key in keys:
+        if not isinstance(current, Mapping) or key not in current:
+            return None
+        current = current[key]
+    return current
+
+
+def _sanitise_component(value: str) -> str:
+    cleaned = value.replace("\\", "-").replace("/", "-").strip()
+    return cleaned or "default"
+
+
+def _format_archive_path(root: Path, pattern: str, run_date: date, version: str) -> Path:
+    try:
+        relative = pattern.format(date=run_date, version=version)
+    except Exception as exc:  # pragma: no cover - formatting errors are unexpected
+        msg = f"Invalid archive pattern '{pattern}': {exc}"
+        raise PipelineOrchestrationError(msg) from exc
+    return (root / Path(relative)).expanduser()
+
+
+@task(name="rehydrate-archive", retries=2, retry_delay_seconds=5)
+def rehydrate_archive_task(archive_path: Path, restore_dir: Path) -> Path:
+    if not archive_path.exists():
+        msg = f"Archive not found: {archive_path}"
+        raise FileNotFoundError(msg)
+    if restore_dir.exists():
+        shutil.rmtree(restore_dir)
+    restore_dir.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(archive_path, "r") as zip_handle:
+        zip_handle.extractall(restore_dir)
+    return restore_dir
+
+
+def _execute_with_concurrency(
+    key: str,
+    slots: int,
+    callback: Callable[[], PipelineRunSummary],
+) -> PipelineRunSummary:
+    if prefect_concurrency is None or slots <= 0:
+        return callback()
+
+    try:
+        import anyio
+    except Exception:  # pragma: no cover - fallback when anyio missing
+        return callback()
+
+    async def _runner() -> PipelineRunSummary:
+        try:
+            async with prefect_concurrency(key, occupy=slots):  # type: ignore[misc]
+                return await anyio.to_thread.run_sync(callback)
+        except Exception as exc:  # pragma: no cover - concurrency fallback
+            _safe_log(
+                logger,
+                logging.WARNING,
+                "Prefect concurrency unavailable for key %s (%s); running synchronously.",
+                key,
+                exc,
+            )
+            return await anyio.to_thread.run_sync(callback)
+
+    try:
+        return anyio.run(_runner)
+    except Exception as exc:  # pragma: no cover - execution fallback
+        _safe_log(
+            logger,
+            logging.WARNING,
+            "Failed to acquire Prefect concurrency for key %s (%s); running synchronously.",
+            key,
+            exc,
+        )
+        return callback()
+
+
+def _coerce_run_date(raw: str | date) -> date:
+    if isinstance(raw, date):
+        return raw
+    try:
+        return date.fromisoformat(str(raw))
+    except ValueError as exc:
+        msg = f"Invalid run_date value: {raw}"
+        raise PipelineOrchestrationError(msg) from exc
+
+
+@flow(name="hotpass-backfill", log_prints=True, validate_parameters=False)
+def backfill_pipeline_flow(
+    runs: Sequence[Mapping[str, Any]] | Sequence[dict[str, Any]],
+    *,
+    archive_root: str,
+    restore_root: str,
+    archive_pattern: str = "hotpass-inputs-{date:%Y%m%d}-v{version}.zip",
+    base_config: Mapping[str, Any] | None = None,
+    parameters: Mapping[str, Any] | None = None,
+    concurrency_limit: int = 1,
+    concurrency_key: str = "hotpass/backfill",
+) -> dict[str, Any]:
+    logger = get_run_logger()
+
+    runs_normalised: list[dict[str, str]] = []
+    for entry in runs:
+        run_date_raw = entry.get("run_date")
+        version_raw = entry.get("version")
+        if run_date_raw is None or version_raw is None:
+            msg = "Each run must include 'run_date' and 'version' keys"
+            raise PipelineOrchestrationError(msg)
+        run_date_value = _coerce_run_date(run_date_raw)
+        version_value = str(version_raw)
+        runs_normalised.append({"run_date": run_date_value.isoformat(), "version": version_value})
+
+    archive_root_path = Path(archive_root)
+    restore_root_path = Path(restore_root)
+    restore_root_path.mkdir(parents=True, exist_ok=True)
+    outputs_root = restore_root_path / "outputs"
+    outputs_root.mkdir(parents=True, exist_ok=True)
+
+    from hotpass.config_schema import HotpassConfig
+
+    if base_config is None:
+        base_payload: Mapping[str, Any] = HotpassConfig().model_dump(mode="python")
+    elif isinstance(base_config, Mapping):
+        base_payload = base_config
+    else:
+        msg = "base_config must be a mapping if provided"
+        raise PipelineOrchestrationError(msg)
+
+    total_records = 0
+    total_elapsed = 0.0
+    successes = 0
+    run_payloads: list[dict[str, Any]] = []
+
+    for run in runs_normalised:
+        iso_date = run["run_date"]
+        version = run["version"]
+        run_date_value = _coerce_run_date(iso_date)
+        archive_path = _format_archive_path(
+            archive_root_path,
+            archive_pattern,
+            run_date_value,
+            version,
+        )
+        restore_dir = restore_root_path / f"{iso_date}--{_sanitise_component(version)}"
+
+        _safe_log(
+            logger,
+            logging.INFO,
+            "Rehydrating archive %s to %s",
+            archive_path,
+            restore_dir,
+        )
+
+        try:
+            extracted = rehydrate_archive_task(archive_path, restore_dir)
+        except FileNotFoundError as exc:
+            msg = f"Archived inputs not found for {iso_date} version {version}: {archive_path}"
+            raise PipelineOrchestrationError(msg) from exc
+        except Exception as exc:  # pragma: no cover - defensive guard
+            msg = f"Failed to extract archive for {iso_date} version {version}: {exc}"
+            raise PipelineOrchestrationError(msg) from exc
+
+        config_model = HotpassConfig.model_validate(dict(base_payload))
+        if parameters:
+            config_model = config_model.merge(parameters)
+
+        output_path = outputs_root / f"refined-{iso_date}-{_sanitise_component(version)}.xlsx"
+        run_updates: dict[str, Any] = {
+            "pipeline": {
+                "input_dir": extracted,
+                "output_path": output_path,
+                "dist_dir": outputs_root,
+            }
+        }
+        if _lookup_nested(parameters, ("pipeline", "archive")) is None:
+            run_updates["pipeline"]["archive"] = False
+
+        config_model = config_model.merge(run_updates)
+
+        def _invoke(config_snapshot: HotpassConfig = config_model) -> PipelineRunSummary:
+            profile_name = None
+            profile = getattr(config_snapshot, "profile", None)
+            if profile is not None:
+                profile_name = getattr(profile, "name", None)
+            return run_pipeline_once(
+                PipelineRunOptions(
+                    config=config_snapshot,
+                    profile_name=profile_name,
+                )
+            )
+
+        summary = _execute_with_concurrency(concurrency_key, concurrency_limit, _invoke)
+
+        total_records += summary.total_records
+        total_elapsed += summary.elapsed_seconds
+        if summary.success:
+            successes += 1
+
+        run_payload = summary.to_payload()
+        run_payload.update({"run_date": iso_date, "version": version})
+        run_payloads.append(run_payload)
+
+    metrics = {
+        "total_runs": len(run_payloads),
+        "successful_runs": successes,
+        "failed_runs": len(run_payloads) - successes,
+        "total_records": total_records,
+        "total_elapsed_seconds": total_elapsed,
+    }
+
+    _safe_log(
+        logger,
+        logging.INFO,
+        "Completed backfill window - %d runs, %d successes",
+        metrics["total_runs"],
+        metrics["successful_runs"],
+    )
+
+    return {"runs": run_payloads, "metrics": metrics}
 
 
 @flow(name="hotpass-refinement-pipeline", log_prints=True, validate_parameters=False)

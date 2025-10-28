@@ -20,8 +20,7 @@ Use this guide when you need to promote Hotpass from ad-hoc execution to a sched
 uv run hotpass deploy \
   --name hotpass-prod \
   --profile aviation \
-  --schedule "0 2 * * *" \
-  --concurrency-limit 1
+  --schedule "0 2 * * *"
 ```
 
 The deployment packages the repository, registers it with Prefect, and schedules nightly runs. Use the `--tag` flag to group deployments by environment.
@@ -108,6 +107,36 @@ uv run hotpass orchestrate --profile aviation --enable-observability
 Use the Prefect UI or the OTLP backend (Grafana, Datadog, etc.) to verify metrics such as `hotpass.pipeline.duration`, `hotpass.validation.failures`, and `hotpass.enrichment.coverage`. When
 customising exporters, inject a bespoke `TelemetryRegistry` via `hotpass.observability.use_registry`
 and include a call to `shutdown_observability()` in CLI scripts to flush readers.
+
+## Replay archived inputs with Prefect backfills
+
+Fill historical gaps by replaying archived spreadsheets through the pipeline. The `backfill` command
+rehydrates zipped inputs, honours concurrency guardrails, and emits the same metrics that scheduled
+runs produce.
+
+1. Store archives in a predictable directory (for example, `dist/input-archives/`).
+2. Name bundles consistently such as `hotpass-inputs-YYYYMMDD-v{version}.zip` or adjust the
+   `orchestrator.backfill.archive_pattern` setting to match your layout.
+3. Execute the backfill command, overriding dates or versions as required:
+
+```bash
+uv run hotpass backfill \
+  --config configs/prod.json \
+  --start-date 2024-01-01 \
+  --end-date 2024-01-03 \
+  --version v1 \
+  --version v2 \
+  --archive-root /data/hotpass/input-archives \
+  --restore-root /tmp/hotpass/backfill
+```
+
+Each run extracts to `<restore-root>/YYYY-MM-DD--version/`, writes refined workbooks under
+`<restore-root>/outputs/`, and reports summary metrics to Prefect. Concurrency is governed by the
+canonical configuration (`orchestrator.backfill.concurrency_limit` and `concurrency_key`), aligning
+with the operational guardrails described in [Prefect governance](../governance/pr-playbook.md#prefect-deployments).
+Setting `concurrency_limit` to `0` or leaving Prefect unavailable forces sequential execution, and the
+flow automatically falls back to synchronous runs if Prefect cannot acquire slots—useful for CI or
+air-gapped environments.
 
 ## Troubleshooting
 

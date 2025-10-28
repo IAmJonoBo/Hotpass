@@ -37,6 +37,8 @@
 - [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31)
 - [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31)
 - [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15)
+- [x] Harden Prefect backfill concurrency fallback for CLI + flow coverage (Owner: Engineering, Due: 2025-12-20)
+- [ ] Validate Prefect backfill deployment concurrency guardrails in staging (Owner: Platform, Due: 2026-01-05)
 - [x] Implement registry provider adapters for CIPC/SACAA with throttling, caching, and normalised schemas (Owner: Engineering, Due: 2026-01-05)
 - [x] Extend registry enrichment dispatch with structured results and resilient error handling (Owner: Engineering, Due: 2026-01-05)
 - [x] Document registry configuration, credentials, and policy expectations for new providers (Owner: Docs & Compliance, Due: 2026-01-05)
@@ -198,6 +200,7 @@
 - [x] Re-reviewed README, configuration how-to, CODEOWNERS, PR template, and acquisition policy to frame registry integration scope and surface assumptions/unknowns (2025-10-28)【F:README.md†L1-L48】【F:docs/how-to-guides/configure-pipeline.md†L1-L178】【F:.github/CODEOWNERS†L1-L14】【F:.github/PULL_REQUEST_TEMPLATE.md†L1-L23】【F:policy/acquisition/providers.json†L1-L20】
 - [x] Re-established clean QA baseline in workspace (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) ahead of registry adapter work (2025-10-28)【3e4047†L1-L87】【5835c8†L1-L2】【fc57d7†L1-L2】【30993d†L1-L9】【d15fda†L1-L21】【bcb237†L1-L79】【714127†L1-L118】
 - [x] Delivered registry adapters, dispatch wiring, integration fixtures, documentation, and policy updates with full QA rerun (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-28)【F:src/hotpass/enrichment/registries/base.py†L1-L208】【F:src/hotpass/enrichment/registries/cipc.py†L19-L140】【F:src/hotpass/enrichment/registries/sacaa.py†L19-L133】【F:tests/enrichment/test_registries.py†L1-L175】【F:docs/how-to-guides/configure-pipeline.md†L184-L225】【F:policy/acquisition/providers.json†L24-L36】【d1593b†L1-L126】【7d9eff†L1-L2】【15749f†L1-L2】【d9011e†L1-L7】【c8e979†L1-L23】【d326b7†L1-L65】【3ee96d†L1-L179】
+- [x] Implemented CLI backfill concurrency overrides, Prefect fallback guards, and documentation updates; reran pytest w/ coverage, ruff check, mypy, bandit, detect-secrets, and uv build (2025-10-28)【030c9a†L1-L219】【34c08c†L1-L58】【1dbb84†L1-L18】【565977†L1-L19】【0bca7b†L1-L69】【3f85e6†L1-L176】【F:src/hotpass/cli/commands/backfill.py†L1-L213】【F:src/hotpass/orchestration.py†L1-L760】【F:tests/cli/test_backfill.py†L1-L168】【F:tests/test_orchestration.py†L1-L360】【F:docs/how-to-guides/orchestrate-and-observe.md†L100-L140】【F:docs/governance/pr-playbook.md†L1-L120】
 
 ## Quality Gates
 
@@ -256,6 +259,7 @@
 - Observability exporters now suppress shutdown ValueErrors; monitor CI logs after enabling full telemetry backends.
 - Docker build validation now executes in CI via workflow docker build step; monitor runtime and cache behaviour in hosted runners.
 - Prefect telemetry exporters still raise SSL errors when orchestrating flows in offline environments; needs hardened configuration or opt-out for air-gapped runs.
+- Prefect backfill flows now fall back to synchronous execution when concurrency slots are unavailable; surface warnings in runbooks and monitor Prefect API health before reenabling shared slots.
 - Baseline QA suite now passes with Splink linkage extras; ensure `python-stdnum`/`nameparser` remain available in packaged environments to avoid regressions.【e8ff23†L1-L84】
 - Fitness function guard continues to fail because `pipeline.py` exceeds 1300 lines; requires targeted refactor before quality gate can be marked green.【cbd1b5†L1-L4】
 - Semgrep auto-config retrieval fails under current SSL policy; rerun once trust anchors are available or pin an offline config for sandbox QA.【6c2e8a†L1-L66】

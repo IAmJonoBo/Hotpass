@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -279,6 +280,65 @@ class GovernanceMetadata(BaseModel):
         return cleaned
 
 
+class BackfillWindow(BaseModel):
+    """Date and version window describing backfill coverage."""
+
+    start_date: date
+    end_date: date | None = None
+    versions: tuple[str, ...] = Field(default_factory=lambda: ("latest",))
+
+    @field_validator("versions", mode="before")
+    @classmethod
+    def _normalise_versions(
+        cls, values: Iterable[str] | str | None
+    ) -> tuple[str, ...]:
+        if values is None:
+            return ("latest",)
+        if isinstance(values, str):
+            values = [values]
+        cleaned: list[str] = []
+        for value in values:
+            candidate = str(value).strip()
+            if candidate and candidate not in cleaned:
+                cleaned.append(candidate)
+        return tuple(cleaned or ["latest"])
+
+    @model_validator(mode="after")
+    def _validate_window(self) -> BackfillWindow:
+        if self.end_date is not None and self.end_date < self.start_date:
+            msg = "Backfill window end_date cannot precede start_date"
+            raise ValueError(msg)
+        return self
+
+
+class BackfillSettings(BaseModel):
+    """Backfill-specific orchestration configuration."""
+
+    archive_root: Path = Field(default_factory=lambda: Path.cwd() / "dist" / "input-archives")
+    restore_root: Path = Field(default_factory=lambda: Path.cwd() / "dist" / "backfill")
+    archive_pattern: str = "hotpass-inputs-{date:%Y%m%d}-v{version}.zip"
+    windows: tuple[BackfillWindow, ...] = Field(default_factory=tuple)
+    parameters: Mapping[str, Any] = Field(default_factory=dict)
+    deployment_name: str = "hotpass-backfill"
+    work_pool: str | None = None
+    schedule: str | None = None
+    concurrency_limit: int = Field(default=1, ge=0)
+    concurrency_key: str = "hotpass/backfill"
+
+    def iter_runs(self) -> list[dict[str, str]]:
+        """Expand configured windows into concrete run dictionaries."""
+
+        runs: list[dict[str, str]] = []
+        for window in self.windows:
+            end = window.end_date or window.start_date
+            current = window.start_date
+            while current <= end:
+                for version in window.versions:
+                    runs.append({"run_date": current.isoformat(), "version": version})
+                current += timedelta(days=1)
+        return runs
+
+
 class OrchestratorSettings(BaseModel):
     """Prefect orchestration defaults derived from canonical config."""
 
@@ -286,6 +346,7 @@ class OrchestratorSettings(BaseModel):
     work_pool: str | None = None
     parameters: Mapping[str, Any] = Field(default_factory=dict)
     run_name_template: str | None = None
+    backfill: BackfillSettings = Field(default_factory=BackfillSettings)
 
 
 class HotpassConfig(BaseModel):
@@ -508,6 +569,8 @@ def _deep_update(original: Mapping[str, Any], updates: Mapping[str, Any]) -> dic
 
 
 __all__ = [
+    "BackfillSettings",
+    "BackfillWindow",
     "ComplianceControls",
     "DataContractConfig",
     "FeatureSwitches",
