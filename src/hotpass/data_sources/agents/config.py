@@ -17,7 +17,9 @@ class ProviderDefinition:
     enabled: bool = True
     weight: float = 1.0
 
-    def merged_options(self, overrides: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
+    def merged_options(
+        self, overrides: Mapping[str, Any] | None = None
+    ) -> Mapping[str, Any]:
         if not overrides:
             return self.options
         merged: dict[str, Any] = dict(self.options)
@@ -69,7 +71,9 @@ class AcquisitionPlan:
     provenance_namespace: str = "agent"
 
     def active_agents(self) -> tuple[AgentDefinition, ...]:
-        return tuple(agent for agent in self.agents if agent.enabled and agent.active_providers())
+        return tuple(
+            agent for agent in self.agents if agent.enabled and agent.active_providers()
+        )
 
 
 class AgentTaskKind(str, Enum):

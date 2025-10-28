@@ -28,12 +28,16 @@ class DatasetTimings:
 class PolarsDataset:
     """Convenience wrapper around a Polars DataFrame with timing metadata."""
 
-    def __init__(self, frame: pl.DataFrame, timings: DatasetTimings | None = None) -> None:
+    def __init__(
+        self, frame: pl.DataFrame, timings: DatasetTimings | None = None
+    ) -> None:
         self._frame = frame
         self.timings = timings or DatasetTimings()
 
     @classmethod
-    def from_rows(cls, rows: Sequence[Mapping[str, Any]], columns: Sequence[str]) -> PolarsDataset:
+    def from_rows(
+        cls, rows: Sequence[Mapping[str, Any]], columns: Sequence[str]
+    ) -> PolarsDataset:
         start = time.perf_counter()
         frame = pl.DataFrame(rows, schema=list(columns))
         duration = time.perf_counter() - start
@@ -76,7 +80,9 @@ class PolarsDataset:
     def to_arrow(self) -> pa.Table:
         return self._frame.to_arrow()
 
-    def write_parquet(self, path: Path, *, compression: CompressionType | None = None) -> None:
+    def write_parquet(
+        self, path: Path, *, compression: CompressionType | None = None
+    ) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         start = time.perf_counter()
         if compression is not None:
@@ -99,7 +105,10 @@ class PolarsDataset:
             pl.col(column).min().alias("min"),
             pl.col(column).max().alias("max"),
         ).to_dicts()[0]
-        return {key: float(value) if value is not None else 0.0 for key, value in stats.items()}
+        return {
+            key: float(value) if value is not None else 0.0
+            for key, value in stats.items()
+        }
 
     def query(
         self,

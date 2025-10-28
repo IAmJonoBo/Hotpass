@@ -38,7 +38,9 @@ try:  # pragma: no cover - Great Expectations is an optional dependency
     )
     from great_expectations.validator.validator import Validator
 except ImportError as exc:  # pragma: no cover - handled via tests when GE absent
-    raise RuntimeError("Great Expectations must be installed for contract validation") from exc
+    raise RuntimeError(
+        "Great Expectations must be installed for contract validation"
+    ) from exc
 
 
 def _project_root() -> Path:

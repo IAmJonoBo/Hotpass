@@ -33,7 +33,11 @@ def main() -> int:
     checkpoints = [
         ("reachout_organisation", "Reachout Database.xlsx", "Organisation"),
         ("reachout_contact_info", "Reachout Database.xlsx", "Contact Info"),
-        ("sacaa_cleaned", "SACAA Flight Schools - Refined copy__CLEANED.xlsx", "Cleaned"),
+        (
+            "sacaa_cleaned",
+            "SACAA Flight Schools - Refined copy__CLEANED.xlsx",
+            "Cleaned",
+        ),
         ("contact_company_cat", "Contact Database.xlsx", "Company_Cat"),
         ("contact_company_contacts", "Contact Database.xlsx", "Company_Contacts"),
         ("contact_company_addresses", "Contact Database.xlsx", "Company_Addresses"),

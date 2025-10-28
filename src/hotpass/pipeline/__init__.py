@@ -119,7 +119,9 @@ def __getattr__(name: str) -> Any:
     try:
         module_name, attribute = _LAZY_ATTRS[name]
     except KeyError as exc:  # pragma: no cover - mirrors default behaviour
-        raise AttributeError(f"module 'hotpass.pipeline' has no attribute {name!r}") from exc
+        raise AttributeError(
+            f"module 'hotpass.pipeline' has no attribute {name!r}"
+        ) from exc
 
     module = import_module(module_name)
     value = getattr(module, attribute)

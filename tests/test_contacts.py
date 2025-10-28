@@ -221,7 +221,9 @@ def test_organization_contacts_to_flat_dict():
     assert flat["organization_name"] == "Acme Inc"
     assert flat["contact_primary_name"] == "John Doe"
     assert flat["contact_primary_email"] == "john@example.com"
-    assert flat["contact_primary_email_confidence"] == primary.email_validation.confidence
+    assert (
+        flat["contact_primary_email_confidence"] == primary.email_validation.confidence
+    )
     assert "jane@example.com" in flat["contact_secondary_emails"]
     assert flat["total_contacts"] == 2
     assert flat["contact_email_confidence_avg"] == pytest.approx(0.9)

@@ -168,7 +168,9 @@ def train_lead_scoring_model(
         stratify=stratify,
     )
 
-    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
+    estimator = LogisticRegression(
+        max_iter=1000, solver="lbfgs", random_state=random_state
+    )
     estimator.fit(X_train, y_train)
 
     validation_probabilities = estimator.predict_proba(X_valid)[:, 1]
@@ -203,7 +205,9 @@ def train_lead_scoring_model(
     serializable_metadata = dict(metadata)
     serializable_metadata["feature_names"] = list(metadata["feature_names"])
     payload = {"metrics": metrics, "metadata": serializable_metadata}
-    destination.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    destination.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
     if metric_thresholds:
         failures = {

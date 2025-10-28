@@ -17,7 +17,9 @@ def expect(condition: bool, message: str) -> None:
 
 
 class _StubDataset:
-    def __init__(self, *, namespace: str, name: str, facets: Mapping[str, object]) -> None:
+    def __init__(
+        self, *, namespace: str, name: str, facets: Mapping[str, object]
+    ) -> None:
         self.namespace = namespace
         self.name = name
         self.facets = dict(facets)
@@ -86,10 +88,14 @@ def test_create_emitter_returns_null_when_openlineage_unavailable(
         isinstance(emitter, lineage.NullLineageEmitter),
         "Expected NullLineageEmitter when OpenLineage is unavailable.",
     )
-    expect(emitter.is_enabled is False, "Emitter should be disabled without OpenLineage.")
+    expect(
+        emitter.is_enabled is False, "Emitter should be disabled without OpenLineage."
+    )
 
 
-def test_lineage_emitter_emits_events_with_stubbed_client(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lineage_emitter_emits_events_with_stubbed_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _StubClient.emitted = []
     monkeypatch.setattr(lineage, "OpenLineageClient", _StubClient)
     monkeypatch.setattr(lineage, "set_lineage_producer", lambda _: None)
@@ -102,7 +108,10 @@ def test_lineage_emitter_emits_events_with_stubbed_client(monkeypatch: pytest.Mo
 
     emitter = lineage.create_emitter("active-job", run_id="run-123")
 
-    expect(emitter.is_enabled is True, "Emitter should be enabled with a configured client.")
+    expect(
+        emitter.is_enabled is True,
+        "Emitter should be enabled with a configured client.",
+    )
 
     emitter.emit_start(inputs=["input-a"])
     emitter.emit_complete(outputs=["output-b"])
@@ -126,7 +135,9 @@ def test_lineage_emitter_emits_events_with_stubbed_client(monkeypatch: pytest.Mo
     )
 
     emitter.emit_fail("boom", outputs=["output-c"])
-    expect(len(_StubClient.emitted) == 3, "Expected failure event to append to the log.")
+    expect(
+        len(_StubClient.emitted) == 3, "Expected failure event to append to the log."
+    )
     expect(
         _StubClient.emitted[-1].eventType == _StubRunState.FAIL,
         "Final event should signal a FAIL state.",

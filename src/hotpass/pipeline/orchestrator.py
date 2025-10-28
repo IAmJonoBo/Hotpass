@@ -27,14 +27,18 @@ class PipelineExecutionConfig:
     """Configuration describing how the orchestrator should execute the pipeline."""
 
     base_config: PipelineConfig
-    enhanced_config: EnhancedPipelineConfig = field(default_factory=EnhancedPipelineConfig)
+    enhanced_config: EnhancedPipelineConfig = field(
+        default_factory=EnhancedPipelineConfig
+    )
     features: tuple[PipelineFeatureStrategy, ...] = field(default_factory=tuple)
     trace_factory: TraceFactory | None = None
     metrics: PipelineMetrics | None = None
 
     def with_default_trace_factory(self) -> PipelineExecutionConfig:
         if self.trace_factory is None:
-            self.trace_factory = default_trace_factory(self.enhanced_config.enable_observability)
+            self.trace_factory = default_trace_factory(
+                self.enhanced_config.enable_observability
+            )
         return self
 
 
@@ -69,7 +73,9 @@ class PipelineOrchestrator:
         result = self._base_executor.run(execution.base_config)
 
         if execution.metrics:
-            execution.metrics.record_records_processed(len(result.refined), source="base_pipeline")
+            execution.metrics.record_records_processed(
+                len(result.refined), source="base_pipeline"
+            )
 
         if execution.trace_factory is None:
             raise RuntimeError(

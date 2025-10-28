@@ -23,7 +23,9 @@ class EntityResolutionFeature(PipelineFeatureStrategy):
 
     name: str = "entity_resolution"
 
-    def is_enabled(self, context: FeatureContext) -> bool:  # noqa: D401 - Protocol contract
+    def is_enabled(
+        self, context: FeatureContext
+    ) -> bool:  # noqa: D401 - Protocol contract
         return context.enhanced_config.enable_entity_resolution
 
     def apply(self, result: PipelineResult, context: FeatureContext) -> PipelineResult:
@@ -41,7 +43,9 @@ class EntityResolutionFeature(PipelineFeatureStrategy):
                     match_threshold = config.linkage_match_threshold or max(
                         0.9, config.entity_resolution_threshold
                     )
-                    high_value = max(match_threshold, config.entity_resolution_threshold)
+                    high_value = max(
+                        match_threshold, config.entity_resolution_threshold
+                    )
                     thresholds = LinkageThresholds(
                         high=high_value,
                         review=config.entity_resolution_threshold,
@@ -64,7 +68,9 @@ class EntityResolutionFeature(PipelineFeatureStrategy):
                         "Falling back to rule-based entity resolution using threshold %.2f",
                         config.entity_resolution_threshold,
                     )
-                    df, _ = resolve_entities_fallback(df, config.entity_resolution_threshold)
+                    df, _ = resolve_entities_fallback(
+                        df, config.entity_resolution_threshold
+                    )
                     linkage_result = None
 
                 df = add_ml_priority_scores(df)

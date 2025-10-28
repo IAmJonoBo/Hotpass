@@ -15,6 +15,7 @@ The Hotpass pipeline previously used direct Great Expectations suite validation 
 5. Difficult to add validation actions (e.g., Slack notifications, metrics publishing)
 
 The pipeline needed a more robust validation infrastructure that could:
+
 - Generate human-readable validation reports (Data Docs)
 - Provide a consistent interface for checkpoint execution
 - Support future enhancements like validation result storage and alerting
@@ -93,6 +94,7 @@ We restructured the Great Expectations validation infrastructure around checkpoi
 **Notes:**
 
 Future enhancements could include:
+
 - Persistent validation result stores (e.g., PostgreSQL)
 - Validation result metrics exported to observability platform
 - Automated Slack/email notifications on validation failures

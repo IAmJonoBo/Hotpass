@@ -50,7 +50,9 @@ def test_config_doctor_diagnose_flags_missing_governance(tmp_path: Path) -> None
     doctor = ConfigDoctor(config=config)
     results = doctor.diagnose()
 
-    assert any(r.check_name == "governance.data_owner" and not r.passed for r in results)
+    assert any(
+        r.check_name == "governance.data_owner" and not r.passed for r in results
+    )
 
 
 def test_config_doctor_autofix_injects_governance_defaults(tmp_path: Path) -> None:

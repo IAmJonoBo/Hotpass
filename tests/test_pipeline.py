@@ -32,7 +32,9 @@ from hotpass.pipeline import (  # noqa: E402
 )
 
 
-def test_pipeline_generates_refined_dataset(tmp_path: Path, sample_data_dir: Path) -> None:
+def test_pipeline_generates_refined_dataset(
+    tmp_path: Path, sample_data_dir: Path
+) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -118,16 +120,28 @@ def test_pipeline_redacts_sensitive_fields(
     monkeypatch.setattr("hotpass.compliance.PIIDetector", lambda: _StubDetector())
 
     result = run_pipeline(config)
-    aero_record = result.refined.loc[result.refined["organization_name"] == "Aero School"].iloc[0]
+    aero_record = result.refined.loc[
+        result.refined["organization_name"] == "Aero School"
+    ].iloc[0]
 
     assert aero_record["contact_primary_email"] == "[REDACTED]"
     assert aero_record["contact_primary_phone"] == "[REDACTED]"
-    assert result.performance_metrics.get("redacted_cells", 0) == len(result.pii_redaction_events)
-    assert any(event["column"] == "contact_primary_email" for event in result.pii_redaction_events)
-    assert any(event["column"] == "contact_primary_phone" for event in result.pii_redaction_events)
+    assert result.performance_metrics.get("redacted_cells", 0) == len(
+        result.pii_redaction_events
+    )
+    assert any(
+        event["column"] == "contact_primary_email"
+        for event in result.pii_redaction_events
+    )
+    assert any(
+        event["column"] == "contact_primary_phone"
+        for event in result.pii_redaction_events
+    )
 
 
-def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_path: Path) -> None:
+def test_pipeline_flags_records_with_missing_contact(
+    sample_data_dir: Path, tmp_path: Path
+) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -152,7 +166,9 @@ def test_pipeline_flags_records_with_missing_contact(sample_data_dir: Path, tmp_
     assert provenance["contact_primary_phone"]["source_dataset"] == "SACAA Cleaned"
 
 
-def test_pipeline_exposes_performance_metrics(sample_data_dir: Path, tmp_path: Path) -> None:
+def test_pipeline_exposes_performance_metrics(
+    sample_data_dir: Path, tmp_path: Path
+) -> None:
     output_path = tmp_path / "refined.xlsx"
     config = PipelineConfig(
         input_dir=sample_data_dir,
@@ -173,7 +189,10 @@ def test_pipeline_exposes_performance_metrics(sample_data_dir: Path, tmp_path: P
     assert metrics["pandas_sort_seconds"] >= 0.0
     assert metrics["duckdb_sort_seconds"] >= 0.0
     assert metrics["polars_sort_speedup"] >= 0.0
-    assert result.quality_report.performance_metrics["total_seconds"] == metrics["total_seconds"]
+    assert (
+        result.quality_report.performance_metrics["total_seconds"]
+        == metrics["total_seconds"]
+    )
 
 
 def test_pipeline_emits_progress_events(sample_data_dir: Path, tmp_path: Path) -> None:
@@ -374,7 +393,9 @@ def test_run_expectations_fallback_failures(monkeypatch: pytest.MonkeyPatch) -> 
     summary = quality.run_expectations(df, email_mostly=0.9)
 
     assert not summary.success
-    assert any("contact_primary_email format" in failure for failure in summary.failures)
+    assert any(
+        "contact_primary_email format" in failure for failure in summary.failures
+    )
 
 
 def test_pipeline_handles_all_invalid_records(
@@ -545,7 +566,9 @@ def test_pipeline_merges_intent_signals(tmp_path: Path, sample_data_dir: Path) -
     assert "news" in (aero["intent_signal_types"] or "")
     assert result.intent_digest is not None
     assert not result.intent_digest.empty
-    digest_match = result.intent_digest.loc[result.intent_digest["target_slug"] == "aero-school"]
+    digest_match = result.intent_digest.loc[
+        result.intent_digest["target_slug"] == "aero-school"
+    ]
     assert not digest_match.empty
     digest_score = digest_match["intent_signal_score"].iloc[0]
     assert digest_score == pytest.approx(aero["intent_signal_score"], rel=1e-6)

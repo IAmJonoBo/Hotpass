@@ -28,7 +28,9 @@ def test_build_parser_registers_expected_commands() -> None:
     parser = cli.build_parser()
     subcommands = _get_subcommands(parser)
 
-    assert {"run", "orchestrate", "resolve", "dashboard", "deploy"}.issubset(set(subcommands))
+    assert {"run", "orchestrate", "resolve", "dashboard", "deploy"}.issubset(
+        set(subcommands)
+    )
 
 
 def test_build_parser_sets_run_as_default_command() -> None:
