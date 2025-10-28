@@ -19,14 +19,14 @@
 - Governance automation stack verified end-to-end (commitlint, labeler, release drafter, Renovate grouping) and captured in ADR 0002.
 - Local pytest baseline verified after `make sync EXTRAS="dev"` (`.venv/bin/pytest --maxfail=1 --disable-warnings`).
 - Dependency profile helper (`scripts/uv_sync_extras.sh`) introduced; workflows, README, and AGENTS guidance updated to use `HOTPASS_UV_EXTRAS`.
+- Semgrep auto script added (`scripts/security/semgrep_auto.sh`) with CA bundle support; `make semgrep-auto` target available for local and CI runs.
 - Consolidated QA gate (`make qa`) restored by refreshing the detect-secrets baseline and normalising test fixtures.
 - Weekly `mypy-audit` workflow added with automatic issue creation on failures.
 - Bootstrap execute-mode how-to published, covering guardrails and rollback steps.
 
 ## Quality Gates
 ### Open
-- Semgrep registry scan blocked by SSL trust chain in sandbox (Security, due 2025-12-12) — import the corporate CA bundle or ship an offline rulepack; document remediation steps in `docs/security/tooling.md`.
-- Extend automation delivery coverage for circuit-open metrics/telemetry edge cases (Platform Observability & QA, due 2025-12-15) — add fixtures from the telemetry refactor and assert metrics in `tests/test_observability.py`.
+- None (all current gates verified)
 
 ### Verified
 | Gate | Last Verified |
@@ -42,6 +42,8 @@
 | Fitness functions (`uv run python scripts/quality/fitness_functions.py`) | 2025-10-28 |
 | SBOM and provenance scripts | 2025-10-28 |
 | Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`) | 2025-10-28 |
+| Semgrep auto (`make semgrep-auto`, optional `HOTPASS_CA_BUNDLE_B64`) | 2025-10-28 |
+| Automation metrics coverage (`tests/test_observability.py::test_record_automation_delivery_tracks_requests`) | 2025-10-28 |
 | ScanCode licence audit / REUSE lint | 2025-10-28 |
 
 ## Reference Commands

@@ -173,6 +173,9 @@ class DummyMetrics:
         self.aggregation_duration = self._histogram("hotpass.aggregation.duration")
         self.validation_duration = self._histogram("hotpass.validation.duration")
         self.write_duration = self._histogram("hotpass.write.duration")
+        self.automation_requests = self._counter("hotpass.automation.requests")
+        self.automation_failures = self._counter("hotpass.automation.failures")
+        self.automation_latency = self._histogram("hotpass.automation.duration")
         self.acquisition_duration = self._histogram("hotpass.acquisition.duration")
         self.acquisition_records = self._counter("hotpass.acquisition.records")
         self.acquisition_warnings = self._counter("hotpass.acquisition.warnings")
@@ -224,6 +227,31 @@ class DummyMetrics:
 
     def update_quality_score(self, score: float) -> None:
         self._latest_quality_score = score
+
+    def record_automation_delivery(
+        self,
+        *,
+        target: str,
+        status: str,
+        endpoint: str | None,
+        attempts: int,
+        latency: float | None,
+        idempotency: str,
+    ) -> None:
+        attributes: dict[str, Any] = {
+            "target": target,
+            "status": status,
+            "attempts": attempts,
+            "idempotency": idempotency,
+        }
+        if endpoint:
+            attributes["endpoint"] = endpoint
+
+        self.automation_requests.add(1, attributes)
+        if status != "delivered":
+            self.automation_failures.add(1, attributes)
+        if latency is not None:
+            self.automation_latency.record(latency, attributes)
 
     def record_acquisition_duration(
         self,

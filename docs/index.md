@@ -136,6 +136,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /security/supply-chain-plan
 /security/risk-register
 /security/quality-gates
+/security/tooling
 ```
 
 ## Need something else?

@@ -124,6 +124,36 @@ def test_get_pipeline_metrics_lazy_when_uninitialised() -> None:
     assert isinstance(metrics, DummyMetrics)
 
 
+
+
+def test_record_automation_delivery_tracks_requests() -> None:
+    observability.initialize_observability(service_name="svc")
+    metrics = observability.get_pipeline_metrics()
+    metrics.record_automation_delivery(
+        target="crm",
+        status="delivered",
+        endpoint=None,
+        attempts=1,
+        latency=1.5,
+        idempotency="id-123",
+    )
+    metrics.record_automation_delivery(
+        target="crm",
+        status="circuit_open",
+        endpoint="https://api.example",
+        attempts=3,
+        latency=None,
+        idempotency="id-123",
+    )
+    request_calls = metrics.meter.counters["hotpass.automation.requests"].calls
+    failure_calls = metrics.meter.counters["hotpass.automation.failures"].calls
+    latency_calls = metrics.meter.histograms["hotpass.automation.duration"].calls
+    assert request_calls[0][1]["status"] == "delivered"
+    assert request_calls[1][1]["status"] == "circuit_open"
+    assert failure_calls[0][1]["status"] == "circuit_open"
+    assert latency_calls[0][0] == 1.5
+    assert latency_calls[0][1]["target"] == "crm"
+
 def test_shutdown_observability_invokes_lifecycle() -> None:
     observability.initialize_observability(service_name="svc")
     reader = DummyMetricReader.instances[0]

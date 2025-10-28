@@ -14,3 +14,7 @@ EXTRAS ?= dev orchestration
 sync:
 	@echo "Synchronising extras: $(EXTRAS)"
 	@HOTPASS_UV_EXTRAS="$(EXTRAS)" bash scripts/uv_sync_extras.sh
+
+.PHONY: semgrep-auto
+semgrep-auto:
+	@HOTPASS_CA_BUNDLE_B64="$(HOTPASS_CA_BUNDLE_B64)" bash scripts/security/semgrep_auto.sh

@@ -39,8 +39,6 @@ make sync EXTRAS="dev orchestration"
 ```
 
 Override `EXTRAS` with the space-separated list you need. The target wraps `scripts/uv_sync_extras.sh` so CI and local runs stay consistent.
-
-
 The script validates the list, echoes the chosen extras, and executes `uv sync --frozen` with the correct switches. If you prefer pip editable installs, mirror the same extras:
 
 ```bash
