@@ -533,7 +533,25 @@ def run_pipeline_task(
         summary.total_records,
     )
 
-    return summary.to_payload()
+    payload = summary.to_payload()
+
+    def _coerce_flag(value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        return False
+
+    payload["backfill"] = _coerce_flag(getattr(config, "backfill", False))
+    payload["incremental"] = _coerce_flag(getattr(config, "incremental", False))
+
+    since_value = getattr(config, "since", None)
+    if isinstance(since_value, datetime):
+        payload["since"] = since_value.isoformat()
+    elif isinstance(since_value, str):
+        payload["since"] = since_value
+
+    return payload
 
 
 def _lookup_nested(

@@ -33,6 +33,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 :caption: Reference
 
 /reference/cli
+/reference/schemas
 /reference/data-model
 /reference/expectations
 /reference/repo-inventory
@@ -86,6 +87,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 /adr/0001-qa-tooling
 /adr/0002-governance-automation
+/adr/0003-data-contracts
 ```
 
 ```{toctree}
