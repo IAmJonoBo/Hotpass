@@ -12,16 +12,17 @@ Hotpass refines messy spreadsheets into a governed single source of truth. The p
 
 ```bash
 uv venv
-uv sync --extra dev --extra docs
+export HOTPASS_UV_EXTRAS="dev docs"
+bash scripts/uv_sync_extras.sh
 uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
 ```
 
 Run `python scripts/idp/bootstrap.py` (add `--execute` to apply changes) for an interactive bootstrap that provisions dependencies, Prefect profiles, and supply-chain tooling.
 
-Need orchestration or enrichment? Install the relevant extras:
+Need orchestration or enrichment? Set `HOTPASS_UV_EXTRAS` to the extras you need before running the helper script:
 
 ```bash
-uv sync --extra orchestration --extra enrichment --extra geospatial --extra compliance --extra dashboards
+HOTPASS_UV_EXTRAS="dev orchestration enrichment geospatial compliance dashboards" bash scripts/uv_sync_extras.sh
 ```
 
 ## Documentation
@@ -29,7 +30,7 @@ uv sync --extra orchestration --extra enrichment --extra geospatial --extra comp
 The full documentation lives under [`docs/`](docs/index.md) and follows the Diátaxis framework:
 
 - [Tutorials](docs/tutorials/quickstart.md) — end-to-end walkthroughs.
-- [How-to guides](docs/how-to-guides/configure-pipeline.md) — targeted tasks such as configuring profiles or enabling observability.
+- [How-to guides](docs/how-to-guides/configure-pipeline.md) — targeted tasks such as configuring profiles or enabling observability. See the [dependency profile guide](docs/how-to-guides/dependency-profiles.md) to pick the right extras.
 - [Reference](docs/reference/cli.md) — command syntax, data model, and expectation catalogue.
 - [Explanations](docs/explanations/architecture.md) — architectural decisions and platform scope.
 - [Roadmap](docs/roadmap.md) — delivery status, quality gates, and tracked follow-ups.

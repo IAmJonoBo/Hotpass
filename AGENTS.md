@@ -43,6 +43,37 @@ uv sync --extra orchestration --extra enrichment --extra geospatial --extra comp
 > - The _Common dependencies_ preset already allowlists PyPI domains; you shouldn’t need to add them manually.
 > - Keep the setup fast: avoid heavyweight toolchains you don’t need.
 
+#### 1.3.1 Select dependency profiles
+
+Codex runners start with a lean `dev orchestration` profile. To add or remove extras on demand:
+
+1. Choose the extras your task needs (space-separated):
+
+   | Profile             | Extras string                                     | Notes                                          |
+   | ------------------- | ------------------------------------------------- | ---------------------------------------------- |
+   | `core` (default)    | `dev orchestration`                               | Installs CLI + Prefect orchestration support.  |
+   | `docs`              | `dev docs`                                        | Adds Sphinx + Diátaxis toolchain.              |
+   | `geospatial`        | `dev orchestration geospatial`                    | Adds GeoPandas/Geopy extras.                   |
+   | `compliance`        | `dev orchestration compliance`                    | Adds Presidio-based compliance stack.          |
+   | `full`              | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.       |
+
+2. Export the selection before running `uv sync` (Codex setup script):
+
+   ```bash
+   export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
+   bash scripts/uv_sync_extras.sh
+   ```
+
+3. After the extras install step, the firewall should be locked down. Declare every required extra up front—additional installs will fail once the firewall is active.
+
+The helper script lives in `scripts/uv_sync_extras.sh` and converts the space-separated list into the correct `uv sync --extra …` flags. Agents using the pip setup can mimic the behaviour with:
+
+```bash
+python -m pip install -U pip
+python -m pip install -e ".[dev,orchestration,geospatial]"
+```
+
+
 ### 1.4 Agent run command (what Codex should execute)
 
 Baseline run into `dist/refined.xlsx`:

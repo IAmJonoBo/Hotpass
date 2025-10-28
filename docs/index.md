@@ -25,6 +25,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /how-to-guides/orchestrate-and-observe
 /how-to-guides/agentic-orchestration
 /how-to-guides/bootstrap-execute-mode
+/how-to-guides/dependency-profiles
 ```
 
 ```{toctree}
