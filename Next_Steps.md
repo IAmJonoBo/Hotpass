@@ -37,6 +37,9 @@
 - [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31)
 - [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31)
 - [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15)
+- [x] Implement registry provider adapters for CIPC/SACAA with throttling, caching, and normalised schemas (Owner: Engineering, Due: 2026-01-05)
+- [x] Extend registry enrichment dispatch with structured results and resilient error handling (Owner: Engineering, Due: 2026-01-05)
+- [x] Document registry configuration, credentials, and policy expectations for new providers (Owner: Docs & Compliance, Due: 2026-01-05)
 - [x] Ship rate-limited intent collectors with persistence and provenance metadata (Owner: Engineering, Due: 2025-11-15)
 - [x] Train and integrate lead scoring models with automated daily list exports (Owner: Data & Engineering, Due: 2025-11-22)
 - [x] Wire CLI/Prefect automation for intent digests and CRM/webhook delivery, update docs (Owner: Engineering & Docs, Due: 2025-11-22)
@@ -134,20 +137,21 @@
 ## Deliverables
 
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
+- [x] Registry adapters for CIPC/SACAA with caching, structured responses, fixtures, documentation, and policy updates landed【F:src/hotpass/enrichment/registries/base.py†L1-L208】【F:src/hotpass/enrichment/registries/cipc.py†L19-L140】【F:src/hotpass/enrichment/registries/sacaa.py†L19-L133】【F:tests/enrichment/test_registries.py†L1-L175】【F:docs/how-to-guides/configure-pipeline.md†L184-L225】【F:policy/acquisition/providers.json†L24-L36】
 - [x] `.github/ISSUE_TEMPLATE/` populated with bug, docs, and task templates plus Slack contact link
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
-- [x] Pytest with coverage ≥ 80% (current: 84%; optional deps satisfied)【d6ce09†L1-L126】
+- [x] Pytest with coverage ≥ 80% (current: 84%; optional deps satisfied)【d1593b†L1-L126】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
-- [x] Ruff lint clean (`uv run ruff check`)【6f5771†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【c0fe6e†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【938a91†L1-L2】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【7dd145†L1-L34】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【ab152a†L1-L65】
-- [x] Package build succeeds (`uv run uv build`)【17d2bb†L1-L246】
+- [x] Ruff lint clean (`uv run ruff check`)【7d9eff†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【15749f†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【d9011e†L1-L7】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【c8e979†L1-L23】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【d326b7†L1-L65】
+- [x] Package build succeeds (`uv run uv build`)【3ee96d†L1-L179】
 - [x] Docs build strict mode passes (`uv run sphinx-build -n -W -b html docs docs/_build/html`)【5a78d4†L1-L26】
 - [x] Docs link check executes with curated ignore list (`uv run sphinx-build -b linkcheck docs docs/_build/linkcheck`)【f029ee†L1-L24】
 - [x] Structurizr DSL workspace captures context, container, and component views (`docs/architecture/hotpass-architecture.dsl`)
@@ -191,16 +195,19 @@
 - [x] Baseline QA (2025-10-27) surfaced missing `frictionless` import coverage, Ruff UP038 lint, and mypy stub gaps prior to telemetry refactor【c063e4†L1-L23】【0d5a32†L1-L13】【c903ed†L1-L18】
 - [x] Baseline QA rerun (pytest, ruff check/format, mypy, bandit, detect-secrets, build) prior to intent automation enhancements (2025-10-28)【b1a3ec†L1-L137】【9e1ede†L1-L2】【ac8145†L1-L2】【023cf4†L1-L2】【21baf7†L1-L20】【1eb49a†L1-L66】【2b6f4f†L1-L120】
 - [x] Plan telemetry registry extraction with policy enforcement, CLI/orchestrator integration, documentation refresh, and QA rerun for new observability lifecycle【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L86】
+- [x] Re-reviewed README, configuration how-to, CODEOWNERS, PR template, and acquisition policy to frame registry integration scope and surface assumptions/unknowns (2025-10-28)【F:README.md†L1-L48】【F:docs/how-to-guides/configure-pipeline.md†L1-L178】【F:.github/CODEOWNERS†L1-L14】【F:.github/PULL_REQUEST_TEMPLATE.md†L1-L23】【F:policy/acquisition/providers.json†L1-L20】
+- [x] Re-established clean QA baseline in workspace (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) ahead of registry adapter work (2025-10-28)【3e4047†L1-L87】【5835c8†L1-L2】【fc57d7†L1-L2】【30993d†L1-L9】【d15fda†L1-L21】【bcb237†L1-L79】【714127†L1-L118】
+- [x] Delivered registry adapters, dispatch wiring, integration fixtures, documentation, and policy updates with full QA rerun (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-28)【F:src/hotpass/enrichment/registries/base.py†L1-L208】【F:src/hotpass/enrichment/registries/cipc.py†L19-L140】【F:src/hotpass/enrichment/registries/sacaa.py†L19-L133】【F:tests/enrichment/test_registries.py†L1-L175】【F:docs/how-to-guides/configure-pipeline.md†L184-L225】【F:policy/acquisition/providers.json†L24-L36】【d1593b†L1-L126】【7d9eff†L1-L2】【15749f†L1-L2】【d9011e†L1-L7】【c8e979†L1-L23】【d326b7†L1-L65】【3ee96d†L1-L179】
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 84%)【d6ce09†L1-L126】
-- [x] Ruff lint clean (`uv run ruff check`)【6f5771†L1-L2】
-- [x] Ruff formatting clean (`uv run ruff format --check`)【c0fe6e†L1-L2】
-- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【938a91†L1-L2】
-- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【7dd145†L1-L34】
-- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【ab152a†L1-L65】
-- [x] Package build succeeds (`uv run uv build`)【17d2bb†L1-L246】
+- [x] Pytest with coverage ≥ 80% (current: 84%)【d1593b†L1-L126】
+- [x] Ruff lint clean (`uv run ruff check`)【7d9eff†L1-L2】
+- [x] Ruff formatting clean (`uv run ruff format --check`)【15749f†L1-L2】
+- [x] Mypy type checks clean (`uv run mypy src tests scripts`)【d9011e†L1-L7】
+- [x] Bandit security scan clean (`uv run bandit -r src scripts`)【c8e979†L1-L23】
+- [x] Detect-secrets scan clean (`uv run detect-secrets scan src tests scripts`)【d326b7†L1-L65】
+- [x] Package build succeeds (`uv run uv build`)【3ee96d†L1-L179】
 - [x] Quarterly compliance verification cadence executed (first cycle due 2025-01-15)【65fb01†L1-L3】
 - [x] Accessibility smoke tests pass (`uv run pytest -m accessibility`)【1b98d5†L1-L13】
 - [x] Mutation testing harness executes (`uv run python scripts/qa/run_mutation_tests.py`)【0b6520†L1-L3】
@@ -221,14 +228,14 @@
 
 ## Links
 
-- Tests: `.venv/bin/pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d6ce09`)
-- Lint: `.venv/bin/ruff check` (chunk `6f5771`)
-- Format: `.venv/bin/ruff format --check` (chunk `c0fe6e`)
+- Tests: `.venv/bin/pytest --cov=src --cov=tests --cov-report=term-missing` (chunk `d1593b`)
+- Lint: `.venv/bin/ruff check` (chunk `7d9eff`)
+- Format: `.venv/bin/ruff format --check` (chunk `15749f`)
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
-- Types: `.venv/bin/mypy src tests scripts` (chunk `938a91`)
-- Security: `uv run bandit -r src scripts` (chunk `7dd145`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `ab152a`)
-- Build: `uv run uv build` (chunk `17d2bb`)
+- Types: `.venv/bin/mypy src tests scripts` (chunk `d9011e`)
+- Security: `uv run bandit -r src scripts` (chunk `c8e979`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `d326b7`)
+- Build: `uv run uv build` (chunk `3ee96d`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)
@@ -270,4 +277,5 @@
 - Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.
 - Ruff formatter drift resolved via repository-wide sweep; keep formatter gate enforced in CI and rerun after major merges.
 - Agent orchestration redesign requires clarity on robots/ToS policy inputs, credential store interfaces, and provider availability assumptions; confirm with platform owners before enabling real HTTP fetchers.
+- Registry enrichment adapters will rely on provider-issued credentials, base URLs, and published rate limits; confirm CIPC/SACAA authentication schemes and throttling policies before enabling live traffic.【F:policy/acquisition/providers.json†L1-L20】
 - Bandit baseline previously flagged a low-severity cleanup in `src/hotpass/linkage/runner.py`; logging now captures failures for review.【F:src/hotpass/linkage/runner.py†L130-L139】

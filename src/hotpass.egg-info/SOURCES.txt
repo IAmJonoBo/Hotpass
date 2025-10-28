@@ -50,6 +50,8 @@ src/hotpass.egg-info/dependency_links.txt
 src/hotpass.egg-info/entry_points.txt
 src/hotpass.egg-info/requires.txt
 src/hotpass.egg-info/top_level.txt
+src/hotpass/automation/__init__.py
+src/hotpass/automation/hooks.py
 src/hotpass/cli/__init__.py
 src/hotpass/cli/builder.py
 src/hotpass/cli/configuration.py
@@ -67,6 +69,7 @@ src/hotpass/data_sources/agents/__init__.py
 src/hotpass/data_sources/agents/base.py
 src/hotpass/data_sources/agents/config.py
 src/hotpass/data_sources/agents/runner.py
+src/hotpass/data_sources/agents/tasks.py
 src/hotpass/domain/__init__.py
 src/hotpass/domain/party/__init__.py
 src/hotpass/domain/party/dictionary.py
@@ -79,6 +82,11 @@ src/hotpass/enrichment/intent/__init__.py
 src/hotpass/enrichment/intent/collectors.py
 src/hotpass/enrichment/intent/config.py
 src/hotpass/enrichment/intent/runner.py
+src/hotpass/enrichment/intent/storage.py
+src/hotpass/enrichment/registries/__init__.py
+src/hotpass/enrichment/registries/base.py
+src/hotpass/enrichment/registries/cipc.py
+src/hotpass/enrichment/registries/sacaa.py
 src/hotpass/enrichment/validators/__init__.py
 src/hotpass/linkage/__init__.py
 src/hotpass/linkage/blocking.py
@@ -125,6 +133,7 @@ tests/test_dashboard.py
 tests/test_data_sources.py
 tests/test_enhancements.py
 tests/test_enrichment.py
+tests/test_enrichment_validators.py
 tests/test_entity_resolution.py
 tests/test_error_handling.py
 tests/test_evidence.py

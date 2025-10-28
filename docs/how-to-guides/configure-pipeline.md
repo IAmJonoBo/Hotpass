@@ -162,8 +162,8 @@ Hotpass includes helper functions that:
   `crm_token`.
 
 Enable daily list exports by setting `daily_list_path` and `daily_list_size`. The
-pipeline writes the CSV (or Parquet when using a `.parquet` suffix) and returns the
-dataframe so automation hooks can send it downstream.
+  pipeline writes the CSV (or Parquet when using a `.parquet` suffix) and returns the
+  dataframe so automation hooks can send it downstream.
 
 ```bash
 uv run hotpass \
@@ -174,12 +174,56 @@ uv run hotpass \
   --daily-list-size 25 \
   --intent-webhook https://hooks.example/hotpass \
   --crm-endpoint https://crm.example/api/leads \
-  --crm-token ${CRM_TOKEN}
+--crm-token ${CRM_TOKEN}
 ```
 
 Hotpass only sends automation payloads when there is data to deliver. If the digest or
 daily list is empty the CLI skips the request but retains log entries so you can audit
 when downstream systems were contacted.
+
+### Configure registry enrichment connectors
+
+Registry lookups now ship with native adapters for the CIPC and SACAA registries. Configure
+the adapters with environment variables so both the CLI and Prefect flows pick up the
+correct credentials and rate limits:
+
+```text
+HOTPASS_CIPC_BASE_URL=https://api.cipc.gov.za/v1/companies
+HOTPASS_CIPC_API_KEY=...
+HOTPASS_CIPC_API_KEY_HEADER=Ocp-Apim-Subscription-Key
+HOTPASS_CIPC_THROTTLE_SECONDS=2
+HOTPASS_CIPC_TIMEOUT_SECONDS=15
+HOTPASS_CIPC_SEARCH_PARAM=search
+
+HOTPASS_SACAA_BASE_URL=https://api.sacaa.co.za/operators
+HOTPASS_SACAA_API_KEY=...
+HOTPASS_SACAA_API_KEY_HEADER=X-API-Key
+HOTPASS_SACAA_THROTTLE_SECONDS=1
+HOTPASS_SACAA_TIMEOUT_SECONDS=15
+HOTPASS_SACAA_QUERY_PARAM=query
+```
+
+Each lookup is cached via `CacheManager`, so repeated calls within the TTL reuse the
+normalised payload instead of hammering upstream APIs. You can share a cache across
+providers:
+
+```python
+from hotpass.enrichment import CacheManager, enrich_from_registry
+
+cache = CacheManager(db_path="./data/.cache/registries.db", ttl_hours=24)
+result = enrich_from_registry("Aero Tech", registry_type="cipc", cache=cache)
+
+if result["success"]:
+    print(result["payload"]["registration_number"])
+else:
+    print("Registry lookup skipped:", result["errors"])
+```
+
+Soft failures (for example unknown entities) return `success: false` with structured
+`errors` so the pipeline can fall back to internal data. Hard failures such as missing
+credentials or transport errors raise `RegistryLookupError`; wrap calls in a `try` block
+when you need bespoke recovery logic. Refer to `policy/acquisition/providers.json` for
+per-provider collection notes and acceptable use constraints.
 
 ### Enable asynchronous website enrichment
 
