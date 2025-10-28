@@ -4,8 +4,6 @@ summary: Guardrails and rollback guidance for applying Hotpass bootstrap changes
 last_updated: 2025-10-26
 ---
 
-# Safely run the bootstrap execute mode
-
 The Hotpass bootstrap utility (`scripts/idp/bootstrap.py`) provisions local dependencies,
 Prefect profiles, supply-chain tooling, and developer experience defaults. By default the
 command performs a dry run so you can review the plan before any files change. Executing

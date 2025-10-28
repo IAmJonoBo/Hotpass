@@ -5,8 +5,6 @@ last_updated: 2025-02-15
 status: Accepted
 ---
 
-# Context
-
 Hotpass contributors were invoking a long sequence of commands to build the
 package, lint, test, run type checks, and scan for security or secrets issues.
 That workflow was easy to drift from and difficult to document consistently
@@ -14,7 +12,7 @@ across README, governance guides, and contributor instructions. The project also
 continued to rely on `setuptools.build_meta` even though the team already
 standardised on `uv` for dependency management and scripting.
 
-# Decision
+## Decision
 
 We switched the PEP 517 build backend to `uv.core.build` with the corresponding
 `requires = ["uv<1"]` declaration, keeping all existing PEP 621 metadata
@@ -28,7 +26,7 @@ overrides), Bandit, detect-secrets, and all configured pre-commit hooks.
 backend so CI and `uv run` can operate without extra bootstrapping. The QA
 entrypoint and supporting tooling remain unchanged.
 
-# Consequences
+## Consequences
 
 - Contributors have a single, documented command to run locally before opening
   a pull request, reducing drift from CI behaviour.

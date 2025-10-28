@@ -4,8 +4,6 @@ summary: Component-level acceptance criteria to keep the Streamlit dashboard WCA
 last_updated: 2025-10-26
 ---
 
-# Accessibility checklist (WCAG 2.2 AA)
-
 | Component             | Criteria                                                                                     | WCAG ref            | Status                                                 | Evidence                                                                          |
 | --------------------- | -------------------------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
 | Page configuration    | `st.set_page_config` defines language, title, and wide layout.                               | 3.2.4, 2.4.2        | ✅ Configured                                          | `src/hotpass/dashboard.py` lines 41-46                                            |

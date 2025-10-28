@@ -4,8 +4,6 @@ summary: SPACE-aligned assessment of Hotpass developer workflows, tooling fricti
 last_updated: 2025-10-26
 ---
 
-# Metrics — developer experience audit
-
 ## Survey insights
 
 | SPACE dimension | Current signal                                                                                       | Pain points                                                                                        | Proposed improvement                                                                                |

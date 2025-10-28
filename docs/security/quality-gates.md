@@ -4,8 +4,6 @@ summary: Expanded automated gates covering testing, linting, mutation, contracts
 last_updated: 2025-10-28
 ---
 
-# Quality and security gates
-
 ## Current automation
 
 | Gate                     | Tooling                | Command                                                                           | Evidence                    |

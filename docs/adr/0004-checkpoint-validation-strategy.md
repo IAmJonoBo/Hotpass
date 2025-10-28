@@ -4,7 +4,7 @@
 
 **Date:** 2025-10-28
 
-**Context:**
+## Context
 
 The Hotpass pipeline previously used direct Great Expectations suite validation without a structured checkpoint framework. This approach had several limitations:
 
@@ -21,7 +21,7 @@ The pipeline needed a more robust validation infrastructure that could:
 - Support future enhancements like validation result storage and alerting
 - Maintain backward compatibility with existing validation code
 
-**Decision:**
+## Decision
 
 We restructured the Great Expectations validation infrastructure around checkpoints:
 
@@ -55,7 +55,7 @@ We restructured the Great Expectations validation infrastructure around checkpoi
    - Script runs all checkpoints against sample workbooks
    - Generates Data Docs for inspection
 
-**Consequences:**
+## Consequences
 
 ### Positive
 
@@ -78,20 +78,20 @@ We restructured the Great Expectations validation infrastructure around checkpoi
 - **Disk usage:** Data Docs generation adds HTML artifacts
 - **Performance:** Building Data Docs adds ~100-200ms per checkpoint
 
-**Alternatives Considered:**
+## Alternatives considered
 
 1. **Keep flat directory structure:** Rejected due to maintainability concerns
 2. **Use native Great Expectations project:** Rejected as too heavyweight
 3. **Custom validation framework:** Rejected to leverage GE ecosystem
 4. **Separate validation step:** Rejected to keep validation inline with data loading
 
-**References:**
+## References
 
 - [Great Expectations Checkpoints](https://docs.greatexpectations.io/docs/terms/checkpoint/)
 - [Data Docs](https://docs.greatexpectations.io/docs/terms/data_docs/)
 - Implementation: PR copilot/restructure-great-expectations-assets
 
-**Notes:**
+## Notes
 
 Future enhancements could include:
 

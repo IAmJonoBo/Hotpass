@@ -4,8 +4,6 @@ summary: Review cadence, trigger events, and measurement approach for each compl
 last_updated: 2025-10-25
 ---
 
-# Compliance — verification plan
-
 ## Cadence overview
 
 | Framework | Routine cadence                                            | Trigger-based checks                                   | Measurement approach                                                                     | Tooling                                                      |

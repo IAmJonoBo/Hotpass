@@ -4,8 +4,6 @@ summary: Findings from a Nielsen heuristic evaluation of the Hotpass Streamlit d
 last_updated: 2025-10-25
 ---
 
-# Streamlit dashboard heuristic review
-
 | Heuristic                                           | Observation                                                                                                           | Impact | Recommendation                                                                     | Owner       | Status      |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------- | ----------- | ----------- |
 | Visibility of system status                         | Success and warning banners appear after pipeline run but lack timestamps for context.                                | Medium | Surface last run timestamp and provenance digest in success message.               | Platform    | Planned     |

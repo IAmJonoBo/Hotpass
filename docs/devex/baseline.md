@@ -4,8 +4,6 @@ summary: Personas, workflows, and SPACE-aligned friction points captured from st
 last_updated: 2025-10-25
 ---
 
-# Developer experience baseline
-
 ## Personas and context
 
 | Persona                   | Team                  | Motivations                                                                            | Friction points                                                                                                     | Critical workflows                                                                         |

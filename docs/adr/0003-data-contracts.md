@@ -5,8 +5,6 @@ last_updated: 2025-10-28
 status: Accepted
 ---
 
-# Context
-
 Hotpass relied on manually curated Frictionless JSON schemas under `schemas/` to
 describe upstream workbooks and the refined single source of truth. The schemas
 were easy to drift because the authoritative definitions lived outside the
@@ -15,7 +13,7 @@ hand. Tests only asserted against the static files, so developers could not
 reason about the contracts programmatically or regenerate the artefacts when
 fields changed.
 
-# Decision
+## Decision
 
 We introduced a `hotpass.contracts` module that stores each dataset contract as a
 Pydantic row model backed by Pandera dataframe validation. The module exposes a
@@ -25,7 +23,7 @@ and an auto-generated reference page. Running
 `docs/reference/schemas.md`, keeping the contract source of truth in code while
 ensuring the published artefacts stay synchronised.
 
-# Consequences
+## Consequences
 
 - Contracts are expressed once in code, enabling reuse across validation,
   testing, documentation, and orchestration tooling.

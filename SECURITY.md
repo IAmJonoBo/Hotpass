@@ -8,7 +8,7 @@
 
 ## Reporting a vulnerability
 
-- Email security@hotpass.example with details and reproduction steps.
+- Email [security@hotpass.example](mailto:security@hotpass.example) with details and reproduction steps.
 - Provide SBOM/provenance artefacts if available to accelerate triage.
 - We aim to respond within 2 business days.
 

@@ -4,8 +4,6 @@ summary: External references supporting tool and standard selections.
 last_updated: 2025-10-25
 ---
 
-# Research log
-
 | Date       | Topic                         | Source                                                                                             | Key takeaway                                                            |
 | ---------- | ----------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | 2025-10-24 | CycloneDX SBOM best practices | [CycloneDX community](https://cyclonedx.org/)                                                      | Align with JSON v1.5 schema for compatibility with tooling ecosystem.   |

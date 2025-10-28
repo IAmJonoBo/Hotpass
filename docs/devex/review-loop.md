@@ -4,8 +4,6 @@ summary: Governance process for monitoring DevEx metrics, experiments, and platf
 last_updated: 2025-10-25
 ---
 
-# Developer experience review cadence
-
 ## Quarterly governance forum
 
 | Cadence                                                 | Participants                                              | Agenda                                                                                   | Inputs                                                                                       | Outputs                                                                                                 |

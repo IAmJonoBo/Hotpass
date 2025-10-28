@@ -4,8 +4,6 @@ summary: Findings from the audit-first review ahead of the online research and v
 last_updated: 2025-10-26
 ---
 
-# Overview
-
 This report captures repository context, current QA posture, and critical gaps that should be closed before the online research and validation overhaul proceeds.
 
 ## Repository context snapshot

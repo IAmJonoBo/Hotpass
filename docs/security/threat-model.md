@@ -4,8 +4,6 @@ summary: Multi-surface threat model covering CLI, Prefect flows, and the Streaml
 last_updated: 2025-10-26
 ---
 
-# Security threat model
-
 ## Executive summary
 
 Hotpass exposes three operator-facing entry points: the command-line interface (CLI), Prefect flow deployments, and the Streamlit dashboard. Each surface touches the same sensitive assets—raw customer spreadsheets, refined exports, and audit metadata—so tampering or leakage on one surface can cascade. The CLI enforces strict option validation and structured logging, the Prefect flow validates deployment parameters with Pydantic models, and the dashboard now ships with password-gated access plus filesystem allowlists to contain data movement.

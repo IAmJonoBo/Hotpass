@@ -4,8 +4,6 @@ summary: Consolidated critical-reasoning checks and delivery package for the Hot
 last_updated: 2025-10-28
 ---
 
-# Hotpass upgrade final report
-
 ## 1. Critical-reasoning checks
 
 ### 1.1 Pre-mortem

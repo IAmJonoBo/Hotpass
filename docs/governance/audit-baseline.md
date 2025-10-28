@@ -4,8 +4,6 @@ summary: Catalog of Hotpass 2.0 configuration defaults, quality expectations, fe
 last_updated: 2025-10-28
 ---
 
-# Governance audit baseline
-
 Hotpass 2.0 treats the orchestrator's default bundle as the authoritative execution contract. Use this
 checklist when verifying a deployment, refreshing evidence, or onboarding a new data provider.
 

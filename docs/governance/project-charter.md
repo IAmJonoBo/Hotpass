@@ -4,8 +4,6 @@ summary: Mission, personas, guardrails, and governance rhythms for the Hotpass m
 last_updated: 2025-10-25
 ---
 
-# Governance — project charter
-
 Hotpass refines messy spreadsheets into a governed single source of truth. This charter links the programme mission to the personas we serve, the constraints we must respect, and the boundaries we will not cross.
 
 ## Mission

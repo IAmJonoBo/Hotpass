@@ -4,8 +4,6 @@ summary: Install only the uv extras you need while keeping runners reproducible 
 last_updated: 2025-10-28
 ---
 
-# Choose dependency profiles
-
 Hotpass ships several optional dependency “extras” (docs, geospatial, compliance, dashboards, etc.). Use the guidance below to keep ephemeral runners fast while ensuring every task has the libraries it needs before the firewall comes up.
 
 ## Quick reference
@@ -65,7 +63,7 @@ python -m pip install -e ".[dev,orchestration,geospatial]"
 
 The main pipeline (`.github/workflows/process-data.yml`) now exposes a `uv_extras` input on the `workflow_dispatch` trigger. When launching a manual run, supply a space-separated list:
 
-```
+```yaml
 uv_extras: "dev orchestration geospatial"
 ```
 

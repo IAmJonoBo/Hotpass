@@ -4,8 +4,6 @@ summary: Rollback considerations and toggles for recent automation.
 last_updated: 2025-10-25
 ---
 
-# Deployment notes and feature toggles
-
 | Change                       | Toggle                                       | Rollback                                                                   | Notes                                                                    |
 | ---------------------------- | -------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Accessibility pytest job     | `A11Y_CHECKS_ENABLED` env var (default true) | Disable job via workflow input; revert tests if causing blocking failures. | Requires Streamlit stub; no external services.                           |

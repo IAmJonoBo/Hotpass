@@ -4,8 +4,6 @@ summary: Prioritised tasks to close compliance gaps across POPIA, ISO 27001, and
 last_updated: 2025-10-26
 ---
 
-# Compliance — remediation backlog
-
 Each backlog item aligns to a control gap in the framework matrices and records ownership, due date, and evidence expectations. High-risk items are marked 🔴.
 
 ## POPIA

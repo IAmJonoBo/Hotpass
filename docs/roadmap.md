@@ -4,8 +4,6 @@ summary: Status of the Hotpass modernisation programme, quality gates, and follo
 last_updated: 2025-10-28
 ---
 
-# Hotpass roadmap
-
 This roadmap is the single source of truth for the Hotpass programme. It captures the active plan, guardrails, acceptance criteria, and the mapping of work to the repository layout so that changes are incremental, reversible, and observable.
 
 ## Executive summary
@@ -19,13 +17,18 @@ Focus areas for the upcoming iterations:
 
 ## Iteration plan (date-free)
 
-**Iteration A – safety rails first**
+### Iteration A – safety rails first
 
 1. Phase 2 tasks (contracts, GX, property tests).
 2. Phase 5 tasks T5.1–T5.4 (quality CI, security, build, provenance).
 3. Phase 6 task T6.1 (docs skeleton and links).
 
-**Iteration B – orchestration, observability, and data versioning** 4. Phase 3 tasks (Prefect deployments, OpenLineage/Marquez, Parquet + DVC). 5. Phase 5 tasks T5.5–T5.6 (ephemeral runners + OpenTelemetry instrumentation). 6. Phase 6 task T6.2 (CLI UX: `doctor` and `init`). 7. Phase 4 task (MLflow) **only if** training is in scope; otherwise record an ADR and defer.
+### Iteration B – orchestration, observability, and data versioning
+
+1. Phase 3 tasks (Prefect deployments, OpenLineage/Marquez, Parquet + DVC).
+2. Phase 5 tasks T5.5–T5.6 (ephemeral runners + OpenTelemetry instrumentation).
+3. Phase 6 task T6.2 (CLI UX: `doctor` and `init`).
+4. Phase 4 task (MLflow) **only if** training is in scope; otherwise record an ADR and defer.
 
 ---
 

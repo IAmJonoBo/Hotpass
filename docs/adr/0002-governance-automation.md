@@ -5,14 +5,12 @@ last_updated: 2025-12-01
 status: Accepted
 ---
 
-# Context
-
 Hotpass relies on Conventional Commits for release hygiene, but checks were manual. Reviewers could only spot malformed commit
 messages during review, labels varied between contributors, and release notes were assembled by hand. Renovate also opened
 ungrouped dependency PRs for the `uv` CLI and Prefect extras, which complicated orchestrator rollouts that require the extras
 to move together.
 
-# Decision
+## Decision
 
 We introduced GitHub workflows that enforce these governance steps automatically:
 
@@ -23,7 +21,7 @@ We introduced GitHub workflows that enforce these governance steps automatically
 - `renovate.json` now groups uv/Prefect extra upgrades, applies dependency labels, and restricts automerge to a weekend window
   once updates have stabilised for at least a day.
 
-# Consequences
+## Consequences
 
 - Contributors must fix lint failures locally before requesting review, but they receive feedback immediately rather than during
   review.

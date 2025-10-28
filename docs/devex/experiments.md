@@ -4,8 +4,6 @@ summary: Targeted experiments to reduce toil and measure SPACE-oriented outcomes
 last_updated: 2025-10-25
 ---
 
-# Developer experience experiments
-
 ## Experiment backlog
 
 | #   | Hypothesis                                                                       | Experiment design                                                                                                    | Metrics                                                                 | Owner                        | Status                        |

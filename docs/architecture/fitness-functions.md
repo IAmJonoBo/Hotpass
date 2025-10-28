@@ -4,8 +4,6 @@ summary: Automated checks safeguarding Hotpass architecture characteristics.
 last_updated: 2025-10-25
 ---
 
-# Fitness functions and architectural guardrails
-
 ## Active fitness functions
 
 | ID   | Scenario                                 | Guardrail                                          | Implementation                         | Threshold |

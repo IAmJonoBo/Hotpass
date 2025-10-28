@@ -4,8 +4,6 @@ summary: Enable Hotpass orchestration, enrichment, and observability features us
 last_updated: 2025-10-25
 ---
 
-# Tutorial — orchestrate the enhanced pipeline
-
 Follow this tutorial to move from the single-command pipeline to a production-ready deployment that orchestrates flows, enriches records, and publishes telemetry. You should complete the [quickstart tutorial](./quickstart.md) first.
 
 ## 1. Install the enhanced extras

@@ -4,8 +4,6 @@ summary: Rationale behind Hotpass validation, enrichment, and compliance capabil
 last_updated: 2025-10-25
 ---
 
-# Explanation — data quality strategy
-
 The quality programme ensures that the refined dataset is trustworthy and compliant.
 
 ## Guiding principles

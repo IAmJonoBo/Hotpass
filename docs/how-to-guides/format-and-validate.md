@@ -4,8 +4,6 @@ summary: Apply professional styling, govern ingest schemas, and surface parquet/
 last_updated: 2025-12-26
 ---
 
-# How-to — format outputs and enforce validation rules
-
 Follow this guide when stakeholders expect polished deliverables and tailored quality gates.
 
 ## Enable premium formatting
@@ -44,7 +42,7 @@ Every workbook consumed by the pipeline carries a Frictionless Table Schema cont
 
 ### Directory structure
 
-```
+```text
 data_expectations/
 ├── suites/           # Canonical expectation suite definitions
 │   ├── reachout_organisation.json

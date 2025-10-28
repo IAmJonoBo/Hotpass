@@ -4,8 +4,6 @@ summary: Automated and manual accessibility testing strategy integrated into CI 
 last_updated: 2025-10-25
 ---
 
-# Accessibility testing approach
-
 ## Automated checks
 
 | Layer                        | Tooling                                             | Command                                                                                 | Output                                    |

@@ -4,8 +4,6 @@ summary: Inventory of audit evidence sources, locations, and retention guidance 
 last_updated: 2025-10-25
 ---
 
-# Compliance — evidence catalog
-
 | Evidence source                         | Location                                                                                 | Owner                  | Retention        | Notes                                                                                                 |
 | --------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
 | QA command history                      | `Next_Steps.md` and GitHub Actions `process-data.yml` logs                               | Engineering            | 1 year           | Capture command outputs in release notes per run; export workflow logs quarterly.                     |

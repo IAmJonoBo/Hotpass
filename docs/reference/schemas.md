@@ -4,8 +4,6 @@ summary: Canonical dataset contracts for Hotpass source and refined tables.
 last_updated: 2025-10-28
 ---
 
-# Dataset schemas
-
 ```{note}
 This page is generated from the dataset contract registry. Run
 `python -m hotpass.contracts.generator` to refresh the artefacts.
@@ -30,7 +28,7 @@ Schema for 10-10-25 Capture sheet in Contact Database.xlsx
 | `Description`           | String | No       | Narrative notes captured by the outreach team         |
 | `Type`                  | String | No       | Captured organisation classification from the sheet   |
 
-### Example
+### Contact capture example
 
 ```json
 {
@@ -61,7 +59,7 @@ Schema for Company_Addresses sheet in Contact Database.xlsx
 | `Airport`    | String | No       | Associated airport or facility if present               |
 | `Unnamed: 4` | String | No       | Spare column for auxiliary notes in the source workbook |
 
-### Example
+### Contact address example
 
 ```json
 {
@@ -93,7 +91,7 @@ Schema for Company_Cat sheet in Contact Database.xlsx
 | `Checked`         | String | No       | Quality assurance marker from source workbook   |
 | `Website`         | String | No       | Company website                                 |
 
-### Example
+### Company catalogue example
 
 ```json
 {
@@ -129,7 +127,7 @@ Schema for Company_Contacts sheet in Contact Database.xlsx
 | `Email`      | String | No       | Email address                     |
 | `Landline`   | String | No       | Landline number if supplied       |
 
-### Example
+### Contact record example
 
 ```json
 {
@@ -165,7 +163,7 @@ Contract defining the Contact Info sheet in Reachout Database.xlsx
 | `Invalid`           | String | No       | Flags invalid contact information                |
 | `Unnamed: 10`       | String | No       | Auxiliary notes column                           |
 
-### Example
+### Reachout contact example
 
 ```json
 {
@@ -205,7 +203,7 @@ Contract defining the Organisation sheet in Reachout Database.xlsx
 | `Notes`             | String | No       | General notes                             |
 | `Open Questions`    | String | No       | Outstanding questions logged by outreach  |
 
-### Example
+### Reachout organisation example
 
 ```json
 {
@@ -241,7 +239,7 @@ Schema for Cleaned sheet in SACAA Flight Schools workbook
 | `Contact Number`        | String | No       | Primary phone number                    |
 | `Contact Email Address` | String | No       | Primary email address                   |
 
-### Example
+### SACAA record example
 
 ```json
 {
@@ -291,7 +289,7 @@ Schema for the refined Hotpass dataset exported via the pipeline
 | `priority`                 | String | No       | Priority ranking used by downstream teams             |
 | `privacy_basis`            | String | No       | Documented privacy basis for retaining the data       |
 
-### Example
+### SSOT record example
 
 ```json
 {
@@ -323,4 +321,3 @@ Schema for the refined Hotpass dataset exported via the pipeline
   "priority": "High",
   "privacy_basis": "Legitimate interest"
 }
-```

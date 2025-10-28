@@ -4,6 +4,8 @@ about: Request an update or addition to the Hotpass documentation
 labels: documentation
 ---
 
+# Documentation improvement
+
 ## Summary
 
 <!-- Briefly describe the documentation change. -->

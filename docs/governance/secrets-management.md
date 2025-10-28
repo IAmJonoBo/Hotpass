@@ -4,8 +4,6 @@ summary: Decision record and implementation plan for Hotpass secrets across CLI,
 last_updated: 2025-10-26
 ---
 
-# Governance — secrets management strategy
-
 Hotpass processes regulated datasets and depends on registry APIs, Prefect deployments, and telemetry exporters that all require credentials. This document captures the selected platform for managing those secrets, the evaluation of alternatives, and the rollout plan.
 
 ## Decision summary

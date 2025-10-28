@@ -4,8 +4,6 @@ summary: Configure the Hotpass telemetry registry, exporter policies, and QA exp
 last_updated: 2025-10-27
 ---
 
-# Observability registry and policy
-
 Hotpass now routes all tracing and metrics through a dedicated telemetry registry. The
 registry centralises OpenTelemetry provider initialisation, exporter wiring, and shutdown
 behaviour so the CLI, Prefect orchestrator, and unit tests share the same lifecycle hooks.

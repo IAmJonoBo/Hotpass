@@ -4,8 +4,6 @@ summary: Inventory and review cadence for key suppliers supporting the Hotpass p
 last_updated: 2025-10-26
 ---
 
-# Supplier risk register
-
 | Supplier | Service scope                                  | Classification | Last review | Next review | Notes                                                                            |
 | -------- | ---------------------------------------------- | -------------- | ----------- | ----------- | -------------------------------------------------------------------------------- |
 | Prefect  | Orchestration platform for scheduled runs      | High           | 2025-10-20  | 2026-01-20  | Tokens rotated monthly; ensure worker nodes restrict egress.                     |

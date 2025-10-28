@@ -4,8 +4,6 @@ summary: Overview of Hotpass compliance frameworks, maturity scoring, evidence m
 last_updated: 2025-10-26
 ---
 
-# Compliance — framework baseline
-
 The Hotpass governance programme spans POPIA, ISO 27001, and SOC 2. This index tracks baseline maturity for each framework, links controls to evidence, and consolidates remediation and verification cadences.
 
 ## How maturity scoring works

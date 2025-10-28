@@ -4,8 +4,6 @@ summary: Forecasted impact of DevEx, security, and UX initiatives on key metrics
 last_updated: 2025-10-25
 ---
 
-# Metrics forecast
-
 | Metric                          | Baseline | 30-day forecast | 60-day forecast | 90-day forecast | Driver                                                    |
 | ------------------------------- | -------- | --------------- | --------------- | --------------- | --------------------------------------------------------- |
 | Deployment frequency (monthly)  | 8        | 10              | 12              | 14              | Automation of environment bootstrap + Backstage templates |

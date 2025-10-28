@@ -4,8 +4,6 @@ summary: Run the core Hotpass pipeline end-to-end using sample data and explore 
 last_updated: 2025-10-25
 ---
 
-# Quickstart — refine a workbook in minutes
-
 This tutorial shows you how to install Hotpass, validate a spreadsheet, and publish a refined workbook with quality insights. It assumes you are comfortable with Python tooling but are new to the Hotpass platform.
 
 ## 1. Install the tooling

@@ -4,8 +4,6 @@ summary: Learn how to install, operate, and extend the Hotpass data refinement p
 last_updated: 2025-10-25
 ---
 
-# Hotpass documentation
-
 Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https://diataxis.fr/) framework so you can jump straight to the material that fits your task. Tutorials walk you through end-to-end experiences, how-to guides focus on specific jobs, reference pages list facts, and explanations share background context and decisions.
 
 ```{toctree}

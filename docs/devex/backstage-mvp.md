@@ -4,8 +4,6 @@ summary: Minimal Backstage footprint, catalog entries, and TechDocs integration 
 last_updated: 2025-10-26
 ---
 
-# Backstage MVP and internal developer platform enablement
-
 ## Catalog entries
 
 | Component                   | Backstage kind | File                                                                                           | Description                                                               |

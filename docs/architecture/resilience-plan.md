@@ -4,8 +4,6 @@ summary: Guardrails for SLOs, chaos experiments, and observability improvements.
 last_updated: 2025-10-27
 ---
 
-# Resilience and observability enhancements
-
 ## SLOs and error budgets
 
 | Service                | SLI                   | Target  | Error budget       | Measurement                       |

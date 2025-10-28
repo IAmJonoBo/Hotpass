@@ -4,8 +4,6 @@ summary: Ownership, lifecycle, and compliance posture for dependencies.
 last_updated: 2025-10-25
 ---
 
-# Dependency and tooling matrix
-
 | Dependency    | Version | Owner       | Lifecycle | Integration points     | License      | Compliance notes                    |
 | ------------- | ------- | ----------- | --------- | ---------------------- | ------------ | ----------------------------------- |
 | Python        | 3.13    | Platform    | Active    | CLI, Prefect flows     | PSF          | Covered by enterprise Python policy |

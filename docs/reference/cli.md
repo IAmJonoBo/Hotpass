@@ -4,8 +4,6 @@ summary: Detailed options for the unified `hotpass` CLI entry point and its subc
 last_updated: 2025-10-28
 ---
 
-# Reference — command-line interface
-
 Hotpass now ships a single console script: `hotpass`. Subcommands map to the core
 pipeline as well as orchestrator, entity resolution, dashboard, and deployment workflows.
 Legacy `hotpass-enhanced` invocations continue to work but simply delegate to the unified

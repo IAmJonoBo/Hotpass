@@ -6,7 +6,9 @@ This note tells Codex how to run Hotpass end‑to‑end and what internet access
 
 ## 1) Codex Cloud: environment recipe
 
-**Purpose:** build/install the project, then run the pipeline on a dataset.
+### Purpose
+
+Build/install the project, then run the pipeline on a dataset.
 
 ### 1.1 Internet access policy
 
@@ -23,14 +25,14 @@ This note tells Codex how to run Hotpass end‑to‑end and what internet access
 
 Use either _pip_ or _uv_. Pick one block.
 
-**Option A — pip only**
+#### Option A — pip only
 
 ```bash
 python -m pip install -U pip
 python -m pip install -e ".[orchestration,enrichment,geospatial,compliance]"
 ```
 
-**Option B — uv**
+#### Option B — uv
 
 ```bash
 python -m pip install -U uv

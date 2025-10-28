@@ -4,8 +4,6 @@ summary: Current capabilities, limitations, and investment themes guiding Hotpas
 last_updated: 2025-10-25
 ---
 
-# Explanation — platform scope and gaps
-
 Hotpass continues to evolve from a spreadsheet normaliser into an end-to-end data refinement platform. This page highlights what is currently in place and what remains under active development.
 
 ## Delivered capabilities

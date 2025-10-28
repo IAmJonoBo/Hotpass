@@ -4,8 +4,6 @@ summary: SBOM, signing, provenance, and policy controls for Hotpass.
 last_updated: 2025-10-25
 ---
 
-# Supply-chain security plan
-
 ## Objectives
 
 - Generate CycloneDX SBOM on every PR and release.

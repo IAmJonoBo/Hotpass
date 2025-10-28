@@ -4,6 +4,8 @@ about: Report a defect in Hotpass runtime or documentation
 labels: bug
 ---
 
+# Bug report
+
 ## Summary
 
 <!-- Describe the problem. -->

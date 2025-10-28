@@ -4,8 +4,6 @@ summary: Expectations, quality gates, and waiver process for Hotpass pull reques
 last_updated: 2025-12-01
 ---
 
-# Pull request playbook
-
 ## Checklist
 
 1. Reference roadmap item or issue.

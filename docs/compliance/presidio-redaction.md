@@ -4,8 +4,6 @@ summary: Enable and tune Presidio-powered redaction for ingestion pipelines.
 last_updated: 2025-10-26
 ---
 
-# Configure Presidio redaction
-
 Hotpass now redacts sensitive content at ingest time using Microsoft Presidio. The
 `PipelineConfig` dataclass creates a `PIIRedactionConfig` automatically, so base
 pipeline runs scrub PII before persisting refined workbooks or audit logs.

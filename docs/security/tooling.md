@@ -4,8 +4,6 @@ summary: Run security automation (Semgrep) in controlled environments with custo
 last_updated: 2025-10-28
 ---
 
-# Security tooling
-
 ## Semgrep auto scans
 
 Use the helper script when you need the managed `--config=auto` rule set, especially on runners that enforce outbound TLS inspection.

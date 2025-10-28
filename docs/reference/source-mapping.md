@@ -4,8 +4,6 @@ summary: Trace how raw spreadsheet columns map to the canonical SSOT schema.
 last_updated: 2025-10-25
 ---
 
-# Reference — source-to-target mapping
-
 The source-to-target mapping defines how the ingestion layer normalises incoming spreadsheets. Use this reference when onboarding a new datasource or debugging missing values.
 
 ## Mapping conventions
