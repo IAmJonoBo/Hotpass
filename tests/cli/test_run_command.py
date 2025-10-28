@@ -119,6 +119,72 @@ def test_run_command_merges_config_file(
     assert archive_event["data"]["path"].startswith(str(dist_dir))
 
 
+def test_run_command_dispatches_automation_hooks(
+    sample_data_dir: Path,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_path = tmp_path / "refined.xlsx"
+    signal_store = tmp_path / "intent-signals.json"
+    daily_list_path = tmp_path / "daily.csv"
+
+    webhook_calls: list[tuple[tuple[str, ...], int]] = []
+    crm_calls: list[tuple[str, int]] = []
+
+    def fake_dispatch(
+        digest: pd.DataFrame,
+        *,
+        webhooks: tuple[str, ...],
+        daily_list: pd.DataFrame | None = None,
+        logger: object | None = None,
+    ) -> None:
+        webhook_calls.append((webhooks, int(digest.shape[0])))
+
+    def fake_push(
+        daily: pd.DataFrame,
+        endpoint: str,
+        *,
+        token: str | None = None,
+        logger: object | None = None,
+    ) -> None:
+        crm_calls.append((endpoint, int(daily.shape[0])))
+
+    monkeypatch.setattr("hotpass.cli.commands.run.dispatch_webhooks", fake_dispatch)
+    monkeypatch.setattr("hotpass.cli.commands.run.push_crm_updates", fake_push)
+
+    exit_code = cli.main(
+        [
+            "run",
+            "--input-dir",
+            str(sample_data_dir),
+            "--output-path",
+            str(output_path),
+            "--log-format",
+            "json",
+            "--intent-signal-store",
+            str(signal_store),
+            "--daily-list-path",
+            str(daily_list_path),
+            "--daily-list-size",
+            "1",
+            "--intent-webhook",
+            "https://webhook.test/intent",
+            "--crm-endpoint",
+            "https://crm.test/api/leads",
+            "--crm-token",
+            "secret-token",
+        ]
+    )
+
+    assert exit_code == 0
+    capsys.readouterr()
+    assert webhook_calls
+    assert crm_calls
+    assert signal_store.exists()
+    assert daily_list_path.exists()
+
+
 def test_run_command_supports_rich_logging(
     sample_data_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -170,6 +236,8 @@ def test_run_command_attaches_progress_listener_when_rich_logging(
                 data_quality_distribution={"mean": 0.0, "min": 0.0, "max": 0.0},
                 performance_metrics={},
             )
+            self.intent_digest = pd.DataFrame()
+            self.daily_list = pd.DataFrame()
 
     def fake_run_pipeline(
         self: PipelineOrchestrator, execution: PipelineExecutionConfig

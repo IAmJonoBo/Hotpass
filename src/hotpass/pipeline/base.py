@@ -32,6 +32,7 @@ from ..enrichment.intent import (
     IntentOrganizationSummary,
     IntentPlan,
     IntentRunResult,
+    IntentSignalStore,
     run_intent_plan,
 )
 from ..enrichment.validators import ContactValidationService
@@ -54,7 +55,7 @@ from ..pipeline.events import (
 )
 from ..storage import DuckDBAdapter, PolarsDataset
 from ..telemetry import pipeline_stage
-from ..transform.scoring import LeadScorer
+from ..transform.scoring import LeadScorer, build_daily_list
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from ..data_sources.agents.runner import AgentTiming
@@ -232,6 +233,12 @@ class PipelineConfig:
     intent_plan: IntentPlan | None = None
     intent_credentials: Mapping[str, str] = field(default_factory=dict)
     intent_digest_path: Path | None = None
+    intent_signal_store_path: Path | None = None
+    daily_list_path: Path | None = None
+    daily_list_size: int = 50
+    automation_webhooks: tuple[str, ...] = field(default_factory=tuple)
+    crm_endpoint: str | None = None
+    crm_token: str | None = None
     preloaded_agent_frame: pd.DataFrame | None = None
     preloaded_agent_timings: list[AgentTiming] = field(default_factory=list)
     preloaded_agent_warnings: list[str] = field(default_factory=list)
@@ -473,6 +480,7 @@ class PipelineResult:
     pii_redaction_events: list[dict[str, Any]] = field(default_factory=list)
     intent_signals: pd.DataFrame | None = None
     intent_digest: pd.DataFrame | None = None
+    daily_list: pd.DataFrame | None = None
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
@@ -1130,11 +1138,17 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     intent_summary_lookup: Mapping[str, IntentOrganizationSummary] | None = None
     if config.intent_plan and config.intent_plan.enabled:
         intent_start = time.perf_counter()
+        store = (
+            IntentSignalStore(config.intent_signal_store_path)
+            if config.intent_signal_store_path is not None
+            else None
+        )
         intent_result = run_intent_plan(
             config.intent_plan,
             country_code=config.country_code,
             credentials=config.intent_credentials,
             issued_at=datetime.now(tz=UTC),
+            storage=store,
         )
         metrics["intent_collection_seconds"] = time.perf_counter() - intent_start
         metrics["intent_signal_count"] = int(intent_result.signals.shape[0])
@@ -1220,6 +1234,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             pii_redaction_events=redaction_events,
             intent_signals=intent_result.signals if intent_result is not None else None,
             intent_digest=intent_result.digest if intent_result is not None else None,
+            daily_list=None,
         )
 
     combined_polars = pl.from_pandas(combined, include_index=False)
@@ -1566,6 +1581,32 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
                 }
             )
 
+    if config.daily_list_path is not None or config.daily_list_size:
+        digest_frame = intent_result.digest if intent_result is not None else pd.DataFrame()
+        daily_list_df = build_daily_list(
+            refined_df=validated_df,
+            intent_digest=digest_frame,
+            model=None,
+            top_n=max(1, int(config.daily_list_size or 0)),
+            output_path=config.daily_list_path,
+        )
+        metrics["daily_list_records"] = int(daily_list_df.shape[0])
+        if config.daily_list_path is not None:
+            metrics["daily_list_path"] = str(config.daily_list_path)
+            if config.enable_audit_trail:
+                audit_trail.append(
+                    {
+                        "timestamp": time.time(),
+                        "event": "daily_list_written",
+                        "details": {
+                            "path": str(config.daily_list_path),
+                            "records": int(daily_list_df.shape[0]),
+                        },
+                    }
+                )
+    else:
+        daily_list_df = None
+
     if "write_seconds" not in metrics:
         metrics["write_seconds"] = time.perf_counter() - write_start
     if "total_seconds" not in metrics:
@@ -1618,6 +1659,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         pii_redaction_events=redaction_events,
         intent_signals=intent_result.signals if intent_result is not None else None,
         intent_digest=intent_result.digest if intent_result is not None else None,
+        daily_list=daily_list_df,
     )
 
 

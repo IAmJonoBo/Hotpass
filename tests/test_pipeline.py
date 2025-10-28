@@ -549,3 +549,69 @@ def test_pipeline_merges_intent_signals(tmp_path: Path, sample_data_dir: Path) -
     assert not digest_match.empty
     digest_score = digest_match["intent_signal_score"].iloc[0]
     assert digest_score == pytest.approx(aero["intent_signal_score"], rel=1e-6)
+
+
+def test_pipeline_exports_daily_list_and_signal_store(
+    tmp_path: Path, sample_data_dir: Path
+) -> None:
+    output_path = tmp_path / "refined.xlsx"
+    signal_store_path = tmp_path / "intent-signals.json"
+    daily_list_path = tmp_path / "daily-list.csv"
+
+    config = PipelineConfig(
+        input_dir=sample_data_dir,
+        output_path=output_path,
+        expectation_suite_name="default",
+        country_code="ZA",
+        pii_redaction=PIIRedactionConfig(enabled=False),
+        intent_signal_store_path=signal_store_path,
+        daily_list_path=daily_list_path,
+        daily_list_size=1,
+    )
+
+    plan = IntentPlan(
+        enabled=True,
+        collectors=(
+            IntentCollectorDefinition(
+                name="news",
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School secures defence contract",
+                                "intent": 0.85,
+                                "timestamp": "2025-10-25T08:00:00Z",
+                                "url": "https://example.test/aero/contract",
+                            }
+                        ]
+                    }
+                },
+            ),
+            IntentCollectorDefinition(
+                name="tech-adoption",
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "technology": "Telemetry Platform",
+                                "intent": 0.7,
+                                "timestamp": "2025-10-25T12:00:00Z",
+                            }
+                        ]
+                    }
+                },
+            ),
+        ),
+        targets=(IntentTargetDefinition(identifier="Aero School", slug="aero-school"),),
+        storage_path=signal_store_path,
+    )
+    config.intent_plan = plan
+    config.intent_credentials = {"api_key": "stub"}  # pragma: allowlist secret
+
+    result = run_pipeline(config)
+
+    assert signal_store_path.exists()
+    assert daily_list_path.exists()
+    assert result.daily_list is not None
+    assert result.daily_list.iloc[0]["organization_slug"] == "aero-school"
+    assert "lead_score" in result.daily_list.columns

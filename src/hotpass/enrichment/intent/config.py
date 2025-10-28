@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -34,6 +35,7 @@ class IntentPlan:
     collectors: Sequence[IntentCollectorDefinition] = field(default_factory=tuple)
     targets: Sequence[IntentTargetDefinition] = field(default_factory=tuple)
     deduplicate: bool = True
+    storage_path: Path | None = None
 
     def active_collectors(self) -> tuple[IntentCollectorDefinition, ...]:
         return tuple(collector for collector in self.collectors if collector.enabled)

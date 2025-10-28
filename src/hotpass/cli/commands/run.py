@@ -10,9 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 from rich.prompt import Confirm
 
 from hotpass.artifacts import create_refined_archive
+from hotpass.automation.hooks import dispatch_webhooks, push_crm_updates
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
 from hotpass.pipeline import default_feature_bundle
@@ -183,6 +185,37 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             int(result.intent_digest.shape[0]),
         )
 
+    digest_df = result.intent_digest
+    daily_list_df = result.daily_list
+
+    effective_digest = digest_df
+    if effective_digest is None:
+        if daily_list_df is not None:
+            effective_digest = daily_list_df
+        else:
+            effective_digest = pd.DataFrame()
+
+    if config.pipeline.intent_webhooks:
+        dispatch_webhooks(
+            effective_digest,
+            webhooks=config.pipeline.intent_webhooks,
+            daily_list=daily_list_df,
+            logger=logger,
+        )
+
+    if daily_list_df is not None and config.pipeline.crm_endpoint:
+        push_crm_updates(
+            daily_list_df,
+            config.pipeline.crm_endpoint,
+            token=config.pipeline.crm_token,
+            logger=logger,
+        )
+
+    store_path = config.pipeline.intent_signal_store_path
+    if store_path is not None and not store_path.exists():
+        store_path.parent.mkdir(parents=True, exist_ok=True)
+        store_path.write_text("[]\n", encoding="utf-8")
+
     if config.pipeline.archive:
         config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
         archive_path = create_refined_archive(output_path, config.pipeline.dist_dir)
@@ -232,6 +265,20 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         pipeline_updates["party_store_path"] = Path(namespace.party_store_path)
     if getattr(namespace, "intent_digest_path", None) is not None:
         pipeline_updates["intent_digest_path"] = Path(namespace.intent_digest_path)
+    if getattr(namespace, "intent_signal_store", None) is not None:
+        pipeline_updates["intent_signal_store_path"] = Path(namespace.intent_signal_store)
+    if getattr(namespace, "daily_list_path", None) is not None:
+        pipeline_updates["daily_list_path"] = Path(namespace.daily_list_path)
+    if getattr(namespace, "daily_list_size", None) is not None:
+        pipeline_updates["daily_list_size"] = int(namespace.daily_list_size)
+    if getattr(namespace, "intent_webhooks", None):
+        pipeline_updates["intent_webhooks"] = [
+            str(value) for value in namespace.intent_webhooks if value is not None
+        ]
+    if getattr(namespace, "crm_endpoint", None) is not None:
+        pipeline_updates["crm_endpoint"] = namespace.crm_endpoint
+    if getattr(namespace, "crm_token", None) is not None:
+        pipeline_updates["crm_token"] = namespace.crm_token
     if namespace.log_format is not None:
         pipeline_updates["log_format"] = namespace.log_format
     if namespace.report_path is not None:

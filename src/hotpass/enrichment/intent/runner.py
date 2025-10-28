@@ -14,6 +14,7 @@ from ...normalization import slugify
 from ..validators import logistic_scale
 from .collectors import COLLECTOR_REGISTRY, IntentCollectorContext, IntentCollectorError
 from .config import IntentPlan
+from .storage import IntentSignalStore
 
 
 @dataclass(slots=True)
@@ -54,6 +55,7 @@ def run_intent_plan(
     country_code: str,
     credentials: Mapping[str, str],
     issued_at: datetime | None = None,
+    storage: IntentSignalStore | None = None,
 ) -> IntentRunResult:
     """Execute the configured collectors and aggregate signals."""
 
@@ -67,6 +69,8 @@ def run_intent_plan(
                 "observed_at",
                 "collector",
                 "metadata",
+                "retrieved_at",
+                "provenance",
             ]
         )
         digest = pd.DataFrame(
@@ -89,10 +93,14 @@ def run_intent_plan(
         )
 
     issued_at = (issued_at or datetime.now(tz=UTC)).astimezone(UTC)
+    active_store = storage
+    if active_store is None and plan.storage_path is not None:
+        active_store = IntentSignalStore(plan.storage_path)
     context = IntentCollectorContext(
         country_code=country_code,
         credentials=credentials,
         issued_at=issued_at,
+        store=active_store,
     )
 
     signal_rows: list[dict[str, Any]] = []
@@ -148,6 +156,8 @@ def run_intent_plan(
                         "observed_at": signal.observed_at.isoformat(),
                         "collector": signal.collector,
                         "metadata": signal.metadata,
+                        "retrieved_at": signal.retrieved_at.isoformat(),
+                        "provenance": signal.provenance,
                     }
                 )
         elapsed = (datetime.now(tz=UTC) - start).total_seconds()
@@ -181,6 +191,8 @@ def run_intent_plan(
                 "observed_at",
                 "collector",
                 "metadata",
+                "retrieved_at",
+                "provenance",
             ]
         )
 

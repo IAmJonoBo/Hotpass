@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
 
 from hotpass.enrichment.validators import logistic_scale
 
@@ -64,3 +69,185 @@ class LeadScorer:
         normalised = self._normalise(components)
         scaled = logistic_scale(normalised)
         return LeadScore(value=scaled, components=components)
+
+
+@dataclass(slots=True)
+class LeadScoringModel:
+    """Persistable estimator for prospect prioritisation."""
+
+    estimator: Any
+    feature_names: tuple[str, ...]
+    trained_at: datetime
+
+    def predict(self, frame: pd.DataFrame) -> pd.Series:
+        missing = [name for name in self.feature_names if name not in frame.columns]
+        if missing:
+            missing_str = ", ".join(missing)
+            msg = f"Missing feature columns for lead scoring: {missing_str}"
+            raise ValueError(msg)
+        values = frame[list(self.feature_names)].fillna(0.0)
+        probabilities = self.estimator.predict_proba(values)[:, 1]
+        series = pd.Series(probabilities, index=values.index, dtype="float64")
+        return series.clip(0.0, 1.0)
+
+
+def train_lead_scoring_model(
+    dataset: pd.DataFrame,
+    *,
+    target_column: str,
+    feature_columns: Sequence[str] | None = None,
+    random_state: int = 7,
+) -> LeadScoringModel:
+    """Train a logistic regression model for prospect prioritisation."""
+
+    try:  # pragma: no cover - dependency import guarded at runtime
+        from sklearn.linear_model import LogisticRegression
+    except ImportError as exc:  # pragma: no cover - informative error
+        msg = (
+            "scikit-learn is required to train lead scoring models. Install the"
+            " 'ml_scoring' extra (pip install hotpass[ml_scoring])."
+        )
+        raise RuntimeError(msg) from exc
+
+    if target_column not in dataset.columns:
+        msg = f"Target column '{target_column}' not present in dataset"
+        raise ValueError(msg)
+
+    default_features = (
+        "completeness",
+        "email_confidence",
+        "phone_confidence",
+        "source_priority",
+        "intent_signal_score",
+    )
+    candidate_features = tuple(feature_columns) if feature_columns else default_features
+    usable = [name for name in candidate_features if name in dataset.columns]
+    if not usable:
+        msg = "No usable feature columns available for lead scoring"
+        raise ValueError(msg)
+
+    training_frame = dataset[list(usable) + [target_column]].dropna()
+    if training_frame.empty:
+        msg = "Training dataset is empty after dropping null values"
+        raise ValueError(msg)
+
+    X = training_frame[list(usable)].astype("float64")
+    y = training_frame[target_column].astype("int64")
+
+    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
+    estimator.fit(X, y)
+
+    return LeadScoringModel(
+        estimator=estimator,
+        feature_names=tuple(usable),
+        trained_at=datetime.now(tz=UTC),
+    )
+
+
+def score_prospects(model: LeadScoringModel, frame: pd.DataFrame) -> pd.DataFrame:
+    """Attach lead score predictions using the supplied model."""
+
+    scores = model.predict(frame)
+    calibrated = scores.apply(logistic_scale)
+    result = frame.copy()
+    result["lead_score"] = calibrated
+    return result
+
+
+def build_daily_list(
+    *,
+    refined_df: pd.DataFrame,
+    intent_digest: pd.DataFrame | None,
+    model: LeadScoringModel | None = None,
+    top_n: int = 50,
+    output_path: Path | None = None,
+) -> pd.DataFrame:
+    """Generate a ranked prospect list combining refined data and intent signals."""
+
+    if refined_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "organization_name",
+                "organization_slug",
+                "lead_score",
+                "intent_signal_score",
+                "intent_signal_count",
+                "intent_last_observed_at",
+                "intent_top_insights",
+            ]
+        )
+
+    working = refined_df.copy()
+    if model is not None:
+        feature_frame = working.set_index("organization_slug", drop=False)
+        feature_subset = feature_frame[list(model.feature_names)]
+        prediction_series = model.predict(feature_subset)
+        ordered_predictions = prediction_series.reindex(
+            feature_frame["organization_slug"],
+        ).fillna(0.0)
+        working["lead_score"] = ordered_predictions.to_numpy()
+    else:
+        base_score = working.get("contact_primary_lead_score")
+        if base_score is None:
+            base_score = pd.Series(0.0, index=working.index)
+        working["lead_score"] = base_score.fillna(0.0).apply(logistic_scale)
+
+    digest = intent_digest if intent_digest is not None else pd.DataFrame()
+    if not digest.empty:
+        digest_subset = digest[
+            [
+                "target_slug",
+                "intent_signal_score",
+                "intent_signal_count",
+                "intent_last_observed_at",
+                "intent_top_insights",
+            ]
+        ].copy()
+        digest_subset.rename(columns={"target_slug": "organization_slug"}, inplace=True)
+        working = working.merge(digest_subset, on="organization_slug", how="left")
+    else:
+        working["intent_signal_score"] = working.get("intent_signal_score", 0.0)
+        working["intent_signal_count"] = working.get("intent_signal_count", 0)
+        working["intent_last_observed_at"] = working.get("intent_last_observed_at")
+        working["intent_top_insights"] = working.get("intent_top_insights")
+
+    columns = [
+        "organization_name",
+        "organization_slug",
+        "lead_score",
+        "intent_signal_score",
+        "intent_signal_count",
+        "intent_last_observed_at",
+        "intent_top_insights",
+    ]
+    available = [column for column in columns if column in working.columns]
+    ranked = (
+        working[available]
+        .sort_values("lead_score", ascending=False)
+        .drop_duplicates(subset="organization_slug", keep="first")
+        .head(top_n)
+        .reset_index(drop=True)
+    )
+
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        suffix = output_path.suffix.lower()
+        if suffix == ".parquet":
+            ranked.to_parquet(output_path, index=False)
+        elif suffix in {".csv", ".tsv"}:
+            sep = "\t" if suffix == ".tsv" else ","
+            ranked.to_csv(output_path, index=False, sep=sep)
+        else:
+            ranked.to_json(output_path, orient="records", indent=2)
+
+    return ranked
+
+
+__all__ = [
+    "LeadScore",
+    "LeadScorer",
+    "LeadScoringModel",
+    "build_daily_list",
+    "score_prospects",
+    "train_lead_scoring_model",
+]

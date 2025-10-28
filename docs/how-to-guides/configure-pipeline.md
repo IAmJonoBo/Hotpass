@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-30
+last_updated: 2025-11-05
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -51,11 +51,21 @@ Copy `config/pipeline.example.yaml` and adjust the options you need:
 - `country_code`: default for phone and address parsing.
 - `validation`: override thresholds per field type.
 - `intent_digest_path`: emit a ranked prospect list with the latest intent signals.
+- `intent_signal_store_path`: persist collector payloads with provenance metadata for reuse.
+- `daily_list_path` / `daily_list_size`: generate the daily prospect export used by automation hooks.
+- `intent_webhooks`: send the daily digest to third-party systems after each run.
+- `crm_endpoint` / `crm_token`: push the generated daily list directly to your CRM.
 
 Run the pipeline with the custom config:
 
 ```bash
 uv run hotpass --config config/pipeline.healthcare.yaml
+```
+
+Install the scoring dependencies before running the automation workflow:
+
+```bash
+uv sync --extra dev --extra enrichment --extra orchestration --extra ml_scoring
 ```
 
 ### Canonical schema and migration
@@ -89,6 +99,10 @@ url = "https://example.test/aero/contract"
 identifier = "Aero School"
 slug = "aero-school"
 
+[pipeline.intent.storage]
+path = "./data/intent-signals.json"
+max_age_hours = 6
+
 [pipeline.intent.credentials]
 token = "${HOTPASS_INTENT_TOKEN}"
 
@@ -99,6 +113,13 @@ compliance = true
 intent = ["Process POPIA regulated dataset"]
 data_owner = "Data Governance"
 classification = "sensitive_pii"
+
+[pipeline]
+daily_list_path = "./dist/daily-list.csv"
+daily_list_size = 100
+intent_webhooks = ["https://hooks.example/pipeline"]
+crm_endpoint = "https://crm.example/api/leads"
+crm_token = "${CRM_TOKEN}"
 ```
 
 Legacy configuration dictionaries can be upgraded automatically:
@@ -118,6 +139,47 @@ Autofix injects sensible governance defaults (for example `Data Governance` as t
 and flags missing intent declarations when compliance or PII detection is enabled. The resulting
 `HotpassConfig` instance exposes `.to_pipeline_config()` and `.to_enhanced_config()` helpers so
 CLI, Prefect flows, and agentic orchestrations consume the same configuration objects.
+
+### Persist signals and automate daily digests
+
+Intent collectors now use a persistent cache with timestamps and provenance. Configure the
+storage block to control where collectors store their JSON payloads and how long entries
+remain eligible for reuse:
+
+```toml
+[pipeline.intent.storage]
+path = "./data/intent-signals.json"
+max_age_hours = 12
+```
+
+When the pipeline runs with `intent_webhooks` or a `crm_endpoint`, the CLI automatically
+dispatches the resulting digest and daily list after the quality report finishes logging.
+Hotpass includes helper functions that:
+
+- POST the daily digest and optional daily list to each webhook URL declared in
+  `intent_webhooks`.
+- Send the same daily list to your CRM endpoint with an optional bearer token from
+  `crm_token`.
+
+Enable daily list exports by setting `daily_list_path` and `daily_list_size`. The
+pipeline writes the CSV (or Parquet when using a `.parquet` suffix) and returns the
+dataframe so automation hooks can send it downstream.
+
+```bash
+uv run hotpass \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --intent-signal-store ./data/intent-signals.json \
+  --daily-list-path ./dist/daily-list.csv \
+  --daily-list-size 25 \
+  --intent-webhook https://hooks.example/hotpass \
+  --crm-endpoint https://crm.example/api/leads \
+  --crm-token ${CRM_TOKEN}
+```
+
+Hotpass only sends automation payloads when there is data to deliver. If the digest or
+daily list is empty the CLI skips the request but retains log entries so you can audit
+when downstream systems were contacted.
 
 ### Enable asynchronous website enrichment
 
