@@ -265,7 +265,7 @@ def load_reachout_database(
     )
     validate_with_expectations(
         organisation_df,
-        suite_descriptor="reachout/organisation.json",
+        suite_descriptor="reachout_organisation.json",
         source_file=f"{org_path.name}#Organisation",
     )
 
@@ -277,7 +277,7 @@ def load_reachout_database(
     )
     validate_with_expectations(
         contacts_df,
-        suite_descriptor="reachout/contact_info.json",
+        suite_descriptor="reachout_contact_info.json",
         source_file=f"{org_path.name}#Contact Info",
     )
 
@@ -348,7 +348,7 @@ def load_contact_database(
     )
     validate_with_expectations(
         company_df,
-        suite_descriptor="contact/company_cat.json",
+        suite_descriptor="contact_company_cat.json",
         source_file=f"{path.name}#Company_Cat",
     )
 
@@ -361,7 +361,7 @@ def load_contact_database(
     contacts_df = _annotate_contact_verification(contacts_df, country_code=country_code)
     validate_with_expectations(
         contacts_df,
-        suite_descriptor="contact/company_contacts.json",
+        suite_descriptor="contact_company_contacts.json",
         source_file=f"{path.name}#Company_Contacts",
     )
 
@@ -373,7 +373,7 @@ def load_contact_database(
     )
     validate_with_expectations(
         addresses_df,
-        suite_descriptor="contact/company_addresses.json",
+        suite_descriptor="contact_company_addresses.json",
         source_file=f"{path.name}#Company_Addresses",
     )
 
@@ -385,7 +385,7 @@ def load_contact_database(
     )
     validate_with_expectations(
         capture_df,
-        suite_descriptor="contact/capture.json",
+        suite_descriptor="contact_capture.json",
         source_file=f"{path.name}#10-10-25 Capture",
     )
 
@@ -500,7 +500,7 @@ def load_sacaa_cleaned(
     )
     validate_with_expectations(
         df,
-        suite_descriptor="sacaa/cleaned.json",
+        suite_descriptor="sacaa_cleaned.json",
         source_file=f"{path.name}#Cleaned",
     )
     records: list[RawRecord] = []

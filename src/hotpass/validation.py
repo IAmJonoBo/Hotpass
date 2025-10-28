@@ -73,7 +73,14 @@ def _load_schema(name: str) -> Schema:
 
 
 def _load_expectation_suite(name: str) -> ExpectationSuite:
-    suite_path = _resource_path("data_expectations", name)
+    # Support both new canonical layout (suites/name.json) and legacy layout (path/name.json)
+    # Try new layout first
+    try:
+        suite_path = _resource_path("data_expectations", f"suites/{name}")
+    except FileNotFoundError:
+        # Fall back to legacy layout for backward compatibility
+        suite_path = _resource_path("data_expectations", name)
+
     with suite_path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
     expectations = [
@@ -90,6 +97,13 @@ def _load_expectation_suite(name: str) -> ExpectationSuite:
         meta=payload.get("meta", {}),
     )
     return suite
+
+
+def _load_checkpoint_config(name: str) -> dict[str, object]:
+    """Load a checkpoint configuration from the data_expectations/checkpoints directory."""
+    checkpoint_path = _resource_path("data_expectations", f"checkpoints/{name}")
+    with checkpoint_path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def validate_with_frictionless(
