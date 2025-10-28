@@ -212,6 +212,124 @@ def validate_with_expectations(
     )
 
 
+def run_checkpoint(
+    df: pd.DataFrame,
+    *,
+    checkpoint_name: str,
+    source_file: str,
+    data_docs_dir: Path | None = None,
+) -> ExpectationSuiteValidationResult:
+    """
+    Execute a Great Expectations checkpoint with optional Data Docs publishing.
+
+    This function loads a checkpoint configuration, runs validation against the
+    provided DataFrame, and optionally publishes results to Data Docs.
+
+    Args:
+        df: DataFrame to validate
+        checkpoint_name: Name of checkpoint config (without .json extension)
+        source_file: Source file identifier for error reporting
+        data_docs_dir: Directory for Data Docs output (e.g., dist/data-docs/)
+                      If None, Data Docs are not generated
+
+    Returns:
+        Validation result object
+
+    Raises:
+        DataContractError: If validation fails
+    """
+    checkpoint_config = _load_checkpoint_config(f"{checkpoint_name}.json")
+    suite_name = checkpoint_config.get("expectation_suite_name")
+    if not isinstance(suite_name, str):
+        raise ValueError(f"Checkpoint {checkpoint_name} missing expectation_suite_name")
+
+    suite = _load_expectation_suite(f"{suite_name}.json")
+
+    # Configure Data Context with optional Data Docs site
+    data_docs_sites = {}
+    if data_docs_dir is not None:
+        data_docs_dir.mkdir(parents=True, exist_ok=True)
+        data_docs_sites = {
+            "local_site": {
+                "class_name": "SiteBuilder",
+                "store_backend": {
+                    "class_name": "TupleFilesystemStoreBackend",
+                    "base_directory": str(data_docs_dir),
+                },
+                "site_index_builder": {
+                    "class_name": "DefaultSiteIndexBuilder",
+                },
+            }
+        }
+
+    config = DataContextConfig(
+        config_version=4,
+        expectations_store_name="expectations_store",
+        validation_results_store_name="validation_results_store",
+        checkpoint_store_name="checkpoint_store",
+        data_docs_sites=data_docs_sites,
+        analytics_enabled=False,
+        store_backend_defaults=InMemoryStoreBackendDefaults(init_temp_docs_sites=False),
+    )
+
+    context = EphemeralDataContext(project_config=config)
+    project_manager = ge_context_factory.project_manager
+    previous_project = project_manager.get_project()
+    project_manager.set_project(context)
+
+    try:
+        validator = Validator(
+            execution_engine=PandasExecutionEngine(),
+            expectation_suite=suite,
+            batches=[Batch(data=df)],
+            data_context=context,
+        )
+        validator.set_default_expectation_argument("catch_exceptions", True)
+        results = cast(ExpectationSuiteValidationResult, validator.validate())
+
+        # Build Data Docs if configured
+        if data_docs_dir is not None:
+            try:
+                context.build_data_docs()
+            except Exception as e:  # pragma: no cover - non-critical
+                # Log but don't fail the validation if Data Docs generation fails
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    f"Failed to build Data Docs for {checkpoint_name}: {e}"
+                )
+    finally:
+        project_manager.set_project(previous_project)
+
+    if not results.success:
+        failures: list[str] = []
+        for result in results.results:
+            if result.success:
+                continue
+            expectation_config = result.expectation_config
+            if expectation_config is None:
+                failures.append("Expectation without configuration metadata")
+                continue
+            expectation = expectation_config.type
+            kwargs = expectation_config.kwargs or {}
+            column = kwargs.get("column")
+            if column:
+                expectation = f"{expectation} ({column})"
+            unexpected = result.result.get("unexpected_list")
+            if unexpected:
+                failures.append(f"{expectation}: unexpected {unexpected[:3]}")
+            else:
+                failures.append(expectation)
+
+        raise DataContractError.from_expectations(
+            suite.name or suite.meta.get("expectation_suite_name", "unknown_suite"),
+            failures=failures,
+            source_file=source_file,
+        )
+
+    return results
+
+
 def load_schema_descriptor(name: str) -> dict[str, object]:
     """Return a raw schema descriptor for downstream metadata exporters."""
     schema_path = _resource_path("schemas", name)
