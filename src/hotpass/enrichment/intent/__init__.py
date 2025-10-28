@@ -7,6 +7,7 @@ from .runner import (
     IntentRunResult,
     run_intent_plan,
 )
+from .storage import IntentSignalStore
 
 __all__ = [
     "IntentCollectorDefinition",
@@ -15,5 +16,6 @@ __all__ = [
     "IntentPlan",
     "IntentRunResult",
     "IntentTargetDefinition",
+    "IntentSignalStore",
     "run_intent_plan",
 ]

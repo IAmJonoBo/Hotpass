@@ -37,6 +37,9 @@
 - [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31)
 - [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31)
 - [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15)
+- [x] Ship rate-limited intent collectors with persistence and provenance metadata (Owner: Engineering, Due: 2025-11-15)
+- [x] Train and integrate lead scoring models with automated daily list exports (Owner: Data & Engineering, Due: 2025-11-22)
+- [x] Wire CLI/Prefect automation for intent digests and CRM/webhook delivery, update docs (Owner: Engineering & Docs, Due: 2025-11-22)
 - [x] Implement acquisition agent task orchestration for search, crawl, and API phases (Owner: Engineering, Due: 2025-11-05)
 - [x] Ship provider adapters with robots/ToS compliance, cached credential access, and provenance metadata (Owner: Engineering, Due: 2025-11-05)
 - [x] Extend orchestrator scheduling and blended acquisition fixtures with configuration toggles (Owner: Engineering & QA, Due: 2025-11-08)
@@ -112,6 +115,8 @@
 - [x] Implement canonical Party/Role/Alias store, loader backfill, CLI party-store export, and data dictionary tooling (2025-10-26)【5a2f34†L1-L20】【02a776†L1-L120】
 - [x] Resolved Polars grouping regression, refreshed telemetry adapters, and reran full QA suite (pytest, ruff, format, mypy, bandit, detect-secrets, uv build, uv pip check) (2025-10-26)【095878†L1-L84】【123bd6†L1-L2】【058b8a†L1-L2】【e95512†L1-L19】【8d5e85†L5-L27】【fe1fc0†L1-L57】【8c87c0†L1-L139】【9785b9†L1-L3】
 - [x] Implemented ingestion-time Presidio redaction with append-only provenance ledgers and acquisition guardrails (2025-10-26)
+- [x] Wired CLI automation dispatch (webhooks + CRM), primed intent store caching TTL, refreshed docs, and reran pytest/ruff/mypy/bandit/detect-secrets/uv build with ml_scoring extra installed (2025-10-28)【docs/how-to-guides/configure-pipeline.md†L1-L210】【fb2ac5†L1-L213】【ced4b9†L1-L2】【f32142†L1-L2】【beec26†L1-L21】【144294†L1-L63】【152c6a†L1-L210】
+- [x] Revalidated automation + scoring integration in current workspace; reran pytest (with coverage), ruff check/format, mypy, bandit, detect-secrets, and uv build after syncing ml_scoring extra (2025-10-28)【fa865f†L1-L4】【c9d597†L1-L192】【5bcc15†L1-L3】【d42d46†L1-L2】【9a5d80†L1-L2】【37fdc1†L1-L21】【dca664†L1-L66】【1199a8†L1-L173】
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 - [x] Re-ran modular CLI QA sweep (pytest, ruff check, ruff format, mypy, bandit, detect-secrets, uv build) after finalising builder migration (2025-10-26)【a97987†L1-L79】【38d75c†L1-L3】【72fd2a†L1-L3】【53fe2f†L1-L16】【821e3e†L1-L34】【48103c†L1-L64】【c97c1d†L1-L240】
 - [x] Canonicalised CLI and Prefect configuration via `HotpassConfig`, refreshed docs, and added migration tooling coverage (2025-10-27)
@@ -184,6 +189,7 @@
 - [x] Canonical configuration refactor regression suite (pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【057336†L1-L121】【bdfff8†L1-L2】【adec4c†L1-L2】【3e5b7e†L1-L14】【9c9345†L1-L32】【f1c670†L1-L53】【788b2a†L1-L220】
 - [x] Completed telemetry registry mypy cleanup and reran QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【48fd1e†L1-L66】【6c9938†L1-L2】【141570†L1-L2】【966aad†L1-L8】【48bfa5†L1-L33】【8706b2†L1-L58】【a7eea3†L1-L199】
 - [x] Baseline QA (2025-10-27) surfaced missing `frictionless` import coverage, Ruff UP038 lint, and mypy stub gaps prior to telemetry refactor【c063e4†L1-L23】【0d5a32†L1-L13】【c903ed†L1-L18】
+- [x] Baseline QA rerun (pytest, ruff check/format, mypy, bandit, detect-secrets, build) prior to intent automation enhancements (2025-10-28)【b1a3ec†L1-L137】【9e1ede†L1-L2】【ac8145†L1-L2】【023cf4†L1-L2】【21baf7†L1-L20】【1eb49a†L1-L66】【2b6f4f†L1-L120】
 - [x] Plan telemetry registry extraction with policy enforcement, CLI/orchestrator integration, documentation refresh, and QA rerun for new observability lifecycle【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L86】
 
 ## Quality Gates

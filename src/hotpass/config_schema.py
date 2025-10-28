@@ -171,6 +171,12 @@ class PipelineRuntimeConfig(BaseModel):
     acquisition: AcquisitionSettings | None = None
     intent_digest_path: Path | None = None
     intent: IntentSettings | None = None
+    intent_signal_store_path: Path | None = None
+    daily_list_path: Path | None = None
+    daily_list_size: int = Field(default=50, ge=1)
+    intent_webhooks: tuple[str, ...] = Field(default_factory=tuple)
+    crm_endpoint: str | None = None
+    crm_token: str | None = None
 
     @field_validator("sensitive_fields", mode="before")
     @classmethod
@@ -184,6 +190,20 @@ class PipelineRuntimeConfig(BaseModel):
                 if cleaned not in normalised:
                     normalised.append(cleaned)
         return tuple(normalised)
+
+    @field_validator("intent_webhooks", mode="before")
+    @classmethod
+    def _normalise_webhooks(cls, values: Iterable[str] | str | None) -> tuple[str, ...]:
+        if values is None:
+            return ()
+        if isinstance(values, str):
+            values = [values]
+        cleaned: list[str] = []
+        for value in values:
+            candidate = str(value).strip()
+            if candidate and candidate not in cleaned:
+                cleaned.append(candidate)
+        return tuple(cleaned)
 
     @model_validator(mode="after")
     def _infer_report_format(self) -> PipelineRuntimeConfig:
@@ -406,12 +426,25 @@ class HotpassConfig(BaseModel):
                     )
                     for target in self.pipeline.intent.targets
                 ),
+                storage_path=self.pipeline.intent_signal_store_path,
             )
             config.intent_plan = intent_plan
             config.intent_credentials = dict(self.pipeline.intent.credentials)
 
         if self.pipeline.intent_digest_path is not None:
             config.intent_digest_path = self.pipeline.intent_digest_path
+        if self.pipeline.intent_signal_store_path is not None:
+            config.intent_signal_store_path = self.pipeline.intent_signal_store_path
+        if self.pipeline.daily_list_path is not None:
+            config.daily_list_path = self.pipeline.daily_list_path
+        if self.pipeline.daily_list_size:
+            config.daily_list_size = int(self.pipeline.daily_list_size)
+        if self.pipeline.intent_webhooks:
+            config.automation_webhooks = tuple(self.pipeline.intent_webhooks)
+        if self.pipeline.crm_endpoint is not None:
+            config.crm_endpoint = self.pipeline.crm_endpoint
+        if self.pipeline.crm_token is not None:
+            config.crm_token = self.pipeline.crm_token
 
         if self.pipeline.qa_mode == "relaxed":
             config.enable_audit_trail = False

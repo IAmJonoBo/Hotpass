@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 import threading
 import time
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -407,7 +409,7 @@ def test_enrich_dataframe_with_registries_null_names(temp_cache):
     assert result_df["registry_enriched"].sum() == 0  # Stub returns not_implemented
 
 
-@pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic"])
+@pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
 def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
     """Each built-in collector should emit at least one signal."""
 
@@ -422,6 +424,9 @@ def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
                         "aero-school": [
                             {
                                 "headline": "Aero School expands fleet",
+                                "technology": "Prefect Cloud",
+                                "magnitude": 2.5,
+                                "role": "Automation Lead",
                                 "intent": 0.9,
                                 "timestamp": (issued - timedelta(days=1)).isoformat(),
                                 "url": "https://example.test/aero/expands",
@@ -509,6 +514,8 @@ def test_run_intent_plan_generates_digest() -> None:
         "signal_type",
         "score",
         "observed_at",
+        "retrieved_at",
+        "provenance",
     }
 
     summary = result.summary["aero-school"]
@@ -525,3 +532,82 @@ def test_run_intent_plan_generates_digest() -> None:
         digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
         > (digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0])
     )
+
+
+def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
+    issued = datetime(2025, 10, 27, 8, tzinfo=UTC)
+    storage_path = tmp_path / "intent-signals.json"
+
+    base_plan = IntentPlan(
+        enabled=True,
+        storage_path=storage_path,
+        collectors=(
+            IntentCollectorDefinition(
+                name="news",
+                options={
+                    "cache_ttl_minutes": 180,
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School expands fleet",
+                                "intent": 0.85,
+                                "timestamp": (issued - timedelta(hours=4)).isoformat(),
+                                "url": "https://example.test/aero/expands",
+                            }
+                        ]
+                    },
+                },
+            ),
+        ),
+        targets=(IntentTargetDefinition(identifier="Aero School", slug="aero-school"),),
+    )
+
+    run_intent_plan(
+        base_plan,
+        country_code="ZA",
+        credentials={},
+        issued_at=issued,
+    )
+
+    assert storage_path.exists()
+    stored_records = json.loads(storage_path.read_text(encoding="utf-8"))
+    assert len(stored_records) == 1
+    record = stored_records[0]
+    assert record["target_slug"] == "aero-school"
+    assert "retrieved_at" in record
+    assert record["provenance"]["collector"] == "news"
+
+    refreshed_plan = IntentPlan(
+        enabled=True,
+        storage_path=storage_path,
+        collectors=(
+            IntentCollectorDefinition(
+                name="news",
+                options={
+                    "cache_ttl_minutes": 180,
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School modernises ops",
+                                "intent": 0.4,
+                                "timestamp": (issued + timedelta(minutes=5)).isoformat(),
+                                "url": "https://example.test/aero/modern",
+                            }
+                        ]
+                    },
+                },
+            ),
+        ),
+        targets=(IntentTargetDefinition(identifier="Aero School", slug="aero-school"),),
+    )
+
+    second_result = run_intent_plan(
+        refreshed_plan,
+        country_code="ZA",
+        credentials={},
+        issued_at=issued + timedelta(minutes=10),
+    )
+
+    assert second_result.summary["aero-school"].signal_count == 1
+    cached_headline = second_result.signals.iloc[0]["metadata"].get("headline")
+    assert cached_headline == "Aero School expands fleet"

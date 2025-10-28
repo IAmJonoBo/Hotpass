@@ -110,6 +110,35 @@ def make_pipeline_parser() -> argparse.ArgumentParser:
         help="Optional path to write the daily intent digest export",
     )
     parser.add_argument(
+        "--intent-signal-store",
+        type=Path,
+        help="Persist raw intent signals to the given path for reuse",
+    )
+    parser.add_argument(
+        "--daily-list-path",
+        type=Path,
+        help="Path to write the generated daily lead list",
+    )
+    parser.add_argument(
+        "--daily-list-size",
+        type=int,
+        help="Maximum number of prospects to include in the daily list",
+    )
+    parser.add_argument(
+        "--intent-webhook",
+        dest="intent_webhooks",
+        action="append",
+        help="Webhook URL notified after intent digest generation (repeatable)",
+    )
+    parser.add_argument(
+        "--crm-endpoint",
+        help="CRM endpoint to receive the daily list payload",
+    )
+    parser.add_argument(
+        "--crm-token",
+        help="Authentication token passed to the CRM endpoint",
+    )
+    parser.add_argument(
         "--party-store-path",
         type=Path,
         help="Optional path to write the canonical party store as JSON",
