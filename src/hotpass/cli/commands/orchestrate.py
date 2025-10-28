@@ -8,6 +8,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, cast
 
+from hotpass.error_handling import DataContractError
 from hotpass.linkage import LabelStudioConfig, LinkageConfig, LinkageThresholds
 from hotpass.orchestration import (
     PipelineOrchestrationError,
@@ -205,6 +206,15 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 runner_kwargs=runner_kwargs,
             )
         )
+    except DataContractError as exc:
+        logger.log_error(f"Data contract validation failed: {exc.context.message}")
+        if console:
+            console.print("[bold red]✗ Data contract validation failed[/bold red]")
+            console.print(f"[dim]Source:[/dim] {exc.context.source_file or 'unknown'}")
+            console.print(f"[dim]Details:[/dim] {exc.context.details}")
+            if exc.context.suggested_fix:
+                console.print(f"[yellow]Suggested fix:[/yellow] {exc.context.suggested_fix}")
+        return 2
     except PipelineOrchestrationError as exc:
         logger.log_error(f"Pipeline failed: {exc}")
         return 1

@@ -19,6 +19,7 @@ from hotpass.automation.hooks import dispatch_webhooks, push_crm_updates
 from hotpass.automation.http import AutomationHTTPClient, DeadLetterQueue
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
+from hotpass.error_handling import DataContractError
 from hotpass.pipeline import default_feature_bundle
 from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
 
@@ -146,6 +147,15 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
         try:
             result = orchestrator.run(execution)
+        except DataContractError as exc:
+            logger.log_error(f"Data contract validation failed: {exc.context.message}")
+            if console:
+                console.print("[bold red]✗ Data contract validation failed[/bold red]")
+                console.print(f"[dim]Source:[/dim] {exc.context.source_file or 'unknown'}")
+                console.print(f"[dim]Details:[/dim] {exc.context.details}")
+                if exc.context.suggested_fix:
+                    console.print(f"[yellow]Suggested fix:[/yellow] {exc.context.suggested_fix}")
+            return 2
         except Exception as exc:  # pragma: no cover - defensive guard
             logger.log_error(str(exc))
             if console:
