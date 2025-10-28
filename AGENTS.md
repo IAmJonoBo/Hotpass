@@ -73,6 +73,8 @@ python -m pip install -U pip
 python -m pip install -e ".[dev,orchestration,geospatial]"
 ```
 
+For local development you can also run `make sync EXTRAS="dev orchestration"` (or another extras string). The make target wraps the same helper script so CLI, Codex agents, and CI stay aligned.
+
 
 ### 1.4 Agent run command (what Codex should execute)
 

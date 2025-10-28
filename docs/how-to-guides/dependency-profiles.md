@@ -30,6 +30,17 @@ export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
 bash scripts/uv_sync_extras.sh
 ```
 
+### Using Make targets
+
+For day-to-day development you can rely on the helper target:
+
+```bash
+make sync EXTRAS="dev orchestration"
+```
+
+Override `EXTRAS` with the space-separated list you need. The target wraps `scripts/uv_sync_extras.sh` so CI and local runs stay consistent.
+
+
 The script validates the list, echoes the chosen extras, and executes `uv sync --frozen` with the correct switches. If you prefer pip editable installs, mirror the same extras:
 
 ```bash
@@ -67,4 +78,5 @@ For push/PR builds the workflow falls back to the default `dev orchestration` pr
 - **Missing library after firewall enablement** — rerun the job with the correct extras string or prefetch wheels in the setup stage.
 - **Typos in the extras string** — `scripts/uv_sync_extras.sh` rejects empty values but won’t validate the names. Watch the step logs for the final `uv sync` command to confirm the extras applied.
 - **Pip editable installs still required** — pass the same extras in the `.[extra1,extra2]` syntax; ensure the firewall remains open long enough to download wheels.
+- **New dependency surfaced during a run** — add the package to the appropriate optional extra in `pyproject.toml`, update `HOTPASS_UV_EXTRAS` (or run `make sync EXTRAS="…"`) to include that extra, and, if CI relies on it, extend the corresponding workflow input default so ephemeral runners and Codex agents pick it up automatically.
 - **Cache busting** — if you need to force a rebuild, add `--no-cache` to the `uv sync` invocation in the helper script temporarily or clear the runner cache.

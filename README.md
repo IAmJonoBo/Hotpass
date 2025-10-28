@@ -25,6 +25,12 @@ Need orchestration or enrichment? Set `HOTPASS_UV_EXTRAS` to the extras you need
 HOTPASS_UV_EXTRAS="dev orchestration enrichment geospatial compliance dashboards" bash scripts/uv_sync_extras.sh
 ```
 
+Or use the `sync` make target when working locally or on ephemeral runners:
+
+```bash
+make sync EXTRAS="dev orchestration enrichment geospatial compliance dashboards"
+```
+
 ## Documentation
 
 The full documentation lives under [`docs/`](docs/index.md) and follows the Diátaxis framework:

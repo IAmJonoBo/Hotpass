@@ -22,3 +22,6 @@ done
 
 echo "Synchronising uv environment with extras: ${extras}"
 uv sync --frozen "${args[@]}"
+
+printf "Tip: use 'make sync EXTRAS=\"%s\"' for subsequent runs.\n" "$extras"
+

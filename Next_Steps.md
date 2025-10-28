@@ -17,6 +17,7 @@
 
 ## Recently Completed Highlights
 - Governance automation stack verified end-to-end (commitlint, labeler, release drafter, Renovate grouping) and captured in ADR 0002.
+- Local pytest baseline verified after `make sync EXTRAS="dev"` (`.venv/bin/pytest --maxfail=1 --disable-warnings`).
 - Dependency profile helper (`scripts/uv_sync_extras.sh`) introduced; workflows, README, and AGENTS guidance updated to use `HOTPASS_UV_EXTRAS`.
 - Consolidated QA gate (`make qa`) restored by refreshing the detect-secrets baseline and normalising test fixtures.
 - Weekly `mypy-audit` workflow added with automatic issue creation on failures.

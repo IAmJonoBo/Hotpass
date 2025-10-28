@@ -7,3 +7,10 @@ qa:
 	bandit -r src scripts
 	python -m detect_secrets scan src tests scripts
 	pre-commit run --all-files --show-diff-on-failure
+
+EXTRAS ?= dev orchestration
+
+.PHONY: sync
+sync:
+	@echo "Synchronising extras: $(EXTRAS)"
+	@HOTPASS_UV_EXTRAS="$(EXTRAS)" bash scripts/uv_sync_extras.sh
