@@ -111,6 +111,10 @@ SSOT_COLUMNS: list[str] = [
     "contact_validation_flags",
     "contact_secondary_emails",
     "contact_secondary_phones",
+    "contact_email_confidence_avg",
+    "contact_phone_confidence_avg",
+    "contact_verification_score_avg",
+    "contact_lead_score_avg",
     "data_quality_score",
     "data_quality_flags",
     "selection_provenance",
@@ -228,6 +232,9 @@ class PipelineConfig:
     intent_plan: IntentPlan | None = None
     intent_credentials: Mapping[str, str] = field(default_factory=dict)
     intent_digest_path: Path | None = None
+    preloaded_agent_frame: pd.DataFrame | None = None
+    preloaded_agent_timings: list[AgentTiming] = field(default_factory=list)
+    preloaded_agent_warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -854,6 +861,7 @@ def _aggregate_group(
     email_status = validation_summary.email.status.value if validation_summary.email else None
     phone_status = validation_summary.phone.status.value if validation_summary.phone else None
     validation_flags = validation_summary.flags()
+    deliverability_score = validation_summary.deliverability_score()
     completeness_inputs = [primary_name, primary_email, primary_phone, primary_role]
     completeness = (
         sum(1 for value in completeness_inputs if value) / len(completeness_inputs)
@@ -921,6 +929,10 @@ def _aggregate_group(
         "contact_primary_lead_score": lead_score
         if primary_name or primary_email or primary_phone
         else None,
+        "contact_email_confidence_avg": email_confidence,
+        "contact_phone_confidence_avg": phone_confidence,
+        "contact_verification_score_avg": deliverability_score if deliverability_score else None,
+        "contact_lead_score_avg": lead_score if lead_score else None,
         "intent_signal_score": round(intent_score, 6) if intent_summary else 0.0,
         "intent_signal_count": intent_summary.signal_count if intent_summary else 0,
         "intent_signal_types": ";".join(intent_summary.signal_types)

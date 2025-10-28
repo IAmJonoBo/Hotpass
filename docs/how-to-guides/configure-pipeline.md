@@ -199,6 +199,24 @@ records enter the existing normalization, validation, and deduplication flow wit
 metadata intact. Supply credentials (for example API keys) under `[pipeline.acquisition.credentials]`
 and they will be passed to each provider adapter.
 
+### Monitor contact verification confidence
+
+Every run now annotates contact rosters with MX- and carrier-aware verification signals. The
+`Company_Contacts` sheet receives additional expectation coverage to ensure the derived columns
+(`EmailValidationStatus`, `EmailValidationConfidence`, `PhoneValidationStatus`,
+`PhoneValidationConfidence`) stay within governed ranges. Downstream SSOT exports emit
+rollups for these checks:
+
+- `contact_email_confidence_avg` / `contact_phone_confidence_avg` — average deliverability
+  confidence for the organisation’s roster.
+- `contact_verification_score_avg` — blended SMTP/MX + carrier signal expressed on a 0–1 scale.
+- `contact_lead_score_avg` — mean ML lead score feeding preference rankings.
+
+Great Expectations and the Pandera schema both enforce 0–1 bounds for these metrics while
+validating that status columns only contain the governed enum (`deliverable`, `risky`,
+`undeliverable`, `unknown`). Failures surface in the pipeline quality report and will block SSOT
+publication until addressed.
+
 Each acquisition run emits OpenTelemetry spans (`acquisition.plan`, `acquisition.agent`,
 `acquisition.provider`) and updates the `hotpass.acquisition.*` metrics. Inspect these spans in
 the console exporter or your OTLP backend to confirm provider coverage, record counts, and runtime.

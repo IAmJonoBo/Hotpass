@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Protocol
 
 from ..data_sources import RawRecord
 from ..normalization import (
@@ -15,6 +15,15 @@ from ..normalization import (
     normalize_phone,
     normalize_website,
 )
+
+
+class CredentialStore(Protocol):
+    """Protocol describing credential lookup helpers for providers."""
+
+    def fetch(
+        self, provider_name: str, aliases: Sequence[str] | None = None
+    ) -> tuple[str | None, bool, str | None]:
+        """Return the credential value, cached flag, and reference identifier."""
 
 
 @dataclass(slots=True)
@@ -121,7 +130,7 @@ class LinkedInProvider(BaseProvider):
         contacts = entry.get("contacts", [])
         records: list[ProviderPayload] = []
         organisation = clean_string(entry.get("organization")) or target_identifier
-        compliance = _compliance_metadata(policies)
+        compliance = _compliance_metadata(entry.get("policies", []))
         credential_info = _credential_metadata(context, self.name, self.options)
         base_provenance = {
             "provider": self.name,

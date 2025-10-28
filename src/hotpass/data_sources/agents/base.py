@@ -27,6 +27,7 @@ class AgentResult:
     """Standardised payload emitted by an acquisition agent."""
 
     agent_name: str
+    targets: list[TargetDefinition] = field(default_factory=list)
     records: list[RawRecord] = field(default_factory=list)
     provenance: list[dict[str, object]] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

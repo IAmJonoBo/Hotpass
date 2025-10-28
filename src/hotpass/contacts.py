@@ -12,6 +12,7 @@ from hotpass.enrichment.validators import (
     EmailValidationResult,
     PhoneValidationResult,
     ValidationStatus,
+    logistic_scale,
 )
 from hotpass.transform.scoring import LeadScorer
 
@@ -36,6 +37,7 @@ class Contact:
     email_validation: EmailValidationResult | None = None
     phone_validation: PhoneValidationResult | None = None
     lead_score: float = 0.0
+    verification_score: float = 0.0
     validation_flags: list[str] = field(default_factory=list)
     intent_score: float = 0.0
 
@@ -55,6 +57,7 @@ class Contact:
             "email_validation": self.email_validation.as_dict() if self.email_validation else None,
             "phone_validation": self.phone_validation.as_dict() if self.phone_validation else None,
             "lead_score": self.lead_score,
+            "verification_score": self.verification_score,
             "validation_flags": list(self.validation_flags),
             "intent_score": self.intent_score,
         }
@@ -74,6 +77,7 @@ class Contact:
             source_record_id=data.get("source_record_id"),
             last_interaction=data.get("last_interaction"),
             lead_score=data.get("lead_score", 0.0),
+            verification_score=float(data.get("verification_score", 0.0) or 0.0),
             validation_flags=list(data.get("validation_flags", [])),
             intent_score=float(data.get("intent_score", 0.0) or 0.0),
         )
@@ -87,12 +91,24 @@ class Contact:
                     status = ValidationStatus.UNKNOWN
             else:
                 status = status_raw
+            smtp_raw = email_validation.get("smtp_status")
+            smtp_status = None
+            if smtp_raw is not None:
+                if isinstance(smtp_raw, ValidationStatus):
+                    smtp_status = smtp_raw
+                else:
+                    try:
+                        smtp_status = ValidationStatus(str(smtp_raw))
+                    except ValueError:
+                        smtp_status = None
             contact.email_validation = EmailValidationResult(
                 address=email_validation.get("address", ""),
                 status=status,
                 confidence=float(email_validation.get("confidence", 0.0)),
                 reason=email_validation.get("reason"),
                 mx_hosts=tuple(email_validation.get("mx_hosts", [])),
+                smtp_status=smtp_status,
+                smtp_reason=email_validation.get("smtp_reason"),
             )
         phone_validation = data.get("phone_validation")
         if isinstance(phone_validation, dict) and phone_validation.get("number"):
@@ -122,15 +138,23 @@ class Contact:
         base_score = filled / len(fields)
         adjustment = 0.0
         if self.email_validation:
+            email_conf = logistic_scale(self.email_validation.confidence)
             if self.email_validation.status == ValidationStatus.DELIVERABLE:
-                adjustment += 0.1 * self.email_validation.confidence
+                adjustment += 0.12 * email_conf
+            elif self.email_validation.status == ValidationStatus.RISKY:
+                adjustment -= 0.05 * email_conf
             elif self.email_validation.status == ValidationStatus.UNDELIVERABLE:
-                adjustment -= 0.2 * max(0.1, self.email_validation.confidence)
+                adjustment -= 0.2 * max(0.2, email_conf)
         if self.phone_validation:
+            phone_conf = logistic_scale(self.phone_validation.confidence)
             if self.phone_validation.status == ValidationStatus.DELIVERABLE:
-                adjustment += 0.08 * self.phone_validation.confidence
+                adjustment += 0.08 * phone_conf
+            elif self.phone_validation.status == ValidationStatus.RISKY:
+                adjustment -= 0.04 * phone_conf
             elif self.phone_validation.status == ValidationStatus.UNDELIVERABLE:
-                adjustment -= 0.15 * max(0.1, self.phone_validation.confidence)
+                adjustment -= 0.15 * max(0.2, phone_conf)
+        if self.verification_score > 0:
+            adjustment += 0.05 * logistic_scale(self.verification_score)
         score = max(0.0, min(1.0, base_score + adjustment))
         return score
 
@@ -195,6 +219,10 @@ class OrganizationContacts:
             "assistant": 0.5,
         }
         max_priority = max(source_priority.values()) if source_priority else 1.0
+        email_confidences: list[float] = []
+        phone_confidences: list[float] = []
+        verification_scores: list[float] = []
+        lead_scores: list[float] = []
         for contact in self.contacts:
             contact.validation_flags = []
             source_score = 0.0
@@ -214,6 +242,8 @@ class OrganizationContacts:
             phone_confidence = (
                 contact.phone_validation.confidence if contact.phone_validation else 0.0
             )
+            email_confidences.append(email_confidence)
+            phone_confidences.append(phone_confidence)
             if contact.email_validation and contact.email_validation.status in {
                 ValidationStatus.RISKY,
                 ValidationStatus.UNDELIVERABLE,
@@ -224,11 +254,25 @@ class OrganizationContacts:
                 ValidationStatus.UNDELIVERABLE,
             }:
                 contact.validation_flags.append(f"phone:{contact.phone_validation.status.value}")
-            validation_score = (
-                (email_confidence + phone_confidence) / 2
-                if (email_confidence or phone_confidence)
-                else 0.0
-            )
+            verification_score = 0.0
+            if email_confidence or phone_confidence:
+                verification_score = logistic_scale(
+                    (email_confidence + phone_confidence)
+                    / (2 if email_confidence and phone_confidence else 1)
+                )
+                if contact.email_validation:
+                    if contact.email_validation.status is ValidationStatus.UNDELIVERABLE:
+                        verification_score *= 0.3
+                    elif contact.email_validation.status is ValidationStatus.RISKY:
+                        verification_score *= 0.65
+                if contact.phone_validation:
+                    if contact.phone_validation.status is ValidationStatus.UNDELIVERABLE:
+                        verification_score *= 0.4
+                    elif contact.phone_validation.status is ValidationStatus.RISKY:
+                        verification_score *= 0.7
+            contact.verification_score = verification_score
+            verification_scores.append(verification_score)
+            validation_score = verification_score
             lead_score = lead_model.score(
                 completeness=completeness,
                 email_confidence=email_confidence,
@@ -237,6 +281,7 @@ class OrganizationContacts:
                 intent_score=contact.intent_score,
             ).value
             contact.lead_score = lead_score
+            lead_scores.append(lead_score)
             numerator = (
                 source_score * recency_weight
                 + completeness * completeness_weight
@@ -248,6 +293,21 @@ class OrganizationContacts:
                 recency_weight + completeness_weight + role_weight + validation_weight + lead_weight
             )
             contact.preference_score = numerator / denominator if denominator else 0.0
+
+        def _average(values: list[float]) -> float | None:
+            filtered = [value for value in values if value is not None]
+            if not filtered:
+                return None
+            if all(value == 0 for value in filtered):
+                return None
+            return sum(filtered) / len(filtered)
+
+        self._aggregated_metrics = {
+            "email_confidence_avg": _average(email_confidences),
+            "phone_confidence_avg": _average(phone_confidences),
+            "verification_score_avg": _average(verification_scores),
+            "lead_score_avg": _average(lead_scores),
+        }
 
     def to_flat_dict(self) -> dict[str, Any]:
         """Convert to flat dictionary format for SSOT output."""
@@ -298,6 +358,49 @@ class OrganizationContacts:
         result["contact_validation_flags"] = (
             ";".join(aggregated_flags) if aggregated_flags else None
         )
+        metrics = getattr(self, "_aggregated_metrics", {})
+
+        def _format_metric(key: str) -> float | None:
+            value = metrics.get(key)
+            if value is None:
+                return None
+            return round(float(value), 6)
+
+        if not metrics and self.contacts:
+            email_conf = [
+                contact.email_validation.confidence
+                for contact in self.contacts
+                if contact.email_validation
+            ]
+            phone_conf = [
+                contact.phone_validation.confidence
+                for contact in self.contacts
+                if contact.phone_validation
+            ]
+            verification = [
+                contact.verification_score
+                for contact in self.contacts
+                if contact.verification_score
+            ]
+            leads = [contact.lead_score for contact in self.contacts if contact.lead_score]
+
+            def _avg(values: list[float]) -> float | None:
+                if not values:
+                    return None
+                return sum(values) / len(values)
+
+            metrics = {
+                "email_confidence_avg": _avg(email_conf),
+                "phone_confidence_avg": _avg(phone_conf),
+                "verification_score_avg": _avg(verification),
+                "lead_score_avg": _avg(leads),
+            }
+
+        result["contact_email_confidence_avg"] = _format_metric("email_confidence_avg")
+        result["contact_phone_confidence_avg"] = _format_metric("phone_confidence_avg")
+        result["contact_verification_score_avg"] = _format_metric("verification_score_avg")
+        result["contact_lead_score_avg"] = _format_metric("lead_score_avg")
+
         return result
 
 
@@ -362,6 +465,7 @@ def consolidate_contacts_from_rows(
                 contact.email = summary.email.address
             if summary.phone:
                 contact.phone = summary.phone.number
+            contact.verification_score = summary.deliverability_score()
             org_contacts.add_contact(contact)
 
     org_contacts.calculate_preference_scores(
