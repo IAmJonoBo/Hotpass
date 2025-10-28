@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-28
+last_updated: 2025-10-30
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -50,6 +50,7 @@ Copy `config/pipeline.example.yaml` and adjust the options you need:
 - `archive`: enable to keep the original spreadsheets for auditing.
 - `country_code`: default for phone and address parsing.
 - `validation`: override thresholds per field type.
+- `intent_digest_path`: emit a ranked prospect list with the latest intent signals.
 
 Run the pipeline with the custom config:
 
@@ -68,6 +69,28 @@ input_dir = "./data"
 output_path = "./dist/refined.xlsx"
 archive = true
 dist_dir = "./dist"
+intent_digest_path = "./dist/daily-intent.parquet"
+
+[pipeline.intent]
+enabled = true
+deduplicate = true
+
+[[pipeline.intent.collectors]]
+name = "news"
+weight = 1.4
+
+[[pipeline.intent.collectors.options.events."aero-school"]]
+headline = "Aero School secures defence contract"
+intent = 0.9
+timestamp = "2025-10-23T08:00:00Z"
+url = "https://example.test/aero/contract"
+
+[[pipeline.intent.targets]]
+identifier = "Aero School"
+slug = "aero-school"
+
+[pipeline.intent.credentials]
+token = "${HOTPASS_INTENT_TOKEN}"
 
 [features]
 compliance = true
@@ -175,6 +198,67 @@ At runtime the pipeline invokes each agent before reading the Excel workbooks. T
 records enter the existing normalization, validation, and deduplication flow with provenance
 metadata intact. Supply credentials (for example API keys) under `[pipeline.acquisition.credentials]`
 and they will be passed to each provider adapter.
+
+Each acquisition run emits OpenTelemetry spans (`acquisition.plan`, `acquisition.agent`,
+`acquisition.provider`) and updates the `hotpass.acquisition.*` metrics. Inspect these spans in
+the console exporter or your OTLP backend to confirm provider coverage, record counts, and runtime.
+Before enabling a provider, confirm it appears in [`policy/acquisition/providers.json`](../../policy/acquisition/providers.json)
+and that the collection basis matches your legal review. Custom providers should be registered via
+`ProviderPolicy.ensure_allowed` to enforce compliance.
+
+### Collect intent signals and daily digests
+
+The canonical schema also supports an intent pipeline that blends news, hiring, and traffic signals
+before the contact aggregation stage. Configure collectors and targets under `[pipeline.intent]`:
+
+```toml
+[pipeline]
+intent_digest_path = "dist/intent-digest.parquet"
+
+[pipeline.intent]
+enabled = true
+deduplicate = true
+
+[[pipeline.intent.collectors]]
+name = "news"
+weight = 1.0
+
+[[pipeline.intent.collectors.options.events."aero-school"]]
+headline = "Aero expands fleet"
+intent = 0.9
+timestamp = "2025-10-25T08:00:00Z"
+url = "https://example.test/aero/expands"
+
+[[pipeline.intent.collectors.options.events."heli-ops"]]
+headline = "Heli Ops launches medivac division"
+intent = 0.7
+timestamp = "2025-10-24T11:00:00Z"
+
+[[pipeline.intent.targets]]
+identifier = "Aero School"
+slug = "aero-school"
+
+[[pipeline.intent.targets]]
+identifier = "Heli Ops"
+slug = "heli-ops"
+
+[pipeline.intent.credentials]
+token = "${HOTPASS_INTENT_TOKEN}"
+``` 
+
+At runtime the plan is materialised into `IntentPlan` objects which feed the new intent scoring stage.
+The resulting columns (`intent_signal_score`, `intent_signal_types`, and `intent_top_insights`) appear
+in the SSOT export and can be blended with lead scoring. Use the new CLI flag to override the export
+location when running ad-hoc analyses:
+
+```bash
+uv run hotpass run --intent-digest-path dist/daily-intent.csv --input-dir data --output-path dist/refined.xlsx
+```
+
+The CLI will log where the digest was written and how many prospects were ranked. All digest exports
+respect the suffix you provide (`.parquet`, `.csv`, or `.json`) and inherit the same masking rules as
+the structured logs. In JSON log mode the CLI emits an `intent.digest` event with the output path and
+record count so downstream automation can react without parsing console output.
 
 ## 3. Extend column mapping
 

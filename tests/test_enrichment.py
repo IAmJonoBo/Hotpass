@@ -1,8 +1,11 @@
 """Tests for enrichment module."""
 
+from __future__ import annotations
+
 import tempfile
 import threading
 import time
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pandas as pd
@@ -18,6 +21,12 @@ from hotpass.enrichment import (
     enrich_dataframe_with_websites_concurrent,
     enrich_from_registry,
     extract_website_content,
+)
+from hotpass.enrichment.intent import (
+    IntentCollectorDefinition,
+    IntentPlan,
+    IntentTargetDefinition,
+    run_intent_plan,
 )
 
 
@@ -396,3 +405,123 @@ def test_enrich_dataframe_with_registries_null_names(temp_cache):
 
     # Only one should be queried
     assert result_df["registry_enriched"].sum() == 0  # Stub returns not_implemented
+
+
+@pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic"])
+def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
+    """Each built-in collector should emit at least one signal."""
+
+    issued = datetime(2025, 10, 27, tzinfo=UTC)
+    plan = IntentPlan(
+        enabled=True,
+        collectors=(
+            IntentCollectorDefinition(
+                name=collector_name,
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School expands fleet",
+                                "intent": 0.9,
+                                "timestamp": (issued - timedelta(days=1)).isoformat(),
+                                "url": "https://example.test/aero/expands",
+                            }
+                        ]
+                    }
+                },
+            ),
+        ),
+        targets=(IntentTargetDefinition(identifier="Aero School", slug="aero-school"),),
+    )
+
+    result = run_intent_plan(
+        plan,
+        country_code="ZA",
+        credentials={},
+        issued_at=issued,
+    )
+
+    assert not result.signals.empty
+    summary = result.summary["aero-school"]
+    assert summary.score > 0
+    assert collector_name in summary.signal_types
+
+
+def test_run_intent_plan_generates_digest() -> None:
+    issued = datetime(2025, 10, 27, 12, tzinfo=UTC)
+    plan = IntentPlan(
+        enabled=True,
+        collectors=(
+            IntentCollectorDefinition(
+                name="news",
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School wins defence training deal",
+                                "intent": 0.9,
+                                "timestamp": (issued - timedelta(hours=3)).isoformat(),
+                                "url": "https://example.test/aero/deal",
+                                "sentiment": 0.8,
+                            }
+                        ],
+                        "heli-ops": [
+                            {
+                                "headline": "Heli Ops launches medivac division",
+                                "intent": 0.7,
+                                "timestamp": (issued - timedelta(days=2)).isoformat(),
+                                "url": "https://example.test/heli/medivac",
+                            }
+                        ],
+                    }
+                },
+            ),
+            IntentCollectorDefinition(
+                name="hiring",
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "role": "Chief Flight Instructor",
+                                "intent": 0.8,
+                                "timestamp": (issued - timedelta(days=1)).isoformat(),
+                            }
+                        ]
+                    }
+                },
+            ),
+        ),
+        targets=(
+            IntentTargetDefinition(identifier="Aero School", slug="aero-school"),
+            IntentTargetDefinition(identifier="Heli Ops", slug="heli-ops"),
+        ),
+    )
+
+    result = run_intent_plan(
+        plan,
+        country_code="ZA",
+        credentials={"token": "dummy"},
+        issued_at=issued,
+    )
+
+    assert set(result.signals.columns) >= {
+        "target_slug",
+        "signal_type",
+        "score",
+        "observed_at",
+    }
+
+    summary = result.summary["aero-school"]
+    assert summary.signal_count == 2
+    assert summary.last_observed_at is not None
+    assert summary.last_observed_at.date().isoformat() == issued.date().isoformat()
+    assert "hiring" in summary.signal_types
+
+    digest = result.digest
+    assert isinstance(digest, pd.DataFrame)
+    assert not digest.empty
+    assert "intent_signal_score" in digest.columns
+    assert (
+        digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
+        > (digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0])
+    )

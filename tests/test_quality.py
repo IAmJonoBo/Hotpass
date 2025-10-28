@@ -177,8 +177,6 @@ def test_run_expectations_with_invalid_email_format():
         }
     )
     df = _with_validation_defaults(df)
-    df = _with_validation_defaults(df)
-    df = _with_validation_defaults(df)
 
     # With default threshold of 0.85, 2/3 valid (66%) should fail
     result = run_expectations(df, email_mostly=0.85)

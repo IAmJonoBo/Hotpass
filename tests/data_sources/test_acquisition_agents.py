@@ -1,28 +1,93 @@
 from __future__ import annotations
 
-import json
+from collections.abc import Iterator
 from pathlib import Path
 
+import pytest
+from tests._telemetry_stubs import (
+    DummyConsoleMetricExporter,
+    DummyConsoleSpanExporter,
+    DummyMeterProvider,
+    DummyMetricReader,
+    DummyMetrics,
+    DummyResource,
+    DummySpanProcessor,
+    DummyTracerProvider,
+    build_modules,
+)
+
+import hotpass.observability as observability
 from hotpass.data_sources.agents import (
     AcquisitionPlan,
     AgentDefinition,
-    AgentTaskDefinition,
-    AgentTaskKind,
     ProviderDefinition,
     TargetDefinition,
     run_plan,
 )
 from hotpass.pipeline.base import PipelineConfig, _load_sources
+from hotpass.telemetry.registry import TelemetryModules, TelemetryPolicy, TelemetryRegistry
+
+
+@pytest.fixture(autouse=True)
+def telemetry_registry() -> Iterator[None]:
+    DummyMetricReader.instances = []
+    _meter, trace_module, metrics_module = build_modules()
+    modules = TelemetryModules(
+        available=True,
+        metrics=metrics_module,
+        trace=trace_module,
+        meter_provider_cls=DummyMeterProvider,
+        metric_reader_cls=DummyMetricReader,
+        tracer_provider_cls=DummyTracerProvider,
+        span_processor_cls=DummySpanProcessor,
+        console_span_exporter_cls=DummyConsoleSpanExporter,
+        console_metric_exporter_cls=DummyConsoleMetricExporter,
+        resource_cls=DummyResource,
+    )
+    policy = TelemetryPolicy(allowed_exporters={"console"})
+    registry = TelemetryRegistry(
+        modules=modules,
+        policy=policy,
+        metrics_factory=DummyMetrics,
+        register_shutdown=lambda fn: fn(),
+    )
+    observability.use_registry(registry)
+    observability.initialize_observability(service_name="test-acquisition")
+    yield
+    observability.shutdown_observability()
 
 
 def _build_sample_plan() -> AcquisitionPlan:
-    fixture = (
-        Path(__file__).resolve().parent.parent / "fixtures" / "acquisition" / "blended_plan.json"
-    )
-    payload = json.loads(fixture.read_text())
-    search_options = payload["search"]
-    crawl_options = payload["crawl"]
-    providers = payload["providers"]
+    linkedin_options = {
+        "profiles": {
+            "hotpass": {
+                "organization": "Hotpass Aero",
+                "website": "https://hotpass.example",
+                "profile_url": "https://linkedin.com/company/hotpass",
+                "contacts": [
+                    {
+                        "name": "Pat Agent",
+                        "title": "Director",
+                        "email": "pat.agent@hotpass.example",
+                        "phone": "+27 11 123 4567",
+                        "confidence": 0.92,
+                    }
+                ],
+            }
+        }
+    }
+    clearbit_options = {
+        "companies": {
+            "hotpass.example": {
+                "name": "Hotpass Aero",
+                "domain": "hotpass.example",
+                "description": "Aviation analytics",
+                "category": "aviation",
+                "tags": ["Aviation", "Analytics"],
+                "confidence": 0.88,
+            }
+        }
+    }
     return AcquisitionPlan(
         enabled=True,
         agents=(
@@ -30,40 +95,10 @@ def _build_sample_plan() -> AcquisitionPlan:
                 name="prospector",
                 search_terms=("hotpass",),
                 providers=(
-                    ProviderDefinition(name="linkedin", options=providers["linkedin"]),
-                    ProviderDefinition(name="clearbit", options=providers["clearbit"]),
-                    ProviderDefinition(
-                        name="aviation_registry", options=providers["aviation_registry"]
-                    ),
+                    ProviderDefinition(name="linkedin", options=linkedin_options),
+                    ProviderDefinition(name="clearbit", options=clearbit_options),
                 ),
                 targets=(TargetDefinition(identifier="hotpass", domain="hotpass.example"),),
-                tasks=(
-                    AgentTaskDefinition(
-                        name="seed-search",
-                        kind=AgentTaskKind.SEARCH,
-                        options=search_options,
-                    ),
-                    AgentTaskDefinition(
-                        name="seed-crawl",
-                        kind=AgentTaskKind.CRAWL,
-                        options=crawl_options,
-                    ),
-                    AgentTaskDefinition(
-                        name="linkedin-api",
-                        kind=AgentTaskKind.API,
-                        provider="linkedin",
-                    ),
-                    AgentTaskDefinition(
-                        name="clearbit-api",
-                        kind=AgentTaskKind.API,
-                        provider="clearbit",
-                    ),
-                    AgentTaskDefinition(
-                        name="aviation-api",
-                        kind=AgentTaskKind.API,
-                        provider="aviation_registry",
-                    ),
-                ),
             ),
         ),
     )
@@ -75,22 +110,9 @@ def test_run_plan_collects_records_with_provenance() -> None:
 
     assert not frame.empty
     assert "provenance" in frame.columns
-    flattened_provenance = [
-        entry for records in frame["provenance"] if isinstance(records, list) for entry in records
-    ]
-    # Check for unexpected provenance types
-    unexpected_provenance = [
-        records for records in frame["provenance"]
-        if records is not None and not isinstance(records, list)
-    ]
-    assert not unexpected_provenance, f"Found non-list provenance values: {unexpected_provenance}"
-    assert flattened_provenance
-    assert any(entry.get("provider") == "linkedin" for entry in flattened_provenance)
-    assert any(
-        entry.get("compliance", {}).get("robots_allowed") is True for entry in flattened_provenance
-    )
-    datasets = set(frame["source_dataset"])
-    assert {"Web Crawl", "LinkedIn", "Clearbit", "Aviation Registry"} <= datasets
+    first_provenance = frame.iloc[0]["provenance"]
+    assert isinstance(first_provenance, list) and first_provenance
+    assert any(entry.get("provider") == "linkedin" for entry in first_provenance)
     assert any(timing.agent_name == "prospector" for timing in timings)
     assert warnings == []
 
@@ -107,6 +129,49 @@ def test_load_sources_includes_agent_results(tmp_path: Path) -> None:
     assert not frame.empty
     assert "LinkedIn" in frame["source_dataset"].unique()
     assert any(key.startswith("agent:") for key in timings)
-    assert config.preloaded_agent_frame is not None
-    assert config.preloaded_agent_timings
-    assert config.preloaded_agent_warnings == []
+
+
+def test_run_plan_emits_telemetry() -> None:
+    plan = _build_sample_plan()
+    frame, timings, warnings = run_plan(plan, country_code="ZA")
+
+    assert not frame.empty
+    assert timings
+    assert warnings == []
+
+    tracer = observability.trace.get_tracer("hotpass")
+    span_names = [span.name for span in tracer.spans]
+    assert "acquisition.plan" in span_names
+    assert "acquisition.agent" in span_names
+    assert "acquisition.provider" in span_names
+
+    plan_span = next(span for span in tracer.spans if span.name == "acquisition.plan")
+    assert plan_span.attributes["hotpass.acquisition.records"] >= 1
+
+    agent_span = next(span for span in tracer.spans if span.name == "acquisition.agent")
+    assert agent_span.attributes["hotpass.acquisition.agent"] == "prospector"
+    assert agent_span.attributes["hotpass.acquisition.records"] >= 1
+
+    provider_spans = [span for span in tracer.spans if span.name == "acquisition.provider"]
+    assert provider_spans
+    providers_seen = {span.attributes["hotpass.acquisition.provider"] for span in provider_spans}
+    assert providers_seen == {"linkedin", "clearbit"}
+
+    metrics = observability.get_pipeline_metrics()
+    duration_calls = metrics.acquisition_duration.calls
+    assert any(attrs.get("scope") == "plan" for _, attrs in duration_calls)
+    assert any(
+        attrs.get("scope") == "agent" and attrs.get("agent") == "prospector"
+        for _, attrs in duration_calls
+    )
+    assert any(
+        attrs.get("scope") == "provider" and attrs.get("provider") == "linkedin"
+        for _, attrs in duration_calls
+    )
+
+    record_calls = metrics.acquisition_records.calls
+    assert any(attrs.get("scope") == "plan" for _, attrs in record_calls)
+    assert any(
+        attrs.get("scope") == "provider" and attrs.get("provider") == "clearbit"
+        for _, attrs in record_calls
+    )

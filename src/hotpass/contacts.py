@@ -37,6 +37,7 @@ class Contact:
     phone_validation: PhoneValidationResult | None = None
     lead_score: float = 0.0
     validation_flags: list[str] = field(default_factory=list)
+    intent_score: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         """Convert contact to dictionary."""
@@ -55,6 +56,7 @@ class Contact:
             "phone_validation": self.phone_validation.as_dict() if self.phone_validation else None,
             "lead_score": self.lead_score,
             "validation_flags": list(self.validation_flags),
+            "intent_score": self.intent_score,
         }
 
     @classmethod
@@ -73,6 +75,7 @@ class Contact:
             last_interaction=data.get("last_interaction"),
             lead_score=data.get("lead_score", 0.0),
             validation_flags=list(data.get("validation_flags", [])),
+            intent_score=float(data.get("intent_score", 0.0) or 0.0),
         )
         email_validation = data.get("email_validation")
         if isinstance(email_validation, dict) and email_validation.get("address"):
@@ -231,7 +234,7 @@ class OrganizationContacts:
                 email_confidence=email_confidence,
                 phone_confidence=phone_confidence,
                 source_priority=source_score,
-                intent_score=0.0,
+                intent_score=contact.intent_score,
             ).value
             contact.lead_score = lead_score
             numerator = (
@@ -343,6 +346,10 @@ def consolidate_contacts_from_rows(
                 source_record_id=row.get("source_record_id"),
                 last_interaction=row.get("last_interaction_date"),
             )
+            try:
+                contact.intent_score = float(row.get("intent_signal_score", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                contact.intent_score = 0.0
             summary = validator.validate_contact(
                 email=email,
                 phone=phone,

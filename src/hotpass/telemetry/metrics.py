@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 
@@ -50,6 +50,24 @@ class PipelineMetrics:
             unit="seconds",
         )
 
+        self.acquisition_duration = meter.create_histogram(
+            name="hotpass.acquisition.duration",
+            description="Duration of acquisition activity by scope (plan, agent, provider)",
+            unit="seconds",
+        )
+
+        self.acquisition_records = meter.create_counter(
+            name="hotpass.acquisition.records",
+            description="Number of records produced during acquisition",
+            unit="records",
+        )
+
+        self.acquisition_warnings = meter.create_counter(
+            name="hotpass.acquisition.warnings",
+            description="Number of compliance or runtime warnings raised during acquisition",
+            unit="warnings",
+        )
+
         self.data_quality_score = meter.create_observable_gauge(
             name="hotpass.data.quality_score",
             description="Overall data quality score",
@@ -81,3 +99,55 @@ class PipelineMetrics:
 
     def update_quality_score(self, score: float) -> None:
         self._latest_quality_score = score
+
+    def record_acquisition_duration(
+        self,
+        seconds: float,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_duration.record(seconds, attributes)
+
+    def record_acquisition_records(
+        self,
+        count: int,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_records.add(count, attributes)
+
+    def record_acquisition_warnings(
+        self,
+        count: int,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_warnings.add(count, attributes)
+
+    @staticmethod
+    def _acquisition_attributes(
+        scope: str,
+        agent: str | None,
+        provider: str | None,
+        extra_attributes: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        attributes: dict[str, Any] = {"scope": scope}
+        if agent:
+            attributes["agent"] = agent
+        if provider:
+            attributes["provider"] = provider
+        if extra_attributes:
+            attributes.update(extra_attributes)
+        return attributes

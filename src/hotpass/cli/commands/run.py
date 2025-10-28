@@ -177,6 +177,12 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         options.party_store_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         logger.log_party_store(options.party_store_path)
 
+    if config.pipeline.intent_digest_path is not None and result.intent_digest is not None:
+        logger.log_intent_digest(
+            config.pipeline.intent_digest_path,
+            int(result.intent_digest.shape[0]),
+        )
+
     if config.pipeline.archive:
         config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
         archive_path = create_refined_archive(output_path, config.pipeline.dist_dir)
@@ -224,6 +230,8 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         pipeline_updates["dist_dir"] = Path(namespace.dist_dir)
     if namespace.party_store_path is not None:
         pipeline_updates["party_store_path"] = Path(namespace.party_store_path)
+    if getattr(namespace, "intent_digest_path", None) is not None:
+        pipeline_updates["intent_digest_path"] = Path(namespace.intent_digest_path)
     if namespace.log_format is not None:
         pipeline_updates["log_format"] = namespace.log_format
     if namespace.report_path is not None:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, ClassVar
@@ -15,35 +15,6 @@ from ..normalization import (
     normalize_phone,
     normalize_website,
 )
-
-
-class CredentialStore:
-    """Lookup credentials for providers with simple in-memory caching."""
-
-    def __init__(self, credentials: Mapping[str, str] | None = None) -> None:
-        self._source: Mapping[str, str] = credentials or {}
-        self._cache: dict[str, str] = {}
-
-    def fetch(
-        self,
-        provider_name: str,
-        aliases: Iterable[str] | None = None,
-    ) -> tuple[str | None, bool, str | None]:
-        keys: list[str] = []
-        if aliases:
-            keys.extend(str(alias) for alias in aliases)
-        upper = provider_name.upper()
-        lower = provider_name.lower()
-        keys.extend([f"{upper}_API_KEY", f"{upper}_TOKEN", upper, lower])
-        for key in keys:
-            if key in self._cache:
-                return self._cache[key], True, key
-        for key in keys:
-            value = self._source.get(key)
-            if value is not None:
-                self._cache[key] = value
-                return value, False, key
-        return None, False, None
 
 
 @dataclass(slots=True)
@@ -143,9 +114,6 @@ class LinkedInProvider(BaseProvider):
         target_domain: str | None,
         context: ProviderContext,
     ) -> Iterable[ProviderPayload]:
-        policies = self.options.get("policies", {})
-        if policies.get("robots_allowed") is False or policies.get("tos_accepted") is False:
-            return []
         dataset = self.options.get("profiles", {})
         entry = dataset.get(target_identifier) or dataset.get(target_domain or "")
         if not entry:
@@ -175,8 +143,12 @@ class LinkedInProvider(BaseProvider):
             )
             role_value = clean_string(contact.get("title"))
             role_list = [role_value] if role_value else []
-            provenance = dict(base_provenance)
-            provenance["url"] = entry.get("profile_url")
+            provenance = {
+                "provider": self.name,
+                "url": entry.get("profile_url"),
+                "retrieved_at": context.issued_at.isoformat(),
+                "source": "linkedin",
+            }
             record = RawRecord(
                 organization_name=organisation,
                 source_dataset="LinkedIn",

@@ -54,7 +54,7 @@
 - [x] Modularise telemetry registry with policy enforcement and exporter lifecycle coverage (Owner: Engineering, Due: 2025-11-03)
 - [x] Build multi-source acquisition framework with provider registry and orchestrator integration (Owner: Engineering, Due: 2025-10-28)
 - [x] Add real-time contact validation and scoring (Owner: Engineering, Due: 2025-11-05)
-- [ ] Deliver intent-signal and automation pipeline (Owner: Engineering, Due: 2025-11-12)
+- [x] Deliver intent-signal and automation pipeline (Owner: Engineering, Due: 2025-11-12)
 - [x] Document observability configuration changes and refresh governance metrics (Owner: Docs & Platform, Due: 2025-11-03)
 - [x] Restore QA gates after telemetry refactor (Owner: QA, Due: 2025-11-04)
 - [x] Design unified CLI command surface aligned with orchestrator presets (Owner: Engineering, Due: 2026-02-28)
@@ -77,6 +77,8 @@
 - [x] Delivered interactive CLI progress reporting and bootstrap plan via `scripts/idp/bootstrap.py`
 - [x] Implement entity registry history merge flow and regression coverage
 - [x] Introduced contact validation services, lead scoring, and SSOT confidence exports (2025-10-29)【F:src/hotpass/enrichment/validators/__init__.py†L1-L214】【F:src/hotpass/pipeline/base.py†L92-L930】
+- [x] Delivered intent collectors, pipeline integration, CLI logging, and documentation updates with full QA rerun (pytest, ruff, mypy, bandit, detect-secrets, build) (2025-10-30)【F:src/hotpass/enrichment/intent/runner.py†L1-L226】【F:src/hotpass/pipeline/base.py†L80-L159】【F:docs/how-to-guides/configure-pipeline.md†L1-L210】【622b26†L1-L122】【b1dde6†L1-L2】【6425f3†L1-L2】【5b6dd7†L1-L9】【444a41†L1-L19】【41a163†L1-L68】【10061d†L1-L244】
+- [x] Instrumented acquisition runs with OpenTelemetry spans/metrics, added provider policy allowlist, and refreshed governance/compliance docs (2025-10-28)【F:src/hotpass/data_sources/agents/runner.py†L1-L180】【F:src/hotpass/telemetry/metrics.py†L1-L130】【F:policy/acquisition/providers.json†L1-L20】【F:docs/governance/audit-baseline.md†L1-L95】【F:docs/compliance/evidence-catalog.md†L1-L24】【F:docs/how-to-guides/configure-pipeline.md†L150-L204】
 - [x] Marked roadmap phases complete and verified enhanced pipeline package contracts
 - [x] Drafted governance charter and metrics instrumentation plan to guide upcoming telemetry work
 - [x] Authored Structurizr DSL architecture views and documented trust boundaries, attack surfaces, and SPOFs

@@ -128,6 +128,27 @@ class AcquisitionSettings(BaseModel):
     agents: tuple[AcquisitionAgentConfig, ...] = Field(default_factory=tuple)
 
 
+class IntentCollectorConfig(BaseModel):
+    name: str
+    enabled: bool = True
+    weight: float = Field(default=1.0, ge=0.0)
+    options: Mapping[str, Any] = Field(default_factory=dict)
+
+
+class IntentTargetConfig(BaseModel):
+    identifier: str
+    slug: str | None = None
+    metadata: Mapping[str, Any] = Field(default_factory=dict)
+
+
+class IntentSettings(BaseModel):
+    enabled: bool = False
+    deduplicate: bool = True
+    collectors: tuple[IntentCollectorConfig, ...] = Field(default_factory=tuple)
+    targets: tuple[IntentTargetConfig, ...] = Field(default_factory=tuple)
+    credentials: Mapping[str, str] = Field(default_factory=dict)
+
+
 class PipelineRuntimeConfig(BaseModel):
     """Input/output, reporting, and runtime options for the refinement pipeline."""
 
@@ -148,6 +169,8 @@ class PipelineRuntimeConfig(BaseModel):
     sensitive_fields: tuple[str, ...] = Field(default_factory=tuple)
     observability: bool | None = None
     acquisition: AcquisitionSettings | None = None
+    intent_digest_path: Path | None = None
+    intent: IntentSettings | None = None
 
     @field_validator("sensitive_fields", mode="before")
     @classmethod
@@ -355,6 +378,40 @@ class HotpassConfig(BaseModel):
             )
             config.acquisition_plan = plan
             config.agent_credentials = dict(self.pipeline.acquisition.credentials)
+
+        if self.pipeline.intent and self.pipeline.intent.enabled:
+            from hotpass.enrichment.intent import (
+                IntentCollectorDefinition,
+                IntentPlan,
+                IntentTargetDefinition,
+            )
+
+            intent_plan = IntentPlan(
+                enabled=True,
+                deduplicate=self.pipeline.intent.deduplicate,
+                collectors=tuple(
+                    IntentCollectorDefinition(
+                        name=collector.name,
+                        options=dict(collector.options),
+                        enabled=collector.enabled,
+                        weight=collector.weight,
+                    )
+                    for collector in self.pipeline.intent.collectors
+                ),
+                targets=tuple(
+                    IntentTargetDefinition(
+                        identifier=target.identifier,
+                        slug=target.slug,
+                        metadata=dict(target.metadata),
+                    )
+                    for target in self.pipeline.intent.targets
+                ),
+            )
+            config.intent_plan = intent_plan
+            config.intent_credentials = dict(self.pipeline.intent.credentials)
+
+        if self.pipeline.intent_digest_path is not None:
+            config.intent_digest_path = self.pipeline.intent_digest_path
 
         if self.pipeline.qa_mode == "relaxed":
             config.enable_audit_trail = False
