@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 
 from ..data_sources.agents import run_plan as run_acquisition_plan
 from ..observability import PipelineMetrics
-from .base import BasePipelineExecutor, PipelineConfig, PipelineResult
+from .base import BasePipelineExecutor
+from .config import PipelineConfig, PipelineResult
 from .features import (
     ComplianceFeature,
     EnhancedPipelineConfig,

@@ -1,7 +1,7 @@
 ---
 title: Quality and security gates
 summary: Expanded automated gates covering testing, linting, mutation, contracts, and security scans.
-last_updated: 2025-10-25
+last_updated: 2025-10-28
 ---
 
 # Quality and security gates
@@ -26,6 +26,10 @@ last_updated: 2025-10-25
 
 The Semgrep scan relies on the repository-hosted `policy/semgrep/hotpass.yml` ruleset so quality gates pass without fetching
 remote registries.
+
+The pipeline refactor split `pipeline.base` into stage-specific modules (`ingestion`, `aggregation`, `validation`, `export`, and
+`config`). The fitness-function gate (`uv run python scripts/quality/fitness_functions.py`) now watches these modules to keep the
+orchestrator slim enough to review in isolation.
 
 ## Additional gates roadmap
 

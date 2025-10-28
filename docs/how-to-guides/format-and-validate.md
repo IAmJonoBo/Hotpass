@@ -40,7 +40,7 @@ Key options:
 
 ## Govern ingest schemas and expectations
 
-Every workbook consumed by the pipeline now carries a Frictionless Table Schema contract under `schemas/` and a matching Great Expectations suite under `data_expectations/`. Contracts ship with the package and are exercised automatically during `_load_sources()`.
+Every workbook consumed by the pipeline now carries a Frictionless Table Schema contract under `schemas/` and a matching Great Expectations suite under `data_expectations/`. Contracts ship with the package and are exercised automatically during `ingest_sources()`.
 
 To introduce a new sheet, add the schema/expectation pair:
 

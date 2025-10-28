@@ -439,7 +439,7 @@ class HotpassConfig(BaseModel):
 
         from hotpass.config import IndustryProfile
         from hotpass.data_sources import ExcelReadOptions
-        from hotpass.pipeline.base import PipelineConfig
+        from hotpass.pipeline.config import PipelineConfig
 
         excel_options = None
         if (

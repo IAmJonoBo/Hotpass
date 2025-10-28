@@ -189,11 +189,9 @@ def test_orchestrator_preloads_acquisition_when_enabled(tmp_path):
             "hotpass.pipeline.orchestrator.run_acquisition_plan",
             return_value=(fake_frame, fake_timings, []),
         ) as plan_call,
-        patch("hotpass.pipeline.base.run_acquisition_plan") as base_call,
+        patch("hotpass.pipeline.ingestion.run_acquisition_plan") as ingest_call,
     ):
-        base_call.side_effect = AssertionError(
-            "pipeline should not invoke acquisition plan directly"
-        )
+        ingest_call.side_effect = AssertionError("ingestion should use preloaded acquisition frame")
         execution = PipelineExecutionConfig(
             base_config=config,
             enhanced_config=enhanced,
@@ -202,7 +200,7 @@ def test_orchestrator_preloads_acquisition_when_enabled(tmp_path):
         orchestrator.run(execution)
 
     plan_call.assert_called_once()
-    base_call.assert_not_called()
+    ingest_call.assert_not_called()
     assert executor.last_config is not None
     assert executor.last_config.preloaded_agent_frame is not None
     assert executor.last_config.preloaded_agent_timings == fake_timings
