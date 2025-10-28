@@ -32,6 +32,10 @@ repos:
         additional_dependencies:
           - types-PyYAML
           - types-requests
+          - pytest
+          - marshmallow
+          - phonenumbers
+          - python-stdnum
         args: [--config-file, pyproject.toml]
 
   - repo: https://github.com/Yelp/detect-secrets
