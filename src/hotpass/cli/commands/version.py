@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -136,7 +135,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             console.print("\n[dim]Configure a remote with: dvc remote add ...[/dim]")
             return 0
         else:
-            console.print("[bold red]✗[/bold red] Failed to initialize DVC", file=sys.stderr)
+            console.print("[bold red]✗[/bold red] Failed to initialize DVC")
             return 1
 
     if namespace.status:
@@ -148,7 +147,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             return 1
 
         if status.get("error"):
-            console.print(f"[red]Error: {status['error']}[/red]", file=sys.stderr)
+            console.print(f"[red]Error: {status['error']}[/red]")
             return 1
 
         console.print(status.get("status_output", ""))
@@ -162,9 +161,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     if namespace.add:
         if not manager.is_initialized():
-            console.print(
-                "[red]DVC not initialized. Run: hotpass version --init[/red]", file=sys.stderr
-            )
+            console.print("[red]DVC not initialized. Run: hotpass version --init[/red]")
             return 1
 
         console.print(f"[bold blue]Adding {namespace.add} to DVC...[/bold blue]")
@@ -173,7 +170,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             console.print(f"\n[dim]Commit the .dvc file: git add {namespace.add}.dvc[/dim]")
             return 0
         else:
-            console.print(f"[bold red]✗[/bold red] Failed to add {namespace.add}", file=sys.stderr)
+            console.print(f"[bold red]✗[/bold red] Failed to add {namespace.add}")
             return 1
 
     if namespace.get:
@@ -198,9 +195,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         try:
             parts = namespace.set.split(".")
             if len(parts) != 3:
-                console.print(
-                    "[red]Version must be in format: major.minor.patch[/red]", file=sys.stderr
-                )
+                console.print("[red]Version must be in format: major.minor.patch[/red]")
                 return 1
 
             major, minor, patch = map(int, parts)
@@ -229,13 +224,11 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
                 return 0
             else:
-                console.print("[bold red]✗[/bold red] Failed to set version", file=sys.stderr)
+                console.print("[bold red]✗[/bold red] Failed to set version")
                 return 1
 
         except ValueError:
-            console.print(
-                "[red]Invalid version format. Use: major.minor.patch[/red]", file=sys.stderr
-            )
+            console.print("[red]Invalid version format. Use: major.minor.patch[/red]")
             return 1
 
     if namespace.bump:
@@ -262,7 +255,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
             return 0
         else:
-            console.print("[bold red]✗[/bold red] Failed to bump version", file=sys.stderr)
+            console.print("[bold red]✗[/bold red] Failed to bump version")
             return 1
 
     console.print("[yellow]No action specified. Use --help for usage.[/yellow]")

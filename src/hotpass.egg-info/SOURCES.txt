@@ -82,6 +82,7 @@ src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/resolve.py
 src/hotpass/cli/commands/run.py
+src/hotpass/cli/commands/version.py
 src/hotpass/contracts/__init__.py
 src/hotpass/contracts/datasets.py
 src/hotpass/contracts/generator.py
