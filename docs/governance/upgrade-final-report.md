@@ -1,7 +1,7 @@
 ---
 title: Hotpass upgrade final report
 summary: Consolidated critical-reasoning checks and delivery package for the Hotpass frontier upgrade initiative.
-last_updated: 2025-10-26
+last_updated: 2025-10-28
 ---
 
 # Hotpass upgrade final report
@@ -79,6 +79,12 @@ Hotpass generates CycloneDX SBOMs and provenance statements via scripts in `scri
 ## 5. Delivery, DX, and UX narrative
 
 Developer experience audits (`docs/metrics/devex-audit.md`) highlight improved tooling yet underscore secrets, telemetry, and compliance follow-ups. SPACE metrics remain partially manual; instrumentation via Prefect/OpenTelemetry must stabilize before automation. UX reviews (`docs/ux/heuristic-review.md`) confirm alignment with Nielsen heuristics but call for authenticated previews and accessibility automation. Establishing quarterly DevEx reviews and automated accessibility scans keeps ISO 9241-210 objectives in view.
+
+### 5.1 Governance workflow telemetry (2025-10-28)
+
+- **commitlint** (`run 18875044612`) — success in 20 s for PR #101 (`codex/implement-github-actions-enhancements`); no manual label adjustments were required before merge.
+- **pr-labeler** (`run 18875148327`) — success in 8 s after label seeding; repository labels now include `type:*`, `scope:dependencies`, `scope:governance`, `prefect`, `uv`, `skip-changelog`, and `breaking-change` as confirmed via `gh label list`.
+- **release-drafter** (`run 18875134498`) — success in 96 s on push `121cbe6753e0e5a4017baaf82bcc21fccfca67bb` (merge of PR #101); release draft reflects automated taxonomy with no manual notes needed.
 
 ## 6. PR-ready artefacts
 

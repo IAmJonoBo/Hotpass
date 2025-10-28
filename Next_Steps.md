@@ -72,8 +72,8 @@
 - [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
 - [x] Deliver lead scoring validation metrics persistence and documentation guidance (Owner: Engineering & Docs, Due: 2025-12-05)
 - [ ] Add regression coverage for modular pipeline stages (Owner: QA & Engineering, Due: 2025-12-13)
-- [ ] Seed Conventional Commit label set (`type:*`, `scope:*`, `prefect`, `uv`, `skip-changelog`) in GitHub repo settings (Owner: Platform, Due: 2025-12-05)
-- [ ] Monitor commitlint/labeler/release-drafter workflow runs post-merge and capture findings in governance docs (Owner: Platform, Due: 2025-12-12)
+- [x] Seed Conventional Commit label set (`type:*`, `scope:*`, `prefect`, `uv`, `skip-changelog`) in GitHub repo settings (Owner: Platform, Due: 2025-12-05) — Completed 2025-10-28 via `gh label create ... --force`; `gh label list --json name` confirms the seeded set.
+- [x] Monitor commitlint/labeler/release-drafter workflow runs post-merge and capture findings in governance docs (Owner: Platform, Due: 2025-12-12) — Completed 2025-10-28; commitlint run 18875044612 succeeded in 20 s, pr-labeler run 18875148327 succeeded in 8 s after label sync, release-drafter run 18875134498 succeeded in 96 s, no manual labels beyond `codex` were needed.
 
 ## Steps
 
