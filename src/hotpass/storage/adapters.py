@@ -15,7 +15,7 @@ import pyarrow as pa
 class QueryAdapter(AbstractContextManager["QueryAdapter"], ABC):
     """Abstract interface for executing SQL-like queries against datasets."""
 
-    def __enter__(self) -> "QueryAdapter":  # pragma: no cover - trivial
+    def __enter__(self) -> QueryAdapter:  # pragma: no cover - trivial
         return self
 
     def __exit__(
