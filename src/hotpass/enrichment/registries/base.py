@@ -157,7 +157,7 @@ class RegistryResponse:
     meta: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        self.meta.setdefault("retrieved_at", _iso_datetime())
+        self.meta.setdefault("looked_up_at", _iso_datetime())
 
     def to_dict(self) -> dict[str, Any]:
         return {
