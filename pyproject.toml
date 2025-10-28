@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv<1"]
+build-backend = "uv.core.build"
 
 [project]
 name = "hotpass"
@@ -80,6 +80,7 @@ docs = [
 hotpass = "hotpass.cli:main"
 hotpass-enhanced = "hotpass.cli_enhanced:main"
 
+
 [tool.ruff]
 line-length = 100
 extend-exclude = ["data"]
@@ -103,10 +104,95 @@ markers = ["accessibility: accessibility semantics checks"]
 [tool.mypy]
 python_version = "3.13"
 namespace_packages = true
-packages = ["hotpass"]
-strict = false
 mypy_path = ["src"]
+files = ["src/hotpass/pipeline/config.py", "scripts/quality/fitness_functions.py"]
 warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
+no_implicit_optional = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["hotpass.pipeline.config"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["scripts.quality.fitness_functions"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["scripts.quality.*"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "prefect",
+    "prefect.*",
+    "great_expectations",
+    "great_expectations.*",
+    "polars",
+    "polars.*",
+    "duckdb",
+    "duckdb.*",
+    "rapidfuzz",
+    "rapidfuzz.*",
+    "trafilatura",
+    "trafilatura.*",
+    "geopandas",
+    "geopandas.*",
+    "openpyxl",
+    "openpyxl.*",
+    "presidio_analyzer",
+    "presidio_analyzer.*",
+    "presidio_anonymizer",
+    "presidio_anonymizer.*",
+    "frictionless",
+    "frictionless.*",
+    "opentelemetry",
+    "opentelemetry.*",
+    "rich",
+    "rich.*",
+    "semgrep",
+    "semgrep.*",
+    "xgboost",
+    "xgboost.*",
+    "scipy",
+    "scipy.*",
+    "pandas",
+    "pandas.*",
+    "numpy",
+    "numpy.*",
+    "geopy",
+    "geopy.*",
+    "pyarrow",
+    "pyarrow.*",
+    "dns",
+    "dns.*",
+    "license_expression",
+    "license_expression.*",
+    "sklearn",
+    "sklearn.*",
+    "shapely",
+    "shapely.*",
+    "playwright",
+    "playwright.*",
+    "nameparser",
+    "nameparser.*",
+    "apprise",
+    "apprise.*",
+    "streamlit",
+    "streamlit.*",
+]
 ignore_missing_imports = true
 
 [tool.coverage.run]

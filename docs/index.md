@@ -81,6 +81,13 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 ```{toctree}
 :maxdepth: 1
+:caption: Architecture decisions
+
+/adr/0001-qa-tooling
+```
+
+```{toctree}
+:maxdepth: 1
 :caption: Observability
 
 /observability/index

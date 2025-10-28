@@ -76,6 +76,7 @@
 ## Steps
 
 - [x] Migrated documentation to Diátaxis structure and removed duplicate legacy pages
+- [x] Adopted uv_build backend with consolidated QA script and ADR record (2025-02-15)【F:pyproject.toml†L1-L25】【F:docs/adr/0001-qa-tooling.md†L1-L40】
 - [x] Added docs CI workflow executing strict Sphinx builds and link checking
 - [x] Refreshed README to act as a lightweight entry point into docs
 - [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
@@ -145,6 +146,7 @@
 ## Deliverables
 
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
+- [x] Documented uv.core.build migration and QA entrypoint (`make qa`)【F:README.md†L36-L47】【F:docs/adr/0001-qa-tooling.md†L1-L40】
 - [x] Registry adapters for CIPC/SACAA with caching, structured responses, fixtures, documentation, and policy updates landed【F:src/hotpass/enrichment/registries/base.py†L1-L208】【F:src/hotpass/enrichment/registries/cipc.py†L19-L140】【F:src/hotpass/enrichment/registries/sacaa.py†L19-L133】【F:tests/enrichment/test_registries.py†L1-L175】【F:docs/how-to-guides/configure-pipeline.md†L184-L225】【F:policy/acquisition/providers.json†L24-L36】
 - [x] `.github/ISSUE_TEMPLATE/` populated with bug, docs, and task templates plus Slack contact link
 - [x] `.github/workflows/docs.yml` enforces strict Sphinx builds and link checking
@@ -228,6 +230,7 @@
 - [x] Accessibility, mutation, and evidence tooling re-run post-update (`uv run pytest -m accessibility`; `uv run python scripts/qa/run_mutation_tests.py`; `uv run python scripts/supply_chain/generate_sbom.py`)【6f2970†L1-L56】【4ebbbd†L1-L56】【c5964d†L1-L2】
 - [x] Post-assert guard QA gate: pytest, ruff check/format, mypy, bandit, detect-secrets, build (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`; `uv run ruff check`; `uv run ruff format --check`; `uv run mypy`; `uv run bandit -r src scripts`; `uv run detect-secrets scan`; `uv build`)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 - [x] Fitness functions updated to guard modular pipeline stage lengths (`uv run python scripts/quality/fitness_functions.py`)【c36079†L1-L2】
+- [ ] Consolidated QA gate via `make qa` currently fails at pre-commit formatting and strict mypy baseline gaps; scope hooks to changed files or remediate repository-wide issues before marking green.【addc44†L1-L4】【137f11†L1-L91】【cf6c95†L1-L120】【01b589†L1-L117】
 - [ ] Local pytest baseline currently fails with `ModuleNotFoundError: No module named 'polars'`; uv-managed runs need investigation before marking tests gate green.【862623†L1-L23】【2be741†L1-L1】
 - [ ] Semgrep registry scan blocked by SSL trust chain in sandbox (`uv run semgrep --config=auto`)【6c2e8a†L1-L66】
 - [ ] Extend automation delivery coverage for circuit-open metrics/telemetry edge cases once additional fixtures are available.

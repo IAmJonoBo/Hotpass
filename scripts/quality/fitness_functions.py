@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from collections.abc import Callable
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -55,6 +56,13 @@ def check_public_api(module: str, symbols: list[str]) -> None:
         raise FitnessFailure(f"{module} missing public exports: {missing}")
 
 
+def _module_length_check(module: str, max_lines: int) -> Callable[[], None]:
+    def _check() -> None:
+        check_module_length(module, max_lines)
+
+    return _check
+
+
 def main() -> None:
     module_thresholds = {
         "pipeline/base.py": 500,
@@ -66,11 +74,8 @@ def main() -> None:
         "pipeline_enhanced.py": 200,
     }
 
-    checks = [
-        *(
-            lambda module=module, limit=limit: check_module_length(module, limit)
-            for module, limit in module_thresholds.items()
-        ),
+    checks: list[Callable[[], None]] = [
+        *(_module_length_check(module, limit) for module, limit in module_thresholds.items()),
         lambda: check_import(
             "observability.py",
             ".telemetry.registry",

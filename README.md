@@ -36,15 +36,12 @@ The full documentation lives under [`docs/`](docs/index.md) and follows the Diá
 
 ## Contributing
 
-Read the [documentation contributing guide](docs/CONTRIBUTING.md) and [style guide](docs/style.md), then submit pull requests using Conventional Commits. Run the full QA suite before opening a PR:
+Read the [documentation contributing guide](docs/CONTRIBUTING.md) and [style guide](docs/style.md), then submit pull requests using Conventional Commits. Run the consolidated QA suite before opening a PR:
 
 ```bash
-uv run pytest --cov=src --cov=tests --cov-report=term-missing
-uv run ruff check
-uv run mypy src tests scripts
-uv run bandit -r src scripts
-uv run detect-secrets scan src tests scripts
-uv run uv build
+make qa
 ```
+
+The `qa` target runs Ruff formatting and linting, pytest with coverage, mypy (strict for the pipeline configuration module and QA tooling), Bandit, detect-secrets, and repository pre-commit hooks so local results match CI.
 
 Join the conversation in the `#hotpass` Slack channel or open an issue using the templates under `.github/ISSUE_TEMPLATE/`.
