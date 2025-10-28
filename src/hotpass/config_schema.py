@@ -9,6 +9,11 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from hotpass.automation.http import (
+    AutomationCircuitBreakerPolicy,
+    AutomationHTTPConfig,
+    AutomationRetryPolicy,
+)
 from hotpass.compliance import DataClassification, LawfulBasis, PIIRedactionConfig
 
 
@@ -150,6 +155,67 @@ class IntentSettings(BaseModel):
     credentials: Mapping[str, str] = Field(default_factory=dict)
 
 
+DEFAULT_AUTOMATION_STATUS_CODES: tuple[int, ...] = (408, 425, 429, 500, 502, 503, 504)
+
+
+class AutomationRetrySettings(BaseModel):
+    attempts: int = Field(default=3, ge=1)
+    backoff_factor: float = Field(default=0.5, ge=0.0)
+    backoff_max: float = Field(default=30.0, ge=0.0)
+    status_forcelist: tuple[int, ...] = Field(
+        default_factory=lambda: DEFAULT_AUTOMATION_STATUS_CODES
+    )
+
+    def to_policy(self) -> AutomationRetryPolicy:
+        return AutomationRetryPolicy(
+            attempts=self.attempts,
+            backoff_factor=self.backoff_factor,
+            backoff_max=self.backoff_max,
+            status_forcelist=self.status_forcelist,
+        )
+
+
+class AutomationCircuitBreakerSettings(BaseModel):
+    failure_threshold: int = Field(default=5, ge=1)
+    recovery_time: float = Field(default=60.0, ge=0.0)
+
+    def to_policy(self) -> AutomationCircuitBreakerPolicy:
+        return AutomationCircuitBreakerPolicy(
+            failure_threshold=self.failure_threshold,
+            recovery_time=self.recovery_time,
+        )
+
+
+class AutomationHTTPSettings(BaseModel):
+    timeout: float = Field(default=10.0, gt=0.0)
+    retry: AutomationRetrySettings = Field(default_factory=AutomationRetrySettings)
+    circuit_breaker: AutomationCircuitBreakerSettings = Field(
+        default_factory=AutomationCircuitBreakerSettings
+    )
+    idempotency_header: str = "Idempotency-Key"
+    dead_letter_path: Path | None = None
+    dead_letter_enabled: bool = False
+
+    @field_validator("idempotency_header", mode="before")
+    @classmethod
+    def _clean_header(cls, value: str) -> str:
+        cleaned = str(value).strip()
+        if not cleaned:
+            msg = "idempotency_header cannot be blank"
+            raise ValueError(msg)
+        return cleaned
+
+    def to_dataclass(self) -> AutomationHTTPConfig:
+        return AutomationHTTPConfig(
+            timeout=self.timeout,
+            retry=self.retry.to_policy(),
+            circuit_breaker=self.circuit_breaker.to_policy(),
+            idempotency_header=self.idempotency_header,
+            dead_letter_path=self.dead_letter_path,
+            dead_letter_enabled=self.dead_letter_enabled,
+        )
+
+
 class PipelineRuntimeConfig(BaseModel):
     """Input/output, reporting, and runtime options for the refinement pipeline."""
 
@@ -178,6 +244,7 @@ class PipelineRuntimeConfig(BaseModel):
     intent_webhooks: tuple[str, ...] = Field(default_factory=tuple)
     crm_endpoint: str | None = None
     crm_token: str | None = None
+    automation_http: AutomationHTTPSettings = Field(default_factory=AutomationHTTPSettings)
 
     @field_validator("sensitive_fields", mode="before")
     @classmethod
@@ -289,9 +356,7 @@ class BackfillWindow(BaseModel):
 
     @field_validator("versions", mode="before")
     @classmethod
-    def _normalise_versions(
-        cls, values: Iterable[str] | str | None
-    ) -> tuple[str, ...]:
+    def _normalise_versions(cls, values: Iterable[str] | str | None) -> tuple[str, ...]:
         if values is None:
             return ("latest",)
         if isinstance(values, str):
@@ -403,6 +468,8 @@ class HotpassConfig(BaseModel):
             progress_listener=progress_listener,
             pii_redaction=self.compliance.to_redaction_config(),
         )
+
+        config.automation_http = self.pipeline.automation_http.to_dataclass()
 
         if self.pipeline.acquisition and self.pipeline.acquisition.enabled:
             from hotpass.data_sources.agents import (

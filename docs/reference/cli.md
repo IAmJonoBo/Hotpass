@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the unified `hotpass` CLI entry point and its subcommands.
-last_updated: 2025-10-27
+last_updated: 2025-10-28
 ---
 
 # Reference — command-line interface
@@ -112,6 +112,15 @@ uv run hotpass run [OPTIONS]
 | `--excel-chunk-size INTEGER` | Chunk size for streaming Excel reads; must be greater than zero when supplied. |
 | `--excel-engine TEXT` | Explicit pandas Excel engine (for example `openpyxl`). |
 | `--excel-stage-dir PATH` | Directory for staging chunked Excel reads to parquet for reuse. |
+| `--automation-http-timeout FLOAT` | Timeout in seconds for webhook and CRM deliveries. |
+| `--automation-http-retries INTEGER` | Maximum retry attempts for automation deliveries. |
+| `--automation-http-backoff FLOAT` | Exponential backoff factor applied between automation retries. |
+| `--automation-http-backoff-max FLOAT` | Upper bound for the backoff interval (seconds). |
+| `--automation-http-circuit-threshold INTEGER` | Consecutive failures that open the automation circuit breaker. |
+| `--automation-http-circuit-reset FLOAT` | Seconds to wait before half-opening the automation circuit. |
+| `--automation-http-idempotency-header TEXT` | Override the `Idempotency-Key` header when generating idempotency keys. |
+| `--automation-http-dead-letter PATH` | Append failed automation payloads to the given NDJSON file. |
+| `--automation-http-dead-letter-enabled` / `--no-automation-http-dead-letter` | Toggle dead-letter persistence for automation failures. |
 
 ### `orchestrate`
 
@@ -188,6 +197,23 @@ uv run hotpass dashboard --host localhost --port 8501
 | --- | --- |
 | `--host HOST` | Bind address for the dashboard server (default: `localhost`). |
 | `--port INTEGER` | Port for the Streamlit dashboard (default: `8501`). |
+
+### Automation delivery environment variables
+
+The CLI and Prefect flows read the following environment variables when CLI flags are not
+provided. All values are optional.
+
+| Variable | Purpose |
+| --- | --- |
+| `HOTPASS_AUTOMATION_HTTP_TIMEOUT` | Override the automation timeout (seconds). |
+| `HOTPASS_AUTOMATION_HTTP_RETRIES` | Override the retry count. |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF` | Override the backoff factor. |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX` | Override the maximum backoff interval (seconds). |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD` | Override the failure threshold before the circuit opens. |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET` | Override the circuit recovery window (seconds). |
+| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER` | Override the idempotency header name. |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER` | Write failed deliveries to the specified NDJSON file. |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED` | Enable or disable dead-letter persistence (`true`/`false`). |
 
 ## Exit codes
 

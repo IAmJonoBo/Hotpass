@@ -139,6 +139,61 @@ def make_pipeline_parser() -> argparse.ArgumentParser:
         help="Authentication token passed to the CRM endpoint",
     )
     parser.add_argument(
+        "--automation-http-timeout",
+        type=float,
+        help="Timeout in seconds for automation webhook and CRM deliveries",
+    )
+    parser.add_argument(
+        "--automation-http-retries",
+        type=int,
+        help="Maximum retry attempts for automation deliveries",
+    )
+    parser.add_argument(
+        "--automation-http-backoff",
+        dest="automation_http_backoff",
+        type=float,
+        help="Exponential backoff factor applied between automation retries",
+    )
+    parser.add_argument(
+        "--automation-http-backoff-max",
+        dest="automation_http_backoff_max",
+        type=float,
+        help="Maximum backoff interval in seconds for automation retries",
+    )
+    parser.add_argument(
+        "--automation-http-circuit-threshold",
+        dest="automation_http_circuit_threshold",
+        type=int,
+        help="Consecutive failures before the automation circuit opens",
+    )
+    parser.add_argument(
+        "--automation-http-circuit-reset",
+        dest="automation_http_circuit_reset",
+        type=float,
+        help="Duration in seconds before automation circuit half-opens",
+    )
+    parser.add_argument(
+        "--automation-http-idempotency-header",
+        help="Custom header name used when generating idempotency keys",
+    )
+    parser.add_argument(
+        "--automation-http-dead-letter",
+        type=Path,
+        help="Path to append failed automation payloads as newline-delimited JSON",
+    )
+    parser.add_argument(
+        "--automation-http-dead-letter-enabled",
+        dest="automation_http_dead_letter_enabled",
+        action="store_true",
+        help="Enable dead-letter persistence for automation failures",
+    )
+    parser.add_argument(
+        "--no-automation-http-dead-letter",
+        dest="automation_http_dead_letter_enabled",
+        action="store_false",
+        help="Disable dead-letter persistence even if configured",
+    )
+    parser.add_argument(
         "--party-store-path",
         type=Path,
         help="Optional path to write the canonical party store as JSON",
@@ -155,7 +210,7 @@ def make_pipeline_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="Disable archive packaging even if configured by profiles",
     )
-    parser.set_defaults(archive=None)
+    parser.set_defaults(archive=None, automation_http_dead_letter_enabled=None)
     return parser
 
 

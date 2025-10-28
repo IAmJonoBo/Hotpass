@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-11-05
+last_updated: 2025-10-28
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -180,6 +180,44 @@ uv run hotpass \
 Hotpass only sends automation payloads when there is data to deliver. If the digest or
 daily list is empty the CLI skips the request but retains log entries so you can audit
 when downstream systems were contacted.
+
+#### Harden webhook and CRM delivery
+
+Automation hooks now run through a shared HTTP client that exposes retry, backoff, and
+circuit-breaking policies. Each delivery emits structured events (`automation.webhook.*`,
+`automation.crm.*`) and updates the OpenTelemetry counter/histogram pair under
+`hotpass.automation.*` so operators can track success/failure rates.
+
+- Use CLI flags to tune the policies per run:
+  - `--automation-http-timeout`, `--automation-http-retries`,
+    `--automation-http-backoff`, and `--automation-http-backoff-max` govern retry
+    behaviour.
+  - `--automation-http-circuit-threshold` and
+    `--automation-http-circuit-reset` control when the circuit opens and how long it
+    waits before retrying.
+  - `--automation-http-idempotency-header` overrides the default `Idempotency-Key`
+    header when downstream systems expect a different name.
+  - `--automation-http-dead-letter` paired with `--automation-http-dead-letter-enabled`
+    appends failed deliveries to a newline-delimited JSON file for replay.
+
+- Equivalent environment variables ensure Prefect deployments and automated agents pick
+  up the same configuration:
+
+| Variable | Meaning |
+| --- | --- |
+| `HOTPASS_AUTOMATION_HTTP_TIMEOUT` | Delivery timeout in seconds. |
+| `HOTPASS_AUTOMATION_HTTP_RETRIES` | Maximum retry attempts. |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF` | Exponential backoff factor. |
+| `HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX` | Maximum backoff interval in seconds. |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD` | Consecutive failures before the circuit opens. |
+| `HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET` | Seconds to wait before half-opening the circuit. |
+| `HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER` | Override the generated idempotency header. |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER` | Destination path for the NDJSON dead-letter queue. |
+| `HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED` | `true`/`false` toggle for dead-letter persistence. |
+
+Delivery reports return the status, idempotency key, attempt count, and latency for each
+webhook or CRM call. These details are mirrored in the structured logger so on-call staff
+can triage failures quickly and correlate with the generated dead-letter artefacts.
 
 ### Configure registry enrichment connectors
 
