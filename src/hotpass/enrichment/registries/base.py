@@ -122,6 +122,11 @@ class RateLimiter:
     def __init__(self, min_interval: float | int | None = None) -> None:
         interval = float(min_interval or 0.0)
         self.min_interval = max(interval, 0.0)
+        if self.min_interval <= 0:
+            logger.warning(
+                "RateLimiter initialized with min_interval=%r; rate limiting is disabled.",
+                min_interval,
+            )
         self._lock = Lock()
         self._next_available: float = 0.0
 
