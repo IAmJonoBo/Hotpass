@@ -52,6 +52,7 @@ src/hotpass.egg-info/requires.txt
 src/hotpass.egg-info/top_level.txt
 src/hotpass/automation/__init__.py
 src/hotpass/automation/hooks.py
+src/hotpass/automation/http.py
 src/hotpass/cli/__init__.py
 src/hotpass/cli/builder.py
 src/hotpass/cli/configuration.py
@@ -59,6 +60,7 @@ src/hotpass/cli/main.py
 src/hotpass/cli/progress.py
 src/hotpass/cli/shared.py
 src/hotpass/cli/commands/__init__.py
+src/hotpass/cli/commands/backfill.py
 src/hotpass/cli/commands/dashboard.py
 src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/orchestrate.py
@@ -96,9 +98,15 @@ src/hotpass/linkage/review.py
 src/hotpass/linkage/runner.py
 src/hotpass/linkage/settings.py
 src/hotpass/pipeline/__init__.py
+src/hotpass/pipeline/aggregation.py
 src/hotpass/pipeline/base.py
+src/hotpass/pipeline/config.py
+src/hotpass/pipeline/enrichment.py
 src/hotpass/pipeline/events.py
+src/hotpass/pipeline/export.py
+src/hotpass/pipeline/ingestion.py
 src/hotpass/pipeline/orchestrator.py
+src/hotpass/pipeline/validation.py
 src/hotpass/pipeline/features/__init__.py
 src/hotpass/pipeline/features/base.py
 src/hotpass/pipeline/features/compliance.py

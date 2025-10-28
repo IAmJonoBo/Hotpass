@@ -15,7 +15,10 @@ class FitnessFailure(Exception):
 
 def check_module_length(module: str, max_lines: int) -> None:
     path = SRC_ROOT / module
-    line_count = sum(1 for _ in path.open("r", encoding="utf-8"))
+    try:
+        line_count = sum(1 for _ in path.open("r", encoding="utf-8"))
+    except FileNotFoundError as exc:  # pragma: no cover - defensive guard
+        raise FitnessFailure(f"module {module} missing; expected at {path}") from exc
     if line_count > max_lines:
         raise FitnessFailure(f"{module} exceeds {max_lines} lines ({line_count})")
 
@@ -23,9 +26,10 @@ def check_module_length(module: str, max_lines: int) -> None:
 def check_import(module: str, module_path: str, symbol: str) -> None:
     path = SRC_ROOT / module
     tree = ast.parse(path.read_text(encoding="utf-8"))
+    candidates = {module_path, module_path.lstrip(".")}
     if not any(
         isinstance(node, ast.ImportFrom)
-        and node.module == module_path
+        and node.module in candidates
         and any(alias.name == symbol for alias in node.names)
         for node in ast.walk(tree)
     ):
@@ -52,13 +56,25 @@ def check_public_api(module: str, symbols: list[str]) -> None:
 
 
 def main() -> None:
+    module_thresholds = {
+        "pipeline/base.py": 500,
+        "pipeline/aggregation.py": 750,
+        "pipeline/ingestion.py": 200,
+        "pipeline/validation.py": 200,
+        "pipeline/export.py": 200,
+        "pipeline/enrichment.py": 150,
+        "pipeline_enhanced.py": 200,
+    }
+
     checks = [
-        lambda: check_module_length("pipeline.py", 1300),
-        lambda: check_module_length("pipeline_enhanced.py", 200),
+        *(
+            lambda module=module, limit=limit: check_module_length(module, limit)
+            for module, limit in module_thresholds.items()
+        ),
         lambda: check_import(
             "observability.py",
-            "opentelemetry.sdk.trace.export",
-            "BatchSpanProcessor",
+            ".telemetry.registry",
+            "build_default_registry",
         ),
         lambda: check_public_api("__init__.py", ["run_pipeline", "PipelineConfig"]),
     ]

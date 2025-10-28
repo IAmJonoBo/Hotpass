@@ -42,9 +42,9 @@ __all__ = [
 
 _LAZY_ATTRS: dict[str, tuple[str, str]] = {
     "PIIRedactionConfig": ("hotpass.compliance", "PIIRedactionConfig"),
-    "PipelineConfig": ("hotpass.pipeline.base", "PipelineConfig"),
-    "PipelineResult": ("hotpass.pipeline.base", "PipelineResult"),
-    "QualityReport": ("hotpass.pipeline.base", "QualityReport"),
+    "PipelineConfig": ("hotpass.pipeline.config", "PipelineConfig"),
+    "PipelineResult": ("hotpass.pipeline.config", "PipelineResult"),
+    "QualityReport": ("hotpass.pipeline.config", "QualityReport"),
     "PipelineExecutionConfig": (
         "hotpass.pipeline.orchestrator",
         "PipelineExecutionConfig",
@@ -104,8 +104,8 @@ _LAZY_ATTRS: dict[str, tuple[str, str]] = {
         "hotpass.pipeline.events",
         "PIPELINE_EVENT_COMPLETED",
     ),
-    "SSOT_COLUMNS": ("hotpass.pipeline.base", "SSOT_COLUMNS"),
-    "_aggregate_group": ("hotpass.pipeline.base", "_aggregate_group"),
+    "SSOT_COLUMNS": ("hotpass.pipeline.config", "SSOT_COLUMNS"),
+    "_aggregate_group": ("hotpass.pipeline.aggregation", "_aggregate_group"),
     "run_pipeline": ("hotpass.pipeline.orchestrator", "run_pipeline"),
 }
 
@@ -135,7 +135,7 @@ def run_pipeline(config: PipelineConfig | HotpassConfig) -> PipelineResult:
 
     from hotpass.config_schema import HotpassConfig as HotpassConfigType
 
-    from .base import PipelineConfig as PipelineConfigType
+    from .config import PipelineConfig as PipelineConfigType
     from .orchestrator import PipelineExecutionConfig, PipelineOrchestrator, default_feature_bundle
 
     orchestrator = PipelineOrchestrator()

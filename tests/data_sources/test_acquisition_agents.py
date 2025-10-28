@@ -24,7 +24,8 @@ from hotpass.data_sources.agents import (
     TargetDefinition,
     run_plan,
 )
-from hotpass.pipeline.base import PipelineConfig, _load_sources
+from hotpass.pipeline.config import PipelineConfig
+from hotpass.pipeline.ingestion import ingest_sources
 from hotpass.telemetry.registry import TelemetryModules, TelemetryPolicy, TelemetryRegistry
 
 
@@ -117,18 +118,19 @@ def test_run_plan_collects_records_with_provenance() -> None:
     assert warnings == []
 
 
-def test_load_sources_includes_agent_results(tmp_path: Path) -> None:
+def test_ingest_sources_includes_agent_results(tmp_path: Path) -> None:
     plan = _build_sample_plan()
     config = PipelineConfig(
         input_dir=tmp_path,
         output_path=tmp_path / "refined.xlsx",
         acquisition_plan=plan,
     )
-    frame, timings = _load_sources(config)
+    frame, timings, events = ingest_sources(config)
 
     assert not frame.empty
     assert "LinkedIn" in frame["source_dataset"].unique()
     assert any(key.startswith("agent:") for key in timings)
+    assert events == []
 
 
 def test_run_plan_emits_telemetry() -> None:

@@ -71,6 +71,7 @@
 - [x] Refresh CLI documentation, tutorials, and retire legacy commands (Owner: Docs, Due: 2026-03-07)
 - [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
 - [x] Deliver lead scoring validation metrics persistence and documentation guidance (Owner: Engineering & Docs, Due: 2025-12-05)
+- [ ] Add regression coverage for modular pipeline stages (Owner: QA & Engineering, Due: 2025-12-13)
 
 ## Steps
 
@@ -78,6 +79,7 @@
 - [x] Added docs CI workflow executing strict Sphinx builds and link checking
 - [x] Refreshed README to act as a lightweight entry point into docs
 - [x] Create dedicated fixtures for observability and orchestration to reduce reliance on global state between tests
+- [x] Decomposed `pipeline.base` into ingestion/aggregation/validation/export modules, updated fitness gates, and reran full QA suite (pytest w/ coverage, ruff check/format, mypy, bandit, detect-secrets, uv build)【F:src/hotpass/pipeline/base.py†L1-L443】【F:src/hotpass/pipeline/aggregation.py†L1-L686】【F:src/hotpass/pipeline/ingestion.py†L1-L122】【F:src/hotpass/pipeline/export.py†L1-L171】【F:scripts/quality/fitness_functions.py†L1-L70】【51873d†L1-L118】【936d6c†L1-L1】【fcfff6†L1-L1】【3c89a7†L1-L9】【55d317†L1-L21】【b2d4de†L1-L58】【40225e†L1-L120】【c36079†L1-L2】
 - [x] Capture outcomes from docs workflow once it runs on `main` (see `uv run sphinx-build` & linkcheck outputs)【5a78d4†L1-L26】【f029ee†L1-L24】
 - [x] Automated quarterly verification logging via `scripts/compliance/run_verification.py`
 - [x] Executed repository-wide Ruff formatting sweep and cleared lingering lint/security warnings (2025-10-26)
@@ -148,7 +150,7 @@
 - [x] README, implementation status, and release summary files now point to canonical roadmap documentation
 - [x] Entity registry merges optional history files while preserving identifiers and status timelines
 - [x] Governance gap analysis captured in `docs/governance/gap-analysis.md` (2025-10-26)
-- [x] Pytest with coverage ≥ 80% (current: 84%; optional deps satisfied)【d1593b†L1-L126】
+- [x] Pytest with coverage ≥ 80% (current: 82%; optional deps satisfied)【51873d†L1-L118】
 - [x] Centralised runtime warning suppression module guards pytest -W error runs (`src/hotpass/_warning_filters.py`)
 - [x] Top-level package exports expose the enhanced pipeline configuration for downstream clients
 - [x] Ruff lint clean (`uv run ruff check`)【7d9eff†L1-L2】
@@ -207,7 +209,7 @@
 
 ## Quality Gates
 
-- [x] Pytest with coverage ≥ 80% (current: 84%)【d1593b†L1-L126】
+- [x] Pytest with coverage ≥ 80% (current: 82%)【51873d†L1-L118】
 - [x] Ruff lint clean (`uv run ruff check`)【7d9eff†L1-L2】
 - [x] Ruff formatting clean (`uv run ruff format --check`)【15749f†L1-L2】
 - [x] Mypy type checks clean (`uv run mypy src tests scripts`)【d9011e†L1-L7】
@@ -224,7 +226,7 @@
 - [x] Lint/type/security/build checks re-run after agent gating updates (`uv run ruff check`; `uv run ruff format --check`; `uv run mypy src tests scripts`; `uv run bandit -r src scripts`; `uv run detect-secrets scan src tests scripts`; `uv run uv build`)【5a5346†L1-L2】【35c67e†L1-L1】【31b801†L1-L22】【a160a5†L1-L33】【cedbe4†L1-L57】【262e3d†L1-L147】
 - [x] Accessibility, mutation, and evidence tooling re-run post-update (`uv run pytest -m accessibility`; `uv run python scripts/qa/run_mutation_tests.py`; `uv run python scripts/supply_chain/generate_sbom.py`)【6f2970†L1-L56】【4ebbbd†L1-L56】【c5964d†L1-L2】
 - [x] Post-assert guard QA gate: pytest, ruff check/format, mypy, bandit, detect-secrets, build (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`; `uv run ruff check`; `uv run ruff format --check`; `uv run mypy`; `uv run bandit -r src scripts`; `uv run detect-secrets scan`; `uv build`)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
-- [ ] Fitness functions require pipeline refactor to drop below 1300 lines (`uv run python scripts/quality/fitness_functions.py`)【cbd1b5†L1-L4】
+- [x] Fitness functions updated to guard modular pipeline stage lengths (`uv run python scripts/quality/fitness_functions.py`)【c36079†L1-L2】
 - [ ] Semgrep registry scan blocked by SSL trust chain in sandbox (`uv run semgrep --config=auto`)【6c2e8a†L1-L66】
 - [ ] Extend automation delivery coverage for circuit-open metrics/telemetry edge cases once additional fixtures are available.
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
@@ -247,7 +249,7 @@
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)
 - Accessibility: `uv run pytest -m accessibility` (chunk `1b98d5`)
 - Mutation: `uv run python scripts/qa/run_mutation_tests.py` (chunk `0b6520`)
-- tsFitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `8eab1a`)
+- tsFitness functions: `uv run python scripts/quality/fitness_functions.py` (chunk `c36079`)
 - SBOM: `uv run python scripts/supply_chain/generate_sbom.py` (chunk `8b644b`)
 - Provenance: `uv run python scripts/supply_chain/generate_provenance.py` (chunk `efd15c`)
 - Semgrep: `uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off` (chunk `467a00`)
