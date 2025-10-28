@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from textwrap import dedent
 
+import duckdb
+
 PARTY_TABLE_DDL = dedent(
     """
     CREATE TABLE IF NOT EXISTS party (
@@ -95,7 +97,7 @@ ALL_DDL = (
 )
 
 
-def install_tables(connection) -> None:
+def install_tables(connection: duckdb.DuckDBPyConnection) -> None:
     """Create the canonical party tables within an existing DuckDB connection."""
 
     for statement in ALL_DDL:

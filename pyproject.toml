@@ -105,7 +105,13 @@ markers = ["accessibility: accessibility semantics checks"]
 python_version = "3.13"
 namespace_packages = true
 mypy_path = ["src"]
-files = ["src/hotpass/pipeline/config.py", "scripts/quality/fitness_functions.py"]
+files = [
+  "src/hotpass/pipeline/config.py",
+  "src/hotpass/storage/adapters.py",
+  "src/hotpass/domain/party/schemas.py",
+  "src/hotpass/_compat_nameparser.py",
+  "scripts/quality/fitness_functions.py",
+]
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -192,6 +198,10 @@ module = [
     "apprise.*",
     "streamlit",
     "streamlit.*",
+    "marshmallow",
+    "marshmallow.*",
+    "pydantic",
+    "pydantic.*",
 ]
 ignore_missing_imports = true
 

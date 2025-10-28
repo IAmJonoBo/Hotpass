@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from contextlib import AbstractContextManager
+from types import TracebackType
 from typing import Any
 
 import polars as pl
@@ -14,10 +15,15 @@ import pyarrow as pa
 class QueryAdapter(AbstractContextManager["QueryAdapter"], ABC):
     """Abstract interface for executing SQL-like queries against datasets."""
 
-    def __enter__(self) -> QueryAdapter:  # pragma: no cover - trivial
+    def __enter__(self) -> "QueryAdapter":  # pragma: no cover - trivial
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - trivial
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:  # pragma: no cover - trivial
         self.close()
 
     @abstractmethod

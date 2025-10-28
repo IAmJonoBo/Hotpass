@@ -127,7 +127,7 @@ hotpass/
   - `uv run bandit -r src scripts`
 - `uv run detect-secrets scan src tests scripts`
 - `uv run uv build`
-- CI enhancements to pursue: CodeQL/Semgrep once SSL fixed, provenance attestation upload jobs, dashboard accessibility tests, scheduled `uv run pre-commit run mypy --all-files` with alerting when dependency resolution fails.
+- CI enhancements to pursue: CodeQL/Semgrep once SSL fixed, provenance attestation upload jobs, dashboard accessibility tests, scheduled `uv run pre-commit run mypy --all-files` via `mypy-audit` workflow with automatic issue creation when dependency resolution fails.
 
 ## 10. Dependency & tooling matrix
 
