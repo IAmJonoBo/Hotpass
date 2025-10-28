@@ -191,10 +191,12 @@ class CacheManager:
                 return None
 
             value, created_at = row
-            created_dt = datetime.fromisoformat(created_at)
+            created_dt = datetime.fromisoformat(created_at.replace(" ", "T"))
+            if created_dt.tzinfo is None:
+                created_dt = created_dt.replace(tzinfo=UTC)
 
             # Check if expired
-            if datetime.now() - created_dt > self.ttl:
+            if datetime.now(UTC) - created_dt > self.ttl:
                 self.delete(key)
                 return None
 
@@ -244,7 +246,7 @@ class CacheManager:
         Returns:
             Number of entries deleted
         """
-        cutoff = (datetime.now() - self.ttl).isoformat()
+        cutoff = (datetime.now(UTC) - self.ttl).isoformat()
         with self._connect() as conn:
             cursor = conn.execute("DELETE FROM cache WHERE created_at < ?", (cutoff,))
             count = cursor.rowcount

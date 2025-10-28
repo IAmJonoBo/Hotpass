@@ -175,9 +175,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             use_splink=options.linkage_use_splink
             or options.features.get("entity_resolution", False),
             linkage_config=linkage_config,
-            linkage_output_dir=str(options.linkage_output_dir)
-            if options.linkage_output_dir
-            else None,
+            linkage_output_dir=(
+                str(options.linkage_output_dir) if options.linkage_output_dir else None
+            ),
             linkage_match_threshold=options.linkage_match_threshold,
         )
         runner = cast(Callable[..., Any], enhanced_runner)

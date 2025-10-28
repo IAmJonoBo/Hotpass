@@ -443,7 +443,7 @@ slug = "heli-ops"
 
 [pipeline.intent.credentials]
 token = "${HOTPASS_INTENT_TOKEN}"
-``` 
+```
 
 At runtime the plan is materialised into `IntentPlan` objects which feed the new intent scoring stage.
 The resulting columns (`intent_signal_score`, `intent_signal_types`, and `intent_top_insights`) appear

@@ -510,9 +510,8 @@ def test_run_intent_plan_generates_digest() -> None:
     assert isinstance(digest, pd.DataFrame)
     assert not digest.empty
     assert "intent_signal_score" in digest.columns
-    assert (
-        digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
-        > (digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0])
+    assert digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0] > (
+        digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0]
     )
 
 

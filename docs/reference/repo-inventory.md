@@ -74,4 +74,3 @@ _Tick a box when reviewing or updating a suite during a docs or QA sweep._
 | [`secret-scanning.yml`](../../.github/workflows/secret-scanning.yml) | Push/PR to `main` | Runs Gitleaks and uploads SARIF to code scanning. |
 | [`copilot-setup-steps.yml`](../../.github/workflows/copilot-setup-steps.yml) | Manual or workflow file updates | Primes uv environment, installs pre-commit, and configures Prefect for local/offline usage. |
 | [`zap-baseline.yml`](../../.github/workflows/zap-baseline.yml) | Manual dispatch | Optional Streamlit launch followed by OWASP ZAP baseline scan and report upload. |
-

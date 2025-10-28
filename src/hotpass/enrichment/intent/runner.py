@@ -225,9 +225,11 @@ def run_intent_plan(
                 "intent_signal_score": score,
                 "intent_signal_count": summary_obj.signal_count,
                 "intent_signal_types": ";".join(types) if types else None,
-                "intent_last_observed_at": summary_obj.last_observed_at.isoformat()
-                if summary_obj.last_observed_at
-                else None,
+                "intent_last_observed_at": (
+                    summary_obj.last_observed_at.isoformat()
+                    if summary_obj.last_observed_at
+                    else None
+                ),
                 "intent_top_insights": "; ".join(insights) if insights else None,
             }
         )

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["uv<1"]
-build-backend = "uv.core.build"
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "hotpass"

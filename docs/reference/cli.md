@@ -228,4 +228,3 @@ provided. All values are optional.
 - [How-to guide — orchestrate and observe](../how-to-guides/orchestrate-and-observe.md)
 - [How-to guide — configure pipeline](../how-to-guides/configure-pipeline.md)
 - [Tutorial — enhanced pipeline](../tutorials/enhanced-pipeline.md)
-

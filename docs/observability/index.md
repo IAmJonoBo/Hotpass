@@ -96,4 +96,3 @@ validation, and integration with `pipeline_stage` spans.
   shared stub registry defined in `tests/_telemetry_stubs.py`.
 - **Hanging shutdown** — ensure `shutdown_observability()` runs in `finally` blocks when
   instrumented CLIs exit to flush readers.
-

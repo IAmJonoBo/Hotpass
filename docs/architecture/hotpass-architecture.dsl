@@ -160,7 +160,7 @@ workspace "Hotpass Architecture" "C4 views capturing the Hotpass platform, deplo
             include data_steward
             include data_consumer
             autoLayout lr
-            description "Containers, trust boundaries, and persistent stores." 
+            description "Containers, trust boundaries, and persistent stores."
         }
 
         component pipeline_engine "Component view — Pipeline engine" {

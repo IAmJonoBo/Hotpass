@@ -514,15 +514,21 @@ def _aggregate_group(
         "contact_lead_score_avg": lead_score if lead_score else None,
         "intent_signal_score": round(intent_score, 6) if intent_summary else 0.0,
         "intent_signal_count": intent_summary.signal_count if intent_summary else 0,
-        "intent_signal_types": ";".join(intent_summary.signal_types)
-        if intent_summary and intent_summary.signal_types
-        else None,
-        "intent_last_observed_at": intent_summary.last_observed_at.isoformat()
-        if intent_summary and intent_summary.last_observed_at
-        else None,
-        "intent_top_insights": "; ".join(intent_summary.top_insights)
-        if intent_summary and intent_summary.top_insights
-        else None,
+        "intent_signal_types": (
+            ";".join(intent_summary.signal_types)
+            if intent_summary and intent_summary.signal_types
+            else None
+        ),
+        "intent_last_observed_at": (
+            intent_summary.last_observed_at.isoformat()
+            if intent_summary and intent_summary.last_observed_at
+            else None
+        ),
+        "intent_top_insights": (
+            "; ".join(intent_summary.top_insights)
+            if intent_summary and intent_summary.top_insights
+            else None
+        ),
         "contact_validation_flags": (
             ";".join(sorted(set(validation_flags))) if validation_flags else None
         ),

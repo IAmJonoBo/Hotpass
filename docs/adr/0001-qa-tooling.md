@@ -23,12 +23,19 @@ repository's required checks in one pass: Ruff formatting and linting, pytest
 with coverage, mypy (strict for the pipeline configuration module and QA tooling with targeted
 overrides), Bandit, detect-secrets, and all configured pre-commit hooks.
 
+**Update (2025-10-28):** Until upstream uv ships a Python module exposing
+`uv.core.build`, we temporarily reverted to `setuptools.build_meta` as the build
+backend so CI and `uv run` can operate without extra bootstrapping. The QA
+entrypoint and supporting tooling remain unchanged.
+
 # Consequences
 
 - Contributors have a single, documented command to run locally before opening
   a pull request, reducing drift from CI behaviour.
 - Using uv's build backend aligns packaging with the dependency workflow,
-  eliminating redundant bootstrap steps.
+  eliminating redundant bootstrap steps; however, the temporary fallback to
+  `setuptools.build_meta` preserves compatibility until the upstream module
+  becomes available.
 - The consolidated QA entrypoint makes it easier to extend or reorder checks,
   because updates now happen in one script rather than multiple documentation
   snippets.
