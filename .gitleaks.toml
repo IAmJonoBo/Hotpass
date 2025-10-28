@@ -1,0 +1,7 @@
+title = "Hotpass Gitleaks Configuration"
+
+[[allowlists]]
+description = "Allow detect-secrets baseline hashed values"
+paths = [
+  ".secrets.baseline",
+]
