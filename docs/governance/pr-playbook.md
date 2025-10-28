@@ -11,8 +11,9 @@ last_updated: 2025-10-25
 1. Reference roadmap item or issue.
 2. Update documentation (Diátaxis) and `Next_Steps.md`.
 3. Run QA suite locally (tests, lint, type, security, secrets, build, accessibility, mutation, fitness functions).
-4. Attach artefacts (SBOM, provenance, accessibility report) as PR uploads if relevant.
-5. Tag code owners (`@platform-eng`, `@security`, `@docs`) per affected areas.
+4. Confirm Prefect configuration changes respect concurrency guardrails (e.g. `orchestrator.backfill.concurrency_limit`, deployment work pools) and document overrides or sequential fallbacks.
+5. Attach artefacts (SBOM, provenance, accessibility report) as PR uploads if relevant.
+6. Tag code owners (`@platform-eng`, `@security`, `@docs`) per affected areas.
 
 ## Quality gate waivers
 
@@ -38,3 +39,9 @@ Waivers require documented approval comment and entry in `Next_Steps.md` Quality
 - Restore previous release artefacts (dist, SBOM, provenance) from GitHub Releases.
 - Update `Next_Steps.md` with rollback summary and follow-up tasks.
 - Notify stakeholders in `#hotpass` Slack channel with remediation ETA.
+
+## Prefect deployments
+
+- **Concurrency guardrails**: Treat `orchestrator.backfill.concurrency_limit` and Prefect work-pool limits as part of the change control process. Setting the limit to `0` forces sequential execution in lower environments and is acceptable when documenting the rationale in the PR description.
+- **Ephemeral API avoidance**: If Prefect concurrency slots cannot be acquired (for example, CI without an API server), the flows fall back to synchronous execution and emit a warning. Surface the warning in PR notes when observed.
+- **Configuration traceability**: Changes to Prefect deployments (schedules, work pools, concurrency keys) must be reflected in the Diátaxis how-to guide and referenced in `Next_Steps.md` deliverables so operations can audit the rollout.

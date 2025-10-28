@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .builder import CLIBuilder
-from .commands import dashboard, deploy, orchestrate, resolve, run
+from .commands import backfill, dashboard, deploy, orchestrate, resolve, run
 from .configuration import (
     DEFAULT_PROFILE_DIRS,
     CLIProfile,
@@ -30,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=EPILOG,
     )
     builder.register(run.register())
+    builder.register(backfill.register())
     builder.register(orchestrate.register())
     builder.register(resolve.register())
     builder.register(dashboard.register())
