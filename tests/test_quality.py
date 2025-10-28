@@ -22,6 +22,23 @@ except ImportError:
     HAS_GE = False
 
 
+def _with_validation_defaults(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    length = len(df)
+    defaults = {
+        "contact_primary_email_confidence": None,
+        "contact_primary_email_status": None,
+        "contact_primary_phone_confidence": None,
+        "contact_primary_phone_status": None,
+        "contact_primary_lead_score": None,
+        "contact_validation_flags": None,
+    }
+    for column, value in defaults.items():
+        if column not in df.columns:
+            df[column] = [value] * length
+    return df
+
+
 def test_build_ssot_schema():
     """Test that SSOT schema is created correctly."""
     schema = build_ssot_schema()
@@ -71,6 +88,7 @@ def test_ssot_schema_validates_valid_data():
             "privacy_basis": ["Legitimate Interest"],
         }
     )
+    valid_df = _with_validation_defaults(valid_df)
 
     # Should not raise an error
     validated = schema.validate(valid_df)
@@ -90,6 +108,7 @@ def test_run_expectations_with_valid_data():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -111,6 +130,7 @@ def test_run_expectations_with_missing_org_name():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -131,6 +151,7 @@ def test_run_expectations_with_invalid_quality_score():
             "website": ["https://test.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -155,6 +176,9 @@ def test_run_expectations_with_invalid_email_format():
             "website": ["https://test1.com", "https://test2.com", "https://test3.com"],
         }
     )
+    df = _with_validation_defaults(df)
+    df = _with_validation_defaults(df)
+    df = _with_validation_defaults(df)
 
     # With default threshold of 0.85, 2/3 valid (66%) should fail
     result = run_expectations(df, email_mostly=0.85)
@@ -179,6 +203,7 @@ def test_run_expectations_with_custom_thresholds():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     # With 50% threshold, 1/2 valid should pass
     result = run_expectations(df, email_mostly=0.5)
@@ -203,6 +228,7 @@ def test_run_expectations_with_blank_emails():
             "website": ["https://test1.com", "https://test2.com", "https://test3.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     # Blank should be ignored, so 2/2 non-blank should be valid (100%)
     result = run_expectations(df, email_mostly=0.85)
@@ -227,6 +253,8 @@ def test_run_expectations_with_invalid_phone_format():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
+    df = _with_validation_defaults(df)
 
     # With default threshold of 0.85, 1/2 valid (50%) should fail
     result = run_expectations(df, phone_mostly=0.85)
@@ -251,6 +279,8 @@ def test_run_expectations_with_invalid_website_format():
             ],
         }
     )
+    df = _with_validation_defaults(df)
+    df = _with_validation_defaults(df)
 
     # With default threshold of 0.85, 1/2 valid (50%) should fail
     result = run_expectations(df, website_mostly=0.85)
@@ -272,6 +302,8 @@ def test_run_expectations_with_wrong_country():
             "website": ["https://test.com"],
         }
     )
+    df = _with_validation_defaults(df)
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -292,6 +324,7 @@ def test_run_expectations_with_empty_dataframe():
             "website": [],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -314,6 +347,7 @@ def test_run_expectations_with_all_na_emails():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -480,6 +514,7 @@ def test_run_with_great_expectations_collects_failures_and_restores_context():
             "country": ["South Africa"],
         }
     )
+    df = _with_validation_defaults(df)
 
     summary = _run_with_great_expectations(
         df,
@@ -511,6 +546,7 @@ def test_run_with_great_expectations_restores_context_on_error():
             "country": ["South Africa"],
         }
     )
+    df = _with_validation_defaults(df)
 
     with pytest.raises(RuntimeError):
         _run_with_great_expectations(
@@ -539,6 +575,7 @@ def test_run_expectations_ge_with_valid_data():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -561,6 +598,7 @@ def test_run_expectations_ge_with_missing_org_name():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -582,6 +620,7 @@ def test_run_expectations_ge_with_invalid_quality_score():
             "website": ["https://test.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -706,6 +745,7 @@ def test_run_expectations_ge_sanitizes_blank_values():
             "website": ["https://test1.com", "https://test2.com", "https://test3.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     # Blanks should be ignored, so 2/2 non-blank should be valid (100%)
     result = run_expectations(df, email_mostly=0.85)
@@ -728,6 +768,7 @@ def test_run_expectations_ge_with_missing_organization_slug():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df = _with_validation_defaults(df)
 
     result = run_expectations(df)
 
@@ -749,6 +790,7 @@ def test_run_expectations_ge_with_boundary_quality_scores():
             "website": ["https://test1.com", "https://test2.com"],
         }
     )
+    df_valid = _with_validation_defaults(df_valid)
 
     result = run_expectations(df_valid)
     assert result.success is True
@@ -764,6 +806,7 @@ def test_run_expectations_ge_with_boundary_quality_scores():
             "website": ["https://test.com"],
         }
     )
+    df_invalid = _with_validation_defaults(df_invalid)
 
     result2 = run_expectations(df_invalid)
     assert result2.success is False

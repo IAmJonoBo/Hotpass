@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -131,10 +132,8 @@ def _link_with_splink(
 
     deduplicated = _deduplicate_from_clusters(working, original, cluster_df)
 
-    try:
+    with suppress(Exception):  # pragma: no cover - best effort cleanup
         connection.close()
-    except Exception:  # pragma: no cover - best effort cleanup
-        pass
 
     return LinkageResult(
         deduplicated=deduplicated,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Literal
@@ -172,6 +173,9 @@ class DummyMetrics:
         self.aggregation_duration = self._histogram("hotpass.aggregation.duration")
         self.validation_duration = self._histogram("hotpass.validation.duration")
         self.write_duration = self._histogram("hotpass.write.duration")
+        self.acquisition_duration = self._histogram("hotpass.acquisition.duration")
+        self.acquisition_records = self._counter("hotpass.acquisition.records")
+        self.acquisition_warnings = self._counter("hotpass.acquisition.warnings")
         self.data_quality_score = meter.create_observable_gauge(
             name="hotpass.data.quality_score",
             callbacks=[self._observe_quality_score],
@@ -220,6 +224,58 @@ class DummyMetrics:
 
     def update_quality_score(self, score: float) -> None:
         self._latest_quality_score = score
+
+    def record_acquisition_duration(
+        self,
+        seconds: float,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_duration.record(seconds, attributes)
+
+    def record_acquisition_records(
+        self,
+        count: int,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_records.add(count, attributes)
+
+    def record_acquisition_warnings(
+        self,
+        count: int,
+        *,
+        scope: str,
+        agent: str | None = None,
+        provider: str | None = None,
+        extra_attributes: Mapping[str, Any] | None = None,
+    ) -> None:
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
+        self.acquisition_warnings.add(count, attributes)
+
+    @staticmethod
+    def _acquisition_attributes(
+        scope: str,
+        agent: str | None,
+        provider: str | None,
+        extra_attributes: Mapping[str, Any] | None,
+    ) -> dict[str, Any]:
+        attributes: dict[str, Any] = {"scope": scope}
+        if agent:
+            attributes["agent"] = agent
+        if provider:
+            attributes["provider"] = provider
+        if extra_attributes:
+            attributes.update(extra_attributes)
+        return attributes
 
 
 def build_modules(

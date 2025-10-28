@@ -25,11 +25,36 @@ from ..data_sources import (
     load_reachout_database,
     load_sacaa_cleaned,
 )
+from ..data_sources.agents import AcquisitionPlan
+from ..data_sources.agents import run_plan as run_acquisition_plan
 from ..domain.party import PartyStore, build_party_store_from_refined
+from ..enrichment.intent import (
+    IntentOrganizationSummary,
+    IntentPlan,
+    IntentRunResult,
+    run_intent_plan,
+)
+from ..enrichment.validators import ContactValidationService
 from ..formatting import OutputFormat, apply_excel_formatting, create_summary_sheet
 from ..normalization import clean_string, coalesce, normalize_province, slugify
+from ..pipeline.events import (
+    PIPELINE_EVENT_AGGREGATE_COMPLETED,
+    PIPELINE_EVENT_AGGREGATE_PROGRESS,
+    PIPELINE_EVENT_AGGREGATE_STARTED,
+    PIPELINE_EVENT_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+    PIPELINE_EVENT_EXPECTATIONS_STARTED,
+    PIPELINE_EVENT_LOAD_COMPLETED,
+    PIPELINE_EVENT_LOAD_STARTED,
+    PIPELINE_EVENT_SCHEMA_COMPLETED,
+    PIPELINE_EVENT_SCHEMA_STARTED,
+    PIPELINE_EVENT_START,
+    PIPELINE_EVENT_WRITE_COMPLETED,
+    PIPELINE_EVENT_WRITE_STARTED,
+)
 from ..storage import DuckDBAdapter, PolarsDataset
 from ..telemetry import pipeline_stage
+from ..transform.scoring import LeadScorer
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     from ..linkage import LinkageResult
@@ -48,19 +73,8 @@ logger = logging.getLogger(__name__)
 ProgressListener = Callable[[str, dict[str, Any]], None]
 
 
-PIPELINE_EVENT_START = "pipeline.start"
-PIPELINE_EVENT_LOAD_STARTED = "load.started"
-PIPELINE_EVENT_LOAD_COMPLETED = "load.completed"
-PIPELINE_EVENT_AGGREGATE_STARTED = "aggregate.started"
-PIPELINE_EVENT_AGGREGATE_PROGRESS = "aggregate.progress"
-PIPELINE_EVENT_AGGREGATE_COMPLETED = "aggregate.completed"
-PIPELINE_EVENT_SCHEMA_STARTED = "schema.started"
-PIPELINE_EVENT_SCHEMA_COMPLETED = "schema.completed"
-PIPELINE_EVENT_EXPECTATIONS_STARTED = "expectations.started"
-PIPELINE_EVENT_EXPECTATIONS_COMPLETED = "expectations.completed"
-PIPELINE_EVENT_WRITE_STARTED = "write.started"
-PIPELINE_EVENT_WRITE_COMPLETED = "write.completed"
-PIPELINE_EVENT_COMPLETED = "pipeline.completed"
+_CONTACT_VALIDATION = ContactValidationService()
+_PIPELINE_LEAD_SCORER = LeadScorer()
 
 
 SSOT_COLUMNS: list[str] = [
@@ -83,6 +97,17 @@ SSOT_COLUMNS: list[str] = [
     "contact_primary_role",
     "contact_primary_email",
     "contact_primary_phone",
+    "contact_primary_email_confidence",
+    "contact_primary_email_status",
+    "contact_primary_phone_confidence",
+    "contact_primary_phone_status",
+    "contact_primary_lead_score",
+    "intent_signal_score",
+    "intent_signal_count",
+    "intent_signal_types",
+    "intent_last_observed_at",
+    "intent_top_insights",
+    "contact_validation_flags",
     "contact_secondary_emails",
     "contact_secondary_phones",
     "data_quality_score",
@@ -197,6 +222,11 @@ class PipelineConfig:
     enable_recommendations: bool = True
     progress_listener: ProgressListener | None = None
     pii_redaction: PIIRedactionConfig = field(default_factory=PIIRedactionConfig)
+    acquisition_plan: AcquisitionPlan | None = None
+    agent_credentials: Mapping[str, str] = field(default_factory=dict)
+    intent_plan: IntentPlan | None = None
+    intent_credentials: Mapping[str, str] = field(default_factory=dict)
+    intent_digest_path: Path | None = None
 
 
 @dataclass
@@ -433,6 +463,8 @@ class PipelineResult:
     party_store: PartyStore | None = None
     linkage: LinkageResult | None = None
     pii_redaction_events: list[dict[str, Any]] = field(default_factory=list)
+    intent_signals: pd.DataFrame | None = None
+    intent_digest: pd.DataFrame | None = None
 
 
 YEAR_FIRST_PATTERN = re.compile(r"^\s*\d{4}")
@@ -517,8 +549,45 @@ def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:
     }
 
 
+def _resolve_intent_summary(
+    intent_summaries: Mapping[str, IntentOrganizationSummary] | None,
+    slug: str | None,
+    organization_name: str | None,
+) -> IntentOrganizationSummary | None:
+    if not intent_summaries:
+        return None
+    candidates: list[str] = []
+    if slug:
+        candidates.append(str(slug).lower())
+    if organization_name:
+        slug_candidate = slugify(organization_name)
+        if slug_candidate:
+            candidates.append(slug_candidate)
+        candidates.append(organization_name.lower())
+    for candidate in candidates:
+        summary = intent_summaries.get(candidate)
+        if summary:
+            return summary
+    return None
+
+
+def _write_intent_digest(digest: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    suffix = path.suffix.lower()
+    if suffix == ".parquet":
+        digest.to_parquet(path, index=False)
+    elif suffix in {".csv"}:
+        digest.to_csv(path, index=False)
+    else:
+        digest.to_json(path, orient="records", indent=2)
+
+
 def _aggregate_group(
-    slug: str | None, rows: Sequence[Mapping[str, Any]]
+    slug: str | None,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    country_code: str,
+    intent_summaries: Mapping[str, IntentOrganizationSummary] | None = None,
 ) -> dict[str, object | None]:
     if not rows:
         raise ValueError("Cannot aggregate empty group")
@@ -774,6 +843,42 @@ def _aggregate_group(
         if primary_role:
             _record_provenance("contact_primary_role", role_values, primary_role)
 
+    validation_summary = _CONTACT_VALIDATION.validate_contact(
+        email=primary_email,
+        phone=primary_phone,
+        country_code=country_code,
+    )
+    email_confidence = validation_summary.email.confidence if validation_summary.email else None
+    phone_confidence = validation_summary.phone.confidence if validation_summary.phone else None
+    email_status = validation_summary.email.status.value if validation_summary.email else None
+    phone_status = validation_summary.phone.status.value if validation_summary.phone else None
+    validation_flags = validation_summary.flags()
+    completeness_inputs = [primary_name, primary_email, primary_phone, primary_role]
+    completeness = (
+        sum(1 for value in completeness_inputs if value) / len(completeness_inputs)
+        if completeness_inputs
+        else 0.0
+    )
+    primary_meta = primary_email_selection or primary_phone_selection
+    if primary_meta is None and name_values:
+        primary_meta = name_values[0]
+    max_priority = max(SOURCE_PRIORITY.values()) if SOURCE_PRIORITY else 1
+    source_priority_norm = (
+        primary_meta.row_metadata.source_priority / max_priority
+        if primary_meta and max_priority
+        else 0.0
+    )
+    intent_summary = _resolve_intent_summary(intent_summaries, slug, organization_name)
+    intent_score = intent_summary.score if intent_summary else 0.0
+
+    lead_score = _PIPELINE_LEAD_SCORER.score(
+        completeness=completeness,
+        email_confidence=email_confidence or 0.0,
+        phone_confidence=phone_confidence or 0.0,
+        source_priority=source_priority_norm,
+        intent_score=intent_score,
+    ).value
+
     last_interaction = _latest_iso_date(_column_values("last_interaction_date"))
 
     quality = _summarise_quality(
@@ -808,6 +913,27 @@ def _aggregate_group(
         "contact_primary_role": primary_role,
         "contact_primary_email": primary_email,
         "contact_primary_phone": primary_phone,
+        "contact_primary_email_confidence": email_confidence,
+        "contact_primary_email_status": email_status,
+        "contact_primary_phone_confidence": phone_confidence,
+        "contact_primary_phone_status": phone_status,
+        "contact_primary_lead_score": lead_score
+        if primary_name or primary_email or primary_phone
+        else None,
+        "intent_signal_score": round(intent_score, 6) if intent_summary else 0.0,
+        "intent_signal_count": intent_summary.signal_count if intent_summary else 0,
+        "intent_signal_types": ";".join(intent_summary.signal_types)
+        if intent_summary and intent_summary.signal_types
+        else None,
+        "intent_last_observed_at": intent_summary.last_observed_at.isoformat()
+        if intent_summary and intent_summary.last_observed_at
+        else None,
+        "intent_top_insights": "; ".join(intent_summary.top_insights)
+        if intent_summary and intent_summary.top_insights
+        else None,
+        "contact_validation_flags": ";".join(sorted(set(validation_flags)))
+        if validation_flags
+        else None,
         "contact_secondary_emails": secondary_emails,
         "contact_secondary_phones": secondary_phones,
         "data_quality_score": quality["score"],
@@ -825,6 +951,16 @@ def _load_sources(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float
     loaders = [load_reachout_database, load_contact_database, load_sacaa_cleaned]
     frames: list[pd.DataFrame] = []
     timings: dict[str, float] = {}
+    if config.acquisition_plan and config.acquisition_plan.enabled:
+        agent_frame, agent_timings, _warnings = run_acquisition_plan(
+            config.acquisition_plan,
+            country_code=config.country_code,
+            credentials=config.agent_credentials,
+        )
+        for timing in agent_timings:
+            timings[f"agent:{timing.agent_name}"] = timing.seconds
+        if not agent_frame.empty:
+            frames.append(agent_frame)
     for loader in loaders:
         start = time.perf_counter()
         try:
@@ -975,6 +1111,39 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if load_seconds > 0:
         metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0
 
+    intent_result: IntentRunResult | None = None
+    intent_summary_lookup: Mapping[str, IntentOrganizationSummary] | None = None
+    if config.intent_plan and config.intent_plan.enabled:
+        intent_start = time.perf_counter()
+        intent_result = run_intent_plan(
+            config.intent_plan,
+            country_code=config.country_code,
+            credentials=config.intent_credentials,
+            issued_at=datetime.now(tz=UTC),
+        )
+        metrics["intent_collection_seconds"] = time.perf_counter() - intent_start
+        metrics["intent_signal_count"] = int(intent_result.signals.shape[0])
+        metrics["intent_target_count"] = int(intent_result.digest.shape[0])
+        if intent_result.warnings:
+            metrics["intent_warnings"] = list(intent_result.warnings)
+        intent_summary_lookup = intent_result.summary
+        if config.enable_audit_trail:
+            audit_trail.append(
+                {
+                    "timestamp": time.time(),
+                    "event": "intent_collection_complete",
+                    "details": {
+                        "collectors": [
+                            collector.name for collector in config.intent_plan.active_collectors()
+                        ],
+                        "signals": int(intent_result.signals.shape[0]),
+                        "targets": int(intent_result.digest.shape[0]),
+                    },
+                }
+            )
+    else:
+        intent_summary_lookup = None
+
     if combined.empty:
         refined = pd.DataFrame(columns=SSOT_COLUMNS)
         config.output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1004,6 +1173,9 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             write_seconds=write_seconds,
         )
         metrics_copy = dict(metrics)
+        if intent_result and config.intent_digest_path:
+            _write_intent_digest(intent_result.digest, config.intent_digest_path)
+            metrics_copy["intent_digest_path"] = str(config.intent_digest_path)
         report = QualityReport(
             total_records=0,
             invalid_records=0,
@@ -1031,6 +1203,8 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             # In the early-return path (no data loaded), the party store is empty by definition.
             party_store=PartyStore(),
             pii_redaction_events=redaction_events,
+            intent_signals=intent_result.signals if intent_result is not None else None,
+            intent_digest=intent_result.digest if intent_result is not None else None,
         )
 
     combined_polars = pl.from_pandas(combined, include_index=False)
@@ -1075,7 +1249,12 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             slug = slug_series[index] if slug_series is not None else None
             indices = index_series[index] if index_series is not None else []
             group_frame = combined_polars[indices]
-            row_dict = _aggregate_group(slug, group_frame.to_dicts())
+            row_dict = _aggregate_group(
+                slug,
+                group_frame.to_dicts(),
+                country_code=config.country_code,
+                intent_summaries=intent_summary_lookup,
+            )
             conflicts_obj = row_dict.pop("_conflicts", [])
             if isinstance(conflicts_obj, list):
                 all_conflicts.extend(conflicts_obj)
@@ -1357,6 +1536,21 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             write_seconds=metrics["write_seconds"],
         )
 
+    if intent_result and config.intent_digest_path:
+        _write_intent_digest(intent_result.digest, config.intent_digest_path)
+        metrics["intent_digest_path"] = str(config.intent_digest_path)
+        if config.enable_audit_trail:
+            audit_trail.append(
+                {
+                    "timestamp": time.time(),
+                    "event": "intent_digest_written",
+                    "details": {
+                        "path": str(config.intent_digest_path),
+                        "records": int(intent_result.digest.shape[0]),
+                    },
+                }
+            )
+
     if "write_seconds" not in metrics:
         metrics["write_seconds"] = time.perf_counter() - write_start
     if "total_seconds" not in metrics:
@@ -1407,6 +1601,8 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         performance_metrics=metrics_copy,
         party_store=party_store,
         pii_redaction_events=redaction_events,
+        intent_signals=intent_result.signals if intent_result is not None else None,
+        intent_digest=intent_result.digest if intent_result is not None else None,
     )
 
 

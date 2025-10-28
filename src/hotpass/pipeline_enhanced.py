@@ -5,14 +5,13 @@ from __future__ import annotations
 import logging
 
 from .observability import get_pipeline_metrics, initialize_observability
-from .pipeline import (
-    PipelineConfig,
+from .pipeline.base import PipelineConfig, PipelineResult
+from .pipeline.features import EnhancedPipelineConfig
+from .pipeline.orchestrator import (
     PipelineExecutionConfig,
     PipelineOrchestrator,
-    PipelineResult,
     default_feature_bundle,
 )
-from .pipeline.features import EnhancedPipelineConfig
 
 logger = logging.getLogger(__name__)
 

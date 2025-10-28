@@ -11,6 +11,11 @@ pytest.importorskip("frictionless")
 
 import hotpass.quality as quality  # noqa: E402
 from hotpass.data_sources import ExcelReadOptions
+from hotpass.enrichment.intent import (  # noqa: E402
+    IntentCollectorDefinition,
+    IntentPlan,
+    IntentTargetDefinition,
+)
 from hotpass.pipeline import (  # noqa: E402
     PIPELINE_EVENT_AGGREGATE_COMPLETED,
     PIPELINE_EVENT_AGGREGATE_PROGRESS,
@@ -289,7 +294,11 @@ def test_aggregate_group_prioritises_reliable_and_recent_values() -> None:
         ]
     )
 
-    aggregated = _aggregate_group(slug, group.to_dict(orient="records"))
+    aggregated = _aggregate_group(
+        slug,
+        group.to_dict(orient="records"),
+        country_code="ZA",
+    )
 
     assert aggregated["website"] == "https://sacaa.example"
     assert aggregated["province"] == "Gauteng"
@@ -478,3 +487,51 @@ def test_pipeline_handles_all_invalid_records(
     # Verify quality report reflects the issues
     assert len(result.quality_report.schema_validation_errors) > 0
     assert result.quality_report.total_records > 0
+
+
+def test_pipeline_merges_intent_signals(tmp_path: Path, sample_data_dir: Path) -> None:
+    output_path = tmp_path / "refined.xlsx"
+    config = PipelineConfig(
+        input_dir=sample_data_dir,
+        output_path=output_path,
+        expectation_suite_name="default",
+        country_code="ZA",
+        pii_redaction=PIIRedactionConfig(enabled=False),
+    )
+
+    plan = IntentPlan(
+        enabled=True,
+        collectors=(
+            IntentCollectorDefinition(
+                name="news",
+                options={
+                    "events": {
+                        "aero-school": [
+                            {
+                                "headline": "Aero School secures defence contract",
+                                "intent": 0.85,
+                                "timestamp": "2025-10-25T08:00:00Z",
+                                "url": "https://example.test/aero/contract",
+                            }
+                        ]
+                    }
+                },
+            ),
+        ),
+        targets=(IntentTargetDefinition(identifier="Aero School", slug="aero-school"),),
+    )
+    config.intent_plan = plan
+    config.intent_credentials = {"api_key": "stub"}  # pragma: allowlist secret
+
+    result = run_pipeline(config)
+    refined = result.refined
+
+    aero = refined.loc[refined["organization_name"] == "Aero School"].iloc[0]
+    assert aero["intent_signal_score"] >= 0.5
+    assert "news" in (aero["intent_signal_types"] or "")
+    assert result.intent_digest is not None
+    assert not result.intent_digest.empty
+    digest_match = result.intent_digest.loc[result.intent_digest["target_slug"] == "aero-school"]
+    assert not digest_match.empty
+    digest_score = digest_match["intent_signal_score"].iloc[0]
+    assert digest_score == pytest.approx(aero["intent_signal_score"], rel=1e-6)

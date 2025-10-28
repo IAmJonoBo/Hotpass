@@ -10,7 +10,7 @@ from typing import Any
 
 import pandas as pd
 
-from .normalization import (
+from ..normalization import (
     clean_string,
     join_non_empty,
     normalize_email,
@@ -18,7 +18,7 @@ from .normalization import (
     normalize_province,
     normalize_website,
 )
-from .validation import validate_with_expectations, validate_with_frictionless
+from ..validation import validate_with_expectations, validate_with_frictionless
 
 
 @dataclass(frozen=True)
@@ -141,6 +141,7 @@ class RawRecord:
     contact_roles: list[str] | None = None
     contact_emails: list[str] | None = None
     contact_phones: list[str] | None = None
+    provenance: list[dict[str, Any]] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -163,6 +164,7 @@ class RawRecord:
             "contact_roles": self.contact_roles or [],
             "contact_emails": self.contact_emails or [],
             "contact_phones": self.contact_phones or [],
+            "provenance": self.provenance or [],
         }
 
 

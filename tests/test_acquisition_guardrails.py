@@ -14,6 +14,7 @@ guardrails_module = importlib.import_module("scripts.acquisition.guardrails")
 
 collect_main = collect_dataset.main
 CollectionGuards = guardrails_module.CollectionGuards
+ProviderPolicy = guardrails_module.ProviderPolicy
 ProvenanceLedger = guardrails_module.ProvenanceLedger
 RobotsTxtGuard = guardrails_module.RobotsTxtGuard
 TermsOfServicePolicy = guardrails_module.TermsOfServicePolicy
@@ -71,6 +72,17 @@ def test_collection_guards_guard_many(tmp_path: Path) -> None:
     logged = [json.loads(line) for line in ledger_contents.splitlines()]
     assert len(logged) == 2
     assert {entry["record_id"] for entry in logged} == {"1", "2"}
+
+
+def test_provider_policy_allowlist(tmp_path: Path) -> None:
+    policy_path = ROOT / "policy" / "acquisition" / "providers.json"
+    policy = ProviderPolicy.from_path(policy_path)
+
+    metadata = policy.ensure_allowed("LinkedIn")
+    assert metadata["category"] == "professional_network"
+
+    with pytest.raises(PermissionError):
+        policy.ensure_allowed("unlisted")
 
 
 def test_collect_dataset_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

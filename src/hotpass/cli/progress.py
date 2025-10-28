@@ -198,6 +198,16 @@ class StructuredLogger:
 
         self._get_console().print(f"[green]Party store exported:[/green] {output_path}")
 
+    def log_intent_digest(self, output_path: Path, record_count: int) -> None:
+        payload = {"path": output_path, "records": record_count}
+        if self.log_format == "json":
+            self._emit_json("intent.digest", payload)
+            return
+
+        self._get_console().print(
+            f"[green]Intent digest written ({record_count} records):[/green] {output_path}"
+        )
+
     def log_error(self, message: str) -> None:
         if self.log_format == "json":
             self._emit_json("error", {"message": message})

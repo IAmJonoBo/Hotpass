@@ -105,6 +105,11 @@ def make_pipeline_parser() -> argparse.ArgumentParser:
         help="Directory to write packaged archives when --archive is enabled",
     )
     parser.add_argument(
+        "--intent-digest-path",
+        type=Path,
+        help="Optional path to write the daily intent digest export",
+    )
+    parser.add_argument(
         "--party-store-path",
         type=Path,
         help="Optional path to write the canonical party store as JSON",

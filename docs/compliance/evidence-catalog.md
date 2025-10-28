@@ -17,5 +17,6 @@ last_updated: 2025-10-25
 | Supplier risk register     | `docs/governance/supplier-risk-register.md`                                              | Procurement & Security | Update on change | Tracks onboarding decisions and review cadence aligned to ISO27001-004.              |
 | Incident response playbook | [`docs/security/threat-model.md`](../security/threat-model.md) & future incident guide   | Security               | Update on change | Update with POPIA escalation steps per POPIA-004; archive historical versions.                          |
 | Data export access logs    | `dist/logs/access/`                                                                      | Platform               | 1 year           | Access manifests produced after each refined export, hashed and rotated quarterly.            |
+| Acquisition telemetry + provider policy | `policy/acquisition/providers.json` and OTEL span exports (`acquisition.*`) | Platform & Compliance | Update on change | Archive telemetry with onboarding approvals and refresh allowlist metadata quarterly. |
 
 Review evidence completeness during each verification cycle and update retention guidance as storage or regulatory requirements evolve.

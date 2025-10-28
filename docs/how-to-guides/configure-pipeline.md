@@ -1,7 +1,7 @@
 ---
 title: How-to — configure Hotpass for your organisation
 summary: Customise industry profiles, column mapping, and runtime options to fit your data landscape.
-last_updated: 2025-10-27
+last_updated: 2025-10-30
 ---
 
 # How-to — configure Hotpass for your organisation
@@ -50,6 +50,7 @@ Copy `config/pipeline.example.yaml` and adjust the options you need:
 - `archive`: enable to keep the original spreadsheets for auditing.
 - `country_code`: default for phone and address parsing.
 - `validation`: override thresholds per field type.
+- `intent_digest_path`: emit a ranked prospect list with the latest intent signals.
 
 Run the pipeline with the custom config:
 
@@ -68,6 +69,28 @@ input_dir = "./data"
 output_path = "./dist/refined.xlsx"
 archive = true
 dist_dir = "./dist"
+intent_digest_path = "./dist/daily-intent.parquet"
+
+[pipeline.intent]
+enabled = true
+deduplicate = true
+
+[[pipeline.intent.collectors]]
+name = "news"
+weight = 1.4
+
+[[pipeline.intent.collectors.options.events."aero-school"]]
+headline = "Aero School secures defence contract"
+intent = 0.9
+timestamp = "2025-10-23T08:00:00Z"
+url = "https://example.test/aero/contract"
+
+[[pipeline.intent.targets]]
+identifier = "Aero School"
+slug = "aero-school"
+
+[pipeline.intent.credentials]
+token = "${HOTPASS_INTENT_TOKEN}"
 
 [features]
 compliance = true
@@ -140,6 +163,103 @@ rate limits. Passing a custom `features` sequence lets you mix built-in strategi
 resolution, geospatial, enrichment, compliance) with your own feature hooks while
 retaining deterministic orchestration and telemetry.
 
+### Orchestrate multi-source acquisition
+
+Hotpass 2.0 introduces agent-based acquisition that can blend API, registry, and respectful crawl
+results before the spreadsheet loaders run. Define the plan under the new `[pipeline.acquisition]`
+section and the schema validator will materialise an `AcquisitionPlan` for you:
+
+```toml
+[pipeline.acquisition]
+enabled = true
+deduplicate = true
+
+[[pipeline.acquisition.agents]]
+name = "prospector"
+search_terms = ["hotpass"]
+
+[[pipeline.acquisition.agents.targets]]
+identifier = "hotpass"
+domain = "hotpass.example"
+
+[[pipeline.acquisition.agents.providers]]
+name = "linkedin"
+[pipeline.acquisition.agents.providers.options.profiles.hotpass]
+organization = "Hotpass Aero"
+profile_url = "https://linkedin.com/company/hotpass"
+
+[[pipeline.acquisition.agents.providers]]
+name = "clearbit"
+[pipeline.acquisition.agents.providers.options.companies."hotpass.example"]
+name = "Hotpass Aero"
+```
+
+At runtime the pipeline invokes each agent before reading the Excel workbooks. The resulting
+records enter the existing normalization, validation, and deduplication flow with provenance
+metadata intact. Supply credentials (for example API keys) under `[pipeline.acquisition.credentials]`
+and they will be passed to each provider adapter.
+
+Each acquisition run emits OpenTelemetry spans (`acquisition.plan`, `acquisition.agent`,
+`acquisition.provider`) and updates the `hotpass.acquisition.*` metrics. Inspect these spans in
+the console exporter or your OTLP backend to confirm provider coverage, record counts, and runtime.
+Before enabling a provider, confirm it appears in [`policy/acquisition/providers.json`](../../policy/acquisition/providers.json)
+and that the collection basis matches your legal review. Custom providers should be registered via
+`ProviderPolicy.ensure_allowed` to enforce compliance.
+
+### Collect intent signals and daily digests
+
+The canonical schema also supports an intent pipeline that blends news, hiring, and traffic signals
+before the contact aggregation stage. Configure collectors and targets under `[pipeline.intent]`:
+
+```toml
+[pipeline]
+intent_digest_path = "dist/intent-digest.parquet"
+
+[pipeline.intent]
+enabled = true
+deduplicate = true
+
+[[pipeline.intent.collectors]]
+name = "news"
+weight = 1.0
+
+[[pipeline.intent.collectors.options.events."aero-school"]]
+headline = "Aero expands fleet"
+intent = 0.9
+timestamp = "2025-10-25T08:00:00Z"
+url = "https://example.test/aero/expands"
+
+[[pipeline.intent.collectors.options.events."heli-ops"]]
+headline = "Heli Ops launches medivac division"
+intent = 0.7
+timestamp = "2025-10-24T11:00:00Z"
+
+[[pipeline.intent.targets]]
+identifier = "Aero School"
+slug = "aero-school"
+
+[[pipeline.intent.targets]]
+identifier = "Heli Ops"
+slug = "heli-ops"
+
+[pipeline.intent.credentials]
+token = "${HOTPASS_INTENT_TOKEN}"
+``` 
+
+At runtime the plan is materialised into `IntentPlan` objects which feed the new intent scoring stage.
+The resulting columns (`intent_signal_score`, `intent_signal_types`, and `intent_top_insights`) appear
+in the SSOT export and can be blended with lead scoring. Use the new CLI flag to override the export
+location when running ad-hoc analyses:
+
+```bash
+uv run hotpass run --intent-digest-path dist/daily-intent.csv --input-dir data --output-path dist/refined.xlsx
+```
+
+The CLI will log where the digest was written and how many prospects were ranked. All digest exports
+respect the suffix you provide (`.parquet`, `.csv`, or `.json`) and inherit the same masking rules as
+the structured logs. In JSON log mode the CLI emits an `intent.digest` event with the output path and
+record count so downstream automation can react without parsing console output.
+
 ## 3. Extend column mapping
 
 Add business-specific column names directly in the profile or register them at runtime:
@@ -176,7 +296,42 @@ consolidated = consolidate_contacts_from_rows(
 primary = consolidated.get_primary_contact()
 ```
 
-## 5. Validate the configuration
+## 5. Enable contact verification
+
+Hotpass now validates primary email and phone contacts during aggregation. The default
+validators perform MX lookups for well-known domains and use `phonenumbers` to parse and
+classify phone numbers. Verification results are exposed via new SSOT columns:
+
+| Column | Description |
+| --- | --- |
+| `contact_primary_email_confidence` | Float confidence score returned by the email validator. |
+| `contact_primary_email_status` | Enum (`deliverable`, `risky`, `undeliverable`, `unknown`). |
+| `contact_primary_phone_confidence` | Confidence score produced by the phone validator. |
+| `contact_primary_phone_status` | Enum mirroring the email status values. |
+| `contact_primary_lead_score` | Logistic-scaled lead score combining completeness, verification, and source priority. |
+| `contact_validation_flags` | Semicolon-delimited list of warnings (for example `email:risky`). |
+
+To customise behaviour instantiate `ContactValidationService` with bespoke provider logic:
+
+```python
+from hotpass.enrichment.validators import ContactValidationService, EmailValidator
+
+service = ContactValidationService(
+    email_validator=EmailValidator(dns_lookup=my_dns_lookup),
+)
+contacts = consolidate_contacts_from_rows(
+    organization_name="Aero Co",
+    rows=frame,
+    validator=service,
+)
+```
+
+At pipeline level the validators use `PipelineConfig.country_code` to infer phone regions and
+cache results to minimise repeated lookups. If you disable validation (for example in offline
+fixtures), set `contact_primary_email_confidence` and related fields manually before schema
+validation.
+
+## 6. Validate the configuration
 
 Run tests before promoting changes:
 
@@ -186,7 +341,7 @@ uv run pytest tests/test_config.py tests/test_contacts.py
 
 A green test suite confirms your configuration behaves as expected across the supported use cases.
 
-## 6. Enforce consent validation
+## 7. Enforce consent validation
 
 The enhanced pipeline now enforces consent for POPIA-regulated fields. When you enable compliance with `EnhancedPipelineConfig(enable_compliance=True)`, the pipeline checks that every record requiring consent has a granted status.
 
