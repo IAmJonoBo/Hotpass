@@ -2,6 +2,17 @@
 
 ## Tasks
 
+### Active Tasks
+
+- [ ] Add regression coverage for modular pipeline stages (Owner: QA & Engineering, Due: 2025-12-13) — Fixture authoring in `tests/pipeline/fixtures/` to be finalised by 2025-12-09; pair QA dry-run scheduled during nightly pipeline window immediately after CLI stress test.
+- [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20) — QA to generate a 10k-run synthetic dataset under `tests/cli/fixtures/progress_high_volume.json` by 2025-12-12 and reserve the 02:00–04:00 UTC nightly slot for stress execution.
+- [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31) — Coordinate with Engineering to secure staging window 2025-12-18 and reuse Prefect deployment `hotpass-e2e-staging`.
+- [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31) — Engineering to extend `tests/test_orchestration.py` scenarios and pair with QA during the 2025-12-18 staging run to collect fixtures.
+- [ ] Validate Prefect backfill deployment concurrency guardrails in staging (Owner: Platform, Due: 2026-01-05) — Platform to share staging credentials and freeze changes week of 2025-12-29 to avoid holiday conflicts.
+- [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15) — Establish benchmarking plan alongside December integration tests so results roll into January ADR updates.
+
+### Completed Tasks
+
 - [x] Consolidate planning collateral into `docs/roadmap.md` and simplify top-level release docs (Owner: Product, Due: 2025-10-25)
 - [x] Publish Diátaxis-aligned docs set with style and contributing guidance (Owner: Docs, Due: 2025-10-25)
 - [x] Validate Docker image build and publish pipeline in CI (Owner: DevOps, Due: 2025-11-08)
@@ -32,13 +43,8 @@
 - [x] Optimise geospatial distance calculations and expose actionable errors (Owner: Data, Due: 2025-12-20)
 - [x] Add deterministic evidence logging tests covering consent/export helpers (Owner: Compliance & QA, Due: 2025-12-06)
 - [x] Create dependency-light fixtures so enhanced CLI/geospatial/entity resolution paths run in CI (Owner: QA, Due: 2025-12-27)
-- [ ] Exercise CLI progress reporting under high-volume fixtures to validate UX responsiveness (Owner: QA, Due: 2025-12-20) — QA to generate a 10k-run synthetic dataset under `tests/cli/fixtures/progress_high_volume.json` by 2025-12-12 and reserve the 02:00–04:00 UTC nightly slot for stress execution.
 - [x] Document bootstrap execute-mode guardrails and rollback guidance in `docs/how-to-guides/` (Owner: Docs, Due: 2025-11-30) — Draft published in `docs/how-to-guides/bootstrap-execute-mode.md` (last_updated: 2025-10-26); Docs editorial review scheduled for 2025-11-28 content sync.
-- [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31) — Coordinate with Engineering to secure staging window 2025-12-18 and reuse Prefect deployment `hotpass-e2e-staging`.
-- [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31) — Engineering to extend `tests/test_orchestration.py` scenarios and pair with QA during the 2025-12-18 staging run to collect fixtures.
-- [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15) — Establish benchmarking plan alongside December integration tests so results roll into January ADR updates.
 - [x] Harden Prefect backfill concurrency fallback for CLI + flow coverage (Owner: Engineering, Due: 2025-12-20)
-- [ ] Validate Prefect backfill deployment concurrency guardrails in staging (Owner: Platform, Due: 2026-01-05) — Platform to share staging credentials and freeze changes week of 2025-12-29 to avoid holiday conflicts.
 - [x] Implement registry provider adapters for CIPC/SACAA with throttling, caching, and normalised schemas (Owner: Engineering, Due: 2026-01-05)
 - [x] Extend registry enrichment dispatch with structured results and resilient error handling (Owner: Engineering, Due: 2026-01-05)
 - [x] Document registry configuration, credentials, and policy expectations for new providers (Owner: Docs & Compliance, Due: 2026-01-05)
@@ -71,11 +77,16 @@
 - [x] Refresh CLI documentation, tutorials, and retire legacy commands (Owner: Docs, Due: 2026-03-07)
 - [x] Extend CLI integration tests and rerun QA suite post-consolidation (Owner: QA & Engineering, Due: 2026-03-07)
 - [x] Deliver lead scoring validation metrics persistence and documentation guidance (Owner: Engineering & Docs, Due: 2025-12-05)
-- [ ] Add regression coverage for modular pipeline stages (Owner: QA & Engineering, Due: 2025-12-13) — Fixture authoring in `tests/pipeline/fixtures/` to be finalised by 2025-12-09; pair QA dry-run scheduled during nightly pipeline window immediately after CLI stress test.
 - [x] Seed Conventional Commit label set (`type:*`, `scope:*`, `prefect`, `uv`, `skip-changelog`) in GitHub repo settings (Owner: Platform, Due: 2025-12-05) — Completed 2025-10-28 via `gh label create ... --force`; `gh label list --json name` confirms the seeded set.
 - [x] Monitor commitlint/labeler/release-drafter workflow runs post-merge and capture findings in governance docs (Owner: Platform, Due: 2025-12-12) — Completed 2025-10-28; commitlint run 18875044612 succeeded in 20 s, pr-labeler run 18875148327 succeeded in 8 s after label sync, release-drafter run 18875134498 succeeded in 96 s, no manual labels beyond `codex` were needed.
 
 ## Steps
+
+### Active Steps
+
+- [ ] Extend orchestrate/resolve CLI integration coverage for advanced profile and feature permutations (Owner: QA & Engineering, Due: 2026-01-15) — Scope draft due 2025-12-19 aligned with December integration suite; target to reuse stress fixtures and add resolve coverage under `tests/cli/test_resolve.py`.
+
+### Completed Steps
 
 - [x] Migrated documentation to Diátaxis structure and removed duplicate legacy pages
 - [x] Adopted uv_build backend with consolidated QA script and ADR record (2025-02-15)【F:pyproject.toml†L1-L25】【F:docs/adr/0001-qa-tooling.md†L1-L40】
@@ -134,7 +145,6 @@
 - [x] Document Prefect runtime toggle for orchestration workflows (2025-10-26)【F:docs/how-to-guides/orchestrate-and-observe.md†L1-L74】
 - [x] Re-ran modular CLI QA sweep (pytest, ruff check, ruff format, mypy, bandit, detect-secrets, uv build) after finalising builder migration (2025-10-26)【a97987†L1-L79】【38d75c†L1-L3】【72fd2a†L1-L3】【53fe2f†L1-L16】【821e3e†L1-L34】【48103c†L1-L64】【c97c1d†L1-L240】
 - [x] Canonicalised CLI and Prefect configuration via `HotpassConfig`, refreshed docs, and added migration tooling coverage (2025-10-27)
-- [ ] Extend orchestrate/resolve CLI integration coverage for advanced profile and feature permutations (Owner: QA & Engineering, Due: 2026-01-15) — Scope draft due 2025-12-19 aligned with December integration suite; target to reuse stress fixtures and add resolve coverage under `tests/cli/test_resolve.py`.
 - [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
 - [x] Executed baseline QA suite prior to CLI consolidation (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-26)【bd696d†L1-L88】【0a62a4†L1-L3】【53bc1d†L1-L2】【cb6a4e†L1-L17】【baee01†L1-L36】【167873†L1-L74】【3c322d†L1-L120】
 - [x] Baseline QA suite executed (pytest 303 passed @ 88% coverage; lint/format/type/secrets/build clean; Bandit reports existing low-risk cleanup guard) (2025-10-26)【cbe9ef†L1-L123】【155bf6†L1-L2】【509179†L1-L2】【c3900e†L1-L20】【a009d0†L1-L27】【59a08e†L1-L58】【f47b44†L1-L120】
@@ -146,6 +156,12 @@
 - [x] QA sweep: pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build after acquisition orchestration changes (2025-10-27)【830186†L1-L132】【673d6c†L1-L2】【f25889†L1-L3】【47d128†L1-L8】【aa63ff†L1-L19】【8e75ea†L1-L67】【854f39†L1-L138】
 
 ## Deliverables
+
+### Active Deliverables
+
+- [ ] Track upstream `uv.core.build` availability and plan re-adoption once module ships (Owner: Platform, Due: 2025-12-05) — Platform (@platform-eng) to monitor Astral release notes, draft revert-to-uv checklist in `docs/adr/0001-qa-tooling.md`, and stage QA dry-run once preview artefact lands.
+
+### Completed Deliverables
 
 - [x] Governance automation in place: commitlint, PR labeler, Release Drafter template, Renovate uv/Prefect grouping, docs + ADR (Owner: Platform, Due: 2025-12-05) — Verified configs (`.github/workflows/commitlint.yml`, `.github/workflows/labeler.yml`, `.github/workflows/release-drafter.yml`, `renovate.json`) and documented outcomes in `docs/adr/0002-governance-automation.md`; added `mypy-audit` workflow to round out weekly guardrail coverage.
 - [x] `docs/` reorganised into tutorials, how-to guides, reference, explanations, roadmap, contributing, and style content
@@ -203,7 +219,6 @@
 - [x] Implemented acquisition agent plan with provider adapters, config schema integration, and regression coverage (2025-10-28)【F:src/hotpass/data_sources/agents/runner.py†L1-L140】【F:src/hotpass/enrichment/providers.py†L1-L131】【F:src/hotpass/config_schema.py†L1-L280】【F:tests/data_sources/test_acquisition_agents.py†L1-L64】
 - [x] Baseline QA blocked: `uv.core.build` module missing prevents `uv run`/`uv sync`; investigate alternate bootstrap before marking gates green (Owner: Platform, Due: 2025-12-05) — Resolved by reverting the build backend to `setuptools.build_meta` and re-running `uv run make qa`.
 - [x] Automate pre-commit mypy dependency audit for ephemeral runners (Owner: Platform, Due: 2025-12-10) — Added scheduled `mypy-audit` workflow to run `uv run pre-commit run mypy --all-files` weekly and open a governance-labelled issue on failures.
-- [ ] Track upstream `uv.core.build` availability and plan re-adoption once module ships (Owner: Platform, Due: 2025-12-05) — Platform (@platform-eng) to monitor Astral release notes, draft revert-to-uv checklist in `docs/adr/0001-qa-tooling.md`, and stage QA dry-run once preview artefact lands.
 - [x] Re-ran pytest, lint, type, security, secrets, build, ScanCode policy, and REUSE lint after redaction fix (2025-10-26)【73d144†L1-L84】【b2de32†L1-L2】【cc9e36†L1-L22】【ebfff6†L1-L28】【e8c9e1†L1-L73】【10630c†L1-L138】【b51c64†L1-L3】【d9a50d†L1-L13】
 - [x] Replaced orchestrator `assert` with runtime guard and reran full QA suite (pytest, ruff check/format, mypy, bandit, detect-secrets, build) (2025-10-26)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 - [x] Canonical configuration refactor regression suite (pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【057336†L1-L121】【bdfff8†L1-L2】【adec4c†L1-L2】【3e5b7e†L1-L14】【9c9345†L1-L32】【f1c670†L1-L53】【788b2a†L1-L220】
@@ -217,6 +232,14 @@
 - [x] Implemented CLI backfill concurrency overrides, Prefect fallback guards, and documentation updates; reran pytest w/ coverage, ruff check, mypy, bandit, detect-secrets, and uv build (2025-10-28)【030c9a†L1-L219】【34c08c†L1-L58】【1dbb84†L1-L18】【565977†L1-L19】【0bca7b†L1-L69】【3f85e6†L1-L176】【F:src/hotpass/cli/commands/backfill.py†L1-L213】【F:src/hotpass/orchestration.py†L1-L760】【F:tests/cli/test_backfill.py†L1-L168】【F:tests/test_orchestration.py†L1-L360】【F:docs/how-to-guides/orchestrate-and-observe.md†L100-L140】【F:docs/governance/pr-playbook.md†L1-L120】
 
 ## Quality Gates
+
+### Active Quality Gates
+
+- [ ] Local pytest baseline currently fails with `ModuleNotFoundError: No module named 'polars'` (Owner: QA, Due: 2025-12-06) — QA to update the onboarding quick-start to call `uv sync --extra dev`, validate `pytest` on a clean venv, and capture the results in `docs/how-to-guides/format-and-validate.md`.
+- [ ] Semgrep registry scan blocked by SSL trust chain in sandbox (`uv run semgrep --config=auto`) (Owner: Security – @security-team, Due: 2025-12-12) — Import corporate CA bundle into the Codex runner or vendor an offline rulepack; document remediation steps in `docs/security/tooling.md`.
+- [ ] Extend automation delivery coverage for circuit-open metrics/telemetry edge cases (Owner: Platform Observability & QA, Due: 2025-12-15) — Awaiting new fixtures from telemetry refactor; track progress in `tests/test_observability.py` and add metrics assertions once available.
+
+### Completed Quality Gates
 
 - [x] Pytest with coverage ≥ 80% (current: 82%)【51873d†L1-L118】
 - [x] Ruff lint clean (`uv run ruff check`)【7d9eff†L1-L2】
@@ -237,9 +260,6 @@
 - [x] Post-assert guard QA gate: pytest, ruff check/format, mypy, bandit, detect-secrets, build (`uv run pytest --cov=src --cov=tests --cov-report=term-missing`; `uv run ruff check`; `uv run ruff format --check`; `uv run mypy`; `uv run bandit -r src scripts`; `uv run detect-secrets scan`; `uv build`)【77efe9†L1-L122】【9384df†L1-L3】【916b12†L1-L2】【339390†L1-L2】【57c315†L1-L33】【916dc1†L1-L86】【be222e†L1-L120】
 - [x] Fitness functions updated to guard modular pipeline stage lengths (`uv run python scripts/quality/fitness_functions.py`)【c36079†L1-L2】
 - [x] Consolidated QA gate via `make qa` (Owner: Platform – @platform-eng, Due: 2025-12-05) — Completed 2025-10-28 after refreshing the .secrets baseline and normalising test fixtures; `uv run make qa` and pre-commit hooks now pass in a clean workspace.
-- [ ] Local pytest baseline currently fails with `ModuleNotFoundError: No module named 'polars'` (Owner: QA, Due: 2025-12-06) — QA to update the onboarding quick-start to call `uv sync --extra dev`, validate `pytest` on a clean venv, and capture the results in `docs/how-to-guides/format-and-validate.md`.
-- [ ] Semgrep registry scan blocked by SSL trust chain in sandbox (`uv run semgrep --config=auto`) (Owner: Security – @security-team, Due: 2025-12-12) — Import corporate CA bundle into the Codex runner or vendor an offline rulepack; document remediation steps in `docs/security/tooling.md`.
-- [ ] Extend automation delivery coverage for circuit-open metrics/telemetry edge cases (Owner: Platform Observability & QA, Due: 2025-12-15) — Awaiting new fixtures from telemetry refactor; track progress in `tests/test_observability.py` and add metrics assertions once available.
 - [x] Semgrep static analysis (`uv run semgrep --config=policy/semgrep/hotpass.yml --metrics=off`)【467a00†L1-L24】
 - [x] ScanCode licence audit (`scancode --license --info --json-pp scancode-report.json --license-score 0 .`)【283e5b†L1-L14】
 - [x] REUSE metadata lint (`reuse lint`)【10d37b†L1-L12】
