@@ -160,9 +160,8 @@ def test_sidebar_widgets_include_help(
     assert calls, f"Expected at least one call to {widget}"
     for call in calls:
         help_text = call.kwargs.get("help")
-        assert (
-            isinstance(help_text, str) and help_text.strip()
-        ), f"Help text missing for {call.label}"
+        text = help_text.strip() if isinstance(help_text, str) else ""
+        assert text, f"Help text missing for {call.label}"
 
 
 @pytest.mark.accessibility

@@ -254,7 +254,7 @@
 - Warning gate: `uv run pytest -W error --maxfail=1` (chunk `09f95e`)
 - Types: `.venv/bin/mypy src tests scripts` (chunk `d9011e`)
 - Security: `uv run bandit -r src scripts` (chunk `c8e979`)
-- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `d326b7`)
+- Secrets: `uv run detect-secrets scan src tests scripts` (chunk `d326b7`) <!-- pragma: allowlist secret -->
 - Build: `uv run uv build` (chunk `3ee96d`)
 - Docs build: `uv run sphinx-build -n -W -b html docs docs/_build/html` (chunk `e173e2`)
 - Docs linkcheck: `uv run sphinx-build -b linkcheck docs docs/_build/linkcheck` (chunk `2b87dd`)

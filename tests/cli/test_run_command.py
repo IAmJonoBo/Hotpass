@@ -277,9 +277,7 @@ def test_run_command_accepts_excel_tuning_options(
 
     calls: list[Path] = []
 
-    def _fake_to_parquet(
-        self: pd.DataFrame, path: Path, *, index: bool = False
-    ) -> None:  # noqa: ARG001
+    def _fake_to_parquet(_df: pd.DataFrame, path: Path, *, index: bool = False) -> None:
         calls.append(Path(path))
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", _fake_to_parquet, raising=False)
