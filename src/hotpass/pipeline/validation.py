@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -73,14 +72,15 @@ def validate_dataset(
     website_threshold = profile.website_validation_threshold if profile else 0.85
 
     notify_progress("expectations_started", {"total_records": len(validated_df)})
-    expectation_start = time.perf_counter()
+    perf_counter = config.runtime_hooks.perf_counter
+    expectation_start = perf_counter()
     expectation_summary = run_expectations(
         validated_df,
         email_mostly=email_threshold,
         phone_mostly=phone_threshold,
         website_mostly=website_threshold,
     )
-    metrics["expectations_seconds"] = time.perf_counter() - expectation_start
+    metrics["expectations_seconds"] = perf_counter() - expectation_start
     notify_progress(
         "expectations_completed",
         {

@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import logging
-import time
+import random
 from collections.abc import Mapping
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from ..domain.party import PartyStore
@@ -42,7 +43,15 @@ logger = logging.getLogger(__name__)
 
 def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     config = initialise_config(config)
-    pipeline_start = time.perf_counter()
+    hooks = config.runtime_hooks
+    perf_counter = hooks.perf_counter
+    time_fn = hooks.time_fn
+
+    if config.random_seed is not None:
+        random.seed(config.random_seed)
+        np.random.seed(config.random_seed)
+
+    pipeline_start = perf_counter()
 
     audit_trail: list[dict[str, Any]] = []
     redaction_events: list[dict[str, Any]] = []
@@ -70,7 +79,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if config.enable_audit_trail:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "pipeline_start",
                 "details": {
                     "input_dir": str(config.input_dir),
@@ -89,10 +98,10 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     )
 
     _notify_progress(config, PIPELINE_EVENT_LOAD_STARTED)
-    ingest_start = time.perf_counter()
+    ingest_start = perf_counter()
     combined, source_timings, _ = ingest_sources(config)
     metrics["source_load_seconds"] = dict(source_timings)
-    load_seconds = time.perf_counter() - ingest_start
+    load_seconds = perf_counter() - ingest_start
     metrics["load_seconds"] = load_seconds
     if load_seconds > 0 and not combined.empty:
         metrics["load_rows_per_second"] = len(combined) / load_seconds
@@ -104,7 +113,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             if config.enable_audit_trail:
                 audit_trail.append(
                     {
-                        "timestamp": time.time(),
+                        "timestamp": time_fn(),
                         "event": "pii_redacted",
                         "details": {
                             "columns": sorted({event["column"] for event in initial_redactions}),
@@ -125,7 +134,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if config.enable_audit_trail:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "sources_loaded",
                 "details": {
                     "total_rows": len(combined),
@@ -144,12 +153,12 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
 
     intent_summary_lookup = None
     intent_result = None
-    intent_start = time.perf_counter()
+    intent_start = perf_counter()
     result, summary = collect_intent_signals(config)
     if result is not None:
         intent_result = result
         intent_summary_lookup = summary
-        metrics["intent_collection_seconds"] = time.perf_counter() - intent_start
+        metrics["intent_collection_seconds"] = perf_counter() - intent_start
         metrics["intent_signal_count"] = int(result.signals.shape[0])
         metrics["intent_target_count"] = int(result.digest.shape[0])
         if result.warnings:
@@ -162,7 +171,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
                 ]
             audit_trail.append(
                 {
-                    "timestamp": time.time(),
+                    "timestamp": time_fn(),
                     "event": "intent_collection_complete",
                     "details": {
                         "collectors": collector_names,
@@ -202,7 +211,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if config.enable_audit_trail:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "aggregation_complete",
                 "details": {
                     "aggregated_records": len(aggregation_result.refined_df),
@@ -241,7 +250,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if config.enable_audit_trail and validation_result.schema_errors:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "schema_validation_errors",
                 "details": {
                     "error_count": len(validation_result.schema_errors),
@@ -259,7 +268,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
             if config.enable_audit_trail:
                 audit_trail.append(
                     {
-                        "timestamp": time.time(),
+                        "timestamp": time_fn(),
                         "event": "pii_redacted_output",
                         "details": {
                             "columns": sorted({event["column"] for event in post_redaction}),
@@ -307,7 +316,7 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
     if config.enable_audit_trail:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "pipeline_complete",
                 "details": {
                     "total_records": total_records,
@@ -374,6 +383,9 @@ def _handle_empty_pipeline(
     redaction_events: list[dict[str, Any]],
     intent_result,
 ) -> PipelineResult:
+    hooks = config.runtime_hooks
+    perf_counter = hooks.perf_counter
+    time_fn = hooks.time_fn
     refined = pd.DataFrame(columns=SSOT_COLUMNS)
     _notify_progress(config, PIPELINE_EVENT_AGGREGATE_STARTED, total=0)
     _notify_progress(
@@ -385,13 +397,13 @@ def _handle_empty_pipeline(
     )
     _notify_progress(config, PIPELINE_EVENT_WRITE_STARTED, path=str(config.output_path))
 
-    write_start = time.perf_counter()
+    write_start = perf_counter()
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
     refined.to_excel(config.output_path, index=False)
     metrics.update(
         {
-            "write_seconds": time.perf_counter() - write_start,
-            "total_seconds": time.perf_counter() - pipeline_start,
+            "write_seconds": perf_counter() - write_start,
+            "total_seconds": perf_counter() - pipeline_start,
             "rows_per_second": 0.0,
         }
     )
@@ -406,7 +418,7 @@ def _handle_empty_pipeline(
     if config.enable_audit_trail:
         audit_trail.append(
             {
-                "timestamp": time.time(),
+                "timestamp": time_fn(),
                 "event": "pipeline_complete",
                 "details": {
                     "total_records": 0,

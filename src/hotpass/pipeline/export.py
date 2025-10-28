@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-import time
 from collections.abc import Callable
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -58,15 +56,18 @@ def publish_outputs(
     metrics["duckdb_sort_seconds"] = validated_dataset.timings.query_seconds
     validated_df = validated_dataset.to_pandas().reset_index(drop=True)
 
+    hooks = config.runtime_hooks
+    perf_counter = hooks.perf_counter
+
     party_store = build_party_store_from_refined(
         validated_df,
         default_country=config.country_code,
-        execution_time=datetime.now(tz=UTC),
+        execution_time=hooks.datetime_factory(),
     )
 
     suffix = config.output_path.suffix.lower()
     notify_progress("write_started", {"path": str(config.output_path)})
-    write_start = time.perf_counter()
+    write_start = perf_counter()
     config.output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if config.enable_formatting and suffix in {".xlsx", ".xls"}:
@@ -90,8 +91,8 @@ def publish_outputs(
     else:
         validated_df.to_excel(config.output_path, index=False)
 
-    metrics["write_seconds"] = time.perf_counter() - write_start
-    metrics["total_seconds"] = time.perf_counter() - pipeline_start
+    metrics["write_seconds"] = perf_counter() - write_start
+    metrics["total_seconds"] = perf_counter() - pipeline_start
     if metrics["total_seconds"] > 0:
         metrics["rows_per_second"] = len(validated_df) / metrics["total_seconds"]
 
