@@ -15,6 +15,12 @@ on:
     paths:
       - "docs/**"
       - "README.md"
+  workflow_dispatch:
+    inputs:
+      uv_extras:
+        description: 'Space-separated uv extras to install (e.g. "dev docs")'
+        required: false
+        default: "dev docs"
 
 permissions:
   contents: read
@@ -22,6 +28,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      UV_EXTRAS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.uv_extras != '' && github.event.inputs.uv_extras || 'dev docs' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -37,9 +45,11 @@ jobs:
           pip install uv
 
       - name: Sync dependencies
+        env:
+          HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
         run: |
           uv venv
-          uv sync --extra docs
+          bash scripts/uv_sync_extras.sh
 
       - name: Build documentation
         run: uv run sphinx-build -n -W -b html docs docs/_build/html

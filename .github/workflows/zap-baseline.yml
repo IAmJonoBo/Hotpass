@@ -7,6 +7,10 @@ on:
         description: URL to scan (defaults to local Streamlit)
         required: false
         default: http://127.0.0.1:8501
+      uv_extras:
+        description: 'Space-separated uv extras to install (e.g. "dev dashboards")'
+        required: false
+        default: "dev dashboards"
 
 permissions:
   contents: read
@@ -23,7 +27,11 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: uv sync --extra dev --extra dashboards --frozen || uv sync --extra dev --extra dashboards
+        env:
+          HOTPASS_UV_EXTRAS: ${{ inputs.uv_extras || 'dev dashboards' }}
+        run: |
+          set -euo pipefail
+          bash scripts/uv_sync_extras.sh
 
       - name: Launch Streamlit (if local)
         if: inputs.target == 'http://127.0.0.1:8501'

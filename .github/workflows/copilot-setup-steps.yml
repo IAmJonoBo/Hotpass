@@ -2,6 +2,11 @@ name: Copilot Setup Steps
 
 on:
   workflow_dispatch:
+    inputs:
+      uv_extras:
+        description: 'Space-separated uv extras to install (e.g. "dev docs")'
+        required: false
+        default: "dev docs"
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
@@ -14,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      UV_EXTRAS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.uv_extras != '' && github.event.inputs.uv_extras || 'dev docs' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -24,9 +31,11 @@ jobs:
           python-version: "3.13"
 
       - name: Synchronise dependencies (dev + docs)
+        env:
+          HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
         run: |
           set -euo pipefail
-          uv sync --extra dev --extra docs --frozen || uv sync --extra dev --extra docs
+          bash scripts/uv_sync_extras.sh
 
       - name: Prime pre-commit hooks
         run: uv run pre-commit install --install-hooks
