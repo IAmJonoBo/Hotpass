@@ -3,22 +3,70 @@
   "name": "contact_company_cat",
   "title": "Contact Database company catalogue",
   "description": "Schema for Company_Cat sheet in Contact Database.xlsx",
-  "primaryKey": ["C_ID"],
+  "primaryKey": [
+    "C_ID"
+  ],
   "fields": [
-    { "name": "C_ID", "type": "number", "constraints": { "required": true } },
+    {
+      "name": "C_ID",
+      "type": "number",
+      "constraints": {
+        "required": true
+      },
+      "description": "Numeric company identifier"
+    },
     {
       "name": "Company",
       "type": "string",
-      "constraints": { "required": true }
+      "constraints": {
+        "required": true
+      },
+      "description": "Registered company name"
     },
-    { "name": "QuickNooks_Name", "type": "string" },
-    { "name": "Last_Order_Date", "type": "string" },
-    { "name": "Category", "type": "string" },
-    { "name": "Strat", "type": "string" },
-    { "name": "Priority", "type": "string" },
-    { "name": "Status", "type": "string" },
-    { "name": "LoadDate", "type": "string" },
-    { "name": "Checked", "type": "string" },
-    { "name": "Website", "type": "string" }
+    {
+      "name": "QuickNooks_Name",
+      "type": "string",
+      "description": "Imported QuickBooks account name when available"
+    },
+    {
+      "name": "Last_Order_Date",
+      "type": "string",
+      "description": "Most recent recorded order date"
+    },
+    {
+      "name": "Category",
+      "type": "string",
+      "description": "Operational category tag assigned by outreach"
+    },
+    {
+      "name": "Strat",
+      "type": "string",
+      "description": "Strategic segment classification"
+    },
+    {
+      "name": "Priority",
+      "type": "string",
+      "description": "Prioritisation tier"
+    },
+    {
+      "name": "Status",
+      "type": "string",
+      "description": "Engagement status in the Contact Database"
+    },
+    {
+      "name": "LoadDate",
+      "type": "string",
+      "description": "Initial load date for the record"
+    },
+    {
+      "name": "Checked",
+      "type": "string",
+      "description": "Quality assurance marker from source workbook"
+    },
+    {
+      "name": "Website",
+      "type": "string",
+      "description": "Company website"
+    }
   ]
 }

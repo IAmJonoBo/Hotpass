@@ -3,16 +3,41 @@
   "name": "contact_company_addresses",
   "title": "Contact Database addresses",
   "description": "Schema for Company_Addresses sheet in Contact Database.xlsx",
-  "primaryKey": ["C_ID", "Type"],
+  "primaryKey": [
+    "C_ID",
+    "Type"
+  ],
   "fields": [
-    { "name": "C_ID", "type": "number", "constraints": { "required": true } },
+    {
+      "name": "C_ID",
+      "type": "number",
+      "constraints": {
+        "required": true
+      },
+      "description": "Numeric company identifier from the Contact Database"
+    },
     {
       "name": "Company",
       "type": "string",
-      "constraints": { "required": true }
+      "constraints": {
+        "required": true
+      },
+      "description": "Registered company name"
     },
-    { "name": "Type", "type": "string" },
-    { "name": "Airport", "type": "string" },
-    { "name": "Unnamed: 4", "type": "string" }
+    {
+      "name": "Type",
+      "type": "string",
+      "description": "Address type classification (for example Head Office)"
+    },
+    {
+      "name": "Airport",
+      "type": "string",
+      "description": "Associated airport or facility if present"
+    },
+    {
+      "name": "Unnamed: 4",
+      "type": "string",
+      "description": "Spare column for auxiliary notes in the source workbook"
+    }
   ]
 }
