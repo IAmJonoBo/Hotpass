@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -70,6 +70,7 @@ class FeatureSwitches(BaseModel):
     geospatial: bool = False
     compliance: bool = False
     observability: bool = False
+    acquisition: bool = False
     dashboards: bool = False
 
 
@@ -87,6 +88,14 @@ class AcquisitionTargetConfig(BaseModel):
     metadata: Mapping[str, Any] = Field(default_factory=dict)
 
 
+class AcquisitionTaskConfig(BaseModel):
+    name: str
+    kind: Literal["search", "crawl", "api"]
+    provider: str | None = None
+    options: Mapping[str, Any] = Field(default_factory=dict)
+    enabled: bool = True
+
+
 class AcquisitionAgentConfig(BaseModel):
     name: str
     description: str | None = None
@@ -95,6 +104,7 @@ class AcquisitionAgentConfig(BaseModel):
     concurrency: int = Field(default=1, ge=1)
     providers: tuple[AcquisitionProviderConfig, ...] = Field(default_factory=tuple)
     targets: tuple[AcquisitionTargetConfig, ...] = Field(default_factory=tuple)
+    tasks: tuple[AcquisitionTaskConfig, ...] = Field(default_factory=tuple)
     enabled: bool = True
 
     @field_validator("search_terms", mode="before")
@@ -317,6 +327,8 @@ class HotpassConfig(BaseModel):
             from hotpass.data_sources.agents import (
                 AcquisitionPlan,
                 AgentDefinition,
+                AgentTaskDefinition,
+                AgentTaskKind,
                 ProviderDefinition,
                 TargetDefinition,
             )
@@ -349,6 +361,16 @@ class HotpassConfig(BaseModel):
                                 metadata=dict(target.metadata),
                             )
                             for target in agent.targets
+                        ),
+                        tasks=tuple(
+                            AgentTaskDefinition(
+                                name=task.name,
+                                kind=AgentTaskKind(task.kind),
+                                provider=task.provider,
+                                options=dict(task.options),
+                                enabled=task.enabled,
+                            )
+                            for task in agent.tasks
                         ),
                     )
                     for agent in self.pipeline.acquisition.agents
@@ -411,6 +433,7 @@ class HotpassConfig(BaseModel):
             enable_enrichment=self.features.enrichment,
             enable_compliance=self.features.compliance,
             enable_observability=self.features.observability,
+            enable_acquisition=self.features.acquisition,
             detect_pii=self.compliance.detect_pii,
             consent_overrides=dict(self.compliance.consent_overrides) or None,
         )

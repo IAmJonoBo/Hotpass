@@ -37,6 +37,9 @@
 - [ ] Execute full E2E runs with canonical configuration toggling entity resolution, geospatial, and compliance stacks (Owner: QA, Due: 2025-12-31)
 - [ ] Add Prefect flow integration tests covering canonical config overrides (Owner: Engineering, Due: 2025-12-31)
 - [ ] Benchmark `HotpassConfig.merge` behaviour on large payloads and record guardrails (Owner: Engineering, Due: 2026-01-15)
+- [x] Implement acquisition agent task orchestration for search, crawl, and API phases (Owner: Engineering, Due: 2025-11-05)
+- [x] Ship provider adapters with robots/ToS compliance, cached credential access, and provenance metadata (Owner: Engineering, Due: 2025-11-05)
+- [x] Extend orchestrator scheduling and blended acquisition fixtures with configuration toggles (Owner: Engineering & QA, Due: 2025-11-08)
 - [x] Refactor storage transforms to Polars with DuckDB adapters and benchmark guardrails (Owner: Engineering, Due: 2026-02-14)
 - [x] Instrument ingest→publish pipeline stages with OpenTelemetry spans and dashboard surfacing (Owner: Engineering, Due: 2026-02-14)
 - [x] Refresh UV tooling, pre-commit hooks, and observability documentation (Owner: Platform & Docs, Due: 2026-02-14)
@@ -114,6 +117,12 @@
 - [x] Reviewed README, docs/CONTRIBUTING.md, architecture overview, workflows, CODEOWNERS, and PR template to refresh repo context and conventions (2025-10-26)
 - [x] Executed baseline QA suite prior to CLI consolidation (pytest, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-26)【bd696d†L1-L88】【0a62a4†L1-L3】【53bc1d†L1-L2】【cb6a4e†L1-L17】【baee01†L1-L36】【167873†L1-L74】【3c322d†L1-L120】
 - [x] Baseline QA suite executed (pytest 303 passed @ 88% coverage; lint/format/type/secrets/build clean; Bandit reports existing low-risk cleanup guard) (2025-10-26)【cbe9ef†L1-L123】【155bf6†L1-L2】【509179†L1-L2】【c3900e†L1-L20】【a009d0†L1-L27】【59a08e†L1-L58】【f47b44†L1-L120】
+- [x] Reviewed README, docs index, contributing/style guides, and architecture overview to refresh repository context before implementation (2025-10-27)【32c63c†L1-L56】【5809ba†L1-L85】【49241b†L1-L40】【427966†L1-L40】【165b78†L1-L120】
+- [x] Re-established QA baseline for current workspace (pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build) (2025-10-27)【5eff4c†L1-L130】【d78e01†L1-L3】【064943†L1-L2】【af2b98†L1-L8】【ff00d6†L1-L36】【02e9ca†L1-L60】【b8008c†L1-L129】
+- [x] Design agent task orchestration sequence covering search, crawl, and API stages with RawRecord outputs【F:src/hotpass/data_sources/agents/tasks.py†L129-L314】
+- [x] Implement provider credential caching and robots/ToS enforcement alongside provenance schema updates【F:scripts/acquisition/guardrails.py†L20-L35】【F:src/hotpass/enrichment/providers.py†L1-L200】
+- [x] Add orchestrator toggles, fixtures, and regression coverage for blended acquisition before Excel ingestion【F:src/hotpass/data_sources/agents/runner.py†L1-L78】【F:tests/pipeline/test_orchestrator_features.py†L1-L200】【F:tests/data_sources/test_acquisition_agents.py†L1-L220】
+- [x] QA sweep: pytest with coverage, ruff check/format, mypy, bandit, detect-secrets, uv build after acquisition orchestration changes (2025-10-27)【830186†L1-L132】【673d6c†L1-L2】【f25889†L1-L3】【47d128†L1-L8】【aa63ff†L1-L19】【8e75ea†L1-L67】【854f39†L1-L138】
 
 ## Deliverables
 
@@ -252,4 +261,5 @@
 - Consent validation logs need exporting to evidence catalog once Prefect automation is wired up; track via new audit task.
 - Quarterly verification automation now logs cadences; future runs must attach DSAR and supplier review findings to keep evidence meaningful.
 - Ruff formatter drift resolved via repository-wide sweep; keep formatter gate enforced in CI and rerun after major merges.
-- Bandit baseline flags a low-severity `try/except/pass` in `src/hotpass/linkage/runner.py`; evaluate remediation or justification alongside storage/pipeline refactors.【a009d0†L5-L27】
+- Agent orchestration redesign requires clarity on robots/ToS policy inputs, credential store interfaces, and provider availability assumptions; confirm with platform owners before enabling real HTTP fetchers.
+- Bandit baseline previously flagged a low-severity cleanup in `src/hotpass/linkage/runner.py`; logging now captures failures for review.【F:src/hotpass/linkage/runner.py†L130-L139】

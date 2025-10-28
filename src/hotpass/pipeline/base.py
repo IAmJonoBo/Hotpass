@@ -57,6 +57,7 @@ from ..telemetry import pipeline_stage
 from ..transform.scoring import LeadScorer
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from ..data_sources.agents.runner import AgentTiming
     from ..linkage import LinkageResult
 from ..pipeline_reporting import (
     collect_unique,
@@ -1107,6 +1108,8 @@ def execute_pipeline(config: PipelineConfig) -> PipelineResult:
         "load_rows_per_second": 0.0,
         "source_load_seconds": source_timings,
     }
+    if config.preloaded_agent_warnings:
+        metrics["agent_warnings"] = list(config.preloaded_agent_warnings)
     post_validation_redaction_events: list[dict[str, Any]] = []
     if load_seconds > 0:
         metrics["load_rows_per_second"] = len(combined) / load_seconds if len(combined) else 0.0
