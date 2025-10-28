@@ -8,6 +8,8 @@ last_updated: 2025-10-25
 
 Thank you for improving Hotpass docs. Follow this lightweight workflow to keep contributions consistent.
 
+> 💡 Working on application code instead? Run `make qa` from the repository root to execute Ruff lint/format, pytest with coverage, mypy (strict for pipeline configuration and QA tooling), Bandit, detect-secrets, and pre-commit hooks before submitting your pull request.
+
 ## 1. Set up your environment
 
 ```bash
