@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, cast
 
 from .telemetry.metrics import PipelineMetrics
 from .telemetry.registry import (
@@ -77,11 +77,13 @@ def get_meter(name: str = "hotpass") -> Any:
 def get_pipeline_metrics() -> PipelineMetrics:
     """Return the pipeline metrics collector."""
 
-    return _REGISTRY.get_metrics()
+    return cast(PipelineMetrics, _REGISTRY.get_metrics())
 
 
 @contextmanager
-def trace_operation(operation_name: str, attributes: Mapping[str, Any] | None = None):
+def trace_operation(
+    operation_name: str, attributes: Mapping[str, Any] | None = None
+) -> Iterator[Any]:
     """Create a span around a block of work and record exceptions."""
 
     tracer = get_tracer()
