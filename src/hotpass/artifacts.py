@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def create_refined_archive(
@@ -14,6 +17,8 @@ def create_refined_archive(
     *,
     timestamp: datetime | None = None,
     checksum_prefix_length: int = 12,
+    include_version_metadata: bool = False,
+    version_metadata_path: Path | None = None,
 ) -> Path:
     """Package the refined Excel output into a timestamped, checksum-stamped zip archive.
 
@@ -28,6 +33,10 @@ def create_refined_archive(
         current UTC timestamp is used.
     checksum_prefix_length:
         Number of SHA256 characters to embed in the archive filename.
+    include_version_metadata:
+        Whether to include version metadata in the archive.
+    version_metadata_path:
+        Optional path to version metadata file to include in archive.
     """
 
     if not excel_path.exists():  # pragma: no cover - defensive guard
@@ -46,11 +55,13 @@ def create_refined_archive(
     archive_name = f"refined-data-{timestamp_label}-{checksum}.zip"
     archive_path = archive_dir / archive_name
 
-    with zipfile.ZipFile(
-        archive_path, mode="w", compression=zipfile.ZIP_DEFLATED
-    ) as zip_file:
+    with zipfile.ZipFile(archive_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zip_file:
         zip_file.write(excel_path, excel_path.name)
         zip_file.writestr("SHA256SUMS", f"{checksum}  {excel_path.name}\n")
+
+        if include_version_metadata and version_metadata_path and version_metadata_path.exists():
+            zip_file.write(version_metadata_path, "version.json")
+            logger.info(f"Included version metadata in archive from {version_metadata_path}")
 
     return archive_path
 

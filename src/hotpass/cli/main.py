@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from .builder import CLIBuilder
-from .commands import backfill, dashboard, deploy, orchestrate, resolve, run
+from .commands import backfill, dashboard, deploy, orchestrate, resolve, run, version
 from .configuration import (
     DEFAULT_PROFILE_DIRS,
     CLIProfile,
@@ -35,6 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(resolve.register())
     builder.register(dashboard.register())
     builder.register(deploy.register())
+    builder.register(version.register())
     return builder.build()
 
 

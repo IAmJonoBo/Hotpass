@@ -59,6 +59,7 @@ src/hotpass/pipeline_reporting.py
 src/hotpass/quality.py
 src/hotpass/secrets.py
 src/hotpass/validation.py
+src/hotpass/versioning.py
 src/hotpass.egg-info/PKG-INFO
 src/hotpass.egg-info/SOURCES.txt
 src/hotpass.egg-info/dependency_links.txt
@@ -133,6 +134,8 @@ src/hotpass/pipeline/features/config.py
 src/hotpass/pipeline/features/enrichment.py
 src/hotpass/pipeline/features/entity_resolution.py
 src/hotpass/pipeline/features/geospatial.py
+src/hotpass/prefect/__init__.py
+src/hotpass/prefect/deployments.py
 src/hotpass/storage/__init__.py
 src/hotpass/storage/adapters.py
 src/hotpass/storage/dataset.py
@@ -158,6 +161,7 @@ tests/test_config_schema.py
 tests/test_contacts.py
 tests/test_dashboard.py
 tests/test_data_sources.py
+tests/test_deployment_specs.py
 tests/test_enhancements.py
 tests/test_enrichment.py
 tests/test_enrichment_validators.py
@@ -170,6 +174,7 @@ tests/test_lineage.py
 tests/test_linkage.py
 tests/test_observability.py
 tests/test_orchestration.py
+tests/test_orchestration_lineage.py
 tests/test_package_contracts.py
 tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
@@ -181,3 +186,4 @@ tests/test_scoring.py
 tests/test_secrets.py
 tests/test_telemetry_registry.py
 tests/test_validation_checkpoints.py
+tests/test_versioning.py

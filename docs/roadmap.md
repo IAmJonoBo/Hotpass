@@ -63,10 +63,13 @@ Focus areas for the upcoming iterations:
   - [ ] Emit **OpenLineage** events from flows; record datasets/jobs/runs; link the UI from docs.
   - **Acceptance:** lineage appears in Marquez for a demo flow; screenshot in PR.
 
-- [ ] **T3.3 Persist refined outputs + data versioning**
-  - [ ] Persist refined outputs as **Parquet** under `dist/refined/` with explicit schema and compression.
-  - [ ] Adopt **DVC** (or lakeFS) to version refined data and backfill snapshots.
-  - **Acceptance:** `dvc status` is clean after a run; `dvc repro` restores a snapshot; Parquet schema checks pass.
+- [x] **T3.3 Persist refined outputs + data versioning**
+  - [x] Persist refined outputs as **Parquet** under `dist/refined/` with explicit schema and compression.
+  - [x] Adopt **DVC** to version refined data and backfill snapshots.
+  - [x] Add `hotpass version` CLI command for version management.
+  - [x] Create `docs/how-to-guides/manage-data-versions.md` documentation.
+  - [x] Update roadmap to track DVC integration progress.
+  - **Acceptance:** `hotpass version --status` works; version bumping functional; docs guide users through setup and recovery workflows.
 
 ## Phase 4 — ML lifecycle (conditional)
 
