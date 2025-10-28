@@ -138,6 +138,7 @@ def test_run_command_dispatches_automation_hooks(
         webhooks: tuple[str, ...],
         daily_list: pd.DataFrame | None = None,
         logger: object | None = None,
+        **_: object,
     ) -> None:
         webhook_calls.append((webhooks, int(digest.shape[0])))
 
@@ -147,6 +148,7 @@ def test_run_command_dispatches_automation_hooks(
         *,
         token: str | None = None,
         logger: object | None = None,
+        **_: object,
     ) -> None:
         crm_calls.append((endpoint, int(daily.shape[0])))
 

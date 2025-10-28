@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from rich.prompt import Confirm
 
 from hotpass.artifacts import create_refined_archive
 from hotpass.automation.hooks import dispatch_webhooks, push_crm_updates
+from hotpass.automation.http import AutomationHTTPClient, DeadLetterQueue
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
 from hotpass.pipeline import default_feature_bundle
@@ -188,6 +190,15 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     digest_df = result.intent_digest
     daily_list_df = result.daily_list
 
+    automation_http_config = base_config.automation_http
+    http_client = AutomationHTTPClient(automation_http_config)
+    dead_letter_queue: DeadLetterQueue | None = None
+    if (
+        automation_http_config.dead_letter_enabled
+        and automation_http_config.dead_letter_path is not None
+    ):
+        dead_letter_queue = DeadLetterQueue(automation_http_config.dead_letter_path)
+
     effective_digest = digest_df
     if effective_digest is None:
         if daily_list_df is not None:
@@ -201,6 +212,8 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             webhooks=config.pipeline.intent_webhooks,
             daily_list=daily_list_df,
             logger=logger,
+            http_client=http_client,
+            dead_letter=dead_letter_queue,
         )
 
     if daily_list_df is not None and config.pipeline.crm_endpoint:
@@ -209,6 +222,8 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             config.pipeline.crm_endpoint,
             token=config.pipeline.crm_token,
             logger=logger,
+            http_client=http_client,
+            dead_letter=dead_letter_queue,
         )
 
     store_path = config.pipeline.intent_signal_store_path
@@ -250,6 +265,18 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         canonical = canonical.merge(payload)
 
     pipeline_updates: dict[str, Any] = {}
+    automation_http_updates: dict[str, Any] = {}
+    retry_updates: dict[str, Any] = {}
+    circuit_updates: dict[str, Any] = {}
+
+    def _parse_bool(value: str) -> bool:
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+        msg = "expected boolean value"
+        raise ValueError(msg)
 
     if namespace.input_dir is not None:
         pipeline_updates["input_dir"] = Path(namespace.input_dir)
@@ -279,6 +306,26 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         pipeline_updates["crm_endpoint"] = namespace.crm_endpoint
     if getattr(namespace, "crm_token", None) is not None:
         pipeline_updates["crm_token"] = namespace.crm_token
+    if getattr(namespace, "automation_http_timeout", None) is not None:
+        automation_http_updates["timeout"] = float(namespace.automation_http_timeout)
+    if getattr(namespace, "automation_http_retries", None) is not None:
+        retry_updates["attempts"] = int(namespace.automation_http_retries)
+    if getattr(namespace, "automation_http_backoff", None) is not None:
+        retry_updates["backoff_factor"] = float(namespace.automation_http_backoff)
+    if getattr(namespace, "automation_http_backoff_max", None) is not None:
+        retry_updates["backoff_max"] = float(namespace.automation_http_backoff_max)
+    if getattr(namespace, "automation_http_circuit_threshold", None) is not None:
+        circuit_updates["failure_threshold"] = int(namespace.automation_http_circuit_threshold)
+    if getattr(namespace, "automation_http_circuit_reset", None) is not None:
+        circuit_updates["recovery_time"] = float(namespace.automation_http_circuit_reset)
+    if getattr(namespace, "automation_http_idempotency_header", None) is not None:
+        automation_http_updates["idempotency_header"] = namespace.automation_http_idempotency_header
+    if getattr(namespace, "automation_http_dead_letter", None) is not None:
+        automation_http_updates["dead_letter_path"] = Path(namespace.automation_http_dead_letter)
+    if getattr(namespace, "automation_http_dead_letter_enabled", None) is not None:
+        automation_http_updates["dead_letter_enabled"] = bool(
+            namespace.automation_http_dead_letter_enabled
+        )
     if namespace.log_format is not None:
         pipeline_updates["log_format"] = namespace.log_format
     if namespace.report_path is not None:
@@ -297,6 +344,77 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         pipeline_updates["observability"] = bool(namespace.observability)
     if getattr(namespace, "archive", None) is not None:
         pipeline_updates["archive"] = bool(namespace.archive)
+
+    if "timeout" not in automation_http_updates:
+        env_timeout = os.getenv("HOTPASS_AUTOMATION_HTTP_TIMEOUT")
+        if env_timeout is not None:
+            try:
+                automation_http_updates["timeout"] = float(env_timeout)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError("HOTPASS_AUTOMATION_HTTP_TIMEOUT must be numeric") from exc
+    if "attempts" not in retry_updates:
+        env_retries = os.getenv("HOTPASS_AUTOMATION_HTTP_RETRIES")
+        if env_retries is not None:
+            try:
+                retry_updates["attempts"] = int(env_retries)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError("HOTPASS_AUTOMATION_HTTP_RETRIES must be an integer") from exc
+    if "backoff_factor" not in retry_updates:
+        env_backoff = os.getenv("HOTPASS_AUTOMATION_HTTP_BACKOFF")
+        if env_backoff is not None:
+            try:
+                retry_updates["backoff_factor"] = float(env_backoff)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError("HOTPASS_AUTOMATION_HTTP_BACKOFF must be numeric") from exc
+    if "backoff_max" not in retry_updates:
+        env_backoff_max = os.getenv("HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX")
+        if env_backoff_max is not None:
+            try:
+                retry_updates["backoff_max"] = float(env_backoff_max)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError("HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX must be numeric") from exc
+    if "failure_threshold" not in circuit_updates:
+        env_threshold = os.getenv("HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD")
+        if env_threshold is not None:
+            try:
+                circuit_updates["failure_threshold"] = int(env_threshold)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD must be an integer"
+                ) from exc
+    if "recovery_time" not in circuit_updates:
+        env_reset = os.getenv("HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET")
+        if env_reset is not None:
+            try:
+                circuit_updates["recovery_time"] = float(env_reset)
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError("HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET must be numeric") from exc
+    if "idempotency_header" not in automation_http_updates:
+        env_header = os.getenv("HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER")
+        if env_header:
+            automation_http_updates["idempotency_header"] = env_header
+    if "dead_letter_path" not in automation_http_updates:
+        env_dead_letter = os.getenv("HOTPASS_AUTOMATION_HTTP_DEAD_LETTER")
+        if env_dead_letter:
+            automation_http_updates["dead_letter_path"] = Path(env_dead_letter)
+    if "dead_letter_enabled" not in automation_http_updates:
+        env_dead_letter_enabled = os.getenv("HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED")
+        if env_dead_letter_enabled is not None:
+            try:
+                automation_http_updates["dead_letter_enabled"] = _parse_bool(
+                    env_dead_letter_enabled
+                )
+            except ValueError as exc:  # pragma: no cover
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED must be a boolean"
+                ) from exc
+
+    if retry_updates:
+        automation_http_updates["retry"] = retry_updates
+    if circuit_updates:
+        automation_http_updates["circuit_breaker"] = circuit_updates
+    if automation_http_updates:
+        pipeline_updates["automation_http"] = automation_http_updates
 
     updates: dict[str, Any] = {}
     if pipeline_updates:

@@ -17,6 +17,7 @@ import pandas as pd
 import polars as pl
 from pandera.errors import SchemaErrors
 
+from ..automation.http import AutomationHTTPConfig
 from ..compliance import PIIRedactionConfig, redact_dataframe
 from ..config import IndustryProfile, get_default_profile
 from ..data_sources import (
@@ -239,6 +240,7 @@ class PipelineConfig:
     automation_webhooks: tuple[str, ...] = field(default_factory=tuple)
     crm_endpoint: str | None = None
     crm_token: str | None = None
+    automation_http: AutomationHTTPConfig = field(default_factory=AutomationHTTPConfig)
     preloaded_agent_frame: pd.DataFrame | None = None
     preloaded_agent_timings: list[AgentTiming] = field(default_factory=list)
     preloaded_agent_warnings: list[str] = field(default_factory=list)

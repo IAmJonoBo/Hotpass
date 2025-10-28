@@ -50,6 +50,24 @@ class PipelineMetrics:
             unit="seconds",
         )
 
+        self.automation_requests = meter.create_counter(
+            name="hotpass.automation.requests",
+            description="Automation delivery attempts",
+            unit="requests",
+        )
+
+        self.automation_failures = meter.create_counter(
+            name="hotpass.automation.failures",
+            description="Failed automation deliveries",
+            unit="requests",
+        )
+
+        self.automation_latency = meter.create_histogram(
+            name="hotpass.automation.duration",
+            description="Delivery latency for automation requests",
+            unit="seconds",
+        )
+
         self.acquisition_duration = meter.create_histogram(
             name="hotpass.acquisition.duration",
             description="Duration of acquisition activity by scope (plan, agent, provider)",
@@ -99,6 +117,31 @@ class PipelineMetrics:
 
     def update_quality_score(self, score: float) -> None:
         self._latest_quality_score = score
+
+    def record_automation_delivery(
+        self,
+        *,
+        target: str,
+        status: str,
+        endpoint: str | None,
+        attempts: int,
+        latency: float | None,
+        idempotency: str,
+    ) -> None:
+        attributes: dict[str, Any] = {
+            "target": target,
+            "status": status,
+            "attempts": attempts,
+            "idempotency": idempotency,
+        }
+        if endpoint:
+            attributes["endpoint"] = endpoint
+
+        self.automation_requests.add(1, attributes)
+        if status != "delivered":
+            self.automation_failures.add(1, attributes)
+        if latency is not None:
+            self.automation_latency.record(latency, attributes)
 
     def record_acquisition_duration(
         self,
