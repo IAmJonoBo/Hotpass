@@ -388,7 +388,7 @@ def enrich_from_registry(
 
     result = response.to_dict()
     meta = result.setdefault("meta", {})
-    meta.setdefault("looked_up_at", datetime.now(UTC).isoformat())
+    meta.setdefault("retrieved_at", datetime.now(UTC).isoformat())
     result.setdefault("registry_type", result.get("registry"))
     result.setdefault("org_name", result.get("organization"))
     payload = result.get("payload") or {}
