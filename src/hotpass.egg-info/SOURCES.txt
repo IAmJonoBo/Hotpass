@@ -34,6 +34,7 @@ src/hotpass/error_handling.py
 src/hotpass/evidence.py
 src/hotpass/formatting.py
 src/hotpass/geospatial.py
+src/hotpass/lineage.py
 src/hotpass/normalization.py
 src/hotpass/observability.py
 src/hotpass/optimize.py
@@ -66,6 +67,10 @@ src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/resolve.py
 src/hotpass/cli/commands/run.py
+src/hotpass/contracts/__init__.py
+src/hotpass/contracts/datasets.py
+src/hotpass/contracts/generator.py
+src/hotpass/contracts/types.py
 src/hotpass/data_sources/__init__.py
 src/hotpass/data_sources/agents/__init__.py
 src/hotpass/data_sources/agents/base.py
@@ -153,6 +158,7 @@ tests/test_orchestration.py
 tests/test_package_contracts.py
 tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
+tests/test_pipeline_stages.py
 tests/test_quality.py
 tests/test_quality_report.py
 tests/test_scancode_policy.py
