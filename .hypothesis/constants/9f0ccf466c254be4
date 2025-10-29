@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/__init__.py
+# hypothesis_version: 6.142.4
+
+[168, 3600, 'T', 'User-Agent', 'api_key', 'api_key_header', 'author', 'avg_hits_per_entry', 'base_url', 'cipc', 'date', 'db_path', 'description', 'error', 'extracted_at', 'ignore', 'meta', 'org_name', 'organization', 'organization_name', 'organization_website', 'payload', 'query_param', 'registration_number', 'registry', 'registry_enriched', 'registry_number', 'registry_status', 'registry_type', 'retrieved_at', 'search_param', 'session', 'status', 'success', 'text', 'throttle_seconds', 'timeout', 'title', 'total_entries', 'total_hits', 'ttl_hours', 'unclosed database', 'url', 'website_description', 'website_enriched', 'website_text_length', 'website_title']

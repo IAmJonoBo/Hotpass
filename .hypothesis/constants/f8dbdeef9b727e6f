@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/domain/party/models.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.5, 1.0, 'Alias identifier', 'Canonical identifier', 'Role identifier', 'contact_method', 'email', 'high', 'historic', 'json', 'legal', 'location', 'low', 'machine', 'medium', 'organisation', 'party', 'party_alias', 'party_role', 'person', 'phone', 'physical_address', 'social', 'trading_as', 'uuid7', 'website', 'whatsapp']

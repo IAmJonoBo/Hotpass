@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/deploy.py
+# hypothesis_version: 6.142.4
+
+[', ', '--build-image', '--flow', '--manifest-dir', '--name', '--push-image', '--schedule', '--work-pool', 'append', 'build', 'build_image', 'deploy', 'deploy.completed', 'deployment_ids', 'deployment_name', 'disable_schedule', 'flows', 'json', 'log_format', 'manifest_dir', 'none', 'off', 'push_image', 'register', 'rich', 'schedule', 'sensitive_fields', 'store_true', 'work_pool']

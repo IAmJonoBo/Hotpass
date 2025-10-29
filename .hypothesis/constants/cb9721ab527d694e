@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/secrets.py
+# hypothesis_version: 6.142.4
+
+['&', '/', '?', 'Authorization', 'HOTPASS_VAULT_ADDR', 'HOTPASS_VAULT_ROLE', 'HOTPASS_VAULT_TOKEN', 'PREFECT_API_KEY', 'PREFECT_API_URL', 'VaultError', 'VaultResponse', 'VaultSecretManager', 'VaultSession', 'X-Vault-Namespace', 'X-Vault-Token', 'auth', 'client_token', 'data', 'github', 'hotpass', 'hotpass/prefect', 'jwt', 'kv', 'prefect_api_key', 'prefect_api_url', 'role', 'value']

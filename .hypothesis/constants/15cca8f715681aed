@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/ingestion.py
+# hypothesis_version: 6.142.4
+
+[0.0, 'Contact Database', 'Reachout Database', 'SACAA Cleaned', 'address', 'area', 'category', 'contact_emails', 'contact_names', 'contact_phones', 'contact_roles', 'description', 'load_seconds', 'notes', 'object', 'organization_name', 'organization_slug', 'organization_type', 'planes', 'priority', 'province', 'source_dataset', 'source_record_id', 'status', 'website']

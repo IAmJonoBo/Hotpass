@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/events.py
+# hypothesis_version: 6.142.4
+
+['PIPELINE_EVENT_START', 'aggregate.completed', 'aggregate.progress', 'aggregate.started', 'expectations.started', 'load.completed', 'load.started', 'pipeline.completed', 'pipeline.start', 'schema.completed', 'schema.started', 'write.completed', 'write.started']

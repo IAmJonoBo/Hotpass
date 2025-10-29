@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/registries/__init__.py
+# hypothesis_version: 6.142.4
+
+['BaseRegistryAdapter', 'CIPCRegistryAdapter', 'RegistryError', 'RegistryResponse', 'SACAARegistryAdapter', 'available_adapters', 'get_registry_adapter', 'register_adapter']

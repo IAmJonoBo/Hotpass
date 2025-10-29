@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/linkage/__init__.py
+# hypothesis_version: 6.142.4
+
+['LabelStudioConfig', 'LinkageConfig', 'LinkagePersistence', 'LinkageResult', 'LinkageThresholds', 'link_entities']

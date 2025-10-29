@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/storage/dataset.py
+# hypothesis_version: 6.142.4
+
+[0.0, 'brotli', 'dataset', 'gzip', 'len', 'lz4', 'lzo', 'max', 'mean', 'min', 'snappy', 'uncompressed', 'zstd']

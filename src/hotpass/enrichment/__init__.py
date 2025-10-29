@@ -22,7 +22,7 @@ from typing import Any
 import pandas as pd
 
 try:
-    import requests  # type: ignore[import-untyped]
+    import requests
 
     REQUESTS_AVAILABLE = True
 except ImportError:
@@ -100,9 +100,16 @@ def _load_registry_options(
     return config
 
 
-def _initialise_website_enrichment(
-    df: pd.DataFrame, website_column: str
-) -> pd.DataFrame | None:
+def _initialise_website_enrichment(df: pd.DataFrame, website_column: str) -> pd.DataFrame | None:
+    """Prepare dataframe for website enrichment by adding enrichment columns.
+
+    Args:
+        df: Input dataframe
+        website_column: Name of column containing website URLs
+
+    Returns:
+        Copy of dataframe with enrichment columns added, or None if column missing
+    """
     if website_column not in df.columns:
         logger.warning("Column %s not found in dataframe", website_column)
         return None
@@ -116,6 +123,13 @@ def _initialise_website_enrichment(
 
 
 def _apply_website_content(df: pd.DataFrame, idx: int, content: dict[str, Any]) -> None:
+    """Apply extracted website content to a specific row in the dataframe.
+
+    Args:
+        df: Target dataframe to update
+        idx: Row index to update
+        content: Extracted website content dictionary
+    """
     if not content.get("success"):
         return
 
@@ -129,9 +143,7 @@ def _apply_website_content(df: pd.DataFrame, idx: int, content: dict[str, Any]) 
 class CacheManager:
     """Simple SQLite-based cache for API responses and web content."""
 
-    def __init__(
-        self, db_path: str = "data/.cache/enrichment.db", ttl_hours: int = 168
-    ):
+    def __init__(self, db_path: str = "data/.cache/enrichment.db", ttl_hours: int = 168):
         """Initialize cache manager.
 
         Args:
@@ -188,9 +200,7 @@ class CacheManager:
             Cached value if found and not expired, None otherwise
         """
         with self._connect() as conn:
-            cursor = conn.execute(
-                "SELECT value, created_at FROM cache WHERE key = ?", (key,)
-            )
+            cursor = conn.execute("SELECT value, created_at FROM cache WHERE key = ?", (key,))
             row = cursor.fetchone()
 
             if row is None:
@@ -217,7 +227,7 @@ class CacheManager:
             )
             conn.commit()
 
-            return value
+            return str(value)
 
     def set(self, key: str, value: str) -> None:
         """Store value in cache.
@@ -286,9 +296,7 @@ class CacheManager:
             }
 
 
-def extract_website_content(
-    url: str, cache: CacheManager | None = None
-) -> dict[str, Any]:
+def extract_website_content(url: str, cache: CacheManager | None = None) -> dict[str, Any]:
     """Extract structured content from a website.
 
     Args:
@@ -312,7 +320,8 @@ def extract_website_content(
         cached = cache.get(cache_key)
         if cached:
             logger.debug(f"Cache hit for {url}")
-            return json.loads(cached)
+            cached_data: dict[str, Any] = json.loads(cached)
+            return cached_data
 
     try:
         # Download HTML content
@@ -367,16 +376,15 @@ def enrich_from_registry(
     """Fetch organization data from external registries."""
 
     if not REQUESTS_AVAILABLE:
-        raise RegistryLookupError(
-            "The 'requests' dependency is required for registry lookups"
-        )
+        raise RegistryLookupError("The 'requests' dependency is required for registry lookups")
 
     cache_key = f"registry:{registry_type}:{org_name}"
     if cache:
         cached = cache.get(cache_key)
         if cached:
             logger.debug("Cache hit for registry lookup: %s", org_name)
-            return json.loads(cached)
+            cached_data: dict[str, Any] = json.loads(cached)
+            return cached_data
 
     logger.info("Looking up %s in %s registry", org_name, registry_type)
 
@@ -392,15 +400,13 @@ def enrich_from_registry(
     try:
         response: RegistryResponse = adapter.lookup(org_name)
     except RegistryRateLimitError as exc:
-        raise RegistryLookupError(
-            f"{registry_type} rate limit exceeded: {exc}"
-        ) from exc
+        raise RegistryLookupError(f"{registry_type} rate limit exceeded: {exc}") from exc
     except RegistryTransportError as exc:
         raise RegistryLookupError(str(exc)) from exc
     except RegistryError as exc:
         raise RegistryLookupError(str(exc)) from exc
 
-    result = response.to_dict()
+    result: dict[str, Any] = response.to_dict()
     meta = result.setdefault("meta", {})
     meta.setdefault("retrieved_at", datetime.now(UTC).isoformat())
     result.setdefault("registry_type", result.get("registry"))
@@ -448,9 +454,7 @@ def enrich_dataframe_with_websites(
         _apply_website_content(enriched_df, idx, content)
 
     enriched_count = enriched_df["website_enriched"].sum()
-    logger.info(
-        f"Enriched {enriched_count}/{len(df)} organizations with website content"
-    )
+    logger.info(f"Enriched {enriched_count}/{len(df)} organizations with website content")
 
     return enriched_df
 
@@ -462,7 +466,29 @@ async def enrich_dataframe_with_websites_async(
     *,
     concurrency: int = 8,
 ) -> pd.DataFrame:
-    """Asynchronously enrich organisation websites using a worker pool."""
+    """Asynchronously enrich organisation websites using a worker pool.
+
+    This function uses asyncio to fetch website content concurrently, significantly
+    improving performance compared to the synchronous version when processing many URLs.
+
+    Args:
+        df: Input dataframe containing website URLs
+        website_column: Name of column containing website URLs (default: "organization_website")
+        cache: Optional cache manager for storing/retrieving results
+        concurrency: Maximum number of concurrent website fetches (default: 8)
+
+    Returns:
+        Enriched dataframe with additional columns:
+        - website_title: Extracted page title
+        - website_description: Extracted meta description
+        - website_text_length: Length of extracted text content
+        - website_enriched: Boolean indicating successful enrichment
+
+    Example:
+        >>> import asyncio
+        >>> df = pd.DataFrame({"website": ["https://example.com"]})
+        >>> result = asyncio.run(enrich_dataframe_with_websites_async(df, "website"))
+    """
 
     enriched_df = _initialise_website_enrichment(df, website_column)
     if enriched_df is None:
@@ -575,14 +601,10 @@ def enrich_dataframe_with_registries(
         payload_obj = registry_data.get("payload")
         payload = payload_obj if isinstance(payload_obj, Mapping) else {}
 
-        enriched_df.at[idx, "registry_type"] = registry_data.get(
-            "registry", registry_type
-        )
+        enriched_df.at[idx, "registry_type"] = registry_data.get("registry", registry_type)
         enriched_df.at[idx, "registry_status"] = payload.get("status")
         enriched_df.at[idx, "registry_number"] = payload.get("registration_number")
-        enriched_df.at[idx, "registry_enriched"] = bool(
-            registry_data.get("success") and payload
-        )
+        enriched_df.at[idx, "registry_enriched"] = bool(registry_data.get("success") and payload)
 
     enriched_count = enriched_df["registry_enriched"].sum()
     logger.info(

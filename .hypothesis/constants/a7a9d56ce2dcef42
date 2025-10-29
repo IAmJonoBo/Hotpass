@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/doctor.py
+# hypothesis_version: 6.142.4
+
+['--autofix', 'FAIL', 'PASS', 'autofix', 'build', 'config_paths', 'doctor', 'environment.dist_dir', 'error', 'failed', 'health_score', 'info', 'passed', 'profile', 'register', 'store_true', 'total_checks', 'warning']

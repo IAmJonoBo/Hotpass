@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/registries/cipc.py
+# hypothesis_version: 6.142.4
+
+[404, 500, 'CIPCRegistryAdapter', 'addresses', 'business_start_date', 'cipc', 'code', 'contacts', 'data', 'directors', 'email', 'enterprise_name', 'enterprise_number', 'enterprise_type', 'entity_type', 'extra', 'financial_year_end', 'incorporation_date', 'last_update', 'last_updated', 'message', 'name', 'no_results', 'not_found', 'officers', 'phone', 'postal', 'postal_address', 'registered', 'registered_address', 'registered_name', 'registration_date', 'registration_number', 'result_count', 'results', 'search', 'search_param', 'status', 'status_code', 'status_date', 'status_effective']

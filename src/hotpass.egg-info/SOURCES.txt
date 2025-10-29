@@ -156,6 +156,7 @@ tests/test_acquisition_guardrails.py
 tests/test_agentic_orchestration.py
 tests/test_artifacts.py
 tests/test_benchmarks.py
+tests/test_benchmarks_unit.py
 tests/test_bootstrap.py
 tests/test_cli_enhanced.py
 tests/test_column_mapping.py
@@ -170,6 +171,7 @@ tests/test_data_sources.py
 tests/test_deployment_specs.py
 tests/test_enhancements.py
 tests/test_enrichment.py
+tests/test_enrichment_async.py
 tests/test_enrichment_validators.py
 tests/test_entity_resolution.py
 tests/test_error_handling.py
@@ -185,6 +187,7 @@ tests/test_orchestration_lineage.py
 tests/test_package_contracts.py
 tests/test_pipeline.py
 tests/test_pipeline_enhanced.py
+tests/test_pipeline_enhancements_exports.py
 tests/test_pipeline_stages.py
 tests/test_quality.py
 tests/test_quality_report.py

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/artifacts.py
+# hypothesis_version: 6.142.4
+
+['%Y%m%dT%H%M%SZ', 'SHA256SUMS', 'version.json', 'w']

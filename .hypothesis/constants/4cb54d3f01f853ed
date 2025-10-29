@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/intent/config.py
+# hypothesis_version: 6.142.4
+
+[1.0, 'IntentPlan']

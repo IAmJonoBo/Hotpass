@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/transform/__init__.py
+# hypothesis_version: 6.142.4
+
+['NormalizedName', 'clean_text', 'normalise_identifier', 'normalize_email', 'normalize_phone', 'normalize_vat_number', 'normalize_website', 'parse_person_name']

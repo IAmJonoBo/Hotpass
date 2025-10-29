@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/scripts/acquisition/collect_dataset.py
+# hypothesis_version: 6.142.4
+
+['--ledger', '--license', '--records', '--robots', '--source-url', '--tos-path', '--user-agent', 'HotpassDataCollector', '__main__', 'id', 'r', 'utf-8']

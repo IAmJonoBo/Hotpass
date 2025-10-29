@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/compliance_verification.py
+# hypothesis_version: 6.142.4
+
+['DEFAULT_CADENCE_DAYS', 'DEFAULT_FRAMEWORKS', 'DEFAULT_LOG_PATH', 'ISO 27001', 'POPIA', 'SOC 2', 'VerificationEntry', 'cadence_days', 'due', 'findings', 'framework', 'frameworks', 'frameworks_due', 'generate_summary', 'generated_at', 'is_framework_due', 'latest_run_at', 'notes', 'r', 'reviewers', 'run_at', 'utf-8', 'w']

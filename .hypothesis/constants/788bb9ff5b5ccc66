@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/compliance.py
+# hypothesis_version: 6.142.4
+
+[0.5, ',', 'DEFAULT', 'UNKNOWN', 'allowed', 'approved', 'column', 'compliance_issues', 'confidential', 'consent', 'consent_date', 'consent_requirements', 'consent_status', 'consent_status_field', 'consent_violations', 'contact_primary_name', 'contract', 'data_source', 'denied', 'description', 'en', 'end', 'entities', 'entity_type', 'expired', 'fields', 'generated_at', 'granted', 'internal', 'lawful_basis', 'legal_obligation', 'legitimate_interest', 'missing', 'notes', 'object', 'pending', 'pii', 'pii_fields', 'processed_at', 'public', 'public_interest', 'reason', 'redact', 'replace', 'retention_policies', 'retention_until', 'review', 'revoked', 'row_index', 'score', 'sensitive_pii', 'start', 'status', 'text', 'total_fields', 'total_records', 'unknown', 'untracked', 'value_index', 'vital_interests', 'withdrawn']
