@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: arc-github-app-secret
+  namespace: arc-runners
+  annotations:
+    secret.hotpass.dev/rotation: github-app
+stringData:
+  github_app_private_key: PLACEHOLDER_REPLACE_WITH_SOPS_REFERENCE
+  github_app_webhook_secret: PLACEHOLDER_REPLACE_WITH_SOPS_REFERENCE
+---
+apiVersion: actions.github.com/v1alpha1
+kind: GitHubConfig
+metadata:
+  name: hotpass-github-config
+  namespace: arc-runners
+spec:
+  githubConfigUrl: https://github.com/IAmJonoBo/Hotpass
+  runnerGithubUrl: https://github.com/IAmJonoBo/Hotpass
+  githubAppID: "123456"
+  githubAppInstallationID: "987654321"
+  githubAppSecretRef:
+    name: arc-github-app-secret
+    key: github_app_private_key
+  githubAppWebhookSecretRef:
+    name: arc-github-app-secret
+    key: github_app_webhook_secret

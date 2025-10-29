@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: arc-runners
+resources:
+  - namespace.yaml
+  - github-config.yaml
+  - runner-scale-set.yaml
+configMapGenerator:
+  - name: arc-runner-controller-settings
+    literals:
+      - RUNNER_GROUP=hotpass-pipeline
+      - ENABLE_ORG_RUNNERS=true
