@@ -124,6 +124,7 @@ files = [
   "src/hotpass/domain/party/schemas.py",
   "src/hotpass/_compat_nameparser.py",
   "src/hotpass/orchestration.py",
+  "src/hotpass/pipeline/orchestrator.py",
   "scripts/quality/fitness_functions.py",
 ]
 warn_unused_configs = true
@@ -142,6 +143,10 @@ strict = true
 
 [[tool.mypy.overrides]]
 module = ["hotpass.orchestration"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["hotpass.pipeline.orchestrator"]
 strict = true
 
 [[tool.mypy.overrides]]

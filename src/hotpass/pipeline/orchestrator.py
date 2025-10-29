@@ -70,7 +70,7 @@ class PipelineOrchestrator:
                     len(agent_frame), source="acquisition_agents"
                 )
 
-        result = self._base_executor.run(execution.base_config)
+        result: PipelineResult = self._base_executor.run(execution.base_config)
 
         if execution.metrics:
             execution.metrics.record_records_processed(
