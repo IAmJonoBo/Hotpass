@@ -24,7 +24,7 @@ def _ensure_optional_dependencies(monkeypatch: pytest.MonkeyPatch) -> None:
             monkeypatch.setitem(sys.modules, module_name, types.ModuleType(module_name))
     pyarrow_stub = sys.modules["pyarrow"]
     if not hasattr(pyarrow_stub, "bool_"):
-        setattr(pyarrow_stub, "bool_", lambda: object())
+        pyarrow_stub.bool_ = lambda: object()
 
 
 @pytest.fixture()

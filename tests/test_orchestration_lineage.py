@@ -11,7 +11,6 @@ pytest.importorskip("pyarrow")
 
 from hotpass import orchestration
 from hotpass.pipeline.config import PipelineConfig
-
 from tests.fixtures.lineage import CapturedLineage
 
 

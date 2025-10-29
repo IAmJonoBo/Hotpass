@@ -1,9 +1,9 @@
 """Prefect integration helpers for Hotpass."""
 
 from .deployments import (
+    PREFECT_AVAILABLE,
     DeploymentSchedule,
     DeploymentSpec,
-    PREFECT_AVAILABLE,
     build_runner_deployment,
     deploy_pipeline,
     load_deployment_specs,
