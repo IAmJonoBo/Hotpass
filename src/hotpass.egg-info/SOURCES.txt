@@ -79,6 +79,8 @@ src/hotpass/cli/commands/__init__.py
 src/hotpass/cli/commands/backfill.py
 src/hotpass/cli/commands/dashboard.py
 src/hotpass/cli/commands/deploy.py
+src/hotpass/cli/commands/doctor.py
+src/hotpass/cli/commands/init.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/resolve.py
 src/hotpass/cli/commands/run.py
@@ -144,6 +146,7 @@ src/hotpass/storage/adapters.py
 src/hotpass/storage/dataset.py
 src/hotpass/storage/duckdb.py
 src/hotpass/telemetry/__init__.py
+src/hotpass/telemetry/bootstrap.py
 src/hotpass/telemetry/metrics.py
 src/hotpass/telemetry/registry.py
 src/hotpass/transform/__init__.py
@@ -188,6 +191,7 @@ tests/test_quality_report.py
 tests/test_scancode_policy.py
 tests/test_scoring.py
 tests/test_secrets.py
+tests/test_telemetry_bootstrap.py
 tests/test_telemetry_registry.py
 tests/test_validation_checkpoints.py
 tests/test_versioning.py

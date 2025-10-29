@@ -19,7 +19,7 @@
 - [x] **2025-11-08 · Programme (Phase 1)** — Reconcile Phase 1 foundation scope with programme leads and document baseline stabilisation deliverables ahead of retro PR `operations/foundation-retro` (owner: Programme). Completed via the published retro plan and roadmap alignment.【F:docs/operations/foundation-retro.md†L1-L64】【F:docs/roadmap.md†L1-L36】
 - [x] **2025-11-12 · Engineering (Phase 2)** — Land ROADMAP T2.1 canonical dataset contracts via PR `contracts/new-dataset-schemas`, including JSON Schema exports and docs sync (owner: Engineering). Round-trip contract tests and schema regeneration tooling are committed. 【d9a97b†L8-L16】【7786e5†L36-L53】【F:tests/contracts/test_dataset_contracts.py†L1-L74】
 - [x] **2025-11-15 · QA & Docs (Phase 2)** — Close ROADMAP T2.2 Great Expectations gate hardening with PR `docs/data-governance-nav` and associated checkpoint automation (owners: QA & Docs). Governance navigation guide published to link Data Docs, schemas, lineage, and evidence flows.【F:docs/governance/data-governance-navigation.md†L1-L52】【F:docs/index.md†L63-L81】
-- [ ] **2025-11-19 · QA (Phase 2)** — Deliver Hypothesis expansion for ROADMAP T2.3 via PR `qa/property-tests-round-two`, covering ingestion/export idempotency (owner: QA).【d9a97b†L8-L19】【7786e5†L48-L53】
+- [x] **2025-11-19 · QA (Phase 2)** — Deliver Hypothesis expansion for ROADMAP T2.3 via PR `qa/property-tests-round-two`, covering ingestion/export idempotency (owner: QA). Completed with `tests/property/test_ingestion_properties.py` hardening ingestion deduplication, Unicode slug generation, and province normalisation.【d9a97b†L8-L19】【7786e5†L48-L53】
 - [ ] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
 - [ ] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA).【d9a97b†L24-L29】【7786e5†L63-L72】
 - [x] **2025-10-28 · Engineering (Phase 3)** — Persist refined outputs & data versioning (completed via PR `telemetry/bootstrap` follow-ons).【d9a97b†L29-L34】【7786e5†L63-L72】
@@ -43,7 +43,7 @@
 - [x] Design dataset contract specification layer and registry.
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
-- [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28).
+- [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28). Extended on 2025-12-26 with ingestion-focused property coverage and column deduplication in `pipeline/ingestion.py`.【7d0f96†L1-L13】【F:src/hotpass/pipeline/ingestion.py†L1-L191】
 - [x] Instrument CLI and Prefect pipeline runs with OpenLineage and document Marquez quickstart (2025-12-02).
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [x] Centralise OpenTelemetry bootstrap across CLI + Prefect flows and document exporter toggles (completed 2025-12-02 with updated docs/ADR/tests).
@@ -70,6 +70,7 @@
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run).【e5372e†L1-L3】
 - [ ] Tests — `uv run pytest --cov=src --cov=tests` (fails: import error for `hotpass.evidence`, optional dependency gap).【caccca†L1-L18】
+- [x] Tests — `uv run pytest tests/property/test_ingestion_properties.py` (pass; exercises ingestion deduplication/idempotency under messy fixtures).【7d0f96†L1-L13】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
 - [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
@@ -104,6 +105,7 @@
 ## Risks/Notes
 
 - Prefect pipeline task payload fix merged; continue monitoring downstream Prefect deployments for regressions when toggling `backfill`/`incremental` flags.
+- Ingestion now normalises column headers and restores missing optional fields before slug/province transforms; monitor downstream consumers for assumptions about duplicate column names.
 - Format gate currently red because repository-wide drift predates this work; coordinate with maintainers before applying automated formatting across the codebase.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
