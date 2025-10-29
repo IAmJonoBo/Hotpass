@@ -73,8 +73,18 @@ def _ensure_source_columns(frame: pd.DataFrame) -> pd.DataFrame:
 
 def _normalise_source_frame(frame: pd.DataFrame) -> pd.DataFrame:
     attrs = dict(frame.attrs)
-    working = frame.copy(deep=True)
-    working = _deduplicate_columns(working)
+
+    if frame.columns.is_unique:
+        working = frame.copy(deep=True)
+    else:
+        # Pandas returns a DataFrame when selecting columns with duplicate
+        # labels, which breaks downstream expectations that individual column
+        # access yields row data. Deduplicate the working copy and mirror the
+        # updated labels back onto the original frame so any callers sharing the
+        # reference observe consistent column names.
+        working = _deduplicate_columns(frame)
+        frame.columns = working.columns
+
     working = _ensure_source_columns(working)
     ordered = _SOURCE_COLUMNS + [
         column for column in working.columns if column not in _SOURCE_COLUMNS

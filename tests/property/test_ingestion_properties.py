@@ -257,8 +257,11 @@ def test_ingest_sources_handles_messy_frames(
         expect(slug is None or slug.isascii(), "slug outputs should remain ASCII-safe")
 
     if "province" in frame.columns:
+        province_source = frame["province"]
+        if isinstance(province_source, pd.DataFrame):
+            province_source = province_source.iloc[:, 0]
         for original, normalized in zip(
-            frame["province"], combined_one["province"], strict=True
+            province_source, combined_one["province"], strict=True
         ):
             expect(
                 normalized == normalize_province(original),
