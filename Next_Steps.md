@@ -15,6 +15,7 @@
 - [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).
 - [ ] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).
 - [x] **2025-12-12 · Engineering** — Finalise OpenTelemetry bootstrap (CLI orchestrate + Prefect flows wiring, exporter toggles, shutdown guards) and land docs/ADR/tests.
+- [x] **2025-12-08 · Engineering/Docs** — Ship `hotpass doctor` / `hotpass init` onboarding commands with docs, ADR, and regression coverage.
 
 ## Steps
 
@@ -32,6 +33,7 @@
 - [x] Exercised telemetry-focused pytest suites (`tests/test_pipeline_enhanced.py`, `tests/test_telemetry_bootstrap.py`, `tests/cli/test_telemetry_options.py`) to validate bootstrap wiring (2025-12-02).【0e3de5†L1-L87】
 
 - [x] Documented ARC runner provisioning and lifecycle verification (2025-10-29).
+- [x] Delivered CLI doctor/init onboarding workflow with targeted QA run and documentation updates (2025-12-08).【f5a08d†L1-L82】【e4f00a†L1-L3】【bf7d68†L1-L2】【cce017†L1-L23】【549e24†L1-L59】
 
 ## Deliverables
 
@@ -46,12 +48,18 @@
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace.
 - [ ] Tests — `uv run pytest --cov=src --cov=tests` (fails: import error for `hotpass.evidence`, optional dependency gap).【caccca†L1-L18】
+- [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
 - [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
+  - [x] Targeted format applied to new CLI/test modules via `ruff format` (pass).【d7b838†L1-L3】
 - [ ] Lint — `uv run ruff check` (fails: import ordering and unused imports across legacy modules).【9f2dbe†L1-L73】
+  - [x] Targeted lint on new modules via `ruff check` (pass).【e4f00a†L1-L3】
 - [ ] Types — `uv run mypy src tests scripts` (fails: 169 errors across legacy modules, including telemetry stubs and Prefect fixtures).【571738†L1-L33】【8a3cb6†L1-L38】
+  - [x] Targeted mypy for doctor/init modules and tests (pass).【bf7d68†L1-L2】
 - [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【586f55†L1-L118】
+  - [x] Targeted bandit scan for doctor/init modules (pass).【cce017†L1-L23】
 - [x] Secrets — `uv run detect-secrets scan src tests scripts` (pass: no findings).【2688f8†L1-L61】
+  - [x] Targeted detect-secrets scan for new CLI/tests/docs (pass).【549e24†L1-L59】
 - [x] Build — `uv run uv build` (pass: source distribution and wheel generated).【570ce6†L1-L226】
 - [ ] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (fails: existing heading hierarchy/toctree gaps across legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — Dedicated lineage pytest matrix not rerun; blocked on optional dependency installation tracked under Tests gate. Refer to global pytest failure for context.【860a1f†L1-L18】
@@ -64,6 +72,8 @@
 - `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
 - `docs/adr/index.md` — documentation strategy alignment summary.
 - `prefect/` — manifest library consumed by the revamped deployment loader.
+- `docs/adr/0007-cli-onboarding.md` — decision record for CLI doctor/init onboarding workflow.
+- `docs/reference/cli.md` / `docs/tutorials/quickstart.md` — updated references introducing doctor/init usage.
 
 ## Risks/Notes
 

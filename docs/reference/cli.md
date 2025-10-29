@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the unified `hotpass` CLI entry point and its subcommands.
-last_updated: 2025-12-02
+last_updated: 2025-12-08
 ---
 
 Hotpass now ships a single console script: `hotpass`. Subcommands map to the core
@@ -13,6 +13,13 @@ CLI after printing a deprecation warning.
 
 ```bash
 uv run hotpass run --input-dir ./data --output-path ./dist/refined.xlsx --archive
+```
+
+Scaffold a dedicated workspace and validate prerequisites before your first run:
+
+```bash
+uv run hotpass init --path ./workspace
+uv run hotpass doctor --config ./config/pipeline.quickstart.toml
 ```
 
 Shared flags such as `--profile`, `--config`, `--log-format`, and `--sensitive-field`
@@ -205,6 +212,39 @@ uv run hotpass dashboard --host localhost --port 8501
 | ---------------- | ------------------------------------------------------------- |
 | `--host HOST`    | Bind address for the dashboard server (default: `localhost`). |
 | `--port INTEGER` | Port for the Streamlit dashboard (default: `8501`).           |
+
+### `doctor`
+
+Run configuration and environment diagnostics. The command honours shared options such as
+`--config` and `--profile` before running the checks.
+
+```bash
+uv run hotpass doctor --config ./config/pipeline.quickstart.toml --autofix
+```
+
+| Option       | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `--autofix`  | Apply safe governance autofixes (for example default data owners). |
+
+The doctor reports Python version compatibility, input/output directory readiness, and the
+results of the underlying `ConfigDoctor` diagnostics. Exit code `1` indicates an error that
+requires remediation, while warnings leave the exit code unchanged.
+
+### `init`
+
+Scaffold a workspace with sample configuration, profile, and Prefect deployment files.
+
+```bash
+uv run hotpass init --path ./workspace
+```
+
+| Option     | Description                                                         |
+| ---------- | ------------------------------------------------------------------- |
+| `--path`   | Destination directory for the generated workspace (default: `.`).   |
+| `--force`  | Overwrite files when the destination already contains artefacts.    |
+
+The generated workspace includes `config/pipeline.quickstart.toml`, a matching profile,
+and a Prefect deployment sample that executes the quickstart pipeline.
 
 ### Automation delivery environment variables
 

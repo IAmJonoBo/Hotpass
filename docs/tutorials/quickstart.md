@@ -1,7 +1,7 @@
 ---
 title: Quickstart — refine a workbook in minutes
 summary: Run the core Hotpass pipeline end-to-end using sample data and explore the generated outputs.
-last_updated: 2025-10-25
+last_updated: 2025-12-08
 ---
 
 This tutorial shows you how to install Hotpass, validate a spreadsheet, and publish a refined workbook with quality insights. It assumes you are comfortable with Python tooling but are new to the Hotpass platform.
@@ -23,11 +23,26 @@ Hotpass includes optional extras for orchestration, enrichment, geospatial insig
 uv sync --extra dev --extra orchestration --extra enrichment --extra geospatial --extra dashboards
 ```
 
-## 2. Inspect the sample data
+## 2. Bootstrap a workspace
 
-The `data/` directory contains anonymised Excel workbooks that mirror the structure of customer spreadsheets. Open one of the files to review key columns such as `organization_name`, `contact_email`, and `status` so you understand the baseline state before processing.
+Create a clean project directory with sample configuration and validate the environment before
+running the pipeline:
 
-## 3. Run the pipeline
+```bash
+uv run hotpass init --path ./quickstart-workspace
+cd quickstart-workspace
+uv run hotpass doctor --config ./config/pipeline.quickstart.toml
+```
+
+The bootstrap step creates configuration, profile, and Prefect deployment templates under
+`./config/` and `./prefect/`. The doctor confirms that Python meets the minimum version
+requirement and that the input/output directories are ready.
+
+## 3. Inspect the sample data
+
+The bootstrap workspace ships with an empty `data/` directory and guidance on where to store workbooks. Copy one of the anonymised fixtures from the repository root (for example `../data/Reachout Database.xlsx`) into `data/`, then review key columns such as `organization_name`, `contact_email`, and `status` so you understand the baseline state before processing.
+
+## 4. Run the pipeline
 
 Run the default command to validate the workbook, normalise field names, and produce a consolidated output file:
 
@@ -42,7 +57,7 @@ The command performs these steps:
 - Consolidates contact rows and resolves conflicts between sources.
 - Generates Excel, CSV, and Parquet outputs when `--archive` is enabled.
 
-## 4. Review the results
+## 5. Review the results
 
 After the run completes, open the generated Excel file. You should see:
 
@@ -56,7 +71,7 @@ To inspect logs programmatically, run the pipeline with JSON output:
 uv run hotpass --archive --log-format json --log-level INFO
 ```
 
-## 5. Extend the experience
+## 6. Extend the experience
 
 Once you are comfortable with the basics, explore the advanced tutorial to orchestrate the pipeline and stream telemetry with Prefect and OpenTelemetry.
 
