@@ -3,16 +3,139 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import subprocess
 import sys
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Protocol, cast
 
-import requests
+import requests  # type: ignore[import-untyped]
+
+
+@dataclass(frozen=True)
+class AwsIdentitySummary:
+    account: str
+    arn: str
+    user_id: str
+    source: str
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "account": self.account,
+            "arn": self.arn,
+            "user_id": self.user_id,
+            "source": self.source,
+        }
+
+
+class _StsClient(Protocol):
+    def get_caller_identity(self) -> Mapping[str, Any]:  # pragma: no cover - protocol definition
+        """Return the AWS identity metadata."""
+
+
+class _Boto3Session(Protocol):
+    def client(
+        self, service_name: str, region_name: str | None = None
+    ) -> _StsClient:  # pragma: no cover - protocol definition
+        """Construct a boto3 client."""
+
+
+class _Boto3SessionModule(Protocol):
+    def Session(self, **kwargs: Any) -> _Boto3Session:  # pragma: no cover - protocol definition
+        """Return a boto3 session instance."""
+
+
+class _Boto3Module(Protocol):
+    session: _Boto3SessionModule  # pragma: no cover - protocol attribute
+
+
+class AwsIdentityVerifier:
+    """Resolve the AWS identity attached to the current credentials."""
+
+    def __init__(
+        self,
+        *,
+        region: str | None = None,
+        profile: str | None = None,
+        boto3_loader: Callable[[], ModuleType | _Boto3Module] | None = None,
+        run_command: CommandRunner | None = None,
+    ) -> None:
+        self.region = region
+        self.profile = profile
+        self._load_boto3 = boto3_loader or self._import_boto3
+        self._run_command = run_command or self._default_run_command
+
+    @staticmethod
+    def _import_boto3() -> ModuleType:
+        return importlib.import_module("boto3")
+
+    @staticmethod
+    def _default_run_command(args: list[str]) -> str:
+        result = subprocess.run(args, capture_output=True, check=True, text=True)
+        return result.stdout.strip()
+
+    def verify(self) -> AwsIdentitySummary:
+        boto3_module: ModuleType | _Boto3Module | None
+        try:
+            boto3_module = self._load_boto3()
+        except ModuleNotFoundError:
+            boto3_module = None
+        except ImportError:
+            boto3_module = None
+        if boto3_module is not None:
+            try:
+                session_kwargs: dict[str, Any] = {}
+                if self.profile:
+                    session_kwargs["profile_name"] = self.profile
+                session_factory = getattr(boto3_module, "session", None)
+                session_ctor = getattr(session_factory, "Session", None)
+                if not callable(session_ctor):
+                    raise AttributeError("boto3 session factory missing")
+                session = cast(_Boto3Session, session_ctor(**session_kwargs))
+                client = session.client("sts", region_name=self.region)
+                response = client.get_caller_identity()
+                return AwsIdentitySummary(
+                    account=str(response.get("Account", "")),
+                    arn=str(response.get("Arn", "")),
+                    user_id=str(response.get("UserId", "")),
+                    source="boto3",
+                )
+            except Exception:
+                boto3_module = None
+        command = ["aws"]
+        if self.profile:
+            command.extend(["--profile", self.profile])
+        command.extend(["sts", "get-caller-identity", "--output", "json"])
+        if self.region:
+            command.extend(["--region", self.region])
+        try:
+            raw_output = self._run_command(command)
+        except FileNotFoundError as exc:  # pragma: no cover - covered via tests
+            raise RuntimeError("AWS CLI executable 'aws' was not found on PATH") from exc
+        except subprocess.CalledProcessError as exc:  # pragma: no cover - defensive guard
+            stderr = exc.stderr.strip() if exc.stderr else ""
+            message = f"AWS CLI failed with exit code {exc.returncode}"
+            if stderr:
+                message = f"{message}: {stderr}"
+            raise RuntimeError(message) from exc
+        output = raw_output.strip()
+        if not output:
+            raise RuntimeError("AWS CLI returned empty output while resolving identity")
+        try:
+            payload = json.loads(output)
+        except json.JSONDecodeError as exc:  # pragma: no cover - defensive guard
+            raise RuntimeError("AWS CLI output is not valid JSON") from exc
+        return AwsIdentitySummary(
+            account=str(payload.get("Account", "")),
+            arn=str(payload.get("Arn", "")),
+            user_id=str(payload.get("UserId", "")),
+            source="aws-cli",
+        )
 
 
 class CommandRunner(Protocol):
@@ -150,15 +273,41 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         type=Path,
         help=("Optional JSON file describing pods and runner statuses for offline verification"),
     )
+    parser.add_argument(
+        "--verify-oidc",
+        action="store_true",
+        help="Also confirm the AWS identity resolved via OIDC",
+    )
+    parser.add_argument(
+        "--aws-region",
+        help="Optional AWS region override when verifying the identity",
+    )
+    parser.add_argument(
+        "--aws-profile",
+        help="Optional AWS profile name to use for identity verification",
+    )
     return parser.parse_args(argv)
 
 
-def _emit_result(success: bool, mode: str) -> None:
+def _emit_result(
+    success: bool,
+    mode: str,
+    *,
+    identity: AwsIdentitySummary | None = None,
+) -> None:
     if mode == "json":
-        print(json.dumps({"success": success}))
+        payload: dict[str, Any] = {"success": success}
+        if identity is not None:
+            payload["identity"] = identity.as_dict()
+        print(json.dumps(payload))
     else:
         state = "healthy" if success else "unhealthy"
         print(f"Runner scale set is {state}")
+        if identity is not None:
+            print(
+                "OIDC identity: "
+                f"{identity.arn} (account {identity.account}, source {identity.source})",
+            )
 
 
 @dataclass(frozen=True)
@@ -287,13 +436,27 @@ def main(argv: list[str] | None = None) -> int:
             timeout_seconds=args.timeout,
             poll_interval=args.poll_interval,
         )
+    identity_summary: AwsIdentitySummary | None = None
     try:
         verifier.verify()
     except Exception as exc:  # noqa: BLE001 - surfaced to the CLI
         _emit_result(False, args.output)
         print(str(exc), file=sys.stderr)
         return 1
-    _emit_result(True, args.output)
+    region = args.aws_region or None
+    profile = args.aws_profile or None
+    if args.verify_oidc:
+        identity_verifier = AwsIdentityVerifier(
+            region=region,
+            profile=profile,
+        )
+        try:
+            identity_summary = identity_verifier.verify()
+        except Exception as exc:  # noqa: BLE001 - surfaced to the CLI
+            _emit_result(False, args.output)
+            print(f"OIDC verification failed: {exc}", file=sys.stderr)
+            return 1
+    _emit_result(True, args.output, identity=identity_summary)
     return 0
 
 

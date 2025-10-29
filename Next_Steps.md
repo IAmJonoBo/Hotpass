@@ -2,7 +2,8 @@
 
 ## Tasks
 
-- [ ] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).
+- [x] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
+- [ ] **2025-12-30 · Programme** — Confirm Phase 5 T5.5 completion with stakeholders so roadmap status reflects programme expectations.【F:ROADMAP.md†L43-L63】
 - [ ] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).
 - [ ] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).
 - [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles (book staging slot on 2025-12-18; reuse Prefect deployment `hotpass-e2e-staging`).
@@ -52,6 +53,8 @@
 - [x] Automated Marquez stack validation and lineage environment guardrails via targeted tests (2025-12-27).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [x] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18). Snapshot scenario exercised locally with recorded output; live cluster follow-up remains on the Platform roadmap.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
+- [x] Added OIDC identity verification to the ARC smoke workflow and lifecycle script so staging rehearsals confirm AWS role assumptions alongside runner drain (2025-12-29).【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
+- [x] Hardened ARC identity verification to tolerate missing boto3 installations and absent AWS CLI binaries, added targeted regression coverage, and enforced GitHub region configuration validation ahead of staging rehearsals (2025-12-30).【F:scripts/arc/verify_runner_lifecycle.py†L1-L220】【F:tests/scripts/test_arc_runner_verifier.py†L1-L340】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L80】【F:docs/how-to-guides/manage-arc-runners.md†L70-L110】
 - [x] Regenerated dataset contract schemas and reference documentation (2025-10-29) via `python -m hotpass.contracts.generator` to confirm artefact parity.【F:docs/reference/schemas.md†L1-L303】【F:schemas/contact_capture.schema.json†L1-L32】
 
 - [x] Documented ARC runner provisioning and lifecycle verification (2025-10-29).
@@ -71,7 +74,8 @@
 
 ## Quality Gates
 
-- [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run).【e5372e†L1-L3】
+- [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
+  - [x] Targeted regression suite covers boto3 import failures, missing AWS CLI binaries, and CLI error handling (`uv run pytest tests/scripts/test_arc_runner_verifier.py`).【F:tests/scripts/test_arc_runner_verifier.py†L1-L360】
 - [x] Tests — `uv run pytest --cov=src --cov=tests` (pass: Prefect deployment stubs restored module state; CLI overrides now exercised).【bfee17†L1-L111】【F:tests/test_deployment_specs.py†L1-L269】
 - [x] Tests — `uv run pytest tests/property/test_ingestion_properties.py` (pass; exercises ingestion deduplication/idempotency under messy fixtures).【7d0f96†L1-L13】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
