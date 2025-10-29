@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from typing import Any
 
 from ...compliance import DataClassification, LawfulBasis
 from ...linkage import LinkageConfig
@@ -31,6 +32,12 @@ class EnhancedPipelineConfig:
     linkage_output_dir: str | None = None
     linkage_match_threshold: float | None = None
     telemetry_attributes: Mapping[str, str] = field(default_factory=dict)
+    telemetry_service_name: str = "hotpass"
+    telemetry_exporters: tuple[str, ...] = field(default_factory=tuple)
+    telemetry_environment: str | None = None
+    telemetry_exporter_settings: Mapping[str, Mapping[str, Any]] = field(
+        default_factory=dict
+    )
     audit_log_enabled: bool = True
     consent_required: bool = True
     governance_intent: tuple[str, ...] = field(default_factory=tuple)

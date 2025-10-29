@@ -39,6 +39,7 @@ def initialize_observability(
     export_to_console: bool = True,
     exporters: tuple[str, ...] | None = None,
     resource_attributes: Mapping[str, str] | None = None,
+    exporter_settings: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> tuple[Any, Any]:
     """Initialise telemetry instrumentation and return tracer/meter handles."""
 
@@ -51,6 +52,7 @@ def initialize_observability(
         environment=environment,
         exporters=chosen_exporters,
         resource_attributes=resource_attributes or {},
+        exporter_settings=exporter_settings or {},
     )
     context = _REGISTRY.configure(config)
     return context.tracer, context.meter

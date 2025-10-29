@@ -212,6 +212,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 profile_name=options.industry_profile_name,
                 runner=runner,
                 runner_kwargs=runner_kwargs,
+                telemetry_context={"hotpass.command": "hotpass orchestrate"},
             )
         )
     except DataContractError as exc:

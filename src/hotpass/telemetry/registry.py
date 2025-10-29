@@ -23,6 +23,7 @@ class TelemetryConfig:
     exporters: tuple[str, ...] = ("console",)
     service_version: str = "0.1.0"
     resource_attributes: Mapping[str, str] = field(default_factory=dict)
+    exporter_settings: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,12 @@ class TelemetryModules:
     console_metric_exporter_cls: type[Any]
     resource_cls: Any
     span_export_result_cls: Any | None = None
+    span_exporter_factories: Mapping[str, Callable[[Mapping[str, Any]], Any]] = field(
+        default_factory=dict
+    )
+    metric_exporter_factories: Mapping[str, Callable[[Mapping[str, Any]], Any]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass(frozen=True)
@@ -56,7 +63,7 @@ class TelemetryPolicy:
     """Validate requested telemetry configuration against policy rules."""
 
     def __init__(self, allowed_exporters: Iterable[str] | None = None) -> None:
-        self.allowed_exporters = set(allowed_exporters or {"console", "noop"})
+        self.allowed_exporters = set(allowed_exporters or {"console", "noop", "otlp"})
 
     def validate(self, config: TelemetryConfig) -> TelemetryConfig:
         errors: list[str] = []
@@ -66,11 +73,19 @@ class TelemetryPolicy:
             errors.append("service_name is required")
 
         exporters = config.exporters or ("console",)
+        settings_input = dict(config.exporter_settings or {})
         invalid = [
             exporter for exporter in exporters if exporter not in self.allowed_exporters
         ]
         if invalid:
             errors.append(f"unsupported exporters: {', '.join(sorted(invalid))}")
+
+        extra_settings = set(settings_input) - set(exporters)
+        if extra_settings:
+            errors.append(
+                "settings provided for exporters that are not enabled: "
+                f"{', '.join(sorted(extra_settings))}"
+            )
 
         env_source = (
             config.environment or os.getenv("HOTPASS_ENVIRONMENT") or "development"
@@ -81,6 +96,17 @@ class TelemetryPolicy:
 
         if errors:
             raise ValueError("; ".join(errors))
+
+        normalised_settings: dict[str, dict[str, Any]] = {}
+        for exporter in exporters:
+            values = settings_input.get(exporter, {})
+            if values and not isinstance(values, Mapping):
+                raise ValueError(
+                    f"settings for exporter '{exporter}' must be a mapping"
+                )
+            normalised_settings[exporter] = {
+                str(key): value for key, value in dict(values or {}).items()
+            }
 
         attributes = {
             "service.name": service_name,
@@ -95,6 +121,7 @@ class TelemetryPolicy:
             exporters=tuple(exporters),
             service_version=config.service_version,
             resource_attributes=attributes,
+            exporter_settings=normalised_settings,
         )
 
 
@@ -152,12 +179,16 @@ class TelemetryRegistry:
         resource = self.modules.resource_cls.create(dict(validated.resource_attributes))
 
         self.tracer_provider = self.modules.tracer_provider_cls(resource=resource)
-        for exporter in self._create_span_exporters(validated.exporters):
+        for exporter in self._create_span_exporters(
+            validated.exporters, validated.exporter_settings
+        ):
             processor = self.modules.span_processor_cls(exporter)
             self.tracer_provider.add_span_processor(processor)
         self.modules.trace.set_tracer_provider(self.tracer_provider)
 
-        self._metric_readers = self._create_metric_readers(validated.exporters)
+        self._metric_readers = self._create_metric_readers(
+            validated.exporters, validated.exporter_settings
+        )
         self.meter_provider = self.modules.meter_provider_cls(
             metric_readers=self._metric_readers,
             resource=resource,
@@ -225,27 +256,60 @@ class TelemetryRegistry:
         self.tracer_provider = None
         self._context = None
 
-    def _create_span_exporters(self, exporters: tuple[str, ...]) -> list[Any]:
+    def _create_span_exporters(
+        self,
+        exporters: tuple[str, ...],
+        settings: Mapping[str, Mapping[str, Any]],
+    ) -> list[Any]:
         result: list[Any] = []
         for name in exporters:
+            if name == "noop":
+                continue
+            exporter_settings = settings.get(name, {})
+            factory = self.modules.span_exporter_factories.get(name)
+            if factory is not None:
+                delegate = factory(exporter_settings)
+                if delegate is not None:
+                    result.append(self._safe_span_exporter(delegate))
+                continue
             if name == "console":
-                result.append(self._safe_span_exporter())
+                delegate = self.modules.console_span_exporter_cls()
+                result.append(self._safe_span_exporter(delegate))
         return result
 
-    def _create_metric_readers(self, exporters: tuple[str, ...]) -> list[Any]:
+    def _create_metric_readers(
+        self,
+        exporters: tuple[str, ...],
+        settings: Mapping[str, Mapping[str, Any]],
+    ) -> list[Any]:
         readers: list[Any] = []
         for name in exporters:
-            if name == "console":
-                exporter = self._safe_metric_exporter()
+            if name == "noop":
+                continue
+            exporter_settings = settings.get(name, {})
+            factory = self.modules.metric_exporter_factories.get(name)
+            if factory is not None:
+                delegate = factory(exporter_settings)
+                if delegate is None:
+                    continue
                 readers.append(
                     self.modules.metric_reader_cls(
-                        exporter, export_interval_millis=60000
+                        self._safe_metric_exporter(delegate),
+                        export_interval_millis=60000,
+                    )
+                )
+                continue
+            if name == "console":
+                delegate = self.modules.console_metric_exporter_cls()
+                readers.append(
+                    self.modules.metric_reader_cls(
+                        self._safe_metric_exporter(delegate),
+                        export_interval_millis=60000,
                     )
                 )
         return readers
 
-    def _safe_span_exporter(self) -> Any:
-        delegate = self.modules.console_span_exporter_cls()
+    def _safe_span_exporter(self, delegate: Any) -> Any:
         result_cls = self.modules.span_export_result_cls
 
         def _fallback(_: ValueError) -> Any:
@@ -255,8 +319,7 @@ class TelemetryRegistry:
 
         return _SafeExporterProxy(delegate, _fallback)
 
-    def _safe_metric_exporter(self) -> Any:
-        delegate = self.modules.console_metric_exporter_cls()
+    def _safe_metric_exporter(self, delegate: Any) -> Any:
 
         def _fallback(_: ValueError) -> Any:
             return None
@@ -402,6 +465,8 @@ def _build_noop_modules() -> TelemetryModules:
         console_metric_exporter_cls=_NoopProvider,
         resource_cls=_NoopResource,
         span_export_result_cls=None,
+        span_exporter_factories={},
+        metric_exporter_factories={},
     )
 
 
@@ -409,6 +474,16 @@ def build_default_modules() -> TelemetryModules:
     try:  # pragma: no cover - exercised in integration tests
         from opentelemetry import metrics as otel_metrics
         from opentelemetry import trace as otel_trace
+        try:
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+                OTLPMetricExporter,
+            )
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                OTLPSpanExporter,
+            )
+        except ImportError:  # pragma: no cover - optional exporter dependency
+            OTLPMetricExporter = None  # type: ignore[assignment]
+            OTLPSpanExporter = None  # type: ignore[assignment]
         from opentelemetry.sdk.metrics import MeterProvider
         from opentelemetry.sdk.metrics.export import (
             ConsoleMetricExporter,
@@ -424,6 +499,52 @@ def build_default_modules() -> TelemetryModules:
     except ImportError:  # pragma: no cover - runtime fallback
         return _build_noop_modules()
 
+    def _build_console_span(_: Mapping[str, Any]) -> Any:
+        return ConsoleSpanExporter()
+
+    def _build_console_metric(_: Mapping[str, Any]) -> Any:
+        return ConsoleMetricExporter()
+
+    def _parse_otlp_kwargs(
+        config: Mapping[str, Any], *, metrics: bool = False
+    ) -> dict[str, Any]:
+        kwargs: dict[str, Any] = {}
+        endpoint_key = "metrics_endpoint" if metrics else "endpoint"
+        endpoint_value = config.get(endpoint_key) or config.get("endpoint")
+        if endpoint_value:
+            kwargs["endpoint"] = str(endpoint_value)
+        headers = config.get("headers")
+        if isinstance(headers, Mapping):
+            kwargs["headers"] = {str(key): str(value) for key, value in headers.items()}
+        if "insecure" in config:
+            kwargs["insecure"] = bool(config.get("insecure"))
+        if "timeout" in config and config.get("timeout") is not None:
+            try:
+                kwargs["timeout"] = float(config.get("timeout"))
+            except (TypeError, ValueError):
+                pass
+        return kwargs
+
+    span_factories: dict[str, Callable[[Mapping[str, Any]], Any]] = {
+        "console": _build_console_span,
+    }
+    metric_factories: dict[str, Callable[[Mapping[str, Any]], Any]] = {
+        "console": _build_console_metric,
+    }
+
+    if OTLPSpanExporter is not None and OTLPMetricExporter is not None:
+
+        def _build_otlp_span(config: Mapping[str, Any]) -> Any:
+            kwargs = _parse_otlp_kwargs(config, metrics=False)
+            return OTLPSpanExporter(**kwargs)
+
+        def _build_otlp_metric(config: Mapping[str, Any]) -> Any:
+            kwargs = _parse_otlp_kwargs(config, metrics=True)
+            return OTLPMetricExporter(**kwargs)
+
+        span_factories["otlp"] = _build_otlp_span
+        metric_factories["otlp"] = _build_otlp_metric
+
     return TelemetryModules(
         available=True,
         metrics=otel_metrics,
@@ -436,6 +557,8 @@ def build_default_modules() -> TelemetryModules:
         console_metric_exporter_cls=ConsoleMetricExporter,
         resource_cls=Resource,
         span_export_result_cls=SpanExportResult,
+        span_exporter_factories=span_factories,
+        metric_exporter_factories=metric_factories,
     )
 
 

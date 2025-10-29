@@ -1,20 +1,26 @@
 ---
 title: Observability registry and policy
-summary: Configure the Hotpass telemetry registry, exporter policies, and QA expectations.
-last_updated: 2025-10-27
+summary: Configure the Hotpass telemetry bootstrap, exporter policies, and QA expectations.
+last_updated: 2025-12-02
 ---
 
-Hotpass now routes all tracing and metrics through a dedicated telemetry registry. The
-registry centralises OpenTelemetry provider initialisation, exporter wiring, and shutdown
-behaviour so the CLI, Prefect orchestrator, and unit tests share the same lifecycle hooks.
+Hotpass now routes all tracing and metrics through a dedicated telemetry bootstrap layer.
+The bootstrap centralises OpenTelemetry provider initialisation, exporter wiring, and
+shutdown behaviour so the CLI, Prefect orchestrator, and unit tests share the same
+lifecycle hooks. Both CLI entry points and Prefect flows call the shared
+`telemetry_session` context manager to ensure exporter shutdown always runs, even when
+exceptions bubble up.
 
 ## Registry overview
 
 - `hotpass.telemetry.registry.TelemetryRegistry` owns tracer/meter providers and exporter
   instances. Dependency injection allows tests to swap in lightweight stubs without
   touching global state.
-- `hotpass.observability.initialize_observability` is a thin wrapper around the registry
-  that the CLI and orchestrator call when `enable_observability` is set.
+- `hotpass.telemetry.bootstrap.telemetry_session` is the canonical way to initialise and
+  shut down telemetry. The CLI and Prefect flows wrap pipeline execution inside this
+  context to guarantee exporters flush on exit.
+- `hotpass.observability.initialize_observability` remains a thin wrapper around the
+  registry and is used by lower-level helpers that need direct tracer/meter references.
 - `PipelineMetrics` moved to `hotpass.telemetry.metrics` and is created via the registry,
   ensuring histogram and counter instruments share the same meter instance.
 
@@ -30,18 +36,24 @@ local development to confirm datasets, jobs, and runs are captured end-to-end.
 
 ## Configuration examples
 
-### CLI (hotpass-enhanced orchestrate)
+### CLI (hotpass run / hotpass orchestrate)
 
 ```bash
-uv run hotpass-enhanced orchestrate \
-  --profile aviation \
-  --enable-observability
+uv run hotpass run \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --enable-observability \
+  --telemetry-exporter otlp \
+  --telemetry-otlp-endpoint grpc://collector:4317 \
+  --telemetry-otlp-header Authorization="Bearer 123" \
+  --telemetry-resource-attr deployment=staging
 ```
 
-The CLI sets telemetry attributes for the selected profile and annotates each run with the
-`hotpass.command=hotpass-enhanced orchestrate` tag. Exporters default to the console
-wrapper and the registry uses `HOTPASS_ENVIRONMENT` (or `development`) for the environment
-tag.
+The CLI sets telemetry attributes for the selected profile and annotates each run with
+`hotpass.command` (`hotpass run` or `hotpass orchestrate`). Exporters default to the
+console wrapper, but the new `--telemetry-exporter` flag enables OTLP alongside console or
+noop exporters. Endpoint, headers, and timeout flags map directly to the registry's OTLP
+settings and are safe to leave unset when publishing solely to the console.
 
 ### Prefect deployments
 
@@ -61,9 +73,11 @@ EnhancedPipelineConfig(
 
 ### Custom exporters
 
-Only the safe console exporter ships out of the box. To add OTLP exporters in a custom
-deployment, instantiate `TelemetryRegistry` with bespoke exporter factories and inject the
-registry via `hotpass.observability.use_registry()`.
+Console exporters remain the default, but OTLP exporters are now included out of the box.
+To integrate with additional back-ends, instantiate `TelemetryRegistry` with bespoke
+exporter factories and inject the registry via `hotpass.observability.use_registry()`.
+Any CLI-specified exporter name must be allow-listed by the registry policy before it can
+be used.
 
 ## Policy enforcement
 
@@ -73,7 +87,7 @@ registry via `hotpass.observability.use_registry()`.
 - `environment` must resolve to a non-empty string (falls back to `HOTPASS_ENVIRONMENT`
   then `development`).
 - Each requested exporter must be allow-listed. The default allow list includes
-  `console` and `noop`.
+  `console`, `noop`, and `otlp`.
 
 Invalid configurations raise `ValueError` early so CI fails fast rather than attempting to
 emit telemetry with missing metadata.
