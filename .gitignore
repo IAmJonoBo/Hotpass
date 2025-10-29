@@ -28,3 +28,7 @@ mutants/
 
 # Allow distribution archives to be generated under dist/
 !/dist/
+
+# MLflow tracking artifacts
+mlflow.db
+mlruns/

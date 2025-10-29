@@ -118,6 +118,8 @@ src/hotpass/linkage/config.py
 src/hotpass/linkage/review.py
 src/hotpass/linkage/runner.py
 src/hotpass/linkage/settings.py
+src/hotpass/ml/__init__.py
+src/hotpass/ml/tracking.py
 src/hotpass/pipeline/__init__.py
 src/hotpass/pipeline/aggregation.py
 src/hotpass/pipeline/base.py
@@ -173,6 +175,7 @@ tests/test_formatting.py
 tests/test_geospatial.py
 tests/test_lineage.py
 tests/test_linkage.py
+tests/test_ml_tracking.py
 tests/test_observability.py
 tests/test_orchestration.py
 tests/test_orchestration_lineage.py

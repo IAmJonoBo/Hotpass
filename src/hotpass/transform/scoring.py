@@ -113,8 +113,14 @@ def train_lead_scoring_model(
     validation_size: float = 0.2,
     metric_thresholds: Mapping[str, float] | None = None,
     metrics_path: Path | None = None,
+    enable_mlflow: bool = True,
+    mlflow_model_name: str = "lead_scoring_model",
 ) -> LeadScoringTrainingResult:
-    """Train a logistic regression model and evaluate it on a validation split."""
+    """
+    Train a logistic regression model and evaluate it on a validation split.
+
+    Optionally logs the training run to MLflow if enable_mlflow=True and MLflow is available.
+    """
 
     try:  # pragma: no cover - dependency import guarded at runtime
         from sklearn.linear_model import LogisticRegression
@@ -168,9 +174,7 @@ def train_lead_scoring_model(
         stratify=stratify,
     )
 
-    estimator = LogisticRegression(
-        max_iter=1000, solver="lbfgs", random_state=random_state
-    )
+    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
     estimator.fit(X_train, y_train)
 
     validation_probabilities = estimator.predict_proba(X_valid)[:, 1]
@@ -205,9 +209,7 @@ def train_lead_scoring_model(
     serializable_metadata = dict(metadata)
     serializable_metadata["feature_names"] = list(metadata["feature_names"])
     payload = {"metrics": metrics, "metadata": serializable_metadata}
-    destination.write_text(
-        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    destination.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     if metric_thresholds:
         failures = {
@@ -228,6 +230,44 @@ def train_lead_scoring_model(
         feature_names=tuple(usable),
         trained_at=trained_at,
     )
+
+    # Log to MLflow if enabled and available
+    if enable_mlflow:
+        try:
+            from hotpass.ml.tracking import init_mlflow, log_training_run
+
+            init_mlflow()
+
+            # Prepare parameters for logging
+            params = {
+                "target_column": target_column,
+                "random_state": random_state,
+                "validation_size": validation_size,
+                "max_iter": 1000,
+                "solver": "lbfgs",
+            }
+
+            # Prepare artifacts
+            artifacts = {}
+            if destination.exists():
+                artifacts["metrics"] = destination
+
+            # Create input example from validation set
+            input_example = X_valid.head(5) if len(X_valid) >= 5 else X_valid
+
+            log_training_run(
+                model=estimator,
+                params=params,
+                metrics=metrics,
+                metadata=metadata,
+                artifacts=artifacts,
+                model_name=mlflow_model_name,
+                input_example=input_example,
+            )
+        except (ImportError, RuntimeError):
+            # MLflow not available or initialization failed - continue without tracking
+            pass
+
     return LeadScoringTrainingResult(model=model, metrics=metrics, metadata=metadata)
 
 
