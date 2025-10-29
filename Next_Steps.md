@@ -10,6 +10,7 @@
 - [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging (share staging credentials and freeze changes week of 2025-12-29 to avoid holiday overlap).
 - [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads (run benchmarks alongside December integration tests; feed results into January ADR updates).
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
+- [x] **2025-11-01 · Docs & Engineering** — Update README/CONTRIBUTING onboarding flow (quickstarts, preflight, doc links) and sync Diátaxis landing page/navigation with new data governance assets (Data Docs, Marquez, schema/reference).【376708†L1-L40】【8c8202†L1-L93】
 - [x] **2025-10-28 · Engineering/Docs** — Implement dataset contract models, regeneration tooling, docs reference, and ADR (landed via contracts module + docs automation).
 - [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).
 - [ ] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).
@@ -18,7 +19,9 @@
 ## Steps
 
 - [x] Bootstrap environment with `pip install -e .[dev]` (2025-10-28).
-- [x] Baseline QA audit (`pytest`, `ruff`, `mypy`, `bandit`, `detect-secrets`, `uv build`) — commands rerun on 2025-12-02 with current branch; see Quality Gates for updated status notes.
+- [x] Baseline QA audit (`pytest`, `ruff`, `mypy`, `bandit`, `detect-secrets`, `uv build`) — commands rerun on 2025-10-29; see Quality Gates for current failures by gate.
+- [x] Repository context review — README, doc structure (Diátaxis), governance roadmap, CI workflows, CODEOWNERS, and PR template catalogued to confirm documentation strategy + quality expectations (2025-10-29).【376708†L1-L40】【153305†L1-L43】【d7a74a†L1-L120】【a24b00†L1-L5】【d59c13†L1-L12】【8695aa†L1-L26】
+- [x] Refreshed docs navigation, governance reference pages, README/CONTRIBUTING quickstarts, and ADR index alignment (2025-10-29).【b17fde†L1-L76】【c42979†L11-L64】【60028f†L1-L34】【f068cc†L1-L42】
 - [x] Design dataset contract specification layer and registry.
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
@@ -42,22 +45,24 @@
 ## Quality Gates
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace.
-- [ ] Tests — `uv run pytest --cov=src --cov=tests` (fails: import error for `hotpass.evidence`, optional dependency gap).【860a1f†L1-L18】
+- [ ] Tests — `uv run pytest --cov=src --cov=tests` (fails: import error for `hotpass.evidence`, optional dependency gap).【caccca†L1-L18】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
-- [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【67b1e7†L1-L87】
-- [ ] Lint — `uv run ruff check` (fails: import ordering and unused imports across legacy modules).【eeb279†L1-L73】
-- [ ] Types — `uv run mypy src tests scripts` (fails: 169 errors across legacy modules, including new telemetry stubs).【b62168†L1-L33】
-- [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【9f6c11†L5-L120】
-- [x] Secrets — `uv run detect-secrets scan src tests scripts` (pass: no findings).【35e86e†L1-L61】
-- [x] Build — `uv run uv build` (pass: source distribution and wheel generated).【8c1cdb†L1-L263】
+- [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
+- [ ] Lint — `uv run ruff check` (fails: import ordering and unused imports across legacy modules).【9f2dbe†L1-L73】
+- [ ] Types — `uv run mypy src tests scripts` (fails: 169 errors across legacy modules, including telemetry stubs and Prefect fixtures).【571738†L1-L33】【8a3cb6†L1-L38】
+- [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【586f55†L1-L118】
+- [x] Secrets — `uv run detect-secrets scan src tests scripts` (pass: no findings).【2688f8†L1-L61】
+- [x] Build — `uv run uv build` (pass: source distribution and wheel generated).【570ce6†L1-L226】
+- [ ] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (fails: existing heading hierarchy/toctree gaps across legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — Dedicated lineage pytest matrix not rerun; blocked on optional dependency installation tracked under Tests gate. Refer to global pytest failure for context.【860a1f†L1-L18】
 
 ## Links
 
 - `schemas/` — current frictionless contracts to be regenerated.
 - `src/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
-- `docs/index.md` — toctree needing schema reference registration.
-- `docs/adr/` — ADR catalog for contract strategy addition.
+- `docs/index.md` — landing page now surfacing governance artefacts; monitor follow-up requests.
+- `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
+- `docs/adr/index.md` — documentation strategy alignment summary.
 - `prefect/` — manifest library consumed by the revamped deployment loader.
 
 ## Risks/Notes

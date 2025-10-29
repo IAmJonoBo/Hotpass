@@ -8,28 +8,55 @@ Hotpass refines messy spreadsheets into a governed single source of truth. The p
 - **Quality first**: Great Expectations, POPIA compliance checks, and actionable quality reports keep stakeholders informed.
 - **Operational**: Prefect orchestration, OpenTelemetry metrics, and a Streamlit dashboard make the pipeline production-friendly.
 
-## Get started
+## Five-minute quickstart
 
-```bash
-uv venv
-export HOTPASS_UV_EXTRAS="dev docs"
-bash scripts/uv_sync_extras.sh
-uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
-```
+1. Create an isolated environment with uv:
 
-Run `python scripts/idp/bootstrap.py` (add `--execute` to apply changes) for an interactive bootstrap that provisions dependencies, Prefect profiles, and supply-chain tooling.
+   ```bash
+   uv venv
+   export HOTPASS_UV_EXTRAS="dev docs"
+   bash scripts/uv_sync_extras.sh
+   ```
 
-Need orchestration or enrichment? Set `HOTPASS_UV_EXTRAS` to the extras you need before running the helper script:
+   Need orchestration or enrichment extras? Append them to
+   `HOTPASS_UV_EXTRAS` before rerunning the helper script.
 
-```bash
-HOTPASS_UV_EXTRAS="dev orchestration enrichment geospatial compliance dashboards" bash scripts/uv_sync_extras.sh
-```
+2. Run the refinement pipeline against the bundled fixtures:
 
-Or use the `sync` make target when working locally or on ephemeral runners:
+   ```bash
+   uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
+   ```
 
-```bash
-make sync EXTRAS="dev orchestration enrichment geospatial compliance dashboards"
-```
+   The command writes refined outputs to `dist/refined.xlsx` and publishes the
+   latest Great Expectations Data Docs under `dist/data-docs/`.
+
+3. Optional: regenerate validation reports explicitly while exploring the
+   dataset contracts:
+
+   ```bash
+   uv run python scripts/validation/refresh_data_docs.py
+   ```
+
+4. Launch the interactive bootstrap when you are ready to provision Prefect,
+   observability, and supply-chain integrations:
+
+   ```bash
+   python scripts/idp/bootstrap.py --execute
+   ```
+
+Working on a hosted runner? Use `make sync EXTRAS="dev orchestration enrichment geospatial compliance dashboards"`
+to replicate the environment bootstrap above with a single command.
+
+## Preflight checks
+
+Run these gates before opening a pull request so local results align with CI:
+
+- `make qa` — runs Ruff format/lint, pytest with coverage, mypy, Bandit,
+  detect-secrets, and pre-commit hooks.
+- `uv run python scripts/validation/refresh_data_docs.py` — refreshes Data Docs
+  to confirm expectation suites remain in sync with contracts.
+- `uv run python scripts/quality/fitness_functions.py` — exercises the
+  architectural fitness checks documented in `docs/architecture/fitness-functions.md`.
 
 ## Documentation
 
@@ -38,12 +65,16 @@ The full documentation lives under [`docs/`](docs/index.md) and follows the Diá
 - [Tutorials](docs/tutorials/quickstart.md) — end-to-end walkthroughs.
 - [How-to guides](docs/how-to-guides/configure-pipeline.md) — targeted tasks such as configuring profiles or enabling observability. See the [dependency profile guide](docs/how-to-guides/dependency-profiles.md) to pick the right extras.
 - [Reference](docs/reference/cli.md) — command syntax, data model, and expectation catalogue.
+- Governance artefacts — [Data Docs](docs/reference/data-docs.md),
+  [schema exports](docs/reference/schema-exports.md), and the
+  [Marquez lineage quickstart](docs/observability/marquez.md).
 - [Explanations](docs/explanations/architecture.md) — architectural decisions and platform scope.
-- [Roadmap](docs/roadmap.md) — delivery status, quality gates, and tracked follow-ups.
+- [Roadmap](docs/roadmap.md) — delivery status, quality gates, and tracked follow-ups. See also the
+  repository-level [ROADMAP.md](ROADMAP.md) for a per-phase PR checklist.
 
 ## Contributing
 
-Read the [documentation contributing guide](docs/CONTRIBUTING.md) and [style guide](docs/style.md), then submit pull requests using Conventional Commits. Run the consolidated QA suite before opening a PR:
+Read the [documentation contributing guide](docs/CONTRIBUTING.md) and [style guide](docs/style.md), then submit pull requests using Conventional Commits. The contributing guide now includes a five-minute documentation quickstart plus preflight reminders. Run the consolidated QA suite before opening a PR:
 
 ```bash
 make qa

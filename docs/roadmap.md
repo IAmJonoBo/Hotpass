@@ -1,7 +1,7 @@
 ---
 title: Hotpass roadmap
 summary: Status of the Hotpass modernisation programme, quality gates, and follow-up work.
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 ---
 
 This roadmap is the single source of truth for the Hotpass programme. It captures the active plan, guardrails, acceptance criteria, and the mapping of work to the repository layout so that changes are incremental, reversible, and observable.
@@ -14,6 +14,7 @@ Focus areas for the upcoming iterations:
 - **Pipelines**: Prefect 3 deployments with idempotent/resumable runs and explicit `backfill` / `incremental` parameters; OpenLineage emission with a local Marquez viewer; refined outputs written as Parquet with data versioning.
 - **CI/CD & runners**: uv-based quality gates (ruff, mypy, pytest+coverage, SARIF), CodeQL/detect-secrets/bandit, Docker buildx with cache, SBOM + SLSA attestations, and ephemeral self-hosted runners via Actions Runner Controller (ARC) with OIDC→AWS.
 - **Docs & UX**: Diátaxis structure enforced; add `hotpass doctor` and `hotpass init` to streamline onboarding and troubleshooting.
+- **Governance artefacts**: Landing page now links to Data Docs, Marquez lineage, and schema export references so reviewers can jump straight to validation context while triaging pull requests.
 
 ## Iteration plan (date-free)
 
@@ -131,8 +132,9 @@ Focus areas for the upcoming iterations:
 ## Outputs
 
 - ADRs under `docs/adr/NNN-*.md` (MADR‑style).
-- Docs site navigation updated with links to Data Docs and the lineage UI.
+- Docs site navigation updated with direct entry points to Data Docs, schema exports, and the Marquez lineage UI.
 - `ROADMAP.md` checklist tying issues/PRs to phases with labels `phase:2`…`phase:6`.
+- Reference pages for Data Docs and schema exports live under `docs/reference/` to support governance handoffs.
 
 ## Guardrails
 
