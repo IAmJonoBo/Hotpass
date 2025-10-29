@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from scripts.arc.verify_runner_lifecycle import RunnerLifecycleVerifier
@@ -117,10 +121,12 @@ def _build_verifier(
 
 
 def test_verifier_succeeds_when_runners_idle() -> None:
-    payloads = iter([
-        {"total_count": 1, "runners": [{"busy": True, "name": "hotpass-arc-1"}]},
-        {"total_count": 1, "runners": [{"busy": False, "name": "hotpass-arc-1"}]},
-    ])
+    payloads = iter(
+        [
+            {"total_count": 1, "runners": [{"busy": True, "name": "hotpass-arc-1"}]},
+            {"total_count": 1, "runners": [{"busy": False, "name": "hotpass-arc-1"}]},
+        ]
+    )
     command_results = iter(["runner-pod", ""])  # kubectl output shows pod until drained
     clock_values = iter([0.0, 1.0, 2.1])
 
@@ -151,3 +157,44 @@ def test_verifier_raises_when_timeout_expires() -> None:
 
     expect(error is not None, "Verifier should raise when runners remain busy")
     expect("Timed out" in str(error), "Error should mention timeout for diagnostics")
+
+
+def test_cli_snapshot_mode(tmp_path: Path) -> None:
+    snapshot = {
+        "iterations": [
+            {
+                "pods": ["runner-pod"],
+                "runners": [{"name": "hotpass-arc-1", "busy": True}],
+            },
+            {
+                "pods": [],
+                "runners": [{"name": "hotpass-arc-1", "busy": False}],
+            },
+        ]
+    }
+    snapshot_path = tmp_path / "scenario.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/arc/verify_runner_lifecycle.py",
+            "--owner",
+            "Hotpass",
+            "--repository",
+            "pipeline",
+            "--scale-set",
+            "hotpass-arc",
+            "--snapshot",
+            str(snapshot_path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    expect(result.returncode == 0, "Snapshot mode should exit successfully")
+    expect(
+        "Runner scale set is healthy" in result.stdout,
+        "Snapshot mode should report healthy status",
+    )

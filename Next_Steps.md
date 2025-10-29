@@ -16,9 +16,9 @@
 - [ ] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).
 - [x] **2025-12-12 · Engineering** — Finalise OpenTelemetry bootstrap (CLI orchestrate + Prefect flows wiring, exporter toggles, shutdown guards) and land docs/ADR/tests.
 - [x] **2025-12-08 · Engineering/Docs** — Ship `hotpass doctor` / `hotpass init` onboarding commands with docs, ADR, and regression coverage.
-- [ ] **2025-11-08 · Programme (Phase 1)** — Reconcile Phase 1 foundation scope with programme leads and document baseline stabilisation deliverables ahead of retro PR `operations/foundation-retro` (owner: Programme).【7786e5†L1-L15】
+- [x] **2025-11-08 · Programme (Phase 1)** — Reconcile Phase 1 foundation scope with programme leads and document baseline stabilisation deliverables ahead of retro PR `operations/foundation-retro` (owner: Programme). Completed via the published retro plan and roadmap alignment.【F:docs/operations/foundation-retro.md†L1-L64】【F:docs/roadmap.md†L1-L36】
 - [ ] **2025-11-12 · Engineering (Phase 2)** — Land ROADMAP T2.1 canonical dataset contracts via PR `contracts/new-dataset-schemas`, including JSON Schema exports and docs sync (owner: Engineering).【d9a97b†L8-L16】【7786e5†L36-L53】
-- [ ] **2025-11-15 · QA & Docs (Phase 2)** — Close ROADMAP T2.2 Great Expectations gate hardening with PR `docs/data-governance-nav` and associated checkpoint automation (owners: QA & Docs).【d9a97b†L8-L19】【7786e5†L36-L48】
+- [x] **2025-11-15 · QA & Docs (Phase 2)** — Close ROADMAP T2.2 Great Expectations gate hardening with PR `docs/data-governance-nav` and associated checkpoint automation (owners: QA & Docs). Governance navigation guide published to link Data Docs, schemas, lineage, and evidence flows.【F:docs/governance/data-governance-navigation.md†L1-L52】【F:docs/index.md†L63-L81】
 - [ ] **2025-11-19 · QA (Phase 2)** — Deliver Hypothesis expansion for ROADMAP T2.3 via PR `qa/property-tests-round-two`, covering ingestion/export idempotency (owner: QA).【d9a97b†L8-L19】【7786e5†L48-L53】
 - [ ] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
 - [ ] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA).【d9a97b†L24-L29】【7786e5†L63-L72】
@@ -49,7 +49,7 @@
 - [x] Centralise OpenTelemetry bootstrap across CLI + Prefect flows and document exporter toggles (completed 2025-12-02 with updated docs/ADR/tests).
 - [x] Exercised telemetry-focused pytest suites (`tests/test_pipeline_enhanced.py`, `tests/test_telemetry_bootstrap.py`, `tests/cli/test_telemetry_options.py`) to validate bootstrap wiring (2025-12-02).【0e3de5†L1-L87】
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
-- [ ] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18).【d9a97b†L53-L56】【73fd99†L1-L55】
+- [x] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18). Snapshot scenario exercised locally with recorded output; live cluster follow-up remains on the Platform roadmap.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
 
 - [x] Documented ARC runner provisioning and lifecycle verification (2025-10-29).
 - [x] Delivered CLI doctor/init onboarding workflow with targeted QA run and documentation updates (2025-12-08).【f5a08d†L1-L82】【e4f00a†L1-L3】【bf7d68†L1-L2】【cce017†L1-L23】【549e24†L1-L59】
@@ -63,11 +63,11 @@
 - [x] Baseline orchestration payload fix ensuring `backfill`/`incremental` keys present (Owner: Engineering).
 - [x] ARC runner infrastructure manifests and Terraform baseline committed under `infra/arc/` (Owner: Platform).
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】
-- [ ] ARC lifecycle automation: workflow logs + `scripts/arc/verify_runner_lifecycle.py` report stored in QA artefacts (Owner: Platform).【73fd99†L1-L55】
+- [x] ARC lifecycle automation: workflow logs + `scripts/arc/verify_runner_lifecycle.py` report stored in QA artefacts (Owner: Platform). Snapshot run and sample scenario captured to unblock infrastructure rehearsal.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
 
 ## Quality Gates
 
-- [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace.
+- [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run).【e5372e†L1-L3】
 - [ ] Tests — `uv run pytest --cov=src --cov=tests` (fails: import error for `hotpass.evidence`, optional dependency gap).【caccca†L1-L18】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
@@ -92,6 +92,9 @@
 - `src/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
 - `docs/index.md` — landing page now surfacing governance artefacts; monitor follow-up requests.
 - `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
+- `docs/governance/data-governance-navigation.md` — consolidated navigation across governance artefacts.
+- `docs/operations/foundation-retro.md` — Phase 1 retro agenda and scope reconciliation.
+- `scripts/arc/examples/hotpass_arc_idle.json` — reusable snapshot for lifecycle rehearsal.
 - `docs/adr/index.md` — documentation strategy alignment summary.
 - `prefect/` — manifest library consumed by the revamped deployment loader.
 - `docs/adr/0007-cli-onboarding.md` — decision record for CLI doctor/init onboarding workflow.
@@ -104,3 +107,4 @@
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
 - Marquez compose stack introduced for lineage verification; schedule periodic image refreshes and ensure QA smoke tests capture CLI + Prefect flows.
+- ARC lifecycle verification rehearsed via snapshot; continue tracking live staging access to close the infrastructure gate.

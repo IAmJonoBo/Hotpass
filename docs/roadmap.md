@@ -33,6 +33,23 @@ Focus areas for the upcoming iterations:
 
 ---
 
+## Phase 1 — Foundation alignment
+
+- [x] **T1.1 Programme guardrails**
+  - [x] Establish roadmap, governance charter, and evidence ledger updates to
+    anchor future phases.
+  - [x] Publish the Phase 1 retrospective plan in
+    [`docs/operations/foundation-retro.md`](operations/foundation-retro.md).
+  - **Acceptance:** retro agenda agreed, navigation to governance artefacts
+    captured for Programme stakeholders.
+
+- [x] **T1.2 Operational readiness**
+  - [x] Land Prefect bootstrap, telemetry instrumentation, and ARC lifecycle
+    verification helpers with snapshot support so Platform can rehearse runner
+    rollouts ahead of Phase 5.
+  - **Acceptance:** lifecycle verifier executable via snapshot file;
+    documentation added to the ARC runner how-to.
+
 ## Phase 2 — Contracts, validation, and data hygiene
 
 - [ ] **T2.1 Canonical dataset contracts**
@@ -41,11 +58,15 @@ Focus areas for the upcoming iterations:
   - [ ] Autogenerate `docs/reference/schemas.md` with a field table per dataset.
   - **Acceptance:** sample records validate; schemas exist under `schemas/`; the reference page builds and links correctly.
 
-- [ ] **T2.2 Great Expectations gates**
-  - [ ] Create **Expectation Suites** per dataset and store under `data_expectations/`.
-  - [ ] Add **Checkpoints** that run before publish steps; failing validation must block publish.
-  - [ ] Render **Data Docs** to `dist/data-docs/` and link from `docs/index`.
-  - **Acceptance:** CI job runs checkpoints; failures fail the job; `dist/data-docs/` artefacts are published.
+- [x] **T2.2 Great Expectations gates**
+  - [x] Create **Expectation Suites** per dataset and store under `data_expectations/`.
+  - [x] Add **Checkpoints** that run before publish steps; failing validation must block publish.
+  - [x] Render **Data Docs** to `dist/data-docs/` and link from `docs/index`.
+  - [x] Publish the governance navigation guide at
+    [`docs/governance/data-governance-navigation.md`](governance/data-governance-navigation.md)
+    so reviewers can trace artefacts quickly.
+  - **Acceptance:** CI job runs checkpoints; failures fail the job; `dist/data-docs/`
+    artefacts are published and linked from the navigation guide.
 
 - [ ] **T2.3 Property-based tests (Hypothesis)**
   - [ ] Create `tests/property/` for edge cases: encodings, date formats, missing/extra columns, duplicate headers.

@@ -5,16 +5,28 @@ open checklist items and the pull requests planned to address them. Use it as th
 entry point during triage so upcoming work stays aligned with the programme
 phases and governance gates.
 
+## Phase 1 — Foundation alignment
+
+- [x] **T1.1 Programme guardrails** — Roadmap, governance charter, and evidence
+  ledger refreshed; retro plan captured in
+  [`docs/operations/foundation-retro.md`](docs/operations/foundation-retro.md) to
+  guide the upcoming Programme review.
+- [x] **T1.2 Operational readiness** — Prefect bootstrap, telemetry wiring, and
+  ARC lifecycle verifier (with snapshot mode) prepared Platform for the staged
+  runner rollout documented in the ARC how-to guide.
+
 ## Phase 2 — Contracts, validation, and data hygiene
 
 - [ ] **T2.1 Canonical dataset contracts** — Finalise Pandera table models and
   publish JSON Schema artefacts for any new datasets.
   - Upcoming PR: `contracts/new-dataset-schemas` (assign to Engineering once
     new workbook samples land).
-- [ ] **T2.2 Great Expectations gates** — Keep checkpoints and Data Docs in
+- [x] **T2.2 Great Expectations gates** — Keep checkpoints and Data Docs in
   sync, ensuring the docs landing page points to the validation artefacts.
-  - In flight: `docs/data-governance-nav` (this PR) links Data Docs, Marquez, and
-    schema exports directly from the documentation hub.
+  - Delivered via `docs/data-governance-nav`: the new
+    [`docs/governance/data-governance-navigation.md`](docs/governance/data-governance-navigation.md)
+    page surfaces Data Docs, schema exports, lineage, and evidence packs from the
+    docs landing page.
 - [ ] **T2.3 Property-based tests** — Expand Hypothesis coverage for ingestion
   and export idempotency scenarios.
   - Upcoming PR: `qa/property-tests-round-two` scheduled for the next QA sweep.

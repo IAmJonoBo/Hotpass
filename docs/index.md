@@ -71,6 +71,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /governance/upgrade-final-report
 /governance/supplier-risk-register
 /governance/secrets-management
+/governance/data-governance-navigation
 /CONTRIBUTING
 /style
 /metrics/metrics-plan
@@ -80,6 +81,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /roadmap/dependency-matrix
 /roadmap/deployment-notes
 /platform/tech-radar
+/operations/foundation-retro
 ```
 
 ```{toctree}

@@ -93,6 +93,23 @@ uv run python scripts/arc/verify_runner_lifecycle.py \
 
 Use `--output json` if you need machine-readable status checks inside CI or monitoring pipelines.
 
+### Offline rehearsal with snapshots
+
+When clusters are unavailable, supply a snapshot file that mimics pod and runner
+states:
+
+```bash
+uv run python scripts/arc/verify_runner_lifecycle.py \
+  --owner IAmJonoBo \
+  --repository Hotpass \
+  --scale-set hotpass-arc \
+  --snapshot scripts/arc/examples/hotpass_arc_idle.json
+```
+
+Snapshots let QA and Platform teams verify workflow wiring during dry runs
+without requiring Kubernetes or GitHub API access. Update the JSON to match the
+expected lifecycle for more advanced rehearsal scenarios.
+
 ## 5. Tear down the runners
 
 When you no longer need the runners, delete the Kubernetes resources and remove the IAM role.
