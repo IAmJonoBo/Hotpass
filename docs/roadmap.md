@@ -76,9 +76,10 @@ Focus areas for the upcoming iterations:
 
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)
 
-- [ ] **T3.1 Prefect 3 deployments**
-  - [ ] Add `prefect.yaml` defining per-flow deployments, schedules, and tags.
-  - [ ] Define parameters `backfill: bool`, `incremental: bool`, `since: datetime|None` and ensure flows are idempotent and resumable.
+- [x] **T3.1 Prefect 3 deployments**
+  - [x] Add `prefect.yaml` defining per-flow deployments, schedules, and tags.
+  - [x] Define parameters `backfill: bool`, `incremental: bool`, `since: datetime|None` and ensure flows are idempotent and resumable.
+    - Verified via automated coverage in `tests/cli/test_deploy_command.py` and `tests/test_orchestration.py`.
   - **Acceptance:** `prefect deploy` produces deployments; the UI shows schedules; re-running is idempotent.
 
 - [ ] **T3.2 OpenLineage + Marquez**

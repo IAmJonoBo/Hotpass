@@ -6,14 +6,14 @@
 - [ ] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).
 - [ ] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).
 - [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles (book staging slot on 2025-12-18; reuse Prefect deployment `hotpass-e2e-staging`).
-- [ ] **2025-12-31 · Engineering** — Add Prefect flow integration tests for canonical overrides (extend `tests/test_orchestration.py`; capture fixtures during the 2025-12-18 staging run alongside QA).
+- [x] **2025-12-31 · Engineering** — Add Prefect flow integration tests for canonical overrides (extend `tests/test_orchestration.py`; capture fixtures during the 2025-12-18 staging run alongside QA).【F:tests/test_orchestration.py†L1-L260】
 - [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging (share staging credentials and freeze changes week of 2025-12-29 to avoid holiday overlap).
 - [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads (run benchmarks alongside December integration tests; feed results into January ADR updates).
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
 - [x] **2025-11-01 · Docs & Engineering** — Update README/CONTRIBUTING onboarding flow (quickstarts, preflight, doc links) and sync Diátaxis landing page/navigation with new data governance assets (Data Docs, Marquez, schema/reference).【376708†L1-L40】【8c8202†L1-L93】
 - [x] **2025-10-28 · Engineering/Docs** — Implement dataset contract models, regeneration tooling, docs reference, and ADR (landed via contracts module + docs automation).
 - [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).
-- [ ] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).
+- [x] **2025-12-10 · Engineering/QA** — Validate Marquez compose stack and lineage emission post-instrumentation (coordinate smoke test covering CLI + Prefect flows with QA ownership).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [x] **2025-12-12 · Engineering** — Finalise OpenTelemetry bootstrap (CLI orchestrate + Prefect flows wiring, exporter toggles, shutdown guards) and land docs/ADR/tests.
 - [x] **2025-12-08 · Engineering/Docs** — Ship `hotpass doctor` / `hotpass init` onboarding commands with docs, ADR, and regression coverage.
 - [x] **2025-11-08 · Programme (Phase 1)** — Reconcile Phase 1 foundation scope with programme leads and document baseline stabilisation deliverables ahead of retro PR `operations/foundation-retro` (owner: Programme). Completed via the published retro plan and roadmap alignment.【F:docs/operations/foundation-retro.md†L1-L64】【F:docs/roadmap.md†L1-L36】
@@ -48,6 +48,8 @@
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [x] Centralise OpenTelemetry bootstrap across CLI + Prefect flows and document exporter toggles (completed 2025-12-02 with updated docs/ADR/tests).
 - [x] Exercised telemetry-focused pytest suites (`tests/test_pipeline_enhanced.py`, `tests/test_telemetry_bootstrap.py`, `tests/cli/test_telemetry_options.py`) to validate bootstrap wiring (2025-12-02).【0e3de5†L1-L87】
+- [x] Added Prefect deploy CLI integration coverage ensuring manifest overrides map to runner registration (2025-12-27).【F:tests/cli/test_deploy_command.py†L1-L78】
+- [x] Automated Marquez stack validation and lineage environment guardrails via targeted tests (2025-12-27).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [x] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18). Snapshot scenario exercised locally with recorded output; live cluster follow-up remains on the Platform roadmap.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
 - [x] Regenerated dataset contract schemas and reference documentation (2025-10-29) via `python -m hotpass.contracts.generator` to confirm artefact parity.【F:docs/reference/schemas.md†L1-L303】【F:schemas/contact_capture.schema.json†L1-L32】
@@ -64,6 +66,7 @@
 - [x] Baseline orchestration payload fix ensuring `backfill`/`incremental` keys present (Owner: Engineering).
 - [x] ARC runner infrastructure manifests and Terraform baseline committed under `infra/arc/` (Owner: Platform).
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】
+  - Automated compose validation and lineage environment checks added in tests; live smoke evidence remains pending once staging access is available.【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [x] ARC lifecycle automation: workflow logs + `scripts/arc/verify_runner_lifecycle.py` report stored in QA artefacts (Owner: Platform). Snapshot run and sample scenario captured to unblock infrastructure rehearsal.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
 
 ## Quality Gates
@@ -73,6 +76,7 @@
 - [x] Tests — `uv run pytest tests/property/test_ingestion_properties.py` (pass; exercises ingestion deduplication/idempotency under messy fixtures).【7d0f96†L1-L13】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
+- [x] Tests — `pytest tests/cli/test_deploy_command.py tests/infrastructure/test_marquez_stack.py tests/test_lineage.py` (pass; validates Prefect deployment overrides and Marquez stack configuration).【F:tests/cli/test_deploy_command.py†L1-L78】【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
   - [x] Targeted format applied to new CLI/test modules via `ruff format` (pass).【d7b838†L1-L3】
 - [ ] Lint — `uv run ruff check` (fails: import ordering and unused imports across legacy modules).【9f2dbe†L1-L73】
@@ -109,5 +113,5 @@
 - Format gate currently red because repository-wide drift predates this work; coordinate with maintainers before applying automated formatting across the codebase.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
-- Marquez compose stack introduced for lineage verification; schedule periodic image refreshes and ensure QA smoke tests capture CLI + Prefect flows.
+- Marquez compose stack introduced for lineage verification; automated tests now guard compose configuration and lineage environment variables while we schedule live smoke tests for CLI + Prefect flows.
 - ARC lifecycle verification rehearsed via snapshot; continue tracking live staging access to close the infrastructure gate.

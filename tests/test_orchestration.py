@@ -7,7 +7,7 @@ import sys
 import types
 import zipfile
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -15,6 +15,39 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+
+_pandera_stub = types.ModuleType("pandera")
+_pandera_pandas = types.ModuleType("pandera.pandas")
+_pandera_errors = types.ModuleType("pandera.errors")
+
+
+class _StubColumn:
+    def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - stub
+        return
+
+
+class _StubDataFrameSchema:
+    def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - stub
+        return
+
+
+_pandera_pandas.Column = _StubColumn
+_pandera_pandas.DataFrameSchema = _StubDataFrameSchema
+_pandera_stub.pandas = _pandera_pandas
+_pandera_errors.SchemaErrors = type("SchemaErrors", (Exception,), {})
+_pandera_stub.errors = _pandera_errors
+sys.modules.setdefault("pandera", _pandera_stub)
+sys.modules.setdefault("pandera.pandas", _pandera_pandas)
+sys.modules.setdefault("pandera.errors", _pandera_errors)
+
+_rapidfuzz_stub = types.ModuleType("rapidfuzz")
+_rapidfuzz_fuzz = types.ModuleType("rapidfuzz.fuzz")
+_rapidfuzz_fuzz.token_sort_ratio = lambda *args, **kwargs: 100.0
+_rapidfuzz_fuzz.partial_ratio = lambda *args, **kwargs: 100.0
+_rapidfuzz_fuzz.token_set_ratio = lambda *args, **kwargs: 100.0
+_rapidfuzz_stub.fuzz = _rapidfuzz_fuzz
+sys.modules.setdefault("rapidfuzz", _rapidfuzz_stub)
+sys.modules.setdefault("rapidfuzz.fuzz", _rapidfuzz_fuzz)
 
 from hotpass.config_schema import HotpassConfig
 
@@ -37,6 +70,13 @@ run_pipeline_task = orchestration.run_pipeline_task
 if not TYPE_CHECKING:
     PipelineRunOptionsType = PipelineRunOptions  # type: ignore[assignment]
     PipelineRunSummaryType = PipelineRunSummary  # type: ignore[assignment]
+
+
+def expect(condition: bool, message: str) -> None:
+    """Raise a descriptive failure when the condition is false."""
+
+    if not condition:
+        pytest.fail(message)
 
 
 @pytest.fixture(autouse=True)
@@ -221,6 +261,120 @@ def test_refinement_pipeline_flow_with_options(mock_pipeline_result, tmp_path):
         assert config_arg.since is None
 
 
+def test_refinement_pipeline_flow_propagates_runtime_overrides(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Runtime flags should populate the canonical pipeline configuration."""
+
+    captured: list[PipelineRunOptionsType] = []
+
+    def _record_run(
+        options: PipelineRunOptionsType,
+    ) -> PipelineRunSummaryType:
+        captured.append(options)
+        return PipelineRunSummary(
+            success=True,
+            total_records=1,
+            elapsed_seconds=0.25,
+            output_path=tmp_path / "outputs" / "refined.xlsx",
+            quality_report={"rows": 1},
+        )
+
+    monkeypatch.setattr(orchestration, "run_pipeline_once", _record_run)
+    monkeypatch.setattr(
+        orchestration,
+        "get_default_profile",
+        lambda _name: SimpleNamespace(model_dump=lambda: {"profile": "aviation"}),
+    )
+    monkeypatch.setattr(
+        orchestration,
+        "create_refined_archive",
+        lambda *_args, **_kwargs: tmp_path / "dist" / "archive.zip",
+    )
+
+    since_iso = "2024-01-01T05:06:07+00:00"
+    result = refinement_pipeline_flow(
+        input_dir=str(tmp_path / "inputs"),
+        output_path=str(tmp_path / "outputs" / "refined.xlsx"),
+        profile_name="aviation",
+        backfill=True,
+        incremental=True,
+        since=since_iso,
+        telemetry_enabled=True,
+        telemetry_exporters=["console"],
+        telemetry_service_name="hotpass-prefect",
+        telemetry_environment="staging",
+        telemetry_resource_attributes={"deployment": "prefect"},
+        telemetry_otlp_endpoint="http://localhost:4317",
+        telemetry_otlp_metrics_endpoint="http://localhost:4318",
+        telemetry_otlp_headers={"authorization": "token"},
+        telemetry_otlp_insecure=True,
+        telemetry_otlp_timeout=5.5,
+    )
+
+    expect(result["success"] is True, "Flow should surface success from pipeline summary.")
+    expect(len(captured) == 1, "Pipeline should execute exactly once.")
+
+    options = captured[0]
+    config = options.config
+
+    expect(config.pipeline.backfill is True, "Backfill flag should propagate to pipeline config.")
+    expect(
+        config.pipeline.incremental is True,
+        "Incremental flag should propagate to pipeline config.",
+    )
+    expected_since = datetime.fromisoformat(since_iso)
+    expect(
+        config.pipeline.since == expected_since,
+        "Since value should be parsed into a datetime instance.",
+    )
+    expect(config.telemetry.enabled is True, "Telemetry enabled flag should propagate.")
+    expect(
+        config.telemetry.exporters == ("console",),
+        "Telemetry exporters should include the console exporter.",
+    )
+    expect(
+        config.telemetry.service_name == "hotpass-prefect",
+        "Telemetry service name should propagate to config.",
+    )
+    expect(
+        config.telemetry.environment == "staging",
+        "Telemetry environment should propagate to config.",
+    )
+    expect(
+        config.telemetry.resource_attributes["deployment"] == "prefect",
+        "Telemetry resource attributes should include deployment marker.",
+    )
+    expect(
+        config.telemetry.otlp_endpoint == "http://localhost:4317",
+        "OTLP endpoint should propagate to telemetry settings.",
+    )
+    expect(
+        config.telemetry.otlp_metrics_endpoint == "http://localhost:4318",
+        "OTLP metrics endpoint should propagate to telemetry settings.",
+    )
+    expect(
+        config.telemetry.otlp_headers["authorization"] == "token",
+        "Telemetry headers should propagate to telemetry settings.",
+    )
+    expect(
+        config.telemetry.otlp_insecure is True,
+        "Telemetry insecure flag should propagate to telemetry settings.",
+    )
+    expect(
+        config.telemetry.otlp_timeout == 5.5,
+        "Telemetry timeout should propagate to telemetry settings.",
+    )
+    expect(
+        options.telemetry_context["hotpass.flow"] == "hotpass-refinement-pipeline",
+        "Telemetry context should include flow identifier.",
+    )
+    expect(
+        options.telemetry_context["hotpass.command"] == "prefect.refinement_flow",
+        "Telemetry context should include command identifier.",
+    )
+
+
 def _write_archive(
     archive_root: Path, run_date: date, version: str, payload: str = "sample"
 ) -> Path:
@@ -294,18 +448,14 @@ def test_backfill_flow_processes_multiple_runs(
         assert config.pipeline.input_dir == extracted
         assert (extracted / "input.csv").read_text() == run["version"]
         expected_output = (
-            restore_root
-            / "outputs"
-            / f"refined-{run['run_date']}-{run['version']}.xlsx"
+            restore_root / "outputs" / f"refined-{run['run_date']}-{run['version']}.xlsx"
         )
         assert config.pipeline.output_path == expected_output
 
     assert all(run_entry["success"] for run_entry in result["runs"])
 
 
-def test_backfill_flow_is_idempotent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-02-01", "version": "baseline"}
@@ -381,9 +531,7 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-04-01", "version": "replay"}
-    _write_archive(
-        archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"]
-    )
+    _write_archive(archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"])
 
     calls: list[Path] = []
 
@@ -405,9 +553,7 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
         yield
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
-    monkeypatch.setattr(
-        orchestration, "prefect_concurrency", _failing_concurrency, raising=False
-    )
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _failing_concurrency, raising=False)
 
     result = backfill_pipeline_flow(
         runs=[run_info],
