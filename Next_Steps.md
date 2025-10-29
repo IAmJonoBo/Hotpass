@@ -23,6 +23,8 @@
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
+- [x] 2025-10-29 — Hardened Prefect concurrency helper with strict mypy coverage and async tests to exercise context manager paths (owner: Engineering).【F:pyproject.toml†L116-L126】【F:tests/test_orchestration.py†L566-L661】【F:src/hotpass/orchestration.py†L38-L126】
+- [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
 
 
 ## Deliverables
@@ -35,6 +37,7 @@
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
 - [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
 - [ ] Types — `uv run mypy src tests scripts` (fails: 169 errors across legacy modules, including telemetry stubs and Prefect fixtures).【571738†L1-L33】【8a3cb6†L1-L38】
+  - [x] Added `hotpass.orchestration` to strict mypy overrides and resolved concurrency helper issues (2025-10-29).【F:pyproject.toml†L116-L126】【F:src/hotpass/orchestration.py†L38-L126】
 - [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【586f55†L1-L118】
 - [ ] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (fails: existing heading hierarchy/toctree gaps across legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
