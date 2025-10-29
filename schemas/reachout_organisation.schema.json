@@ -3,7 +3,9 @@
   "name": "reachout_organisation",
   "title": "Reachout organisation sheet",
   "description": "Contract defining the Organisation sheet in Reachout Database.xlsx",
-  "primaryKey": ["ID"],
+  "primaryKey": [
+    "ID"
+  ],
   "fields": [
     {
       "name": "Organisation Name",

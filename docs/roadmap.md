@@ -52,10 +52,10 @@ Focus areas for the upcoming iterations:
 
 ## Phase 2 — Contracts, validation, and data hygiene
 
-- [ ] **T2.1 Canonical dataset contracts**
-  - [ ] Add row-level models with **Pydantic** under `contracts/<dataset>.py`. Optionally add table-level **Pandera** `DataFrameModel`s for whole-table checks.
-  - [ ] Export **JSON Schema** files to `schemas/<dataset>.schema.json` for every canonical dataset.
-  - [ ] Autogenerate `docs/reference/schemas.md` with a field table per dataset.
+- [x] **T2.1 Canonical dataset contracts**
+  - [x] Add row-level models with **Pydantic** under `contracts/<dataset>.py`. Optionally add table-level **Pandera** `DataFrameModel`s for whole-table checks.
+  - [x] Export **JSON Schema** files to `schemas/<dataset>.schema.json` for every canonical dataset.
+  - [x] Autogenerate `docs/reference/schemas.md` with a field table per dataset.
   - **Acceptance:** sample records validate; schemas exist under `schemas/`; the reference page builds and links correctly.
 
 - [x] **T2.2 Great Expectations gates**

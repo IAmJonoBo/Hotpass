@@ -17,10 +17,11 @@ phases and governance gates.
 
 ## Phase 2 — Contracts, validation, and data hygiene
 
-- [ ] **T2.1 Canonical dataset contracts** — Finalise Pandera table models and
-  publish JSON Schema artefacts for any new datasets.
-  - Upcoming PR: `contracts/new-dataset-schemas` (assign to Engineering once
-    new workbook samples land).
+- [x] **T2.1 Canonical dataset contracts** — Pandera table models, JSON Schema
+  exports, and the regenerated documentation set are live. Round-trip tests
+  exercise the contract registry so new datasets remain governed.
+  - Delivered via `contracts/new-dataset-schemas`; follow-up PRs will extend the
+    contract catalogue as new workbooks arrive.
 - [x] **T2.2 Great Expectations gates** — Keep checkpoints and Data Docs in
   sync, ensuring the docs landing page points to the validation artefacts.
   - Delivered via `docs/data-governance-nav`: the new

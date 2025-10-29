@@ -3,7 +3,9 @@
   "name": "contact_company_cat",
   "title": "Contact Database company catalogue",
   "description": "Schema for Company_Cat sheet in Contact Database.xlsx",
-  "primaryKey": ["C_ID"],
+  "primaryKey": [
+    "C_ID"
+  ],
   "fields": [
     {
       "name": "C_ID",
