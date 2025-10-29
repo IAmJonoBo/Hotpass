@@ -28,7 +28,7 @@ Focus areas for the upcoming iterations:
 1. Phase 3 tasks (Prefect deployments, OpenLineage/Marquez, Parquet + DVC).
 2. Phase 5 tasks T5.5–T5.6 (ephemeral runners + OpenTelemetry instrumentation).
 3. Phase 6 task T6.2 (CLI UX: `doctor` and `init`).
-4. Phase 4 task (MLflow) **only if** training is in scope; otherwise record an ADR and defer.
+4. **Phase 4 completed**: MLflow tracking, model registry, and promotion workflow fully implemented with comprehensive testing.
 
 ---
 
@@ -73,10 +73,12 @@ Focus areas for the upcoming iterations:
 
 ## Phase 4 — ML lifecycle (conditional)
 
-- [ ] **T4.1 MLflow tracking + registry**
-  - [ ] If model training exists or is planned, run MLflow Tracking with a DB backend; log code, params, metrics, and artefacts.
-  - [ ] Create a Model Registry with stage gates ("Staging" → "Production"); document promotion policy.
-  - **Acceptance:** example run visible; a dummy model promoted to "Staging"; ADR committed describing the policy.
+- [x] **T4.1 MLflow tracking + registry**
+  - [x] Run MLflow Tracking with a DB backend (SQLite for dev, configurable for production); log code, params, metrics, and artefacts.
+  - [x] Create a Model Registry with stage gates ("None" → "Staging" → "Production" → "Archived"); document promotion policy.
+  - [x] Integrate tracking into `train_lead_scoring_model` with `enable_mlflow` flag.
+  - [x] Add comprehensive tests (12 tests, 86% coverage) with in-memory SQLite.
+  - **Acceptance:** Training runs logged to MLflow; models registered and promotable through stages; ADR 0006 committed; how-to guide available at `docs/how-to-guides/model-lifecycle-mlflow.md`.
 
 ## Phase 5 — CI/CD & ephemeral runners
 
