@@ -1,7 +1,7 @@
 ---
 title: Contributing to the documentation
 summary: Workflow and expectations for updating the Hotpass documentation set.
-last_updated: 2025-10-29
+last_updated: 2025-12-26
 ---
 
 # Contributing to the documentation
