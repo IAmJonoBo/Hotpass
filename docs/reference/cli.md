@@ -198,6 +198,9 @@ uv run hotpass deploy --flow refinement
 | `--manifest-dir DIR` | Directory containing manifest files (default: `prefect/`).                                 |
 | `--build-image`      | Build the deployment image before registration.                                            |
 | `--push-image`       | Push the built image to the configured registry.                                           |
+| `--name TEXT`        | Override the Prefect deployment name for the selected manifests.                           |
+| `--schedule TEXT`    | Apply a cron schedule in UTC. Use `none`/`off` to disable scheduling.                       |
+| `--work-pool TEXT`   | Target Prefect work pool name when registering deployments.                                |
 
 ### `dashboard`
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -208,6 +208,10 @@ def deploy_pipeline(
     base_dir: Path | None = None,
     build_image: bool = False,
     push_image: bool = False,
+    deployment_name: str | None = None,
+    schedule: str | None = None,
+    disable_schedule: bool = False,
+    work_pool: str | None = None,
 ) -> list[Any]:
     """Register Hotpass deployments with Prefect based on manifest definitions."""
 
@@ -219,7 +223,28 @@ def deploy_pipeline(
     flow_filter = set(flows) if flows is not None else None
     selected = [spec for spec in specs if flow_filter is None or spec.identifier in flow_filter]
 
-    deployments_to_apply = [build_runner_deployment(spec) for spec in selected]
+    def _apply_overrides(spec: DeploymentSpec) -> DeploymentSpec:
+        updated = spec
+        if deployment_name:
+            updated = replace(updated, name=deployment_name)
+        if work_pool is not None:
+            updated = replace(updated, work_pool=work_pool)
+        if disable_schedule:
+            updated = replace(updated, schedule=None)
+        elif schedule is not None:
+            existing_schedule = spec.schedule
+            anchor = existing_schedule.anchor_date if existing_schedule else None
+            timezone = existing_schedule.timezone if existing_schedule else "UTC"
+            updated_schedule = DeploymentSchedule(
+                kind="cron",
+                value=schedule,
+                timezone=timezone,
+                anchor_date=anchor,
+            )
+            updated = replace(updated, schedule=updated_schedule)
+        return updated
+
+    deployments_to_apply = [build_runner_deployment(_apply_overrides(spec)) for spec in selected]
     if not deployments_to_apply:
         return []
 
