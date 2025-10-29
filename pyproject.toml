@@ -38,6 +38,7 @@ orchestration = [
   "prefect>=3.0.0",
   "opentelemetry-api>=1.20.0",
   "opentelemetry-sdk>=1.20.0",
+  "opentelemetry-exporter-otlp-proto-grpc>=1.20.0",
 ]
 
 entity_resolution = ["splink>=3.9.0", "rapidfuzz>=3.9.2"]

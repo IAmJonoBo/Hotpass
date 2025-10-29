@@ -21,12 +21,13 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from .artifacts import create_refined_archive
 from .config import get_default_profile
-from .pipeline import PipelineConfig, run_pipeline
 from .lineage import (
     build_output_datasets,
     create_emitter,
     discover_input_datasets,
 )
+from .pipeline import PipelineConfig, run_pipeline
+from .telemetry.bootstrap import TelemetryBootstrapOptions, telemetry_session
 
 if TYPE_CHECKING:  # pragma: no cover - typing aids
     from hotpass.config_schema import HotpassConfig
@@ -69,7 +70,6 @@ if _prefect_flow_decorator is not None:
         Callable[..., Callable[[F], F]], _prefect_flow_decorator
     )
 else:
-
     def flow(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
         return _noop_prefect_decorator(*_args, **_kwargs)
 
@@ -79,7 +79,6 @@ if _prefect_task_decorator is not None:
         Callable[..., Callable[[F], F]], _prefect_task_decorator
     )
 else:
-
     def task(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
         return _noop_prefect_decorator(*_args, **_kwargs)
 
@@ -136,6 +135,7 @@ class PipelineRunOptions:
     profile_name: str | None = None
     runner: Callable[..., Any] | None = None
     runner_kwargs: Mapping[str, Any] | None = None
+    telemetry_context: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -273,7 +273,11 @@ def _pipeline_options_from_request(request: AgenticRequest) -> PipelineRunOption
         industry = get_default_profile(profile_name)
         config = config.merge({"profile": industry.to_dict()})
 
-    return PipelineRunOptions(config=config, profile_name=profile_name)
+    return PipelineRunOptions(
+        config=config,
+        profile_name=profile_name,
+        telemetry_context={"hotpass.command": "agentic.run"},
+    )
 
 
 @task(name="evaluate-agent-request", retries=0)
@@ -521,14 +525,44 @@ def run_pipeline_once(options: PipelineRunOptions) -> PipelineRunSummary:
     config = options.config
     runner = options.runner or run_pipeline
     pipeline_config = config.to_pipeline_config()
+    enhanced_config = config.to_enhanced_config()
 
-    return _execute_pipeline(
-        pipeline_config,
-        runner=runner,
-        runner_kwargs=options.runner_kwargs,
-        archive=config.pipeline.archive,
-        archive_dir=config.pipeline.dist_dir,
+    telemetry_options = TelemetryBootstrapOptions(
+        enabled=enhanced_config.enable_observability,
+        service_name=enhanced_config.telemetry_service_name,
+        environment=enhanced_config.telemetry_environment,
+        exporters=enhanced_config.telemetry_exporters,
+        resource_attributes=enhanced_config.telemetry_attributes,
+        exporter_settings=enhanced_config.telemetry_exporter_settings,
     )
+    telemetry_context: dict[str, str] = {}
+    if options.telemetry_context:
+        for key, value in options.telemetry_context.items():
+            if value is None:
+                continue
+            telemetry_context[str(key)] = str(value)
+    telemetry_context.setdefault("hotpass.command", "prefect.run_pipeline_once")
+    if options.profile_name:
+        telemetry_context["hotpass.profile"] = str(options.profile_name)
+    if pipeline_config.run_id:
+        telemetry_context["hotpass.run_id"] = str(pipeline_config.run_id)
+
+    runner_kwargs = dict(options.runner_kwargs or {})
+
+    with telemetry_session(
+        telemetry_options, additional_attributes=telemetry_context
+    ) as metrics:
+        runner_name = getattr(runner, "__name__", "")
+        if metrics is not None and runner_name == "run_enhanced_pipeline":
+            runner_kwargs.setdefault("metrics", metrics)
+
+        return _execute_pipeline(
+            pipeline_config,
+            runner=runner,
+            runner_kwargs=runner_kwargs or None,
+            archive=config.pipeline.archive,
+            archive_dir=config.pipeline.dist_dir,
+        )
 
 
 @task(name="run-pipeline", retries=2, retry_delay_seconds=10)
@@ -700,6 +734,7 @@ def backfill_pipeline_flow(
     archive_pattern: str = "hotpass-inputs-{date:%Y%m%d}-v{version}.zip",
     base_config: Mapping[str, Any] | None = None,
     parameters: Mapping[str, Any] | None = None,
+    telemetry: Mapping[str, Any] | None = None,
     concurrency_limit: int = 1,
     concurrency_key: str = "hotpass/backfill",
 ) -> dict[str, Any]:
@@ -771,6 +806,8 @@ def backfill_pipeline_flow(
         config_model = HotpassConfig.model_validate(dict(base_payload))
         if parameters:
             config_model = config_model.merge(parameters)
+        if telemetry:
+            config_model = config_model.merge({"telemetry": telemetry})
 
         output_path = (
             outputs_root / f"refined-{iso_date}-{_sanitise_component(version)}.xlsx"
@@ -796,6 +833,9 @@ def backfill_pipeline_flow(
 
         def _invoke(
             config_snapshot: HotpassConfig = config_model,
+            *,
+            run_version: str = version,
+            run_date_value: str = iso_date,
         ) -> PipelineRunSummary:
             profile_name = None
             profile = getattr(config_snapshot, "profile", None)
@@ -805,6 +845,12 @@ def backfill_pipeline_flow(
                 PipelineRunOptions(
                     config=config_snapshot,
                     profile_name=profile_name,
+                    telemetry_context={
+                        "hotpass.command": "prefect.backfill_flow",
+                        "hotpass.flow": "hotpass-backfill",
+                        "hotpass.backfill.version": run_version,
+                        "hotpass.backfill.date": run_date_value,
+                    },
                 )
             )
 
@@ -849,6 +895,16 @@ def refinement_pipeline_flow(
     backfill: bool = False,
     incremental: bool = False,
     since: datetime | str | None = None,
+    telemetry_enabled: bool | None = None,
+    telemetry_exporters: Sequence[str] | None = None,
+    telemetry_service_name: str | None = None,
+    telemetry_environment: str | None = None,
+    telemetry_resource_attributes: Mapping[str, str] | None = None,
+    telemetry_otlp_endpoint: str | None = None,
+    telemetry_otlp_metrics_endpoint: str | None = None,
+    telemetry_otlp_headers: Mapping[str, str] | None = None,
+    telemetry_otlp_insecure: bool | None = None,
+    telemetry_otlp_timeout: float | None = None,
 ) -> dict[str, Any]:
     """Main Hotpass refinement pipeline as a Prefect flow.
 
@@ -908,6 +964,7 @@ def refinement_pipeline_flow(
             "incremental": bool(incremental),
         }
     }
+    telemetry_updates: dict[str, Any] = {}
     if resolved_since is not None:
         config_updates["pipeline"]["since"] = resolved_since
     if run_id:
@@ -919,6 +976,30 @@ def refinement_pipeline_flow(
 
     if excel_chunk_size is not None:
         config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size)
+
+    if telemetry_enabled is not None:
+        telemetry_updates["enabled"] = bool(telemetry_enabled)
+    if telemetry_exporters:
+        telemetry_updates["exporters"] = tuple(telemetry_exporters)
+    if telemetry_service_name:
+        telemetry_updates["service_name"] = telemetry_service_name
+    if telemetry_environment:
+        telemetry_updates["environment"] = telemetry_environment
+    if telemetry_resource_attributes:
+        telemetry_updates["resource_attributes"] = dict(telemetry_resource_attributes)
+    if telemetry_otlp_endpoint:
+        telemetry_updates["otlp_endpoint"] = telemetry_otlp_endpoint
+    if telemetry_otlp_metrics_endpoint:
+        telemetry_updates["otlp_metrics_endpoint"] = telemetry_otlp_metrics_endpoint
+    if telemetry_otlp_headers:
+        telemetry_updates["otlp_headers"] = dict(telemetry_otlp_headers)
+    if telemetry_otlp_insecure is not None:
+        telemetry_updates["otlp_insecure"] = bool(telemetry_otlp_insecure)
+    if telemetry_otlp_timeout is not None:
+        telemetry_updates["otlp_timeout"] = float(telemetry_otlp_timeout)
+
+    if telemetry_updates:
+        config_updates["telemetry"] = telemetry_updates
 
     config = HotpassConfig().merge(config_updates)
     profile = get_default_profile(profile_name)
@@ -939,8 +1020,23 @@ def refinement_pipeline_flow(
     if profile_payload is not None:
         config = config.merge({"profile": profile_payload})
 
+    telemetry_context = {
+        "hotpass.command": "prefect.refinement_flow",
+        "hotpass.flow": "hotpass-refinement-pipeline",
+    }
+    if run_id:
+        telemetry_context["prefect.flow_run_id"] = str(run_id)
+    if flow_run_name:
+        telemetry_context["prefect.flow_run_name"] = str(flow_run_name)
+    if scheduled_start_time is not None:
+        telemetry_context["prefect.scheduled_start"] = str(scheduled_start_time)
+
     summary = run_pipeline_once(
-        PipelineRunOptions(config=config, profile_name=profile_name)
+        PipelineRunOptions(
+            config=config,
+            profile_name=profile_name,
+            telemetry_context=telemetry_context,
+        )
     )
 
     payload = summary.to_payload()
@@ -959,7 +1055,3 @@ def refinement_pipeline_flow(
     )
 
     return payload
-if __name__ == "__main__":
-    # Run the flow directly for testing
-    result = refinement_pipeline_flow()
-    print(f"\nPipeline execution result: {result}")

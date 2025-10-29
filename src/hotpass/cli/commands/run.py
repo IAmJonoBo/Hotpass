@@ -6,7 +6,7 @@ import argparse
 import json
 import os
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -26,9 +26,10 @@ from hotpass.lineage import (
     create_emitter,
     discover_input_datasets,
 )
+from hotpass.orchestration import build_pipeline_job_name
 from hotpass.pipeline import default_feature_bundle
 from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
-from hotpass.orchestration import build_pipeline_job_name
+from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions, telemetry_session
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -155,159 +156,180 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         base_config = config.to_pipeline_config(progress_listener=listener)
         enhanced_config = config.to_enhanced_config()
         orchestrator = PipelineOrchestrator()
-        execution = PipelineExecutionConfig(
-            base_config=base_config,
-            enhanced_config=enhanced_config,
-            features=default_feature_bundle(),
+
+        telemetry_options = TelemetryBootstrapOptions(
+            enabled=enhanced_config.enable_observability,
+            service_name=enhanced_config.telemetry_service_name,
+            environment=enhanced_config.telemetry_environment,
+            exporters=enhanced_config.telemetry_exporters,
+            resource_attributes=enhanced_config.telemetry_attributes,
+            exporter_settings=enhanced_config.telemetry_exporter_settings,
         )
+        telemetry_context = {
+            "hotpass.command": "hotpass run",
+        }
+        if options.profile_name:
+            telemetry_context["hotpass.profile"] = options.profile_name
+        if base_config.run_id:
+            telemetry_context["hotpass.run_id"] = base_config.run_id
 
-        emitter = create_emitter(
-            build_pipeline_job_name(base_config),
-            run_id=base_config.run_id,
-        )
-        emitter.emit_start(
-            inputs=discover_input_datasets(base_config.input_dir)
-        )
+        with telemetry_session(
+            telemetry_options, additional_attributes=telemetry_context
+        ) as metrics:
+            execution = PipelineExecutionConfig(
+                base_config=base_config,
+                enhanced_config=enhanced_config,
+                features=default_feature_bundle(),
+                metrics=metrics,
+            )
 
-        lineage_outputs = build_output_datasets(base_config.output_path)
-        archive_path: Path | None = None
+            emitter = create_emitter(
+                build_pipeline_job_name(base_config),
+                run_id=base_config.run_id,
+            )
+            emitter.emit_start(
+                inputs=discover_input_datasets(base_config.input_dir)
+            )
 
-        try:
-            result = orchestrator.run(execution)
+            lineage_outputs = build_output_datasets(base_config.output_path)
+            archive_path: Path | None = None
 
-            report = result.quality_report
-            logger.log_summary(report)
+            try:
+                result = orchestrator.run(execution)
 
-            if console:
-                console.print()
-                console.print(
-                    "[bold green]✓[/bold green] Pipeline completed successfully!"
-                )
-                console.print(
-                    f"[dim]Refined data written to:[/dim] {output_path}"
-                )
+                report = result.quality_report
+                logger.log_summary(report)
 
-            if interactive and console and report.recommendations:
-                console.print()
-                if Confirm.ask("View top recommendations now?", default=True):
-                    console.print("[bold]Top recommendations:[/bold]")
-                    for recommendation in report.recommendations[:3]:
-                        console.print(f"  • {recommendation}")
-
-            if options.report_path is not None:
-                options.report_path.parent.mkdir(parents=True, exist_ok=True)
-                if options.report_format == "html":
-                    options.report_path.write_text(
-                        report.to_html(), encoding="utf-8"
-                    )
-                else:
-                    options.report_path.write_text(
-                        report.to_markdown(), encoding="utf-8"
-                    )
-                logger.log_report_write(options.report_path, options.report_format)
-
-            if (
-                options.party_store_path is not None
-                and result.party_store is not None
-            ):
-                options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
-                payload = result.party_store.as_dict()
-                options.party_store_path.write_text(
-                    json.dumps(payload, indent=2), encoding="utf-8"
-                )
-                logger.log_party_store(options.party_store_path)
-
-            if (
-                config.pipeline.intent_digest_path is not None
-                and result.intent_digest is not None
-            ):
-                logger.log_intent_digest(
-                    config.pipeline.intent_digest_path,
-                    int(result.intent_digest.shape[0]),
-                )
-
-            digest_df = result.intent_digest
-            daily_list_df = result.daily_list
-
-            automation_http_config = base_config.automation_http
-            http_client = AutomationHTTPClient(automation_http_config)
-            dead_letter_queue: DeadLetterQueue | None = None
-            if (
-                automation_http_config.dead_letter_enabled
-                and automation_http_config.dead_letter_path is not None
-            ):
-                dead_letter_queue = DeadLetterQueue(
-                    automation_http_config.dead_letter_path
-                )
-
-            effective_digest = digest_df
-            if effective_digest is None:
-                if daily_list_df is not None:
-                    effective_digest = daily_list_df
-                else:
-                    effective_digest = pd.DataFrame()
-
-            if config.pipeline.intent_webhooks:
-                dispatch_webhooks(
-                    effective_digest,
-                    webhooks=config.pipeline.intent_webhooks,
-                    daily_list=daily_list_df,
-                    logger=logger,
-                    http_client=http_client,
-                    dead_letter=dead_letter_queue,
-                )
-
-            if daily_list_df is not None and config.pipeline.crm_endpoint:
-                push_crm_updates(
-                    daily_list_df,
-                    config.pipeline.crm_endpoint,
-                    token=config.pipeline.crm_token,
-                    logger=logger,
-                    http_client=http_client,
-                    dead_letter=dead_letter_queue,
-                )
-
-            store_path = config.pipeline.intent_signal_store_path
-            if store_path is not None and not store_path.exists():
-                store_path.parent.mkdir(parents=True, exist_ok=True)
-                store_path.write_text("[]\n", encoding="utf-8")
-
-            if config.pipeline.archive:
-                config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
-                archive_path = create_refined_archive(
-                    output_path, config.pipeline.dist_dir
-                )
-                logger.log_archive(archive_path)
-                lineage_outputs = build_output_datasets(
-                    base_config.output_path, archive_path
-                )
-        except DataContractError as exc:
-            context = getattr(exc, "context", None)
-            message = context.message if context is not None else str(exc)
-            emitter.emit_fail(message, outputs=lineage_outputs)
-            logger.log_error(f"Data contract validation failed: {message}")
-            if console:
-                console.print("[bold red]✗ Data contract validation failed[/bold red]")
-                source_hint = (
-                    context.source_file if context and context.source_file else "unknown"
-                )
-                console.print(f"[dim]Source:[/dim] {source_hint}")
-                details = context.details if context else "Unavailable"
-                console.print(f"[dim]Details:[/dim] {details}")
-                if context and context.suggested_fix:
+                if console:
+                    console.print()
                     console.print(
-                        f"[yellow]Suggested fix:[/yellow] {context.suggested_fix}"
+                        "[bold green]✓[/bold green] Pipeline completed successfully!"
                     )
-            return 2
-        except Exception as exc:  # pragma: no cover - defensive guard
-            emitter.emit_fail(str(exc), outputs=lineage_outputs)
-            logger.log_error(str(exc))
-            if console:
-                console.print("[bold red]Pipeline failed with error:[/bold red]")
-                console.print_exception()
-            return 1
-        else:
-            emitter.emit_complete(outputs=lineage_outputs)
+                    console.print(
+                        f"[dim]Refined data written to:[/dim] {output_path}"
+                    )
+
+                if interactive and console and report.recommendations:
+                    console.print()
+                    if Confirm.ask("View top recommendations now?", default=True):
+                        console.print("[bold]Top recommendations:[/bold]")
+                        for recommendation in report.recommendations[:3]:
+                            console.print(f"  • {recommendation}")
+
+                if options.report_path is not None:
+                    options.report_path.parent.mkdir(parents=True, exist_ok=True)
+                    if options.report_format == "html":
+                        options.report_path.write_text(
+                            report.to_html(), encoding="utf-8"
+                        )
+                    else:
+                        options.report_path.write_text(
+                            report.to_markdown(), encoding="utf-8"
+                        )
+                    logger.log_report_write(options.report_path, options.report_format)
+
+                if (
+                    options.party_store_path is not None
+                    and result.party_store is not None
+                ):
+                    options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
+                    payload = result.party_store.as_dict()
+                    options.party_store_path.write_text(
+                        json.dumps(payload, indent=2), encoding="utf-8"
+                    )
+                    logger.log_party_store(options.party_store_path)
+
+                if (
+                    config.pipeline.intent_digest_path is not None
+                    and result.intent_digest is not None
+                ):
+                    logger.log_intent_digest(
+                        config.pipeline.intent_digest_path,
+                        int(result.intent_digest.shape[0]),
+                    )
+
+                digest_df = result.intent_digest
+                daily_list_df = result.daily_list
+
+                automation_http_config = base_config.automation_http
+                http_client = AutomationHTTPClient(automation_http_config)
+                dead_letter_queue: DeadLetterQueue | None = None
+                if (
+                    automation_http_config.dead_letter_enabled
+                    and automation_http_config.dead_letter_path is not None
+                ):
+                    dead_letter_queue = DeadLetterQueue(
+                        automation_http_config.dead_letter_path
+                    )
+
+                effective_digest = digest_df
+                if effective_digest is None:
+                    if daily_list_df is not None:
+                        effective_digest = daily_list_df
+                    else:
+                        effective_digest = pd.DataFrame()
+
+                if config.pipeline.intent_webhooks:
+                    dispatch_webhooks(
+                        effective_digest,
+                        webhooks=config.pipeline.intent_webhooks,
+                        daily_list=daily_list_df,
+                        logger=logger,
+                        http_client=http_client,
+                        dead_letter=dead_letter_queue,
+                    )
+
+                if daily_list_df is not None and config.pipeline.crm_endpoint:
+                    push_crm_updates(
+                        daily_list_df,
+                        config.pipeline.crm_endpoint,
+                        token=config.pipeline.crm_token,
+                        logger=logger,
+                        http_client=http_client,
+                        dead_letter=dead_letter_queue,
+                    )
+
+                store_path = config.pipeline.intent_signal_store_path
+                if store_path is not None and not store_path.exists():
+                    store_path.parent.mkdir(parents=True, exist_ok=True)
+                    store_path.write_text("[]\n", encoding="utf-8")
+
+                if config.pipeline.archive:
+                    config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
+                    archive_path = create_refined_archive(
+                        output_path, config.pipeline.dist_dir
+                    )
+                    logger.log_archive(archive_path)
+                    lineage_outputs = build_output_datasets(
+                        base_config.output_path, archive_path
+                    )
+            except DataContractError as exc:
+                context = getattr(exc, "context", None)
+                message = context.message if context is not None else str(exc)
+                emitter.emit_fail(message, outputs=lineage_outputs)
+                logger.log_error(f"Data contract validation failed: {message}")
+                if console:
+                    console.print("[bold red]✗ Data contract validation failed[/bold red]")
+                    source_hint = (
+                        context.source_file if context and context.source_file else "unknown"
+                    )
+                    console.print(f"[dim]Source:[/dim] {source_hint}")
+                    details = context.details if context else "Unavailable"
+                    console.print(f"[dim]Details:[/dim] {details}")
+                    if context and context.suggested_fix:
+                        console.print(
+                            f"[yellow]Suggested fix:[/yellow] {context.suggested_fix}"
+                        )
+                return 2
+            except Exception as exc:  # pragma: no cover - defensive guard
+                emitter.emit_fail(str(exc), outputs=lineage_outputs)
+                logger.log_error(str(exc))
+                if console:
+                    console.print("[bold red]Pipeline failed with error:[/bold red]")
+                    console.print_exception()
+                return 1
+            else:
+                emitter.emit_complete(outputs=lineage_outputs)
 
     return 0
 
@@ -343,6 +365,7 @@ def _resolve_options(
     automation_http_updates: dict[str, Any] = {}
     retry_updates: dict[str, Any] = {}
     circuit_updates: dict[str, Any] = {}
+    telemetry_updates: dict[str, Any] = {}
 
     def _parse_bool(value: str) -> bool:
         lowered = value.strip().lower()
@@ -352,6 +375,16 @@ def _resolve_options(
             return False
         msg = "expected boolean value"
         raise ValueError(msg)
+
+    def _parse_kv(values: Iterable[str], option: str) -> dict[str, str]:
+        pairs: dict[str, str] = {}
+        for item in values:
+            if "=" not in item:
+                msg = f"{option} values must use KEY=VALUE syntax"
+                raise ValueError(msg)
+            key, value = item.split("=", 1)
+            pairs[key.strip()] = value.strip()
+        return pairs
 
     if namespace.input_dir is not None:
         pipeline_updates["input_dir"] = Path(namespace.input_dir)
@@ -411,6 +444,34 @@ def _resolve_options(
         automation_http_updates["dead_letter_enabled"] = bool(
             namespace.automation_http_dead_letter_enabled
         )
+    if namespace.telemetry_service_name:
+        telemetry_updates["service_name"] = namespace.telemetry_service_name
+    if namespace.telemetry_environment:
+        telemetry_updates["environment"] = namespace.telemetry_environment
+    if namespace.telemetry_exporters:
+        telemetry_updates["exporters"] = tuple(namespace.telemetry_exporters)
+        telemetry_updates.setdefault("enabled", True)
+    if namespace.telemetry_resource_attributes:
+        telemetry_updates["resource_attributes"] = _parse_kv(
+            namespace.telemetry_resource_attributes,
+            "--telemetry-resource-attr",
+        )
+    if namespace.telemetry_otlp_headers:
+        telemetry_updates["otlp_headers"] = _parse_kv(
+            namespace.telemetry_otlp_headers,
+            "--telemetry-otlp-header",
+        )
+    if namespace.telemetry_otlp_endpoint:
+        telemetry_updates["otlp_endpoint"] = namespace.telemetry_otlp_endpoint
+    if namespace.telemetry_otlp_metrics_endpoint:
+        telemetry_updates["otlp_metrics_endpoint"] = (
+            namespace.telemetry_otlp_metrics_endpoint
+        )
+    if namespace.telemetry_otlp_insecure is not None:
+        telemetry_updates["otlp_insecure"] = bool(namespace.telemetry_otlp_insecure)
+    if namespace.telemetry_otlp_timeout is not None:
+        telemetry_updates["otlp_timeout"] = float(namespace.telemetry_otlp_timeout)
+
     if namespace.log_format is not None:
         pipeline_updates["log_format"] = namespace.log_format
     if namespace.report_path is not None:
@@ -427,6 +488,7 @@ def _resolve_options(
         pipeline_updates["qa_mode"] = namespace.qa_mode
     if getattr(namespace, "observability", None) is not None:
         pipeline_updates["observability"] = bool(namespace.observability)
+        telemetry_updates["enabled"] = bool(namespace.observability)
     if getattr(namespace, "archive", None) is not None:
         pipeline_updates["archive"] = bool(namespace.archive)
 
@@ -516,6 +578,8 @@ def _resolve_options(
     updates: dict[str, Any] = {}
     if pipeline_updates:
         updates["pipeline"] = pipeline_updates
+    if telemetry_updates:
+        updates["telemetry"] = telemetry_updates
 
     if updates:
         canonical = canonical.merge(updates)

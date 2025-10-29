@@ -80,6 +80,41 @@ class FeatureSwitches(BaseModel):
     dashboards: bool = False
 
 
+class TelemetrySettings(BaseModel):
+    """Runtime telemetry configuration applied across CLI and flows."""
+
+    enabled: bool = False
+    service_name: str = "hotpass"
+    environment: str | None = None
+    exporters: tuple[str, ...] = Field(default_factory=tuple)
+    resource_attributes: Mapping[str, str] = Field(default_factory=dict)
+    otlp_endpoint: str | None = None
+    otlp_metrics_endpoint: str | None = None
+    otlp_headers: Mapping[str, str] = Field(default_factory=dict)
+    otlp_insecure: bool = False
+    otlp_timeout: float | None = Field(default=None, ge=0.0)
+    exporter_settings: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
+
+    def resolved_exporter_settings(self) -> dict[str, dict[str, Any]]:
+        """Combine explicit exporter settings with derived OTLP configuration."""
+
+        settings = {key: dict(value) for key, value in self.exporter_settings.items()}
+        otlp_payload: dict[str, Any] = {}
+        if self.otlp_endpoint:
+            otlp_payload["endpoint"] = self.otlp_endpoint
+        if self.otlp_metrics_endpoint:
+            otlp_payload["metrics_endpoint"] = self.otlp_metrics_endpoint
+        if self.otlp_headers:
+            otlp_payload["headers"] = {str(k): str(v) for k, v in self.otlp_headers.items()}
+        if self.otlp_insecure:
+            otlp_payload["insecure"] = True
+        if self.otlp_timeout is not None:
+            otlp_payload["timeout"] = float(self.otlp_timeout)
+        if otlp_payload:
+            settings.setdefault("otlp", {}).update(otlp_payload)
+        return settings
+
+
 class AcquisitionProviderConfig(BaseModel):
     name: str
     enabled: bool = True
@@ -434,6 +469,7 @@ class HotpassConfig(BaseModel):
     profile: ProfileConfig = Field(default_factory=ProfileConfig)
     pipeline: PipelineRuntimeConfig = Field(default_factory=PipelineRuntimeConfig)
     features: FeatureSwitches = Field(default_factory=FeatureSwitches)
+    telemetry: TelemetrySettings = Field(default_factory=TelemetrySettings)
     compliance: ComplianceControls = Field(default_factory=ComplianceControls)
     data_contract: DataContractConfig = Field(default_factory=DataContractConfig)
     governance: GovernanceMetadata = Field(default_factory=GovernanceMetadata)
@@ -606,12 +642,16 @@ class HotpassConfig(BaseModel):
 
         from hotpass.pipeline.features.config import EnhancedPipelineConfig
 
+        enable_observability = (
+            self.features.observability or self.telemetry.enabled
+        )
+
         enhanced = EnhancedPipelineConfig(
             enable_entity_resolution=self.features.entity_resolution,
             enable_geospatial=self.features.geospatial,
             enable_enrichment=self.features.enrichment,
             enable_compliance=self.features.compliance,
-            enable_observability=self.features.observability,
+            enable_observability=enable_observability,
             enable_acquisition=self.features.acquisition,
             detect_pii=self.compliance.detect_pii,
             consent_overrides=dict(self.compliance.consent_overrides) or None,
@@ -624,10 +664,23 @@ class HotpassConfig(BaseModel):
         enhanced.lawful_basis = (
             self.compliance.lawful_basis or self.governance.lawful_basis
         )
-        enhanced.telemetry_attributes = {
+        telemetry_attributes = {
             "governance_classification": self.governance.classification.value,
             "data_owner": self.governance.data_owner,
         }
+        telemetry_attributes.update(self.telemetry.resource_attributes)
+        if self.telemetry.environment:
+            telemetry_attributes.setdefault(
+                "deployment.environment", self.telemetry.environment
+            )
+
+        enhanced.telemetry_attributes = telemetry_attributes
+        enhanced.telemetry_service_name = self.telemetry.service_name
+        enhanced.telemetry_environment = self.telemetry.environment
+        enhanced.telemetry_exporters = self.telemetry.exporters
+        enhanced.telemetry_exporter_settings = (
+            self.telemetry.resolved_exporter_settings()
+        )
 
         return enhanced
 
@@ -669,4 +722,5 @@ __all__ = [
     "PIIRedactionSettings",
     "PipelineRuntimeConfig",
     "ProfileConfig",
+    "TelemetrySettings",
 ]

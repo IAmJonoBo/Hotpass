@@ -72,7 +72,67 @@ def make_base_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="Disable observability exporters regardless of profile settings",
     )
+    parser.add_argument(
+        "--telemetry-exporter",
+        dest="telemetry_exporters",
+        action="append",
+        choices=["console", "otlp", "noop"],
+        help="Telemetry exporter to enable (repeat for multiple exporters)",
+    )
+    parser.add_argument(
+        "--telemetry-resource-attr",
+        dest="telemetry_resource_attributes",
+        action="append",
+        metavar="KEY=VALUE",
+        help="Additional OpenTelemetry resource attribute (repeatable)",
+    )
+    parser.add_argument(
+        "--telemetry-service-name",
+        help="Override the OpenTelemetry service.name attribute",
+    )
+    parser.add_argument(
+        "--telemetry-environment",
+        help="Deployment environment tag applied to telemetry resources",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-endpoint",
+        help="OTLP gRPC endpoint for trace exporters",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-metrics-endpoint",
+        help="OTLP gRPC endpoint for metrics exporters",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-header",
+        dest="telemetry_otlp_headers",
+        action="append",
+        metavar="KEY=VALUE",
+        help="Custom header applied to OTLP exporters (repeatable)",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-insecure",
+        dest="telemetry_otlp_insecure",
+        action="store_true",
+        help="Disable TLS verification when publishing via OTLP",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-secure",
+        dest="telemetry_otlp_insecure",
+        action="store_false",
+        help="Require TLS verification for OTLP exporters (default)",
+    )
+    parser.add_argument(
+        "--telemetry-otlp-timeout",
+        type=float,
+        help="Request timeout in seconds for OTLP exporters",
+    )
     parser.set_defaults(interactive=None, observability=None)
+    parser.set_defaults(
+        telemetry_exporters=None,
+        telemetry_resource_attributes=None,
+        telemetry_otlp_headers=None,
+        telemetry_otlp_insecure=None,
+    )
     return parser
 
 
