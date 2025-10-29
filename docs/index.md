@@ -25,6 +25,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 /how-to-guides/bootstrap-execute-mode
 /how-to-guides/dependency-profiles
 /how-to-guides/manage-prefect-deployments
+/how-to-guides/manage-arc-runners
 ```
 
 ```{toctree}

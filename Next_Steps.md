@@ -2,6 +2,7 @@
 
 ## Tasks
 
+- [ ] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).
 - [ ] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).
 - [ ] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).
 - [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles (book staging slot on 2025-12-18; reuse Prefect deployment `hotpass-e2e-staging`).
@@ -24,6 +25,8 @@
 - [x] Instrument CLI and Prefect pipeline runs with OpenLineage and document Marquez quickstart (2025-12-02).
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 
+- [x] Documented ARC runner provisioning and lifecycle verification (2025-10-29).
+
 ## Deliverables
 
 - [x] Dataset contract module under `src/hotpass/contracts/` with Pydantic and Pandera coverage (Owner: Engineering).
@@ -31,9 +34,11 @@
 - [x] `docs/reference/schemas.md` generated from contracts plus toctree registration (Owner: Docs/Engineering).
 - [x] ADR documenting contract strategy and lifecycle (Owner: Architecture/Engineering).
 - [x] Baseline orchestration payload fix ensuring `backfill`/`incremental` keys present (Owner: Engineering).
+- [x] ARC runner infrastructure manifests and Terraform baseline committed under `infra/arc/` (Owner: Platform).
 
 ## Quality Gates
 
+- [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace.
 - [ ] Tests — `pytest` (fails: import error for optional dependency `duckdb` when collecting `tests/automation/test_hooks.py`; see baseline run on 2025-12-02).【0ae58a†L1-L27】
 - [ ] Format — `make qa` (fails: `ruff format --check` wants to reformat 118 files; drift predates current work, rerun 2025-12-02).【bd4b4c†L1-L119】
 - [x] Types — `mypy` (pass: no issues reported in targeted modules, run 2025-12-02).【1565f3†L1-L2】
