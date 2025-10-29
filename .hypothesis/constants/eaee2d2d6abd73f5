@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/_compat_nameparser.py
+# hypothesis_version: 6.142.4
+
+['HumanName', 'first', 'full_name', 'last', 'middle', 'nameparser', 'title']

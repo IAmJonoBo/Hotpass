@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/automation/hooks.py
+# hypothesis_version: 6.142.4
+
+['Authorization', 'absent', 'circuit_open', 'crm', 'daily_list', 'delivered', 'dispatch_webhooks', 'failed', 'intent_digest', 'present', 'prospects', 'push_crm_updates', 'records', 'webhook']

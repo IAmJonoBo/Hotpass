@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/contracts/generator.py
+# hypothesis_version: 6.142.4
+
+['--docs', '--last-updated', '--schemas', '--skip-docs', '--skip-schemas', '__main__', 'docs', 'main', 'reference', 'schemas', 'schemas.md', 'store_true', 'utf-8']

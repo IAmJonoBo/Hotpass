@@ -188,9 +188,7 @@ class AutomationHTTPClient:
         self._session = session or requests.Session()
         self._sleep = sleep
         self._monotonic = monotonic
-        self._idempotency_key_factory = idempotency_key_factory or (
-            lambda: uuid.uuid4().hex
-        )
+        self._idempotency_key_factory = idempotency_key_factory or (lambda: uuid.uuid4().hex)
 
         self._consecutive_failures = 0
         self._circuit_open_until: float | None = None
@@ -297,7 +295,7 @@ class AutomationHTTPClient:
         if factor <= 0:
             return 0.0
         backoff = factor * (2 ** (attempt - 1))
-        return min(backoff, self._config.retry.backoff_max)
+        return float(min(backoff, self._config.retry.backoff_max))
 
     def _should_retry_exception(self, attempt: int) -> bool:
         return attempt < self._config.retry.attempts

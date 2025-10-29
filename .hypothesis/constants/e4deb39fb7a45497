@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/domain/party/loader.py
+# hypothesis_version: 6.142.4
+
+[0.05, 0.2, 0.25, 0.4, 0.5, 0.55, 0.6, 0.65, 0.75, 1.0, 5.0, 'Primary contact', 'Unknown', '[;,]', 'address_primary', 'contact_primary_name', 'contact_primary_role', 'country', 'organization_name', 'organization_slug', 'primary_contact', 'quality_score', 'selection_provenance', 'source_dataset', 'source_datasets', 'source_priority', 'source_record_id', 'website']

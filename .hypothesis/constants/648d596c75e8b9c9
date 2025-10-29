@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/main.py
+# hypothesis_version: 6.142.4
+
+['Hotpass CLI', 'build_parser', 'handler', 'main', 'profile']

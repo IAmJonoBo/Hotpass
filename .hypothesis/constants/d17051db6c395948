@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/automation/http.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.5, 10.0, 30.0, 60.0, 400, 408, 425, 429, 500, 502, 503, 504, 'AutomationHTTPClient', 'AutomationHTTPConfig', 'AutomationHTTPError', 'Content-Type', 'DeadLetterQueue', 'DeliveryAttempt', 'DeliveryReport', 'HTTPResult', 'Idempotency-Key', 'POST', 'a', 'application/json', 'attempts', 'delivered', 'elapsed', 'endpoint', 'error', 'idempotency_key', 'payload', 'status', 'status_code', 'target', 'timestamp', 'utf-8']

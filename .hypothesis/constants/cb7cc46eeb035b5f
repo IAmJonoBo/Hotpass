@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/automation/__init__.py
+# hypothesis_version: 6.142.4
+
+['AutomationHTTPClient', 'AutomationHTTPConfig', 'AutomationHTTPError', 'DeadLetterQueue', 'DeliveryAttempt', 'DeliveryReport', 'HTTPResult', 'dispatch_webhooks', 'push_crm_updates']

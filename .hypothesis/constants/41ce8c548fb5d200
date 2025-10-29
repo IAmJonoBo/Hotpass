@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/validation.py
+# hypothesis_version: 6.142.4
+
+[0.85, 'data_quality_score', 'errors', 'expectations_seconds', 'expectations_started', 'failure_count', 'index', 'records', 'schema_completed', 'schema_started', 'success', 'total_records', 'validate']

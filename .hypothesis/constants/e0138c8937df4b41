@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/telemetry/__init__.py
+# hypothesis_version: 6.142.4
+
+[', ', 'aggregation', 'canonicalise', 'canonicalize', 'hotpass.pipeline', 'ingest', 'link', 'load', 'publish', 'validate', 'validation', 'write']

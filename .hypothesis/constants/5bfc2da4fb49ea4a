@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/scripts/acquisition/guardrails.py
+# hypothesis_version: 6.142.4
+
+[384, 'CollectionGuards', 'HotpassDataCollector', 'ProvenanceLedger', 'ProviderPolicy', 'RobotsTxtGuard', 'TermsOfServicePolicy', 'a', 'file', 'http', 'https', 'license', 'metadata', 'policy_hash', 'providers', 'record_id', 'source', 'timestamp', 'utf-8']

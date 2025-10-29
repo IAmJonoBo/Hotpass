@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/__init__.py
+# hypothesis_version: 6.142.4
+
+['backfill', 'dashboard', 'deploy', 'doctor', 'init', 'orchestrate', 'resolve', 'run', 'version']

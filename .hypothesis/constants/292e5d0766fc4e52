@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/enrichment.py
+# hypothesis_version: 6.142.4
+
+['.csv', '.parquet', 'records']

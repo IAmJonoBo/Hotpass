@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/config_doctor.py
+# hypothesis_version: 6.142.4
+
+[100, 'ConfigDoctor', 'Data Governance', 'DiagnosticResult', 'country_code', 'data_owner', 'error', 'expectation_suite', 'failed', 'features', 'generic', 'governance', 'governance.intent', 'health_score', 'info', 'input_dir', 'legacy.features', 'legacy.input_dir', 'legacy.profile', 'output_path', 'passed', 'pipeline', 'profile', 'total_checks', 'warning']

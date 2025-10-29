@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -405,7 +405,7 @@ def test_promote_model_archives_existing(fake_mlflow: tuple[ModuleType, _FakeMlf
 
 
 def test_promote_model_without_existing_versions_raises(
-    fake_mlflow: tuple[ModuleType, _FakeMlflowState]
+    fake_mlflow: tuple[ModuleType, _FakeMlflowState],
 ) -> None:
     module, _ = fake_mlflow
 
@@ -421,7 +421,7 @@ def test_promote_model_without_existing_versions_raises(
 
 
 def test_promote_model_skips_archiving_when_disabled(
-    fake_mlflow: tuple[ModuleType, _FakeMlflowState]
+    fake_mlflow: tuple[ModuleType, _FakeMlflowState],
 ) -> None:
     module, state = fake_mlflow
     state.register_version("demo", version=1, stage=ModelStage.STAGING.value, run_id="run-1")

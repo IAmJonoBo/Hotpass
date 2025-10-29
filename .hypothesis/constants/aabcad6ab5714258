@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/lineage.py
+# hypothesis_version: 6.142.4
+
+['*.csv', '*.parquet', '*.xls', '*.xlsx', '0', '1', '://', 'InputDataset', 'Job', 'LineageEmitter', 'NullLineageEmitter', 'OpenLineageClient', 'OutputDataset', 'Run', 'RunEvent', 'RunState', 'create_emitter', 'facets', 'hotpass.local', 'name', 'namespace', 'openlineage.client', 'set_producer']

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/base.py
+# hypothesis_version: 6.142.4
+
+[0.0, 'agent_warnings', 'aggregate_completed', 'aggregate_progress', 'aggregate_started', 'aggregated_records', 'aggregation_complete', 'aggregation_seconds', 'collectors', 'column', 'columns', 'conflicts_resolved', 'default', 'details', 'duration_seconds', 'error_count', 'event', 'expectations_seconds', 'expectations_started', 'input_dir', 'intent_signal_count', 'intent_target_count', 'intent_warnings', 'invalid_records', 'load_rows_per_second', 'load_seconds', 'max', 'mean', 'min', 'operator', 'output_path', 'pii_redacted', 'pii_redacted_output', 'pipeline_complete', 'pipeline_start', 'profile', 'redacted_cells', 'rows_per_second', 'schema_completed', 'schema_started', 'signals', 'source_load_seconds', 'sources', 'sources_loaded', 'targets', 'timestamp', 'total_records', 'total_rows', 'total_seconds', 'write_completed', 'write_seconds', 'write_started']

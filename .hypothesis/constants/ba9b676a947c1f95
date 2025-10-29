@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/configuration.py
+# hypothesis_version: 6.142.4
+
+['.tml', '.toml', '.yaml', '.yml', 'CLIProfile', 'DEFAULT_PROFILE_DIRS', 'FeatureFlags', 'OrchestratorPreset', 'ProfileIntentError', 'ProfileNotFoundError', '^(json|rich)$', 'after', 'before', 'config', 'config_files', 'country_code', 'ctx', 'error', 'expectation_suite', 'features', 'intent', 'load_profile', 'log_format', 'name', 'observability', 'path', 'pipeline', 'profiles', 'qa_mode', 'utf-8']

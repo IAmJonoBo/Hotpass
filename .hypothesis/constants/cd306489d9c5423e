@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/normalization.py
+# hypothesis_version: 6.142.4
+
+[10000, '-', '-+', 'Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'NFKD', 'North West', 'Northern Cape', 'Western Cape', 'ZA', '[^a-z ]+', '[^a-z0-9]+', 'ascii', 'eastern cape', 'free state', 'gauteng', 'gpretoria', 'ignore', 'kwa zulu natal', 'kwazulu-natal', 'kzn', 'limpopo', 'mpumalanga', 'north west', 'northern cape', 'province', 'wcape', 'western cape']
