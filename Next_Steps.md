@@ -4,8 +4,8 @@
 
 - [x] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
 - [ ] **2025-12-30 · Programme** — Confirm Phase 5 T5.5 completion with stakeholders so roadmap status reflects programme expectations.【F:ROADMAP.md†L43-L63】
-- [ ] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).
-- [ ] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).
+- [x] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/pipeline/fixtures/stage_inputs.py†L1-L111】
+- [x] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).【F:tests/cli/test_progress.py†L1-L149】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
 - [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles (book staging slot on 2025-12-18; reuse Prefect deployment `hotpass-e2e-staging`).
 - [x] **2025-12-31 · Engineering** — Add Prefect flow integration tests for canonical overrides (extend `tests/test_orchestration.py`; capture fixtures during the 2025-12-18 staging run alongside QA).【F:tests/test_orchestration.py†L1-L260】
 - [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging (share staging credentials and freeze changes week of 2025-12-29 to avoid holiday overlap).
@@ -41,6 +41,8 @@
 - [x] Repository context review — README, doc structure (Diátaxis), governance roadmap, CI workflows, CODEOWNERS, and PR template catalogued to confirm documentation strategy + quality expectations (2025-10-29).【376708†L1-L40】【153305†L1-L43】【d7a74a†L1-L120】【a24b00†L1-L5】【d59c13†L1-L12】【8695aa†L1-L26】
 - [x] Refreshed docs navigation, governance reference pages, README/CONTRIBUTING quickstarts, and ADR index alignment (2025-10-29).【b17fde†L1-L76】【c42979†L11-L64】【60028f†L1-L34】【f068cc†L1-L42】
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
+- [x] Landed modular pipeline orchestration regression suite and reusable fixtures to unblock upcoming stage-by-stage verification (2025-12-30).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/pipeline/fixtures/stage_inputs.py†L1-L111】
+- [x] Captured high-volume CLI progress playback scenario with 10k-event fixture and throttling assertions (2025-12-30).【F:tests/cli/test_progress.py†L113-L149】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
 - [x] Design dataset contract specification layer and registry.
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
@@ -72,6 +74,7 @@
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】
   - Automated compose validation and lineage environment checks added in tests; live smoke evidence remains pending once staging access is available.【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 - [x] ARC lifecycle automation: workflow logs + `scripts/arc/verify_runner_lifecycle.py` report stored in QA artefacts (Owner: Platform). Snapshot run and sample scenario captured to unblock infrastructure rehearsal.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
+- [x] Modular pipeline orchestration regression coverage and CLI progress high-volume fixture available for QA rehearsals (Owner: QA & Engineering).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
 
 ## Quality Gates
 
@@ -96,6 +99,7 @@
 - [ ] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (fails: existing heading hierarchy/toctree gaps across legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
+- [x] Tests — `uv run pytest tests/pipeline/test_stage_execution.py tests/cli/test_progress.py` (pass; covers modular stage orchestration and high-volume progress throttling).【6dc66d†L1-L99】
 
 ## Links
 
