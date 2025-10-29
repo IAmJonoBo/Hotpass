@@ -1,7 +1,7 @@
 ---
 title: Hotpass roadmap
 summary: Status of the Hotpass modernisation programme, quality gates, and follow-up work.
-last_updated: 2025-10-29
+last_updated: 2025-12-26
 ---
 
 This roadmap is the single source of truth for the Hotpass programme. It captures the active plan, guardrails, acceptance criteria, and the mapping of work to the repository layout so that changes are incremental, reversible, and observable.
@@ -68,9 +68,10 @@ Focus areas for the upcoming iterations:
   - **Acceptance:** CI job runs checkpoints; failures fail the job; `dist/data-docs/`
     artefacts are published and linked from the navigation guide.
 
-- [ ] **T2.3 Property-based tests (Hypothesis)**
-  - [ ] Create `tests/property/` for edge cases: encodings, date formats, missing/extra columns, duplicate headers.
-  - [ ] Add idempotency tests (same inputs → same outputs) for core transforms.
+- [x] **T2.3 Property-based tests (Hypothesis)**
+  - [x] Create `tests/property/` for edge cases: encodings, date formats, missing/extra columns, duplicate headers.
+  - [x] Add idempotency tests (same inputs → same outputs) for core transforms.
+  - Implemented via `tests/property/test_ingestion_properties.py`, which hardens ingestion deduplication/normalisation and exercises slug/province transformations across messy Unicode payloads.
   - **Acceptance:** CI passes property-based tests; any discovered regressions include minimal repro data in `tests/data/`.
 
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)

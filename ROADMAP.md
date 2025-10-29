@@ -28,9 +28,10 @@ phases and governance gates.
     [`docs/governance/data-governance-navigation.md`](docs/governance/data-governance-navigation.md)
     page surfaces Data Docs, schema exports, lineage, and evidence packs from the
     docs landing page.
-- [ ] **T2.3 Property-based tests** — Expand Hypothesis coverage for ingestion
+- [x] **T2.3 Property-based tests** — Expand Hypothesis coverage for ingestion
   and export idempotency scenarios.
-  - Upcoming PR: `qa/property-tests-round-two` scheduled for the next QA sweep.
+  - Delivered via `tests/property/test_ingestion_properties.py`, reinforcing
+    ingestion deduplication, Unicode handling, and deterministic slugs/provinces.
 
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)
 

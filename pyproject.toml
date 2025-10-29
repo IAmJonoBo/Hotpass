@@ -31,6 +31,9 @@ dependencies = [
   "python-stdnum>=1.19",
   "pyarrow>=17.0.0",
   "rapidfuzz>=3.9.2",
+  "hypothesis>=6.115.0",
+  "pytest>=8.4.2",
+  "pytest-cov>=7.0.0",
 ]
 
 [project.optional-dependencies]

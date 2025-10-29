@@ -17,10 +17,76 @@ from ..data_sources.agents import run_plan as run_acquisition_plan
 from ..normalization import normalize_province, slugify
 from .config import PipelineConfig
 
+_SOURCE_COLUMNS: list[str] = [
+    "organization_name",
+    "source_dataset",
+    "source_record_id",
+    "province",
+    "area",
+    "address",
+    "category",
+    "organization_type",
+    "status",
+    "website",
+    "planes",
+    "description",
+    "notes",
+    "last_interaction_date",
+    "priority",
+    "contact_names",
+    "contact_roles",
+    "contact_emails",
+    "contact_phones",
+]
+
+
+def _deduplicate_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.columns.is_unique:
+        return frame
+    deduped = frame.copy()
+    new_columns: list[str] = []
+    occurrences: dict[str, int] = {}
+    for name in deduped.columns:
+        count = occurrences.get(name, 0)
+        if count == 0:
+            new_columns.append(name)
+        else:
+            new_columns.append(f"{name}__dup{count}")
+        occurrences[name] = count + 1
+    deduped.columns = new_columns
+    return deduped
+
+
+def _ensure_source_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    if not frame.empty:
+        missing = [column for column in _SOURCE_COLUMNS if column not in frame.columns]
+        if not missing:
+            return frame
+        for column in missing:
+            frame[column] = pd.Series([pd.NA] * len(frame), dtype="object")
+        return frame
+    for column in _SOURCE_COLUMNS:
+        if column not in frame.columns:
+            frame[column] = pd.Series(dtype="object")
+    return frame
+
+
+def _normalise_source_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    attrs = dict(frame.attrs)
+    working = frame.copy(deep=True)
+    working = _deduplicate_columns(working)
+    working = _ensure_source_columns(working)
+    ordered = _SOURCE_COLUMNS + [
+        column for column in working.columns if column not in _SOURCE_COLUMNS
+    ]
+    normalised = working.loc[:, ordered]
+    normalised.attrs = attrs
+    return normalised
+
 
 def _load_agent_frame(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, float]]:
     if config.preloaded_agent_frame is not None:
-        frame = config.preloaded_agent_frame.copy(deep=True)
+        frame = _normalise_source_frame(config.preloaded_agent_frame)
         timings = {
             f"agent:{timing.agent_name}": timing.seconds
             for timing in config.preloaded_agent_timings
@@ -35,6 +101,7 @@ def _load_agent_frame(config: PipelineConfig) -> tuple[pd.DataFrame, dict[str, f
         country_code=config.country_code,
         credentials=config.agent_credentials,
     )
+    frame = _normalise_source_frame(frame)
     config.preloaded_agent_frame = frame.copy(deep=True)
     config.preloaded_agent_timings = list(agent_timings)
     config.preloaded_agent_warnings.extend(warnings)
@@ -58,8 +125,9 @@ def load_sources(
             frame = loader(input_dir, country_code, excel_options)
         except FileNotFoundError:
             continue
-        if not frame.empty:
-            frames[label] = frame
+        if frame.empty:
+            continue
+        frames[label] = _normalise_source_frame(frame)
     return frames
 
 
@@ -83,6 +151,7 @@ def ingest_sources(
         return _empty_sources_frame(), source_timings, []
 
     combined = pd.concat(frames, ignore_index=True, sort=False)
+    combined = _normalise_source_frame(combined)
     combined["organization_slug"] = combined["organization_name"].apply(slugify)
     combined["province"] = combined["province"].apply(normalize_province)
     return combined, source_timings, []
@@ -97,26 +166,4 @@ def apply_redaction(
 
 
 def _empty_sources_frame() -> pd.DataFrame:
-    return pd.DataFrame(
-        columns=[
-            "organization_name",
-            "source_dataset",
-            "source_record_id",
-            "province",
-            "area",
-            "address",
-            "category",
-            "organization_type",
-            "status",
-            "website",
-            "planes",
-            "description",
-            "notes",
-            "last_interaction_date",
-            "priority",
-            "contact_names",
-            "contact_roles",
-            "contact_emails",
-            "contact_phones",
-        ]
-    )
+    return pd.DataFrame(columns=_SOURCE_COLUMNS)
