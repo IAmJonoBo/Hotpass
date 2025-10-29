@@ -6,6 +6,7 @@ import importlib
 import sys
 import types
 import zipfile
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import date, datetime
 from pathlib import Path
@@ -13,6 +14,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
+import anyio
 import pandas as pd
 import pytest
 
@@ -66,6 +68,8 @@ backfill_pipeline_flow = orchestration.backfill_pipeline_flow
 refinement_pipeline_flow = orchestration.refinement_pipeline_flow
 run_pipeline_once = orchestration.run_pipeline_once
 run_pipeline_task = orchestration.run_pipeline_task
+_run_with_prefect_concurrency = orchestration._run_with_prefect_concurrency
+_execute_with_concurrency = orchestration._execute_with_concurrency
 
 if not TYPE_CHECKING:
     PipelineRunOptionsType = PipelineRunOptions  # type: ignore[assignment]
@@ -137,9 +141,12 @@ def test_run_pipeline_once_success(mock_pipeline_result, tmp_path):
 
         summary = run_pipeline_once(options)
 
-    assert summary.success is True
-    assert summary.total_records == 3
-    assert summary.archive_path == tmp_path / "dist" / "archive.zip"
+    expect(summary.success is True, "Pipeline summary should mark execution as successful")
+    expect(summary.total_records == 3, "Expected three records in the refined output")
+    expect(
+        summary.archive_path == tmp_path / "dist" / "archive.zip",
+        "Archive path should include the dist directory",
+    )
 
 
 def test_run_pipeline_task_success(mock_pipeline_result, tmp_path):
@@ -157,7 +164,7 @@ def test_run_pipeline_task_success(mock_pipeline_result, tmp_path):
 
         result = run_pipeline_task(mock_config)
 
-        assert result["success"] is True
+        expect(result["success"] is True, "Task helper should mark execution as successful")
         assert result["total_records"] == 3
         assert "elapsed_seconds" in result
         assert result["backfill"] is False
@@ -562,5 +569,144 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
         concurrency_limit=1,
     )
 
-    assert len(calls) == 1
-    assert result["metrics"]["total_runs"] == 1
+    expect(len(calls) == 1, "Backfill flow should invoke the pipeline exactly once")
+    expect(
+        result["metrics"]["total_runs"] == 1,
+        "Metrics should reflect a single run when concurrency fails",
+    )
+
+
+@pytest.mark.asyncio
+async def test_run_with_prefect_concurrency_acquires_and_releases(
+    tmp_path: Path,
+) -> None:
+    events: list[tuple[str, ...]] = []
+
+    summary = PipelineRunSummary(
+        success=True,
+        total_records=5,
+        elapsed_seconds=0.25,
+        output_path=tmp_path / "refined.xlsx",
+        quality_report={"rows": 5},
+    )
+
+    @asynccontextmanager
+    async def _tracking_concurrency(key: str, occupy: int):
+        events.append(("enter", key, str(occupy)))
+        try:
+            yield
+        finally:
+            events.append(("exit", key, str(occupy)))
+
+    async def _run_sync(
+        func: Callable[[], PipelineRunSummaryType],
+        *_args: object,
+        **_kwargs: object,
+    ) -> PipelineRunSummaryType:
+        events.append(("run_sync",))
+        return func()
+
+    def _callback() -> PipelineRunSummaryType:
+        events.append(("callback",))
+        return summary
+
+    result = await _run_with_prefect_concurrency(
+        _tracking_concurrency,
+        "hotpass/tests",
+        2,
+        _callback,
+        run_sync=_run_sync,
+    )
+
+    expect(result is summary, "Expected concurrency helper to return callback result")
+    expect(("callback",) in events, "Callback should execute within the concurrency guard")
+    expect(("enter", "hotpass/tests", "2") in events, "Concurrency context should be entered")
+    expect(("exit", "hotpass/tests", "2") in events, "Concurrency context should be exited")
+
+
+@pytest.mark.asyncio
+async def test_run_with_prefect_concurrency_falls_back_on_error(
+    tmp_path: Path,
+) -> None:
+    events: list[str] = []
+
+    summary = PipelineRunSummary(
+        success=True,
+        total_records=1,
+        elapsed_seconds=0.1,
+        output_path=tmp_path / "fallback.xlsx",
+        quality_report={"rows": 1},
+    )
+
+    @asynccontextmanager
+    async def _failing_concurrency(*_args: object, **_kwargs: object):
+        raise RuntimeError("boom")
+        yield
+
+    async def _run_sync(
+        func: Callable[[], PipelineRunSummaryType],
+        *_args: object,
+        **_kwargs: object,
+    ) -> PipelineRunSummaryType:
+        events.append("run_sync")
+        return func()
+
+    def _callback() -> PipelineRunSummaryType:
+        events.append("callback")
+        return summary
+
+    result = await _run_with_prefect_concurrency(
+        _failing_concurrency,
+        "hotpass/tests",
+        1,
+        _callback,
+        run_sync=_run_sync,
+    )
+
+    expect(result is summary, "Concurrency fallback should return callback result")
+    expect(events.count("run_sync") == 1, "Thread runner should execute once when falling back")
+    expect("callback" in events, "Callback must still execute when concurrency acquisition fails")
+
+
+def test_execute_with_concurrency_uses_async_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    events: list[tuple[str, ...]] = []
+
+    summary = PipelineRunSummary(
+        success=True,
+        total_records=4,
+        elapsed_seconds=0.4,
+        output_path=tmp_path / "concurrency.xlsx",
+        quality_report={"rows": 4},
+    )
+
+    @asynccontextmanager
+    async def _tracking_concurrency(key: str, occupy: int):
+        events.append(("enter", key, str(occupy)))
+        try:
+            yield
+        finally:
+            events.append(("exit", key, str(occupy)))
+
+    async def _run_sync(
+        func: Callable[[], PipelineRunSummaryType],
+        *_args: object,
+        **_kwargs: object,
+    ) -> PipelineRunSummaryType:
+        events.append(("run_sync",))
+        return func()
+
+    def _callback() -> PipelineRunSummaryType:
+        events.append(("callback",))
+        return summary
+
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _tracking_concurrency, raising=False)
+    monkeypatch.setattr(anyio.to_thread, "run_sync", _run_sync)
+
+    result = _execute_with_concurrency("hotpass/tests", 3, _callback)
+
+    expect(result is summary, "Execute with concurrency should return callback result")
+    expect(("callback",) in events, "Callback should execute through async runner")
+    expect(("enter", "hotpass/tests", "3") in events, "Concurrency context should be entered")
+    expect(("exit", "hotpass/tests", "3") in events, "Concurrency context should be exited")

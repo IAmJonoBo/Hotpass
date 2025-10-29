@@ -13,7 +13,8 @@ import os
 import shutil
 import time
 import zipfile
-from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from collections.abc import Awaitable, Callable, Mapping, MutableSequence, Sequence
+from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -34,8 +35,10 @@ if TYPE_CHECKING:  # pragma: no cover - typing aids
 
 F = TypeVar("F", bound=Callable[..., Any])
 
-_prefect_flow_decorator: Callable[..., Callable[[F], F]] | None = None
-_prefect_task_decorator: Callable[..., Callable[[F], F]] | None = None
+DecoratorFactory = Callable[..., Callable[[Callable[..., Any]], Callable[..., Any]]]
+
+_prefect_flow_decorator: DecoratorFactory | None = None
+_prefect_task_decorator: DecoratorFactory | None = None
 _prefect_get_run_logger: Callable[..., Any] | None = None
 
 
@@ -65,32 +68,34 @@ else:
         _prefect_get_run_logger = None
 
 
-if _prefect_flow_decorator is not None:
-    flow: Callable[..., Callable[[F], F]] = cast(
-        Callable[..., Callable[[F], F]], _prefect_flow_decorator
-    )
-else:
-    def flow(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
+def _resolve_prefect_decorator(
+    factory: DecoratorFactory | None,
+) -> DecoratorFactory:
+    """Return the available Prefect decorator or a no-op fallback."""
+
+    if factory is not None:
+        return factory
+
+    def _fallback(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
         return _noop_prefect_decorator(*_args, **_kwargs)
 
-
-if _prefect_task_decorator is not None:
-    task: Callable[..., Callable[[F], F]] = cast(
-        Callable[..., Callable[[F], F]], _prefect_task_decorator
-    )
-else:
-    def task(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
-        return _noop_prefect_decorator(*_args, **_kwargs)
+    return _fallback
 
 
-prefect_concurrency: Callable[..., Any] | None
+flow: DecoratorFactory = _resolve_prefect_decorator(_prefect_flow_decorator)
+task: DecoratorFactory = _resolve_prefect_decorator(_prefect_task_decorator)
+
+
+ConcurrencyCallable = Callable[..., AbstractAsyncContextManager[object]]
+
+prefect_concurrency: ConcurrencyCallable | None
 
 try:  # pragma: no cover - optional Prefect feature
     from prefect.concurrency.asyncio import concurrency as _prefect_concurrency
 except Exception:  # pragma: no cover - Prefect may be unavailable in tests
     prefect_concurrency = None
 else:
-    prefect_concurrency = cast(Callable[..., Any], _prefect_concurrency)
+    prefect_concurrency = cast(ConcurrencyCallable, _prefect_concurrency)
 
 
 if _prefect_get_run_logger is not None:
@@ -659,12 +664,46 @@ def rehydrate_archive_task(archive_path: Path, restore_dir: Path) -> Path:
     return restore_dir
 
 
+ThreadRunner = Callable[[Callable[[], PipelineRunSummary]], Awaitable[PipelineRunSummary]]
+
+
+async def _run_with_prefect_concurrency(
+    concurrency: ConcurrencyCallable,
+    key: str,
+    slots: int,
+    callback: Callable[[], PipelineRunSummary],
+    *,
+    run_sync: ThreadRunner | None = None,
+) -> PipelineRunSummary:
+    """Execute the callback while holding a Prefect concurrency slot."""
+
+    if run_sync is None:
+        from anyio import to_thread
+
+        run_sync = to_thread.run_sync
+
+    try:
+        async with concurrency(key, occupy=slots):
+            result = await run_sync(callback)
+            return result
+    except Exception as exc:  # pragma: no cover - concurrency fallback
+        _safe_log(
+            logger,
+            logging.WARNING,
+            "Prefect concurrency unavailable for key %s (%s); running synchronously.",
+            key,
+            exc,
+        )
+        return await run_sync(callback)
+
+
 def _execute_with_concurrency(
     key: str,
     slots: int,
     callback: Callable[[], PipelineRunSummary],
 ) -> PipelineRunSummary:
-    if prefect_concurrency is None or slots <= 0:
+    concurrency = prefect_concurrency
+    if concurrency is None or slots <= 0:
         return callback()
 
     try:
@@ -672,22 +711,15 @@ def _execute_with_concurrency(
     except Exception:  # pragma: no cover - fallback when anyio missing
         return callback()
 
-    async def _runner() -> PipelineRunSummary:
-        try:
-            async with prefect_concurrency(key, occupy=slots):  # type: ignore[misc]
-                return await anyio.to_thread.run_sync(callback)
-        except Exception as exc:  # pragma: no cover - concurrency fallback
-            _safe_log(
-                logger,
-                logging.WARNING,
-                "Prefect concurrency unavailable for key %s (%s); running synchronously.",
-                key,
-                exc,
-            )
-            return await anyio.to_thread.run_sync(callback)
-
     try:
-        return anyio.run(_runner)
+        result = anyio.run(
+            _run_with_prefect_concurrency,
+            concurrency,
+            key,
+            slots,
+            callback,
+        )
+        return cast(PipelineRunSummary, result)
     except Exception as exc:  # pragma: no cover - execution fallback
         _safe_log(
             logger,
@@ -763,11 +795,12 @@ def backfill_pipeline_flow(
 
     if base_config is None:
         base_payload: Mapping[str, Any] = HotpassConfig().model_dump(mode="python")
-    elif isinstance(base_config, Mapping):
-        base_payload = base_config
     else:
-        msg = "base_config must be a mapping if provided"
-        raise PipelineOrchestrationError(msg)
+        base_candidate: object = base_config
+        if not isinstance(base_candidate, Mapping):
+            msg = "base_config must be a mapping if provided"
+            raise PipelineOrchestrationError(msg)
+        base_payload = cast(Mapping[str, Any], base_candidate)
 
     total_records = 0
     total_elapsed = 0.0
