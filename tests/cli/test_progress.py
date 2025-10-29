@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
+import pytest
 from rich.console import Console
 
 from hotpass import cli
@@ -15,6 +18,11 @@ from hotpass.pipeline import (
 )
 
 
+def expect(condition: bool, message: str) -> None:
+    if not condition:
+        pytest.fail(message)
+
+
 class _RecordingTask:
     def __init__(self, task_id: int, description: str, total: int) -> None:
         self.id = task_id
@@ -24,18 +32,14 @@ class _RecordingTask:
 
 
 class _RecordingProgress:
-    def __init__(
-        self, *args: Any, **kwargs: Any
-    ) -> None:  # noqa: D401 - parity with Progress
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - parity with Progress
         self.tasks: list[_RecordingTask] = []
         self.log_messages: list[str] = []
 
     def __enter__(self) -> _RecordingProgress:
         return self
 
-    def __exit__(
-        self, exc_type, exc, tb
-    ) -> None:  # pragma: no cover - no cleanup needed
+    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - no cleanup needed
         return None
 
     def add_task(self, description: str, total: int = 1) -> int:
@@ -61,12 +65,18 @@ class _RecordingProgress:
         self.log_messages.append(message)
 
 
+def _load_fixture(name: str) -> list[tuple[str, dict[str, Any]]]:
+    fixture_path = Path(__file__).resolve().parent / "fixtures" / name
+    data = json.loads(fixture_path.read_text(encoding="utf-8"))
+    return [(entry["event"], entry["payload"]) for entry in data]
+
+
 def test_pipeline_progress_throttles_high_volume_events() -> None:
     console = Console(record=True)
     progress = cli.PipelineProgress(
         console,
         progress_factory=_RecordingProgress,
-        throttle_seconds=0.01,
+        throttle_seconds=0.5,
     )
 
     with progress:
@@ -84,12 +94,54 @@ def test_pipeline_progress_throttles_high_volume_events() -> None:
 
     recording_progress: _RecordingProgress = progress._progress  # type: ignore[assignment]
     aggregate_task = next(
-        task
-        for task in recording_progress.tasks
-        if task.description == "Aggregating organisations"
+        task for task in recording_progress.tasks if task.description == "Aggregating organisations"
     )
-    assert aggregate_task.completed == aggregate_task.total
+    expect(
+        aggregate_task.completed == aggregate_task.total,
+        "high volume updates should fill aggregate task",
+    )
+    suppression_logs = [msg for msg in recording_progress.log_messages if "Suppressed" in msg]
+    expect(
+        bool(suppression_logs),
+        "high volume updates should emit suppression summary",
+    )
+
+
+def test_pipeline_progress_replays_high_volume_fixture() -> None:
+    console = Console(record=True)
+    progress = cli.PipelineProgress(
+        console,
+        progress_factory=_RecordingProgress,
+        throttle_seconds=0.5,
+    )
+    events = _load_fixture("progress_high_volume.json")
+
+    with progress:
+        for event, payload in events:
+            progress.handle_event(event, payload)
+
+    recording_progress: _RecordingProgress = progress._progress  # type: ignore[assignment]
+    aggregate_task = next(
+        (
+            task
+            for task in recording_progress.tasks
+            if task.description == "Aggregating organisations"
+        ),
+        None,
+    )
+    expect(aggregate_task is not None, "fixture playback should create aggregate task")
+    expect(
+        aggregate_task.completed == aggregate_task.total,
+        "aggregate task should finish when replaying fixture",
+    )
     suppression_logs = [
-        msg for msg in recording_progress.log_messages if "Suppressed" in msg
+        message for message in recording_progress.log_messages if "Suppressed" in message
     ]
-    assert suppression_logs, "high volume updates should emit suppression summary"
+    expect(suppression_logs, "fixture playback should emit suppression summary")
+    suppressed_counts = [
+        int("".join(ch for ch in message if ch.isdigit()) or "0") for message in suppression_logs
+    ]
+    expect(
+        any(count > 0 for count in suppressed_counts),
+        "suppression summary should report suppressed updates",
+    )
