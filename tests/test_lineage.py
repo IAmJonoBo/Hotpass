@@ -13,7 +13,7 @@ import pytest
 for _module_name in ("duckdb", "pyarrow", "polars"):
     sys.modules.setdefault(_module_name, types.ModuleType(_module_name))
 if not hasattr(sys.modules["pyarrow"], "bool_"):
-    setattr(sys.modules["pyarrow"], "bool_", lambda: object())
+    sys.modules["pyarrow"].bool_ = lambda: object()
 
 _LINEAGE_PATH = Path(__file__).resolve().parents[1] / "src" / "hotpass" / "lineage.py"
 _LINEAGE_SPEC = importlib.util.spec_from_file_location("hotpass.lineage", _LINEAGE_PATH)

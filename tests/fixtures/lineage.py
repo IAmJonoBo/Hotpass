@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Any, Iterator, Mapping
+from typing import Any
 
 import pytest
 
