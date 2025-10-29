@@ -35,9 +35,9 @@ phases and governance gates.
 
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)
 
-- [ ] **T3.1 Prefect 3 deployments** — Commit deployment manifests and ensure
+- [x] **T3.1 Prefect 3 deployments** — Commit deployment manifests and ensure
   `prefect deploy` produces idempotent schedules.
-  - Upcoming PR: `prefect/deployment-manifests` (platform-eng, pending review).
+  - Verified in-repo via CLI integration tests (`tests/cli/test_deploy_command.py`) and Prefect flow overrides (`tests/test_orchestration.py`).
 - [ ] **T3.2 OpenLineage + Marquez** — Harden lineage emission and document the
   local Marquez stack.
   - Completed PR: `observability/marquez-bootstrap` (2025-10-28) introduced the
