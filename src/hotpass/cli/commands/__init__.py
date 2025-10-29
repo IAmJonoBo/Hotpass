@@ -4,7 +4,10 @@ __all__ = [
     "backfill",
     "deploy",
     "dashboard",
+    "doctor",
+    "init",
     "orchestrate",
     "resolve",
     "run",
+    "version",
 ]

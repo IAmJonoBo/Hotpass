@@ -23,6 +23,8 @@ navigation) keeps the guidance actionable.
 - **Future work:** Planned PRs for `hotpass doctor` / `init` will close the loop
   on the UX guarantees described in [docs/roadmap.md](../roadmap.md) and surfaced
   in the repository-level `ROADMAP.md`.
+- **CLI onboarding:** `hotpass init` and `hotpass doctor` now land as part of the
+  quickstart workflow, addressing the UX commitments captured in ROADMAP.md.
 
 ## Decision catalogue
 
@@ -35,6 +37,7 @@ navigation) keeps the guidance actionable.
 | [0005](0005-prefect-deployment-manifests.md) | Prefect deployment manifests | Proposed | Pending PR `prefect/deployment-manifests`; status tracked in ROADMAP.md. |
 | [0006](0006-telemetry-bootstrap.md) | Telemetry bootstrap | Accepted | Observability docs and quickstarts align with the bootstrap decision. |
 | [0006B](0006-mlflow-lifecycle-strategy.md) | MLflow lifecycle strategy | Accepted | Continues to guide MLflow references in tutorials/how-tos. |
+| [0007](0007-cli-onboarding.md) | CLI onboarding commands | Accepted | Establishes `hotpass init` / `doctor` workflow and docs coverage. |
 
 ## How to contribute
 

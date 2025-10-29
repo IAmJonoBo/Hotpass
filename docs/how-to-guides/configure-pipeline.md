@@ -42,6 +42,15 @@ healthcare = load_industry_profile("healthcare")
 
 ## 2. Tune the pipeline configuration
 
+Start by generating a workspace scaffold so you have baseline configuration files to edit:
+
+```bash
+uv run hotpass init --path ./workspace
+uv run hotpass doctor --config ./workspace/config/pipeline.quickstart.toml
+```
+
+After the scaffold completes, adjust the settings you need in the generated configuration files.
+
 Copy `config/pipeline.example.yaml` and adjust the options you need:
 
 - `input_dir` / `output_path`: point to your source and destination folders.
