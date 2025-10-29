@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype
 
 
 @dataclass
@@ -66,6 +67,31 @@ def apply_excel_formatting(
         return
 
     worksheet = writer.sheets[sheet_name]
+
+    # Normalise datetime cells to millisecond precision so Excel round-tripping
+    # matches the original Pandas values. Pandas writes datetime64 columns with
+    # nanosecond precision, but Excel persists datetimes at millisecond
+    # precision using half-up rounding. The governance tests expect the
+    # workbook to reflect Pandas' own rounding semantics (banker's rounding),
+    # so we explicitly coerce values before applying any styling.
+    datetime_columns = [
+        column
+        for column in df.columns
+        if is_datetime64_any_dtype(df[column])
+    ]
+    for column in datetime_columns:
+        col_index = df.columns.get_loc(column) + 1
+        for row_offset, raw_value in enumerate(df[column], start=2):
+            cell = worksheet.cell(row=row_offset, column=col_index)
+            if pd.isna(raw_value):
+                cell.value = None
+                continue
+
+            timestamp = pd.Timestamp(raw_value).round("ms")
+            if timestamp.tzinfo is not None:
+                timestamp = timestamp.tz_localize(None)
+
+            cell.value = timestamp.to_pydatetime()
 
     # Format header row
     header_fill = PatternFill(

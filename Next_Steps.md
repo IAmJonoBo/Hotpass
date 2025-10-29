@@ -45,6 +45,7 @@
 - [x] Implement JSON Schema/docs regeneration workflow and associated tests.
 - [x] Capture contract architecture decision and update reference docs/toctree.
 - [x] Introduce Hypothesis property suites and deterministic pipeline hooks for formatting and pipeline execution (2025-10-28). Extended on 2025-12-26 with ingestion-focused property coverage and column deduplication in `pipeline/ingestion.py`.【7d0f96†L1-L13】【F:src/hotpass/pipeline/ingestion.py†L1-L191】
+- [x] Normalised Excel datetime handling and hardened ingestion duplicate-column compatibility after pandas 2.3 upgrade to keep property suites green (2025-12-29).【F:src/hotpass/formatting.py†L1-L189】【F:tests/property/test_ingestion_properties.py†L1-L212】
 - [x] Instrument CLI and Prefect pipeline runs with OpenLineage and document Marquez quickstart (2025-12-02).
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [x] Centralise OpenTelemetry bootstrap across CLI + Prefect flows and document exporter toggles (completed 2025-12-02 with updated docs/ADR/tests).
@@ -76,7 +77,7 @@
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
   - [x] Targeted regression suite covers boto3 import failures, missing AWS CLI binaries, and CLI error handling (`uv run pytest tests/scripts/test_arc_runner_verifier.py`).【F:tests/scripts/test_arc_runner_verifier.py†L1-L360】
-- [x] Tests — `uv run pytest --cov=src --cov=tests` (pass: Prefect deployment stubs restored module state; CLI overrides now exercised).【bfee17†L1-L111】【F:tests/test_deployment_specs.py†L1-L269】
+- [x] Tests — `uv run pytest --cov=src --cov=tests` (pass: Prefect deployment stubs restored module state; CLI overrides now exercised).【da4ec2†L1-L120】【F:tests/test_deployment_specs.py†L1-L269】
 - [x] Tests — `uv run pytest tests/property/test_ingestion_properties.py` (pass; exercises ingestion deduplication/idempotency under messy fixtures).【7d0f96†L1-L13】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
