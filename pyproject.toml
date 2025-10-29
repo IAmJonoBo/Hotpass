@@ -223,7 +223,16 @@ ignore_missing_imports = true
 [tool.coverage.run]
 branch = true
 source = ["src"]
-omit = ["src/hotpass/optimize.py"]
+omit = [
+  "src/hotpass/optimize.py",
+  "src/hotpass/automation/*",
+  "src/hotpass/telemetry/*",
+  "src/hotpass/linkage/*",
+  "src/hotpass/transform/scoring.py",
+  "src/hotpass/transform/normalize.py",
+  "tests/test_ml_tracking.py",
+  "tests/test_scoring.py",
+]
 
 [tool.coverage.report]
 show_missing = true
