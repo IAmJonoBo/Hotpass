@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import pandas as pd
@@ -42,16 +43,30 @@ class MLflowConfig:
         )
 
 
-def init_mlflow(config: MLflowConfig | None = None) -> None:
-    """Initialize MLflow tracking with the specified configuration."""
+def _load_mlflow(module: ModuleType | None) -> ModuleType:
+    """Import the mlflow module or return the provided override."""
+
+    if module is not None:
+        return module
     try:
-        import mlflow
-    except ImportError as exc:  # pragma: no cover
+        import mlflow  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - exercised via tests with stub
         msg = (
             "mlflow is required for model tracking. Install the 'ml_scoring' extra "
             "(pip install hotpass[ml_scoring])."
         )
         raise RuntimeError(msg) from exc
+    return mlflow
+
+
+def init_mlflow(
+    config: MLflowConfig | None = None,
+    *,
+    mlflow_module: ModuleType | None = None,
+) -> None:
+    """Initialize MLflow tracking with the specified configuration."""
+
+    mlflow = _load_mlflow(mlflow_module)
 
     if config is None:
         config = MLflowConfig.from_env()
@@ -71,6 +86,39 @@ def init_mlflow(config: MLflowConfig | None = None) -> None:
     mlflow.set_experiment(config.experiment_name)
 
 
+def _normalise_tag_value(value: Any) -> str | None:
+    """Coerce metadata values into mlflow tag-friendly strings."""
+
+    if value is None:
+        return None
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, (str, int, float, bool)):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, set):
+        return ", ".join(str(item) for item in sorted(value))
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return ", ".join(str(item) for item in value)
+    return repr(value)
+
+
+def _iter_artifact_entries(artifacts: Mapping[str, Path] | None) -> Iterable[tuple[str, Path]]:
+    """Yield artifact entries that exist on disk."""
+
+    if not artifacts:
+        return []
+    existing: list[tuple[str, Path]] = []
+    for name, path in artifacts.items():
+        candidate = Path(path)
+        if candidate.exists():
+            existing.append((name, candidate))
+    return existing
+
+
 def log_training_run(
     *,
     model: Any,
@@ -82,21 +130,15 @@ def log_training_run(
     signature: Any = None,
     input_example: pd.DataFrame | None = None,
     run_name: str | None = None,
+    mlflow_module: ModuleType | None = None,
 ) -> str:
     """
     Log a training run with MLflow, including model, params, metrics, and artifacts.
 
     Returns the run ID of the logged run.
     """
-    try:
-        import mlflow
-        from mlflow.models import infer_signature
-    except ImportError as exc:  # pragma: no cover
-        msg = (
-            "mlflow is required for model tracking. Install the 'ml_scoring' extra "
-            "(pip install hotpass[ml_scoring])."
-        )
-        raise RuntimeError(msg) from exc
+    mlflow = _load_mlflow(mlflow_module)
+    infer_signature = mlflow.models.infer_signature
 
     if run_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -111,10 +153,9 @@ def log_training_run(
 
         # Log metadata as tags
         for key, value in metadata.items():
-            if isinstance(value, (str, int, float, bool)):
-                mlflow.set_tag(key, value)
-            elif isinstance(value, (list, tuple)):
-                mlflow.set_tag(key, str(value))
+            tag_value = _normalise_tag_value(value)
+            if tag_value is not None:
+                mlflow.set_tag(key, tag_value)
 
         # Infer signature if not provided
         if signature is None and input_example is not None:
@@ -135,13 +176,11 @@ def log_training_run(
         )
 
         # Log additional artifacts
-        if artifacts:
-            for name, path in artifacts.items():
-                if path.exists():
-                    if path.is_file():
-                        mlflow.log_artifact(str(path), artifact_path=name)
-                    else:
-                        mlflow.log_artifacts(str(path), artifact_path=name)
+        for name, path in _iter_artifact_entries(artifacts):
+            if path.is_file():
+                mlflow.log_artifact(str(path), artifact_path=name)
+            else:
+                mlflow.log_artifacts(str(path), artifact_path=name)
 
         return run.info.run_id
 
@@ -152,6 +191,7 @@ def promote_model(
     version: int | str,
     stage: ModelStage,
     archive_existing: bool = True,
+    mlflow_module: ModuleType | None = None,
 ) -> None:
     """
     Promote a model version to a specific stage in the registry.
@@ -162,17 +202,13 @@ def promote_model(
         stage: Target stage for promotion
         archive_existing: Whether to archive existing models in the target stage
     """
-    try:
-        import mlflow
-        from mlflow.exceptions import MlflowException
-    except ImportError as exc:  # pragma: no cover
-        msg = (
-            "mlflow is required for model tracking. Install the 'ml_scoring' extra "
-            "(pip install hotpass[ml_scoring])."
-        )
-        raise RuntimeError(msg) from exc
-
+    mlflow = _load_mlflow(mlflow_module)
     client = mlflow.MlflowClient()
+    MlflowException = getattr(mlflow, "exceptions", None)
+    if MlflowException is None or not hasattr(MlflowException, "MlflowException"):
+        MlflowException = RuntimeError
+    else:  # pragma: no branch - simple attribute lookup
+        MlflowException = MlflowException.MlflowException
 
     # Resolve version if "latest"
     if isinstance(version, str) and version.lower() == "latest":
@@ -206,27 +242,28 @@ def promote_model(
     )
 
 
-def load_production_model(model_name: str = "lead_scoring_model") -> Any:
+def load_production_model(
+    model_name: str = "lead_scoring_model",
+    *,
+    mlflow_module: ModuleType | None = None,
+) -> Any:
     """
     Load the production model from the registry.
 
     Returns:
         The loaded model ready for inference.
     """
-    try:
-        import mlflow
-    except ImportError as exc:  # pragma: no cover
-        msg = (
-            "mlflow is required for model tracking. Install the 'ml_scoring' extra "
-            "(pip install hotpass[ml_scoring])."
-        )
-        raise RuntimeError(msg) from exc
-
+    mlflow = _load_mlflow(mlflow_module)
     model_uri = f"models:/{model_name}/Production"
     return mlflow.sklearn.load_model(model_uri)
 
 
-def get_model_metadata(model_name: str, stage: ModelStage | None = None) -> list[dict]:
+def get_model_metadata(
+    model_name: str,
+    stage: ModelStage | None = None,
+    *,
+    mlflow_module: ModuleType | None = None,
+) -> list[dict[str, Any]]:
     """
     Retrieve metadata for model versions in the registry.
 
@@ -237,15 +274,7 @@ def get_model_metadata(model_name: str, stage: ModelStage | None = None) -> list
     Returns:
         List of model version metadata dictionaries
     """
-    try:
-        import mlflow
-    except ImportError as exc:  # pragma: no cover
-        msg = (
-            "mlflow is required for model tracking. Install the 'ml_scoring' extra "
-            "(pip install hotpass[ml_scoring])."
-        )
-        raise RuntimeError(msg) from exc
-
+    mlflow = _load_mlflow(mlflow_module)
     client = mlflow.MlflowClient()
 
     if stage:
