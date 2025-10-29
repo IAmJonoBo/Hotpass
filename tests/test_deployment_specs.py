@@ -4,47 +4,99 @@ from __future__ import annotations
 
 import sys
 import types
+from collections.abc import Iterator
+from contextlib import contextmanager
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 import pytest
 
-prefect_module = pytest.importorskip("prefect")
-prefect_flow = prefect_module.flow
 
-for module_name in ("duckdb", "polars", "pyarrow"):
-    sys.modules.setdefault(module_name, types.ModuleType(module_name))
+@contextmanager
+def _temporary_module(name: str, module: types.ModuleType | None) -> Iterator[None]:
+    """Temporarily override ``sys.modules`` entry and restore afterwards."""
 
-MODULE_NAME = "hotpass.prefect.deployments"
-module_path = Path(__file__).resolve().parents[1] / "src" / "hotpass" / "prefect" / "deployments.py"
-spec = spec_from_file_location(MODULE_NAME, module_path)
-if spec is None or spec.loader is None:  # pragma: no cover - defensive guard
-    raise RuntimeError("Unable to load deployment module spec")
+    previous = sys.modules.get(name)
+    if module is None:
+        sys.modules.pop(name, None)
+    else:
+        sys.modules[name] = module
+    try:
+        yield
+    finally:
+        if previous is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = previous
 
-hotpass_pkg = sys.modules.setdefault("hotpass", types.ModuleType("hotpass"))
-hotpass_pkg.__path__ = []  # type: ignore[attr-defined]
-prefect_pkg = sys.modules.setdefault("hotpass.prefect", types.ModuleType("hotpass.prefect"))
-hotpass_pkg.prefect = prefect_pkg  # type: ignore[attr-defined]
 
-deployments = module_from_spec(spec)
-sys.modules[MODULE_NAME] = deployments
-spec.loader.exec_module(deployments)
-prefect_pkg.deployments = deployments  # type: ignore[attr-defined]
+@contextmanager
+def _load_deployments_module() -> Iterator[types.ModuleType]:
+    """Load ``hotpass.prefect.deployments`` with isolated module state."""
 
-if "hotpass.orchestration" not in sys.modules:
-    orchestration_module = types.ModuleType("hotpass.orchestration")
+    prefect_module = pytest.importorskip("prefect")
+    prefect_flow = prefect_module.flow
 
-    @prefect_flow(name="hotpass-refinement-pipeline", validate_parameters=False)
-    def refinement_pipeline_flow(**kwargs: object) -> dict[str, object]:
-        return dict(kwargs)
+    # Ensure optional dependencies imported by deployments are stubbed if missing.
+    stubbed: dict[str, types.ModuleType | None] = {}
+    for module_name in ("duckdb", "polars", "pyarrow"):
+        stubbed[module_name] = sys.modules.get(module_name)
+        if module_name not in sys.modules:
+            sys.modules[module_name] = types.ModuleType(module_name)
 
-    @prefect_flow(name="hotpass-backfill", validate_parameters=False)
-    def backfill_pipeline_flow(**kwargs: object) -> dict[str, object]:
-        return dict(kwargs)
+    module_path = (
+        Path(__file__).resolve().parents[1] / "src" / "hotpass" / "prefect" / "deployments.py"
+    )
+    spec = spec_from_file_location("hotpass.prefect.deployments", module_path)
+    if spec is None or spec.loader is None:  # pragma: no cover - defensive guard
+        raise RuntimeError("Unable to load deployment module spec")
 
-    orchestration_module.refinement_pipeline_flow = refinement_pipeline_flow
-    orchestration_module.backfill_pipeline_flow = backfill_pipeline_flow
-    sys.modules["hotpass.orchestration"] = orchestration_module
+    hotpass_pkg = types.ModuleType("hotpass")
+    hotpass_pkg.__path__ = []  # type: ignore[attr-defined]
+    prefect_pkg = types.ModuleType("hotpass.prefect")
+    hotpass_pkg.prefect = prefect_pkg  # type: ignore[attr-defined]
+
+    deployments = module_from_spec(spec)
+
+    try:
+        with (
+            _temporary_module("hotpass", hotpass_pkg),
+            _temporary_module("hotpass.prefect", prefect_pkg),
+            _temporary_module("hotpass.prefect.deployments", deployments),
+        ):
+            spec.loader.exec_module(deployments)
+            prefect_pkg.deployments = deployments  # type: ignore[attr-defined]
+
+            orchestration_module = types.ModuleType("hotpass.orchestration")
+
+            @prefect_flow(name="hotpass-refinement-pipeline", validate_parameters=False)
+            def refinement_pipeline_flow(**kwargs: object) -> dict[str, object]:
+                return dict(kwargs)
+
+            @prefect_flow(name="hotpass-backfill", validate_parameters=False)
+            def backfill_pipeline_flow(**kwargs: object) -> dict[str, object]:
+                return dict(kwargs)
+
+            orchestration_module.refinement_pipeline_flow = refinement_pipeline_flow
+            orchestration_module.backfill_pipeline_flow = backfill_pipeline_flow
+
+            with _temporary_module("hotpass.orchestration", orchestration_module):
+                yield deployments
+    finally:
+        # Restore optional dependency modules to their previous state.
+        for module_name, original in stubbed.items():
+            if original is None:
+                sys.modules.pop(module_name, None)
+            else:
+                sys.modules[module_name] = original
+
+
+@pytest.fixture(scope="module")
+def deployments_module() -> Iterator[types.ModuleType]:
+    """Provide the Prefect deployments module with isolated imports."""
+
+    with _load_deployments_module() as module:
+        yield module
 
 
 def expect(condition: bool, message: str) -> None:
@@ -55,14 +107,16 @@ def expect(condition: bool, message: str) -> None:
 
 
 @pytest.fixture(scope="module")
-def loaded_specs() -> dict[str, deployments.DeploymentSpec]:
-    specs = deployments.load_deployment_specs(Path("prefect"))
+def loaded_specs(
+    deployments_module: types.ModuleType,
+) -> dict[str, object]:
+    specs = deployments_module.load_deployment_specs(Path("prefect"))
     expect(bool(specs), "No deployment specs discovered under the prefect/ directory.")
     return {spec.identifier: spec for spec in specs}
 
 
 def test_specs_include_refinement_and_backfill(
-    loaded_specs: dict[str, deployments.DeploymentSpec],
+    loaded_specs: dict[str, object],
 ) -> None:
     """The repo should ship manifests for both refinement and backfill flows."""
 
@@ -74,7 +128,7 @@ def test_specs_include_refinement_and_backfill(
 
 
 def test_refinement_manifest_encodes_incremental_resume_options(
-    loaded_specs: dict[str, deployments.DeploymentSpec],
+    loaded_specs: dict[str, object],
 ) -> None:
     """The refinement manifest encodes parameters for incremental and resumable runs."""
 
@@ -109,13 +163,15 @@ def test_refinement_manifest_encodes_incremental_resume_options(
 
 @pytest.mark.parametrize("identifier", ["refinement", "backfill"])
 def test_build_runner_deployment_renders_prefect_model(
-    identifier: str, loaded_specs: dict[str, deployments.DeploymentSpec]
+    identifier: str,
+    deployments_module: types.ModuleType,
+    loaded_specs: dict[str, object],
 ) -> None:
     """Deployment manifests compile into Prefect RunnerDeployment objects."""
 
     pytest.importorskip("prefect.deployments.runner")
     spec = loaded_specs[identifier]
-    runner_deployment = deployments.build_runner_deployment(spec)
+    runner_deployment = deployments_module.build_runner_deployment(spec)
     expect(
         runner_deployment.name == spec.name,
         "Runner deployment name should match manifest name.",
@@ -140,16 +196,18 @@ class DummyRunnerDeployRecorder:
         return ["deployment-id"]
 
 
-def test_deploy_pipeline_filters_and_registers(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_deploy_pipeline_filters_and_registers(
+    deployments_module: types.ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Deploy pipeline should register the selected deployment manifests via Prefect runner API."""
 
     pytest.importorskip("prefect.deployments.runner")
-    monkeypatch.setattr(deployments, "PREFECT_AVAILABLE", True, raising=False)
+    monkeypatch.setattr(deployments_module, "PREFECT_AVAILABLE", True, raising=False)
 
     recorder = DummyRunnerDeployRecorder()
-    monkeypatch.setattr(deployments.runner, "deploy", recorder, raising=False)
+    monkeypatch.setattr(deployments_module.runner, "deploy", recorder, raising=False)
 
-    registered = deployments.deploy_pipeline(flows=("refinement",))
+    registered = deployments_module.deploy_pipeline(flows=("refinement",))
 
     expect(registered == ["deployment-id"], "Runner should return the Prefect deployment IDs.")
     expect(len(recorder.calls) == 1, "Runner deploy should have been invoked once.")
@@ -159,9 +217,57 @@ def test_deploy_pipeline_filters_and_registers(monkeypatch: pytest.MonkeyPatch) 
     expect(kwargs.get("push") is False, "Deploy should avoid pushing images during registration.")
 
 
-def test_deploy_pipeline_without_prefect_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_deploy_pipeline_without_prefect_raises(
+    deployments_module: types.ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Deploying when Prefect is unavailable should raise a runtime error."""
 
-    monkeypatch.setattr(deployments, "PREFECT_AVAILABLE", False, raising=False)
+    monkeypatch.setattr(deployments_module, "PREFECT_AVAILABLE", False, raising=False)
     with pytest.raises(RuntimeError, match="Prefect is not installed"):
-        deployments.deploy_pipeline()
+        deployments_module.deploy_pipeline()
+
+
+def test_deploy_pipeline_applies_overrides(
+    deployments_module: types.ModuleType, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CLI overrides should adjust deployment metadata before registration."""
+
+    pytest.importorskip("prefect.deployments.runner")
+    monkeypatch.setattr(deployments_module, "PREFECT_AVAILABLE", True, raising=False)
+
+    recorder = DummyRunnerDeployRecorder()
+    monkeypatch.setattr(deployments_module.runner, "deploy", recorder, raising=False)
+
+    captured: list[object] = []
+    original_build = deployments_module.build_runner_deployment
+
+    def _capture(spec: object) -> object:
+        captured.append(spec)
+        return original_build(spec)
+
+    monkeypatch.setattr(deployments_module, "build_runner_deployment", _capture, raising=False)
+
+    deployments_module.deploy_pipeline(
+        flows=("refinement",),
+        deployment_name="custom-name",
+        schedule="0 5 * * *",
+        work_pool="prefect-prod",
+    )
+
+    expect(len(captured) == 1, "Expected a single deployment spec to be built.")
+    spec = captured.pop()
+    expect(spec.name == "custom-name", "Deployment name override should apply.")
+    expect(spec.work_pool == "prefect-prod", "Work pool override should apply.")
+    expect(spec.schedule is not None, "Schedule override should create metadata.")
+    if spec.schedule is not None:
+        expect(spec.schedule.kind == "cron", "Override should use cron schedule kind.")
+        expect(
+            spec.schedule.value == "0 5 * * *",
+            "Cron expression should match the override value.",
+        )
+
+    deployments_module.deploy_pipeline(flows=("refinement",), disable_schedule=True)
+
+    expect(len(captured) == 1, "Second invocation should build another spec.")
+    disabled_spec = captured.pop()
+    expect(disabled_spec.schedule is None, "Disabling schedule should clear metadata.")
