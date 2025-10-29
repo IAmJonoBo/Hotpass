@@ -1821,6 +1821,9 @@ orchestration = [
     { name = "opentelemetry-sdk" },
     { name = "prefect" },
 ]
+platform = [
+    { name = "boto3" },
+]
 versioning = [
     { name = "dvc", extra = ["s3"] },
 ]
@@ -1834,6 +1837,7 @@ dev = [
 requires-dist = [
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.8.6" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=25.9.0" },
+    { name = "boto3", marker = "extra == 'platform'", specifier = ">=1.35.0" },
     { name = "cyclonedx-bom", marker = "extra == 'dev'", specifier = ">=4.4.0" },
     { name = "detect-secrets", specifier = ">=1.5.0" },
     { name = "detect-secrets", marker = "extra == 'dev'", specifier = ">=1.5.0" },
@@ -1894,7 +1898,7 @@ requires-dist = [
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12" },
     { name = "xgboost", marker = "extra == 'ml-scoring'", specifier = ">=2.0.0" },
 ]
-provides-extras = ["orchestration", "entity-resolution", "ml-scoring", "enrichment", "geospatial", "compliance", "dashboards", "caching", "versioning", "dev", "docs"]
+provides-extras = ["orchestration", "entity-resolution", "ml-scoring", "enrichment", "geospatial", "compliance", "dashboards", "caching", "versioning", "platform", "dev", "docs"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "types-requests", specifier = ">=2.32.4.20250913" }]

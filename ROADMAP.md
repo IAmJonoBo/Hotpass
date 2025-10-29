@@ -63,8 +63,8 @@ phases and governance gates.
   - Upcoming PR: `ci/docker-cache` queued after quality gate hardening.
 - [ ] **T5.4 Provenance** — Generate SBOMs and SLSA attestations.
   - Upcoming PR: `supply-chain/provenance` depends on SBOM generator refactor.
-- [ ] **T5.5 Ephemeral runners** — Roll out ARC manifests and AWS OIDC wiring.
-  - Upcoming PR: `infra/arc-rollout` tracked in platform backlog.
+- [x] **T5.5 Ephemeral runners** — Roll out ARC manifests and AWS OIDC wiring (pending stakeholder confirmation that programme expectations are met).
+  - Completed via updated ARC smoke workflow and lifecycle verifier that now confirm AWS role assumptions alongside runner drain; staging rollout follows the refreshed runbook and workflow configuration.【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L110】
 - [ ] **T5.6 Telemetry instrumentation** — Propagate OpenTelemetry exporters
   through CLI and Prefect.
   - Completed PR: `telemetry/bootstrap` (2025-12-02) delivered shared bootstrap

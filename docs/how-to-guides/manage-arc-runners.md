@@ -1,7 +1,7 @@
 ---
 title: Deploy GitHub ARC runners for Hotpass pipelines
 summary: Provision and operate ephemeral GitHub Actions runners on Kubernetes using OIDC and the Actions Runner Controller.
-last_updated: 2025-10-29
+last_updated: 2025-12-29
 ---
 
 This guide walks platform engineers through deploying the GitHub Actions Runner Controller (ARC) manifests shipped with Hotpass,
@@ -74,21 +74,30 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::123456789012:role/hotpass-arc-runner
           aws-region: eu-west-1
-      - run: uv run python scripts/arc/verify_runner_lifecycle.py --owner IAmJonoBo --repository Hotpass --scale-set hotpass-arc
+      - run: uv run python scripts/arc/verify_runner_lifecycle.py --owner IAmJonoBo --repository Hotpass --scale-set hotpass-arc --verify-oidc --aws-region eu-west-1
 ```
+
+Install dependencies for the smoke workflow with `uv sync --extra orchestration --extra platform` to pull in `boto3`, which the
+OIDC verification step prefers before falling back to the AWS CLI.
+
+> ℹ️ Set a repository or organisation variable named `AWS_REGION` before dispatching the workflow. The smoke test validates this
+>    variable explicitly and fails early with a clear error if it is absent.
 
 ## 4. Validate runner lifecycle
 
 Run the integration script [`scripts/arc/verify_runner_lifecycle.py`](../../scripts/arc/verify_runner_lifecycle.py) to ensure the
 scale set drains after a workflow completes. The script polls the GitHub API and the Kubernetes cluster until the runner pods are
-removed.
+removed. Pass `--verify-oidc` to confirm that the workflow assumed the correct AWS role; the script will emit the resolved ARN in
+text mode and include the identity payload in JSON output.
 
 ```bash
 uv run python scripts/arc/verify_runner_lifecycle.py \
   --owner IAmJonoBo \
   --repository Hotpass \
   --scale-set hotpass-arc \
-  --namespace arc-runners
+  --namespace arc-runners \
+  --verify-oidc \
+  --aws-region eu-west-1
 ```
 
 Use `--output json` if you need machine-readable status checks inside CI or monitoring pipelines.
