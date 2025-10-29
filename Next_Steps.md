@@ -17,7 +17,7 @@
 - [x] **2025-12-12 · Engineering** — Finalise OpenTelemetry bootstrap (CLI orchestrate + Prefect flows wiring, exporter toggles, shutdown guards) and land docs/ADR/tests.
 - [x] **2025-12-08 · Engineering/Docs** — Ship `hotpass doctor` / `hotpass init` onboarding commands with docs, ADR, and regression coverage.
 - [x] **2025-11-08 · Programme (Phase 1)** — Reconcile Phase 1 foundation scope with programme leads and document baseline stabilisation deliverables ahead of retro PR `operations/foundation-retro` (owner: Programme). Completed via the published retro plan and roadmap alignment.【F:docs/operations/foundation-retro.md†L1-L64】【F:docs/roadmap.md†L1-L36】
-- [ ] **2025-11-12 · Engineering (Phase 2)** — Land ROADMAP T2.1 canonical dataset contracts via PR `contracts/new-dataset-schemas`, including JSON Schema exports and docs sync (owner: Engineering).【d9a97b†L8-L16】【7786e5†L36-L53】
+- [x] **2025-11-12 · Engineering (Phase 2)** — Land ROADMAP T2.1 canonical dataset contracts via PR `contracts/new-dataset-schemas`, including JSON Schema exports and docs sync (owner: Engineering). Round-trip contract tests and schema regeneration tooling are committed. 【d9a97b†L8-L16】【7786e5†L36-L53】【F:tests/contracts/test_dataset_contracts.py†L1-L74】
 - [x] **2025-11-15 · QA & Docs (Phase 2)** — Close ROADMAP T2.2 Great Expectations gate hardening with PR `docs/data-governance-nav` and associated checkpoint automation (owners: QA & Docs). Governance navigation guide published to link Data Docs, schemas, lineage, and evidence flows.【F:docs/governance/data-governance-navigation.md†L1-L52】【F:docs/index.md†L63-L81】
 - [ ] **2025-11-19 · QA (Phase 2)** — Deliver Hypothesis expansion for ROADMAP T2.3 via PR `qa/property-tests-round-two`, covering ingestion/export idempotency (owner: QA).【d9a97b†L8-L19】【7786e5†L48-L53】
 - [ ] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
@@ -50,6 +50,7 @@
 - [x] Exercised telemetry-focused pytest suites (`tests/test_pipeline_enhanced.py`, `tests/test_telemetry_bootstrap.py`, `tests/cli/test_telemetry_options.py`) to validate bootstrap wiring (2025-12-02).【0e3de5†L1-L87】
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [x] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18). Snapshot scenario exercised locally with recorded output; live cluster follow-up remains on the Platform roadmap.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
+- [x] Regenerated dataset contract schemas and reference documentation (2025-10-29) via `python -m hotpass.contracts.generator` to confirm artefact parity.【F:docs/reference/schemas.md†L1-L303】【F:schemas/contact_capture.schema.json†L1-L32】
 
 - [x] Documented ARC runner provisioning and lifecycle verification (2025-10-29).
 - [x] Delivered CLI doctor/init onboarding workflow with targeted QA run and documentation updates (2025-12-08).【f5a08d†L1-L82】【e4f00a†L1-L3】【bf7d68†L1-L2】【cce017†L1-L23】【549e24†L1-L59】
