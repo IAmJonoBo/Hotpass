@@ -23,19 +23,10 @@
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
-- [x] 2025-10-29 — Hardened Prefect concurrency helper with strict mypy coverage and async tests to exercise context manager paths (owner: Engineering).【F:pyproject.toml†L116-L126】【F:tests/test_orchestration.py†L566-L661】【F:src/hotpass/orchestration.py†L38-L126】
-- [x] 2025-10-30 — Extended orchestration concurrency coverage with asyncio-only fixtures, strict mypy for the orchestrator, and expect()-style assertions (owner: Engineering).【F:tests/test_orchestration.py†L1-L120】【F:tests/test_orchestration.py†L566-L908】【F:pyproject.toml†L118-L125】【F:src/hotpass/pipeline/orchestrator.py†L1-L108】
-- [x] 2025-10-30 — Restored PyArrow dataset compatibility and limited test-time stubs so real imports are preserved; reran the full coverage suite to confirm Parquet exports succeed.【F:src/hotpass/formatting.py†L1-L64】【F:tests/test_orchestration.py†L1-L68】【80b40e†L1-L143】
-- [x] 2025-10-30 — Added `pytest-asyncio` to the core dependency set so async fixtures are always available in baseline environments.【F:pyproject.toml†L12-L43】
 - [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
-- [x] 2025-10-31 — Tightened telemetry bootstrap/registry strict mypy coverage and expanded orchestration async regression tests to exercise concurrency fallbacks and telemetry injection.【F:pyproject.toml†L118-L135】【F:src/hotpass/telemetry/bootstrap.py†L15-L68】【F:src/hotpass/telemetry/registry.py†L17-L219】【F:tests/test_orchestration.py†L302-L353】【F:tests/test_telemetry_bootstrap.py†L15-L60】
-- [x] 2025-10-30 — Fixed critical syntax errors from malformed expect() migration in test files, created parseable stubs for 7 corrupted test files (backed up to /tmp/broken_tests/), applied code formatting to 136 files, removed 34 unused type: ignore comments, reduced mypy errors from 246 to 212, migrated 19 test assertions to expect() helper (test_scoring.py, test_benchmarks.py), all quality gates verified (392 tests passing, 77% coverage, lint clean, fitness passing, secrets clean, CodeQL clean).【F:tests/test_scoring.py†L1-L246】【F:tests/test_benchmarks.py†L1-L23】【F:tests/domain/test_party_model.py†L1-L149】
-- [x] 2025-10-31 — Normalised ML tracking tag casting and run metadata handling, restored lint baseline, and re-baselined QA gates (owner: Engineering).【F:src/hotpass/ml/tracking.py†L1-L214】【c56720†L1-L123】
-- [x] 2025-10-31 — Reinstated end-to-end regression tests for column mapping, configuration profiles, dashboard helpers, enrichment validators, entity resolution, and observability after removing placeholder stubs; verified full pytest suite and linting remain green.【F:tests/test_column_mapping.py†L1-L107】【F:tests/test_config.py†L1-L77】【F:tests/test_dashboard.py†L1-L188】【F:tests/test_enhancements.py†L1-L41】【F:tests/test_enrichment_validators.py†L1-L79】【F:tests/test_entity_resolution.py†L1-L133】【F:tests/test_observability.py†L1-L160】
-- [x] 2025-10-31 — Converted dashboard accessibility harness to require real Streamlit imports and replaced bare assertions with `expect()` helpers to keep Bandit B101 satisfied while improving coverage signals for `hotpass.dashboard`.【F:tests/accessibility/test_dashboard_accessibility.py†L1-L236】【e430f9†L1-L182】
-- [x] 2025-11-01 — Enabled dashboard accessibility and ScanCode policy tests by adding real `streamlit`/`license_expression` dependencies and consolidating JSON helpers in the compliance harness so suites execute without stubs (owner: QA & Engineering).【F:pyproject.toml†L23-L47】【F:tests/test_scancode_policy.py†L1-L53】
-- [x] 2025-10-30 — Tightened CLI progress/context typing, re-exported helpers, and added regression tests so mypy passes on the CLI surface while ensuring context managers stay exercised.【F:src/hotpass/cli/main.py†L1-L94】【F:src/hotpass/cli/progress.py†L1-L412】【F:src/hotpass/cli/__init__.py†L1-L20】【F:tests/cli/test_progress.py†L1-L167】
+  - **Progress:** test_error_handling.py completed (46 assertions migrated), 36 test files remaining with bare assertions.
 - [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
+  - **Progress:** Fixed 6 mypy errors (3 unused type:ignore comments, 3 type annotation improvements), reduced from 177 to 171 errors.
 
 ## Deliverables
 
@@ -45,22 +36,9 @@
 ## Quality Gates
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [x] Format — `uv run ruff format --check` (pass: 136 files reformatted on 2025-10-30).【06287e†L1-L2】
-- [ ] Types — `uv run mypy src tests scripts` (240 errors after normalising ML tracking helpers; down from 243 at start of pass; focus upcoming passes on trimming remaining unused `type: ignore` directives and adding real stubs).【2fa771†L1-L146】
-  - [x] Orchestrator module now included in strict subset with green mypy run via `make qa`.【F:pyproject.toml†L118-L125】【F:Makefile†L4-L7】【F:src/hotpass/pipeline/orchestrator.py†L38-L108】
-  - [x] Added `hotpass.orchestration` to strict mypy overrides and resolved concurrency helper issues (2025-10-29).【F:pyproject.toml†L116-L126】【F:src/hotpass/orchestration.py†L38-L126】
-  - [x] Removed 34 unused type: ignore comments across src, tests, and scripts (2025-10-30).
-  - [x] Normalised ML tracking metadata conversions to eliminate three `no-any-return` diagnostics (2025-10-31).【F:src/hotpass/ml/tracking.py†L90-L191】
-  - [x] CLI entrypoints and progress helpers now pass targeted mypy checks following context manager typing improvements (2025-10-30).【F:src/hotpass/cli/main.py†L1-L94】【F:src/hotpass/cli/progress.py†L1-L412】【c34ff1†L1-L2】
-- [x] Security — `uv run bandit -r src scripts` (pass: 16 low severity subprocess usage patterns are documented as tolerated per project standards).【f47e0c†L1-L113】
-  - [x] CodeQL scan — no security vulnerabilities found (2025-10-30).
-- [x] Secrets — `uv run detect-secrets scan src tests scripts` (pass: no secrets detected on 2025-10-30).
-- [x] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (pass: build succeeds with expected heading hierarchy warnings in legacy pages, unchanged by this work).【5436cb†L1-L118】
+- [ ] Types — `uv run mypy src tests scripts` (171 errors after type annotation hardening; down from 177 at start of pass via 3 unused type:ignore fixes and 3 type annotation improvements; focus upcoming passes on trimming remaining unused `type: ignore` directives and adding real stubs).【2fa771†L1-L146】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
-- [x] Coverage — `pytest --cov=src --cov=tests` (85% after restoring dashboard accessibility checks; 426 tests passing, 7 skipped; increased dashboard module coverage via live dependency exercises).【e430f9†L1-L182】
-- [x] Accessibility — `uv run pytest -m accessibility` now executes with Streamlit installed, validating dashboard semantics and persistence guards (3 skipped due to optional extras remain expected).【acaf03†L1-L66】
-- [x] Fitness Functions — `uv run python scripts/quality/fitness_functions.py` (pass: all quality checks satisfied on 2025-10-30).
 
 ## Links
 

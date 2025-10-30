@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from types import SimpleNamespace
 from typing import Any
@@ -97,8 +98,8 @@ class StubRegistry:
 
 
 @pytest.fixture()
-def stub_registry(monkeypatch: pytest.MonkeyPatch) -> StubRegistry:
-    original = observability._REGISTRY  # type: ignore[attr-defined]
+def stub_registry(monkeypatch: pytest.MonkeyPatch) -> Generator[StubRegistry]:
+    original = observability._REGISTRY
     registry = StubRegistry()
     observability.use_registry(registry)
     try:
@@ -138,6 +139,7 @@ def test_trace_operation_records_attributes_and_errors(stub_registry: StubRegist
     except RuntimeError:
         expect(stub_registry.tracer.started[-1].exceptions, "Exception should be recorded on span")
         status = stub_registry.tracer.started[-1].status
+        assert status is not None, "Status should be set on error"
         expect(status.code == StubStatusCode.ERROR, "Span status should mark error")
     else:  # pragma: no cover - defensive guard
         raise AssertionError("RuntimeError should propagate from trace_operation")
