@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import json
-import sys
-import types
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal
 
 import pandas as pd
 import pytest
 
-if "streamlit" not in sys.modules:
-    sys.modules["streamlit"] = types.ModuleType("streamlit")
-
+pytest.importorskip("streamlit")
 pytest.importorskip("nameparser")
+
+from tests.helpers.assertions import expect
 
 import hotpass.dashboard as dashboard
 
@@ -157,11 +156,11 @@ def test_sidebar_widgets_include_help(
     dashboard.main()
 
     calls = [call for call in stub.sidebar.calls if call.widget == widget]
-    assert calls, f"Expected at least one call to {widget}"
+    expect(bool(calls), f"Expected at least one call to {widget}")
     for call in calls:
         help_text = call.kwargs.get("help")
         text = help_text.strip() if isinstance(help_text, str) else ""
-        assert text, f"Help text missing for {call.label}"
+        expect(bool(text), f"Help text missing for {call.label}")
 
 
 @pytest.mark.accessibility
@@ -178,9 +177,15 @@ def test_run_button_uses_accessible_configuration(
 
     dashboard.main()
 
-    assert stub.button_kwargs is not None, "Run button was not configured"
-    assert stub.button_kwargs.get("type") == "primary"
-    assert stub.button_kwargs.get("use_container_width") is True
+    expect(stub.button_kwargs is not None, "Run button was not configured")
+    expect(
+        stub.button_kwargs.get("type") == "primary",
+        "Run button should use primary styling",
+    )
+    expect(
+        stub.button_kwargs.get("use_container_width") is True,
+        "Run button should occupy the available width",
+    )
 
 
 @pytest.mark.accessibility
@@ -194,10 +199,14 @@ def test_tabs_cover_primary_journeys(monkeypatch: pytest.MonkeyPatch, tmp_path: 
 
     dashboard.main()
 
-    assert stub.tabs_requested == (
-        "Pipeline Control",
-        "Execution History",
-        "Quality Metrics",
+    expect(
+        stub.tabs_requested
+        == (
+            "Pipeline Control",
+            "Execution History",
+            "Quality Metrics",
+        ),
+        "Dashboard tabs should match the expected journeys",
     )
 
 
@@ -218,20 +227,23 @@ def test_spinner_announces_status(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
         def to_dict(self) -> dict[str, Any]:
             return {"status": "ok"}
 
-    run_result = types.SimpleNamespace(
+    run_result = SimpleNamespace(
         refined=pd.DataFrame({"data_quality_score": [0.9, 0.8]}),
         quality_report=DummyQualityReport(),
     )
 
-    monkeypatch.setattr(dashboard, "get_default_profile", lambda _: types.SimpleNamespace())
+    monkeypatch.setattr(dashboard, "get_default_profile", lambda _: SimpleNamespace())
     monkeypatch.setattr(dashboard, "run_pipeline", lambda _: run_result)
 
     dashboard.main()
 
-    assert stub.spinner_messages, "Expected spinner to announce status"
-    assert any("Running pipeline" in message for message in stub.spinner_messages)
+    expect(bool(stub.spinner_messages), "Expected spinner to announce status")
+    expect(
+        any("Running pipeline" in message for message in stub.spinner_messages),
+        "Spinner should announce that the pipeline is running",
+    )
 
     history_file = Path("./logs/pipeline_history.json")
-    assert history_file.exists()
+    expect(history_file.exists(), "Pipeline history should be written to disk")
     data = json.loads(history_file.read_text())
-    assert data, "History should contain at least one entry"
+    expect(bool(data), "History should contain at least one entry")
