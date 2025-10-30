@@ -2,10 +2,10 @@
 
 ## Tasks
 
-- [ ] **2025-12-30 · Programme** — Confirm Phase 5 T5.5 completion with stakeholders so roadmap status reflects programme expectations.【F:ROADMAP.md†L43-L63】
-- [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles (book staging slot on 2025-12-18; reuse Prefect deployment `hotpass-e2e-staging`).
-- [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging (share staging credentials and freeze changes week of 2025-12-29 to avoid holiday overlap).
-- [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads (run benchmarks alongside December integration tests; feed results into January ADR updates).
+- [ ] **2025-12-30 · Programme** — Confirm Phase 5 T5.5 completion so roadmap status reflects programme expectations.【F:ROADMAP.md†L43-L63】
+- [ ] **2025-12-31 · QA** — Execute full E2E runs with canonical configuration toggles ; reuse Prefect deployment `hotpass-e2e-staging`).
+- [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging.
+- [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
 - [ ] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
 - [ ] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA).【d9a97b†L24-L29】【7786e5†L63-L72】
