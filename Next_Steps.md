@@ -23,8 +23,10 @@
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
-- [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering). **In progress:** test_error_handling.py completed (46 assertions migrated), 36 test files remaining with bare assertions.
-- [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA). **In progress:** Fixed 6 mypy errors (3 unused type:ignore comments), reduced from 177 to 171 errors.
+- [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
+  - **Progress:** test_error_handling.py completed (46 assertions migrated), 36 test files remaining with bare assertions.
+- [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
+  - **Progress:** Fixed 6 mypy errors (3 unused type:ignore comments, 3 type annotation improvements), reduced from 177 to 171 errors.
 
 ## Deliverables
 
@@ -34,7 +36,7 @@
 ## Quality Gates
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [ ] Types — `uv run mypy src tests scripts` (171 errors after type annotation hardening; down from 177 at start of pass; focus upcoming passes on trimming remaining unused `type: ignore` directives and adding real stubs).【2fa771†L1-L146】
+- [ ] Types — `uv run mypy src tests scripts` (171 errors after type annotation hardening; down from 177 at start of pass via 3 unused type:ignore fixes and 3 type annotation improvements; focus upcoming passes on trimming remaining unused `type: ignore` directives and adding real stubs).【2fa771†L1-L146】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
 
