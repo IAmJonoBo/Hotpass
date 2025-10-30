@@ -8,6 +8,7 @@ from .progress import (
     REDACTED_PLACEHOLDER,
     PipelineProgress,
     StructuredLogger,
+    render_progress,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "StructuredLogger",
     "build_parser",
     "main",
+    "render_progress",
 ]

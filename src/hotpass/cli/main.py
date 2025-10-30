@@ -6,6 +6,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Protocol, cast
 
 from .builder import CLIBuilder
 from .commands import (
@@ -34,6 +35,12 @@ EPILOG = (
 )
 
 
+class CommandHandler(Protocol):
+    """Callable interface implemented by CLI subcommand handlers."""
+
+    def __call__(self, args: argparse.Namespace, profile: CLIProfile | None) -> int: ...
+
+
 def build_parser() -> argparse.ArgumentParser:
     builder = CLIBuilder(
         description="Hotpass CLI",
@@ -48,14 +55,15 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(deploy.register())
     builder.register(init.register())
     builder.register(version.register())
-    return builder.build()
+    parser = cast(argparse.ArgumentParser, builder.build())
+    return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    handler = getattr(args, "handler", None)
+    handler = cast(CommandHandler | None, getattr(args, "handler", None))
     if handler is None:
         parser.print_help()
         return 1
@@ -75,8 +83,9 @@ def _load_profile(args: argparse.Namespace) -> CLIProfile | None:
         return None
 
     search_paths: list[Path] = []
-    if args.profile_search_paths:
-        search_paths.extend(Path(path) for path in args.profile_search_paths)
+    raw_search_paths = getattr(args, "profile_search_paths", None)
+    if raw_search_paths:
+        search_paths.extend(Path(path) for path in raw_search_paths)
     search_paths.extend(DEFAULT_PROFILE_DIRS)
 
     return load_profile(identifier, search_paths=search_paths)
