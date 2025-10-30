@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -130,7 +131,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         console.print("[green]✓ All QA checks passed[/green]")
         return 0
     else:
-        console.print("[red]✗ Some QA checks failed[/red]", file=sys.stderr)
+        console.print("[red]✗ Some QA checks failed[/red]")
         return 1
 
 
@@ -154,10 +155,55 @@ def run_fitness_functions() -> tuple[bool, str]:
 def run_data_quality(profile_name: str | None = None) -> tuple[bool, str]:
     """Run Great Expectations data quality checks."""
     try:
-        from hotpass.validation import validate_profile_with_ge
+        cmd = [
+            sys.executable,
+            "scripts/quality/run_qg2.py",
+            "--json",
+        ]
+        if profile_name:
+            cmd.extend(["--profile", profile_name])
 
-        profile = profile_name or "generic"
-        return validate_profile_with_ge(profile)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=180,
+        )
+
+        payload: dict[str, object] | None = None
+        if result.stdout.strip():
+            try:
+                payload = json.loads(result.stdout)
+            except json.JSONDecodeError as exc:
+                return False, f"Failed to parse data quality output: {exc}"
+
+        if result.returncode == 0:
+            if isinstance(payload, dict):
+                stats = payload.get("stats")
+                stats_dict = stats if isinstance(stats, dict) else {}
+                passed = stats_dict.get("passed")
+                total = stats_dict.get("total")
+                docs_dir = payload.get("data_docs")
+                if passed is not None and total is not None and isinstance(docs_dir, str):
+                    return True, (
+                        f"Data quality checks passed ({passed}/{total}); Data Docs: {docs_dir}"
+                    )
+            return True, "Data quality checks passed"
+
+        failure_message = result.stderr.strip() or "Data quality checks failed"
+        if isinstance(payload, dict):
+            raw_results = payload.get("results", [])
+            items = raw_results if isinstance(raw_results, list) else []
+            failures = [
+                f"{item.get('checkpoint')}: {item.get('message')}"
+                for item in items
+                if isinstance(item, dict) and item.get("status") == "failed"
+            ]
+            if failures:
+                failure_message = "; ".join(failures)
+
+        return False, failure_message
     except Exception as e:
         return False, f"Error running data quality checks: {e}"
 

@@ -40,9 +40,30 @@ jobs:
           uv run pytest tests/cli/test_quality_gates.py::TestQG1CLIIntegrity -v
 
       - name: QG-2 - Data Quality
+        id: qg2
         run: |
           echo "Running QG-2: Data Quality"
-          uv run pytest tests/cli/test_quality_gates.py::TestQG2DataQuality -v
+          set -o pipefail
+          uv run python scripts/quality/run_qg2.py --json | tee qg2-output.json
+          status=${PIPESTATUS[0]}
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload QG-2 Data Docs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qg2-data-quality
+          if-no-files-found: warn
+          path: |
+            dist/quality-gates/qg2-data-quality/latest.json
+            dist/quality-gates/qg2-data-quality/*/data-docs/**
+
+      - name: Enforce QG-2 Result
+        if: steps.qg2.outputs.status != '0'
+        run: |
+          echo "QG-2 failed; see uploaded Data Docs for details."
+          exit 1
 
       - name: QG-3 - Enrichment Chain
         run: |

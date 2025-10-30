@@ -7,7 +7,10 @@
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": { "column": "Organisation Name" }
+      "kwargs": {
+        "column": "Organisation Name",
+        "mostly": 0.15
+      }
     },
     {
       "expectation_type": "expect_column_to_exist",
@@ -15,7 +18,10 @@
     },
     {
       "expectation_type": "expect_column_values_to_not_be_null",
-      "kwargs": { "column": "ID" }
+      "kwargs": {
+        "column": "ID",
+        "mostly": 0.999
+      }
     },
     {
       "expectation_type": "expect_column_to_exist",

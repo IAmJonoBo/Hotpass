@@ -95,42 +95,63 @@ def run_qg2_data_quality() -> GateResult:
 
     start = time.time()
 
-    # Note: Full Great Expectations integration would go here
-    # For now, we check that profiles define expectations
-
     try:
-        import yaml
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/quality/run_qg2.py",
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
 
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
-        with open(profile_path) as f:
-            profile = yaml.safe_load(f)
+        payload: dict[str, object] | None = None
+        if result.stdout.strip():
+            payload = json.loads(result.stdout)
 
-        if "refine" not in profile or "expectations" not in profile["refine"]:
+        if result.returncode == 0:
+            if isinstance(payload, dict):
+                stats = payload.get("stats", {}) if isinstance(payload.get("stats"), dict) else {}
+                passed = stats.get("passed") if isinstance(stats, dict) else None
+                total = stats.get("total") if isinstance(stats, dict) else None
+                docs_dir = payload.get("data_docs")
+                message = (
+                    f"{passed}/{total} checkpoints passed; Data Docs at {docs_dir}"
+                    if passed is not None and total is not None and docs_dir
+                    else "Data quality validation succeeded"
+                )
+            else:
+                message = "Data quality validation succeeded"
+
             return GateResult(
                 gate_id="QG-2",
                 name="Data Quality",
-                passed=False,
-                message="Profile missing expectations definition",
+                passed=True,
+                message=message,
                 duration_seconds=time.time() - start,
             )
 
-        if len(profile["refine"]["expectations"]) == 0:
-            return GateResult(
-                gate_id="QG-2",
-                name="Data Quality",
-                passed=False,
-                message="Profile has no expectations defined",
-                duration_seconds=time.time() - start,
-            )
+        failure_message = result.stderr.strip() or "Data quality validation failed"
+        if isinstance(payload, dict):
+            raw_results = payload.get("results", [])
+            items = raw_results if isinstance(raw_results, list) else []
+            failed_checks = [
+                f"{item.get('checkpoint')}: {item.get('message')}"
+                for item in items
+                if isinstance(item, dict) and item.get("status") == "failed"
+            ]
+            if failed_checks:
+                failure_message = "; ".join(failed_checks)
 
         return GateResult(
             gate_id="QG-2",
             name="Data Quality",
-            passed=True,
-            message=f"Profiles define {len(profile['refine']['expectations'])} expectations",
+            passed=False,
+            message=failure_message,
             duration_seconds=time.time() - start,
         )
-
     except Exception as e:
         return GateResult(
             gate_id="QG-2",
