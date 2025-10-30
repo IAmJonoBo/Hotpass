@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib import request
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
@@ -32,7 +32,7 @@ def _default_fetcher(url: str) -> str:
 
     with request.urlopen(url) as response:  # noqa: S310 - validated scheme  # nosec B310
         content_bytes = response.read()
-    return content_bytes.decode("utf-8")
+    return cast(str, content_bytes.decode("utf-8"))
 
 
 @dataclass(slots=True)

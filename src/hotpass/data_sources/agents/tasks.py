@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, assert_never
 
 from ...enrichment.providers import (
     BaseProvider,
@@ -82,8 +82,8 @@ def execute_agent_tasks(
                 registry,
                 credential_store,
             )
-        else:  # pragma: no cover - defensive branch
-            state.warnings.append(f"{task.name}: unsupported task kind {task.kind!s}")
+        else:
+            assert_never(task.kind)
 
     result.targets.extend(state.targets)
     result.records.extend(state.records)

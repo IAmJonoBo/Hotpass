@@ -138,7 +138,6 @@ def run_pipeline(config: PipelineConfig | HotpassConfig) -> PipelineResult:
 
     from hotpass.config_schema import HotpassConfig as HotpassConfigType
 
-    from .config import PipelineConfig as PipelineConfigType
     from .orchestrator import (
         PipelineExecutionConfig,
         PipelineOrchestrator,
@@ -147,16 +146,13 @@ def run_pipeline(config: PipelineConfig | HotpassConfig) -> PipelineResult:
 
     orchestrator = PipelineOrchestrator()
 
-    if not isinstance(config, PipelineConfigType):
-        if isinstance(config, HotpassConfigType):
-            execution = PipelineExecutionConfig(
-                base_config=config.to_pipeline_config(),
-                enhanced_config=config.to_enhanced_config(),
-                features=default_feature_bundle(),
-            )
-            return orchestrator.run(execution)
-        msg = f"Unsupported configuration type: {type(config)!r}"
-        raise TypeError(msg)
+    if isinstance(config, HotpassConfigType):
+        execution = PipelineExecutionConfig(
+            base_config=config.to_pipeline_config(),
+            enhanced_config=config.to_enhanced_config(),
+            features=default_feature_bundle(),
+        )
+        return orchestrator.run(execution)
 
     execution = PipelineExecutionConfig(base_config=config)
     return orchestrator.run(execution)

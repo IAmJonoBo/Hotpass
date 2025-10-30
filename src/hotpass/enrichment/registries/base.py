@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from threading import Lock
 from time import monotonic
-from typing import Any
+from typing import Any, cast
 
 try:
     import requests
@@ -251,7 +251,7 @@ class BaseRegistryAdapter(ABC):
     @staticmethod
     def _json(response: requests.Response) -> dict[str, Any]:
         try:
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except ValueError as exc:
             raise RegistryTransportError("Registry response was not valid JSON") from exc
 

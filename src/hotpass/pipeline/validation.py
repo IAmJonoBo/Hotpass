@@ -13,7 +13,7 @@ from ..telemetry import pipeline_stage
 from .config import PipelineConfig
 
 
-def _get_ssot_schema():
+def _get_ssot_schema() -> Any:
     from . import build_ssot_schema  # Local import to avoid circular dependency
 
     return build_ssot_schema()

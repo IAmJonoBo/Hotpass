@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Iterable
-from typing import Any, Union, get_args, get_origin
+from typing import Any, Union, cast, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -15,7 +15,7 @@ def _type_name(annotation: Any) -> str:
     origin = get_origin(annotation)
     if origin is None:
         if getattr(annotation, "__name__", None):
-            return annotation.__name__
+            return cast(str, annotation.__name__)
         return str(annotation)
     args = get_args(annotation)
     if origin is list or origin is tuple:

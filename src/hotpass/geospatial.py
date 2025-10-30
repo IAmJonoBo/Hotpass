@@ -9,7 +9,7 @@ This module provides functionality for:
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -267,7 +267,7 @@ def infer_province_from_coordinates(
             or address.get("county")
         )
 
-        return province
+        return cast(str | None, province)
 
     return None
 

@@ -17,6 +17,8 @@ from .telemetry.metrics import PipelineMetrics
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["EnhancedPipelineConfig", "run_enhanced_pipeline"]
+
 
 def run_enhanced_pipeline(
     config: PipelineConfig,
@@ -58,7 +60,7 @@ def _initialize_observability(
     config: EnhancedPipelineConfig,
     *,
     additional_attributes: Mapping[str, str] | None = None,
-):
+) -> PipelineMetrics | None:
     """Initialise observability when requested and return the metrics sink."""
 
     if not config.enable_observability:
