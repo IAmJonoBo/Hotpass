@@ -55,7 +55,7 @@ to capture expectation coverage in the quality report.
 
 ## Verification steps
 
-1. Run `uv run hotpass --input-dir data --output-path dist/refined.xlsx --archive` with the default bundle
+1. Run `uv run hotpass refine --input-dir data --output-path dist/refined.xlsx --profile generic --archive` with the default bundle
    and confirm acquisition spans/metrics appear in the telemetry exporter (console in sandbox environments).
 2. Regenerate provenance ledgers via `scripts/acquisition/collect_dataset.py` when onboarding a new provider and
    store the resulting JSONL artefact under `dist/provenance/` for compliance review.

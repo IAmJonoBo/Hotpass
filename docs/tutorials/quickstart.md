@@ -47,7 +47,11 @@ The bootstrap workspace ships with an empty `data/` directory and guidance on wh
 Run the default command to validate the workbook, normalise field names, and produce a consolidated output file:
 
 ```bash
-uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile generic \
+  --archive
 ```
 
 The command performs these steps:
@@ -65,10 +69,16 @@ After the run completes, open the generated Excel file. You should see:
 - A **Quality Summary** worksheet that highlights validation failures and remediation tips.
 - Archived raw inputs under `dist/archive/` so you can trace data lineage.
 
-To inspect logs programmatically, run the pipeline with JSON output:
+To inspect logs programmatically, run the refine command with structured output:
 
 ```bash
-uv run hotpass --archive --log-format json --log-level INFO
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile generic \
+  --archive \
+  --log-format json \
+  --log-level INFO
 ```
 
 ## 6. Extend the experience

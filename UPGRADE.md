@@ -10,17 +10,17 @@
 
 ## 0. Executive Summary (Updated 2025-10-30)
 
-- **Completed**  
-  - CLI & MCP parity is live: the new command set ships under `src/hotpass/cli/commands/` and the stdio server in `src/hotpass/mcp/server.py` exposes `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl` (guarded), and `hotpass.ta.check`.  
-  - Quality gates QG‑1 → QG‑5 now run end-to-end via `scripts/quality/run_qg*.py`, `scripts/quality/run_all_gates.py`, and the GitHub workflow `.github/workflows/quality-gates.yml`.  
-  - Supply-chain automation publishes SBOM, provenance, and checksums directly from `.github/workflows/process-data.yml`, backed by `scripts/supply_chain/` utilities.  
-- **In progress**  
-  - Adaptive research orchestrator and research MCP verbs remain to be implemented (`hotpass.crawl` currently returns a placeholder and no `hotpass.plan.research` exists).  
-  - Profile-first linkage and assertion migration require additional coverage; the `expect()` helper is present but bare `assert` calls remain in several tests.  
-  - Docs navigation uplift and long-tail telemetry/performance benchmarking are partially complete and need follow-on sign-offs.  
-- **Blockers / dependencies**  
-  - Staging access is still required to capture live Marquez lineage evidence and ARC runner smoke logs.  
-  - Docker buildx cache reuse work has not begun; pipeline cost reductions remain blocked pending that PR.  
+- **Completed**
+  - CLI & MCP parity is live: the new command set ships under `src/hotpass/cli/commands/` and the stdio server in `src/hotpass/mcp/server.py` exposes `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl` (guarded), and `hotpass.ta.check`.
+  - Quality gates QG‑1 → QG‑5 now run end-to-end via `scripts/quality/run_qg*.py`, `scripts/quality/run_all_gates.py`, and the GitHub workflow `.github/workflows/quality-gates.yml`.
+  - Supply-chain automation publishes SBOM, provenance, and checksums directly from `.github/workflows/process-data.yml`, backed by `scripts/supply_chain/` utilities.
+- **In progress**
+  - Adaptive research orchestrator and research MCP verbs remain to be implemented (`hotpass.crawl` currently returns a placeholder and no `hotpass.plan.research` exists).
+  - Profile-first linkage and assertion migration require additional coverage; the `expect()` helper is present but bare `assert` calls remain in several tests.
+  - Docs navigation uplift and long-tail telemetry/performance benchmarking are partially complete and need follow-on sign-offs.
+- **Blockers / dependencies**
+  - Staging access is still required to capture live Marquez lineage evidence and ARC runner smoke logs.
+  - Docker buildx cache reuse work has not begun; pipeline cost reductions remain blocked pending that PR.
   - Adaptive research enhancements depend on defining provider rate limits and human-in-the-loop guardrails before enabling network defaults.
 
 ---
@@ -29,23 +29,23 @@
 
 ### 1.1 Next Steps alignment (tasks)
 
-| Item | Due | Owner | Status | Evidence / Notes |
-| --- | --- | --- | --- | --- |
-| Confirm Phase 5 T5.5 completion against programme expectations | 2025-12-30 | Programme | Pending sign-off | Roadmap milestone is marked complete, but stakeholder confirmation is outstanding (`ROADMAP.md`). |
-| Execute full E2E runs with canonical configuration toggles | 2025-12-31 | QA | Open | Requires running `uv run hotpass overview/refine/enrich/qa` with `hotpass-e2e-staging`; no artefact recorded yet. |
-| Validate Prefect backfill deployment guardrails in staging | 2026-01-05 | Platform | In progress | Prefect manifests exist (`prefect/backfill.yaml`, `prefect/refinement.yaml`); staging validation still pending. |
-| Benchmark `HotpassConfig.merge` on large payloads | 2026-01-15 | Engineering | Not started | No benchmark harness or artefact committed. |
-| Extend orchestrate/resolve CLI coverage for advanced profiles | 2026-01-15 | Engineering & QA | In progress | Resolve command exists (`src/hotpass/cli/commands/resolve.py`), but advanced profile fixtures/tests remain to be authored. |
-| Merge Prefect deployment manifests and validate idempotent schedules | 2025-11-26 | Platform | Complete | Manifests landed (`prefect/backfill.yaml`, `prefect/refinement.yaml`) and CLI deployment tests cover overrides (`tests/cli/test_deploy_command.py`). |
-| Exercise OpenLineage + Marquez hardening follow-up | 2025-11-29 | Engineering & QA | Blocked on staging | Compose stack and tests ready (`tests/infrastructure/test_marquez_stack.py`, `tests/test_lineage.py`); waiting for staging lineage smoke. |
-| Harden uv-based CI quality gates | 2025-12-03 | Platform | Complete | Gate scripts orchestrated in `scripts/quality/run_qg*.py`; workflow `.github/workflows/quality-gates.yml` enforces them. |
-| Ship CodeQL + secrets scanning | 2025-12-06 | Security | Complete | Workflows `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` active; SARIF uploads configured. |
-| Enable Docker buildx cache reuse | 2025-12-09 | Platform | Not started | No `ci/docker-cache` workflow yet; caching remains manual. |
-| Publish SBOM + SLSA attestations | 2025-12-13 | Platform | Complete | `.github/workflows/process-data.yml` `supply-chain` job runs `scripts/supply_chain/generate_sbom.py` / `generate_provenance.py` and uploads artefacts. |
-| Complete ARC runner rollout and OIDC wiring | 2025-12-18 | Platform | In progress | ARC manifests and smoke workflow exist (`infra/arc/runner-scale-set.yaml`, `.github/workflows/arc-ephemeral-runner.yml`, `scripts/arc/verify_runner_lifecycle.py`); live staging rehearsal pending access. |
-| Finalise OpenTelemetry exporter propagation | 2025-12-20 | Engineering | Complete | Telemetry bootstrap integrated in CLI (`src/hotpass/cli/shared.py`, `src/hotpass/cli/commands/run.py`, `src/hotpass/telemetry/bootstrap.py`). |
-| Finish Diátaxis navigation uplift follow-on | 2026-01-07 | Docs & UX | In progress | Navigation doc merged (`docs/governance/data-governance-navigation.md`) and surfaced via `docs/index.md`; follow-on UX review scheduled. |
-| Release `cli/doctor` + `cli/init` onboarding refinements | 2026-01-10 | Engineering & UX | Complete | Commands and docs shipped (`src/hotpass/cli/commands/doctor.py`, `docs/reference/cli.md`). |
+| Item                                                                 | Due        | Owner            | Status             | Evidence / Notes                                                                                                                                                                                           |
+| -------------------------------------------------------------------- | ---------- | ---------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Confirm Phase 5 T5.5 completion against programme expectations       | 2025-12-30 | Programme        | Pending sign-off   | Roadmap milestone is marked complete, but stakeholder confirmation is outstanding (`ROADMAP.md`).                                                                                                          |
+| Execute full E2E runs with canonical configuration toggles           | 2025-12-31 | QA               | Open               | Requires running `uv run hotpass overview/refine/enrich/qa` with `hotpass-e2e-staging`; no artefact recorded yet.                                                                                          |
+| Validate Prefect backfill deployment guardrails in staging           | 2026-01-05 | Platform         | In progress        | Prefect manifests exist (`prefect/backfill.yaml`, `prefect/refinement.yaml`); staging validation still pending.                                                                                            |
+| Benchmark `HotpassConfig.merge` on large payloads                    | 2026-01-15 | Engineering      | Not started        | No benchmark harness or artefact committed.                                                                                                                                                                |
+| Extend orchestrate/resolve CLI coverage for advanced profiles        | 2026-01-15 | Engineering & QA | In progress        | Resolve command exists (`src/hotpass/cli/commands/resolve.py`), but advanced profile fixtures/tests remain to be authored.                                                                                 |
+| Merge Prefect deployment manifests and validate idempotent schedules | 2025-11-26 | Platform         | Complete           | Manifests landed (`prefect/backfill.yaml`, `prefect/refinement.yaml`) and CLI deployment tests cover overrides (`tests/cli/test_deploy_command.py`).                                                       |
+| Exercise OpenLineage + Marquez hardening follow-up                   | 2025-11-29 | Engineering & QA | Blocked on staging | Compose stack and tests ready (`tests/infrastructure/test_marquez_stack.py`, `tests/test_lineage.py`); waiting for staging lineage smoke.                                                                  |
+| Harden uv-based CI quality gates                                     | 2025-12-03 | Platform         | Complete           | Gate scripts orchestrated in `scripts/quality/run_qg*.py`; workflow `.github/workflows/quality-gates.yml` enforces them.                                                                                   |
+| Ship CodeQL + secrets scanning                                       | 2025-12-06 | Security         | Complete           | Workflows `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` active; SARIF uploads configured.                                                                                     |
+| Enable Docker buildx cache reuse                                     | 2025-12-09 | Platform         | Not started        | No `ci/docker-cache` workflow yet; caching remains manual.                                                                                                                                                 |
+| Publish SBOM + SLSA attestations                                     | 2025-12-13 | Platform         | Complete           | `.github/workflows/process-data.yml` `supply-chain` job runs `scripts/supply_chain/generate_sbom.py` / `generate_provenance.py` and uploads artefacts.                                                     |
+| Complete ARC runner rollout and OIDC wiring                          | 2025-12-18 | Platform         | In progress        | ARC manifests and smoke workflow exist (`infra/arc/runner-scale-set.yaml`, `.github/workflows/arc-ephemeral-runner.yml`, `scripts/arc/verify_runner_lifecycle.py`); live staging rehearsal pending access. |
+| Finalise OpenTelemetry exporter propagation                          | 2025-12-20 | Engineering      | Complete           | Telemetry bootstrap integrated in CLI (`src/hotpass/cli/shared.py`, `src/hotpass/cli/commands/run.py`, `src/hotpass/telemetry/bootstrap.py`).                                                              |
+| Finish Diátaxis navigation uplift follow-on                          | 2026-01-07 | Docs & UX        | In progress        | Navigation doc merged (`docs/governance/data-governance-navigation.md`) and surfaced via `docs/index.md`; follow-on UX review scheduled.                                                                   |
+| Release `cli/doctor` + `cli/init` onboarding refinements             | 2026-01-10 | Engineering & UX | Complete           | Commands and docs shipped (`src/hotpass/cli/commands/doctor.py`, `docs/reference/cli.md`).                                                                                                                 |
 
 ### 1.2 Next Steps — hygiene, steps, and deliverables
 
@@ -55,11 +55,11 @@
 - **Assertion migration (due 2025-11-05)** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
 - **Telemetry/mypy audit (due 2025-11-07)** — first pass removed six mypy issues; remaining errors ~171 (run `uv run mypy src tests scripts`).
 
-**Deliverable status**
+### Deliverable status**
 
 - **Marquez lineage smoke evidence** — instrumentation and automated checks exist, but live evidence (logs/screenshots) still outstanding pending staging access.
 
-**Quality gate status**
+### Quality gate status
 
 - **QG‑1 (CLI integrity)** — ✅ Passing via `scripts/quality/run_qg1.py` and workflow job.
 - **QG‑2 (Data quality)** — ✅ Passing locally/CI; outputs archived under `dist/quality-gates/qg2-data-quality`.
@@ -69,26 +69,26 @@
 
 ### 1.3 Gap closure tracker (from 30 Oct audit)
 
-| Gap | Status | Evidence | Next action |
-| --- | --- | --- | --- |
-| QG‑2 only performed schema checks | Resolved | `scripts/quality/run_qg2.py` runs full GE checkpoints; uploads in `.github/workflows/quality-gates.yml`. | Monitor GE dependency availability; ensure sample workbooks stay in `data/`. |
-| Sprint 5 automation stubs | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`). | Implement real crawler handler for `hotpass.crawl` and add MCP integration tests. |
-| Documentation misalignment | Resolved | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`. | Extend reference set with MCP/quality gate pages. |
-| Research APIs promised but not exposed | Outstanding | No public `hotpass.research` CLI/MCP wrapper; `_run_crawl` is placeholder (`src/hotpass/mcp/server.py`). | Decide on HTTP client surface vs documentation downgrade; implement CLI/MCP verbs accordingly. |
-| Assert-free pytest migration incomplete | Outstanding | Bare asserts present (e.g. `tests/test_evidence.py`). | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`. |
-| Next Steps backlog alignment | Ongoing | This dashboard now mirrors outstanding work; maintain weekly review cadence (starting 2025-11-07). | Update `Next_Steps.md` & this section after each closure. |
+| Gap                                     | Status                   | Evidence                                                                                                                                                                               | Next action                                                                                    |
+| --------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| QG‑2 only performed schema checks       | Resolved                 | `scripts/quality/run_qg2.py` runs full GE checkpoints; uploads in `.github/workflows/quality-gates.yml`.                                                                               | Monitor GE dependency availability; ensure sample workbooks stay in `data/`.                   |
+| Sprint 5 automation stubs               | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`). | Implement real crawler handler for `hotpass.crawl` and add MCP integration tests.              |
+| Documentation misalignment              | Resolved                 | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`.                                                 | Extend reference set with MCP/quality gate pages.                                              |
+| Research APIs promised but not exposed  | Outstanding              | No public `hotpass.research` CLI/MCP wrapper; `_run_crawl` is placeholder (`src/hotpass/mcp/server.py`).                                                                               | Decide on HTTP client surface vs documentation downgrade; implement CLI/MCP verbs accordingly. |
+| Assert-free pytest migration incomplete | Outstanding              | Bare asserts present (e.g. `tests/test_evidence.py`).                                                                                                                                  | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`. |
+| Next Steps backlog alignment            | Ongoing                  | This dashboard now mirrors outstanding work; maintain weekly review cadence (starting 2025-11-07).                                                                                     | Update `Next_Steps.md` & this section after each closure.                                      |
 
 ### 1.4 Strategic enhancements (from `UPGRADE_B.md`)
 
-| Enhancement | Status | Notes |
-| --- | --- | --- |
-| Research-first positioning across docs/README | In progress | README/landing copy still emphasises refinement over research; update messaging once orchestrator lands. |
-| Adaptive research orchestrator module (`src/hotpass/research/orchestrator.py`) | Not started | Deterministic fetchers exist but no orchestrator module or planner loop yet. |
-| Relationship & identity mapping (Splink, graph view) | Partially delivered | Linkage module active (`src/hotpass/linkage/`); need profile-driven graph export and UI hooks. |
-| Agent-native research planning tools (`hotpass.plan.research`, MCP hooks, audit log) | Not started | MCP server lacks plan tool; `.hotpass/mcp-audit.log` not yet written. |
-| Live spreadsheet UI with provenance badges | Not started | Streamlit dashboard exists in legacy branch only; no AG Grid / Handsontable integration here. |
-| CLI export formats (`--export xlsx,csv,pipe`) | Not started | CLI presently writes XLSX/CSV explicitly; expose shared export flag and docs. |
-| Frontier-grade guarantees (single system, adaptive research, provenance, human-in-loop) | Dependent | Achieved partially through CLI+MCP parity and quality gates; full guarantee requires orchestrator, UI, and audit hooks above. |
+| Enhancement                                                                             | Status              | Notes                                                                                                                         |
+| --------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Research-first positioning across docs/README                                           | In progress         | README/landing copy still emphasises refinement over research; update messaging once orchestrator lands.                      |
+| Adaptive research orchestrator module (`src/hotpass/research/orchestrator.py`)          | Not started         | Deterministic fetchers exist but no orchestrator module or planner loop yet.                                                  |
+| Relationship & identity mapping (Splink, graph view)                                    | Partially delivered | Linkage module active (`src/hotpass/linkage/`); need profile-driven graph export and UI hooks.                                |
+| Agent-native research planning tools (`hotpass.plan.research`, MCP hooks, audit log)    | Not started         | MCP server lacks plan tool; `.hotpass/mcp-audit.log` not yet written.                                                         |
+| Live spreadsheet UI with provenance badges                                              | Not started         | Streamlit dashboard exists in legacy branch only; no AG Grid / Handsontable integration here.                                 |
+| CLI export formats (`--export xlsx,csv,pipe`)                                           | Not started         | CLI presently writes XLSX/CSV explicitly; expose shared export flag and docs.                                                 |
+| Frontier-grade guarantees (single system, adaptive research, provenance, human-in-loop) | Dependent           | Achieved partially through CLI+MCP parity and quality gates; full guarantee requires orchestrator, UI, and audit hooks above. |
 
 ---
 
@@ -163,14 +163,14 @@ uv run hotpass contracts emit --profile <profile>
 
 Expose the same capabilities via MCP stdio:
 
-| Tool | Purpose | Notes |
-| --- | --- | --- |
-| `hotpass.refine` | Shells to CLI refine | Accepts `input_path`, `output_path`, `profile`, `archive`. |
-| `hotpass.enrich` | Shells to CLI enrich | Honors `allow_network` and env guardrails. |
-| `hotpass.qa` | Runs `hotpass qa <target>` | Default `target="all"`. |
-| `hotpass.crawl` | Reserved for research orchestrator | Currently returns placeholder response; implement during Sprint 6. |
-| `hotpass.explain_provenance` | Reads provenance columns for a row | Works on XLSX outputs with provenance fields. |
-| `hotpass.ta.check` | Runs consolidated quality gates | Optional `gate` argument filters to a specific gate. |
+| Tool                         | Purpose                            | Notes                                                              |
+| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| `hotpass.refine`             | Shells to CLI refine               | Accepts `input_path`, `output_path`, `profile`, `archive`.         |
+| `hotpass.enrich`             | Shells to CLI enrich               | Honors `allow_network` and env guardrails.                         |
+| `hotpass.qa`                 | Runs `hotpass qa <target>`         | Default `target="all"`.                                            |
+| `hotpass.crawl`              | Reserved for research orchestrator | Currently returns placeholder response; implement during Sprint 6. |
+| `hotpass.explain_provenance` | Reads provenance columns for a row | Works on XLSX outputs with provenance fields.                      |
+| `hotpass.ta.check`           | Runs consolidated quality gates    | Optional `gate` argument filters to a specific gate.               |
 
 Ensure `tools/list` returns the full tool set and that the server logs tool invocations (future: write to `./.hotpass/mcp-audit.log` once implemented).
 
@@ -227,13 +227,13 @@ Planned enhancements:
 
 Quality gates guard every stage:
 
-| Gate | Command | Pass criteria | Artefact |
-| --- | --- | --- | --- |
-| QG‑1 CLI integrity | `scripts/quality/run_qg1.py` | CLI verbs present, help text works | Summary JSON under `dist/quality-gates/qg1-cli-integrity`. |
-| QG‑2 Data quality | `scripts/quality/run_qg2.py` | GE checkpoints succeed; Data Docs generated | Data Docs archived under `dist/quality-gates/qg2-data-quality/<timestamp>/`. |
-| QG‑3 Enrichment chain | `scripts/quality/run_qg3.py` | Deterministic enrichment produces output with provenance; network skipped when disabled | Test fixtures under `tests/data/`. |
-| QG‑4 MCP discoverability | `scripts/quality/run_qg4.py` | MCP server lists required tools | JSON summary from gate script. |
-| QG‑5 Docs/instructions | `scripts/quality/run_qg5.py` | Instruction files present and contain key phrases | Summary JSON plus optional markdown excerpts. |
+| Gate                     | Command                      | Pass criteria                                                                           | Artefact                                                                     |
+| ------------------------ | ---------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| QG‑1 CLI integrity       | `scripts/quality/run_qg1.py` | CLI verbs present, help text works                                                      | Summary JSON under `dist/quality-gates/qg1-cli-integrity`.                   |
+| QG‑2 Data quality        | `scripts/quality/run_qg2.py` | GE checkpoints succeed; Data Docs generated                                             | Data Docs archived under `dist/quality-gates/qg2-data-quality/<timestamp>/`. |
+| QG‑3 Enrichment chain    | `scripts/quality/run_qg3.py` | Deterministic enrichment produces output with provenance; network skipped when disabled | Test fixtures under `tests/data/`.                                           |
+| QG‑4 MCP discoverability | `scripts/quality/run_qg4.py` | MCP server lists required tools                                                         | JSON summary from gate script.                                               |
+| QG‑5 Docs/instructions   | `scripts/quality/run_qg5.py` | Instruction files present and contain key phrases                                       | Summary JSON plus optional markdown excerpts.                                |
 
 Use `scripts/quality/run_all_gates.py --json` for consolidated runs (called by `hotpass qa ta` and MCP `hotpass.ta.check`). Ensure workflow artefacts remain accessible for audits.
 

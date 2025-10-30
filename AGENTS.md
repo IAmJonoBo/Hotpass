@@ -82,13 +82,21 @@ For local development you can also run `make sync EXTRAS="dev orchestration"` (o
 Baseline run into `dist/refined.xlsx`:
 
 ```bash
-uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile generic \
+  --archive
 ```
 
-If you used Option A (pip), replace `uv run` with `python -m hotpass`:
+If you used Option A (pip), replace `uv run` with `python -m hotpass refine`:
 
 ```bash
-python -m hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
+python -m hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile generic \
+  --archive
 ```
 
 **Artifacts**: `dist/` will contain the refined output and any reports Hotpass produces.
@@ -184,14 +192,17 @@ network_access = true
 As of the UPGRADE.md implementation, Hotpass provides these CLI verbs:
 
 ### Discovery & Overview
+
 ```bash
 uv run hotpass overview
 ```
+
 Shows all available commands, quick start examples, and system status.
 
 ### Core Pipeline Commands
 
 **Refine** (clean and normalize data):
+
 ```bash
 uv run hotpass refine \
   --input-dir ./data \
@@ -201,6 +212,7 @@ uv run hotpass refine \
 ```
 
 **Enrich** (add data from deterministic and optional network sources):
+
 ```bash
 # Deterministic only (safe, offline)
 uv run hotpass enrich \
@@ -218,6 +230,7 @@ uv run hotpass enrich \
 ```
 
 **QA** (quality assurance checks):
+
 ```bash
 uv run hotpass qa all          # All checks
 uv run hotpass qa fitness      # Fitness functions only
@@ -227,6 +240,7 @@ uv run hotpass qa ta           # Technical acceptance
 ```
 
 **Contracts** (generate data contracts):
+
 ```bash
 uv run hotpass contracts emit \
   --profile aviation \
@@ -261,6 +275,7 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
 ### Available MCP Tools
 
 1. **`hotpass.refine`**
+
    - Description: Run the Hotpass refinement pipeline
    - Inputs:
      - `input_path` (required): Directory or file with data to refine
@@ -269,6 +284,7 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
      - `archive` (default: false): Create archive of refined output
 
 2. **`hotpass.enrich`**
+
    - Description: Enrich refined data with additional information
    - Inputs:
      - `input_path` (required): Refined input file
@@ -277,11 +293,13 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
      - `allow_network` (default: false): Enable network-based enrichment
 
 3. **`hotpass.qa`**
+
    - Description: Run quality assurance checks
    - Inputs:
      - `target` (default: "all"): Which checks to run (all | fitness | profiles | contracts | docs | ta)
 
 4. **`hotpass.explain_provenance`**
+
    - Description: Explain data provenance for a specific row
    - Inputs:
      - `row_id` (required): ID of the row to explain
@@ -334,7 +352,7 @@ const result = await callTool("hotpass.refine", {
   input_path: "./data",
   output_path: "./dist/refined.xlsx",
   profile: "aviation",
-  archive: true
+  archive: true,
 });
 ```
 
@@ -351,6 +369,7 @@ The UPGRADE.md implementation includes 5 quality gates (QG) that verify system i
 - **QG-5**: Docs/Instructions - Agent documentation complete and accurate
 
 Run all quality gate tests:
+
 ```bash
 uv run pytest tests/cli/test_quality_gates.py -v
 ```

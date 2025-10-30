@@ -66,7 +66,7 @@ Copy `config/pipeline.example.yaml` and adjust the options you need:
 Run the pipeline with the custom config:
 
 ```bash
-uv run hotpass --config config/pipeline.healthcare.yaml
+uv run hotpass refine --config config/pipeline.healthcare.yaml --profile healthcare --archive
 ```
 
 Install the scoring dependencies before running the automation workflow:

@@ -344,7 +344,11 @@ To integrate MLflow tracking with the full pipeline, set environment variables b
 export MLFLOW_TRACKING_URI="sqlite:///mlflow.db"
 export MLFLOW_EXPERIMENT_NAME="hotpass_pipeline"
 
-uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile generic \
+  --archive
 ```
 
 ## See Also

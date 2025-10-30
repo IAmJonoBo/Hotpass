@@ -21,23 +21,46 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    Need orchestration or enrichment extras? Append them to
    `HOTPASS_UV_EXTRAS` before rerunning the helper script.
 
-2. Run the refinement pipeline against the bundled fixtures:
+2. Confirm the CLI surface and available profiles:
 
    ```bash
-   uv run hotpass --input-dir ./data --output-path ./dist/refined.xlsx --archive
+   uv run hotpass overview
+   ```
+
+   The overview command lists the core verbs (`refine`, `enrich`, `qa`, `contracts`) and reports the
+   installed extras/profile set so agents and operators can plan the next steps.
+
+3. Run the refinement pipeline against the bundled fixtures:
+
+   ```bash
+   uv run hotpass refine \
+     --input-dir ./data \
+     --output-path ./dist/refined.xlsx \
+     --profile generic \
+     --archive
    ```
 
    The command writes refined outputs to `dist/refined.xlsx` and publishes the
    latest Great Expectations Data Docs under `dist/data-docs/`.
 
-3. Optional: regenerate validation reports explicitly while exploring the
+4. Optional: enrich the refined workbook deterministically (network off by default):
+
+   ```bash
+   uv run hotpass enrich \
+     --input ./dist/refined.xlsx \
+     --output ./dist/enriched.xlsx \
+     --profile generic \
+     --allow-network=false
+   ```
+
+5. Optional: regenerate validation reports explicitly while exploring the
    dataset contracts:
 
    ```bash
    uv run python scripts/validation/refresh_data_docs.py
    ```
 
-4. Launch the interactive bootstrap when you are ready to provision Prefect,
+6. Launch the interactive bootstrap when you are ready to provision Prefect,
    observability, and supply-chain integrations:
 
    ```bash
@@ -53,6 +76,8 @@ Run these gates before opening a pull request so local results align with CI:
 
 - `make qa` — runs Ruff format/lint, pytest with coverage, mypy, Bandit,
   detect-secrets, and pre-commit hooks.
+- `uv run hotpass qa all` — executes the CLI-driven quality gates (QG‑1 → QG‑5)
+  and mirrors the GitHub Actions workflow.
 - `uv run python scripts/validation/refresh_data_docs.py` — refreshes Data Docs
   to confirm expectation suites remain in sync with contracts.
 - `uv run python scripts/quality/fitness_functions.py` — exercises the
