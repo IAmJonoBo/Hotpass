@@ -28,6 +28,8 @@
 - [x] 2025-10-30 — Restored PyArrow dataset compatibility and limited test-time stubs so real imports are preserved; reran the full coverage suite to confirm Parquet exports succeed.【F:src/hotpass/formatting.py†L1-L64】【F:tests/test_orchestration.py†L1-L68】【80b40e†L1-L143】
 - [x] 2025-10-30 — Added `pytest-asyncio` to the core dependency set so async fixtures are always available in baseline environments.【F:pyproject.toml†L12-L43】
 - [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
+- [x] 2025-10-31 — Tightened telemetry bootstrap/registry strict mypy coverage and expanded orchestration async regression tests to exercise concurrency fallbacks and telemetry injection.【F:pyproject.toml†L118-L135】【F:src/hotpass/telemetry/bootstrap.py†L15-L68】【F:src/hotpass/telemetry/registry.py†L17-L219】【F:tests/test_orchestration.py†L302-L353】【F:tests/test_telemetry_bootstrap.py†L15-L60】
+- [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
 
 
 ## Deliverables

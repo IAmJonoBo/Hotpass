@@ -23,8 +23,10 @@ class TelemetryBootstrapOptions:
     service_name: str = "hotpass"
     environment: str | None = None
     exporters: tuple[str, ...] = field(default_factory=tuple)
-    resource_attributes: Mapping[str, str] = field(default_factory=dict)
-    exporter_settings: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    resource_attributes: Mapping[str, str | None] = field(default_factory=dict)
+    exporter_settings: Mapping[str, Mapping[str, Any] | object] = field(
+        default_factory=dict
+    )
 
     def resolved_exporters(self) -> tuple[str, ...]:
         """Return the exporter tuple accounting for enabled state and defaults."""
@@ -36,11 +38,15 @@ class TelemetryBootstrapOptions:
         return tuple(self.exporters)
 
     def merged_resource_attributes(
-        self, extra: Mapping[str, str] | None = None
+        self, extra: Mapping[str, str | None] | None = None
     ) -> dict[str, str]:
         """Merge configured resource attributes with optional extras."""
 
-        attributes = dict(self.resource_attributes)
+        attributes: dict[str, str] = {
+            str(key): str(value)
+            for key, value in self.resource_attributes.items()
+            if value is not None
+        }
         if extra:
             for key, value in extra.items():
                 if value is None:
@@ -55,7 +61,9 @@ class TelemetryBootstrapOptions:
         for name, values in self.exporter_settings.items():
             if not isinstance(values, Mapping):
                 continue
-            settings[str(name)] = dict(values)
+            settings[str(name)] = {
+                str(key): value for key, value in values.items()
+            }
         return settings
 
 

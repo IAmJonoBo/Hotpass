@@ -22,7 +22,7 @@ class TelemetryConfig:
     environment: str | None = None
     exporters: tuple[str, ...] = ("console",)
     service_version: str = "0.1.0"
-    resource_attributes: Mapping[str, str] = field(default_factory=dict)
+    resource_attributes: Mapping[str, str | None] = field(default_factory=dict)
     exporter_settings: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
 
 
@@ -113,7 +113,10 @@ class TelemetryPolicy:
             "service.version": config.service_version,
             "deployment.environment": environment,
         }
-        attributes.update(dict(config.resource_attributes))
+        for key, value in dict(config.resource_attributes).items():
+            if value is None:
+                continue
+            attributes[str(key)] = str(value)
 
         return TelemetryConfig(
             service_name=service_name,
@@ -474,16 +477,6 @@ def build_default_modules() -> TelemetryModules:
     try:  # pragma: no cover - exercised in integration tests
         from opentelemetry import metrics as otel_metrics
         from opentelemetry import trace as otel_trace
-        try:
-            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-                OTLPMetricExporter,
-            )
-            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-                OTLPSpanExporter,
-            )
-        except ImportError:  # pragma: no cover - optional exporter dependency
-            OTLPMetricExporter = None  # type: ignore[assignment]
-            OTLPSpanExporter = None  # type: ignore[assignment]
         from opentelemetry.sdk.metrics import MeterProvider
         from opentelemetry.sdk.metrics.export import (
             ConsoleMetricExporter,
@@ -496,6 +489,18 @@ def build_default_modules() -> TelemetryModules:
             ConsoleSpanExporter,
             SpanExportResult,
         )
+        try:
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+                OTLPMetricExporter as _OTLPMetricExporter,
+            )
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                OTLPSpanExporter as _OTLPSpanExporter,
+            )
+        except ImportError:  # pragma: no cover - optional exporter dependency
+            _OTLPMetricExporter = None
+            _OTLPSpanExporter = None
+        OTLPMetricExporter: type[Any] | None = _OTLPMetricExporter
+        OTLPSpanExporter: type[Any] | None = _OTLPSpanExporter
     except ImportError:  # pragma: no cover - runtime fallback
         return _build_noop_modules()
 
@@ -518,11 +523,13 @@ def build_default_modules() -> TelemetryModules:
             kwargs["headers"] = {str(key): str(value) for key, value in headers.items()}
         if "insecure" in config:
             kwargs["insecure"] = bool(config.get("insecure"))
-        if "timeout" in config and config.get("timeout") is not None:
-            try:
-                kwargs["timeout"] = float(config.get("timeout"))
-            except (TypeError, ValueError):
-                pass
+        if "timeout" in config:
+            timeout_value = config.get("timeout")
+            if timeout_value is not None:
+                try:
+                    kwargs["timeout"] = float(timeout_value)
+                except (TypeError, ValueError):
+                    pass
         return kwargs
 
     span_factories: dict[str, Callable[[Mapping[str, Any]], Any]] = {

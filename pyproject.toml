@@ -126,6 +126,8 @@ files = [
   "src/hotpass/_compat_nameparser.py",
   "src/hotpass/orchestration.py",
   "src/hotpass/pipeline/orchestrator.py",
+  "src/hotpass/telemetry/bootstrap.py",
+  "src/hotpass/telemetry/registry.py",
   "scripts/quality/fitness_functions.py",
 ]
 warn_unused_configs = true
@@ -152,6 +154,13 @@ strict = true
 
 [[tool.mypy.overrides]]
 module = ["scripts.quality.fitness_functions"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+  "hotpass.telemetry.bootstrap",
+  "hotpass.telemetry.registry",
+]
 strict = true
 
 [[tool.mypy.overrides]]
