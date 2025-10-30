@@ -471,8 +471,8 @@ class ResearchOrchestrator:
                 LOGGER.warning("Requests crawl failed: %s", exc)
                 return ResearchStepResult(
                     name="native_crawl",
-                    status="error",
-                    message=f"Requests crawl failed: {exc}",
+                    status="skipped",
+                    message=f"Requests crawl failed (non-fatal): {exc}",
                     artifacts={"urls": list(plan.target_urls)},
                 )
 

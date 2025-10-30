@@ -79,6 +79,8 @@ def _check_required_tools() -> StepResult:
         "hotpass.enrich",
         "hotpass.qa",
         "hotpass.explain_provenance",
+        "hotpass.plan.research",
+        "hotpass.crawl",
         "hotpass.ta.check",
     }
     missing = sorted(required_tools.difference(tool_names))
@@ -136,6 +138,10 @@ def _check_schema_shapes() -> StepResult:
                     "hotpass.qa target enum must include "
                     "'all, contracts, docs, profiles, ta, fitness, data-quality'",
                 )
+        if tool.name == "hotpass.plan.research":
+            urls_schema = properties.get("urls", {}) if isinstance(properties, dict) else {}
+            if urls_schema.get("type") != "array":
+                issues.append("hotpass.plan.research.urls must be an array")
 
     if issues:
         return StepResult(
@@ -151,6 +157,78 @@ def _check_schema_shapes() -> StepResult:
         description="Validate MCP tool schemas",
         passed=True,
         message="MCP tool schemas are well-formed",
+        duration_seconds=time.time() - start,
+    )
+
+def _exercise_research_tools() -> StepResult:
+    start = time.time()
+    try:
+        from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
+        import pandas as pd  # pylint: disable=import-outside-toplevel
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        import asyncio
+    except Exception as exc:  # pragma: no cover - defensive guard
+        return StepResult(
+            step_id="research-tools-import",
+            description="Import MCP server and pandas for research tool exercise",
+            passed=False,
+            message=f"Failed to import prerequisites: {exc}",
+            duration_seconds=time.time() - start,
+        )
+
+    try:
+        server = HotpassMCPServer()
+        with TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            dataset_path = tmp_path / "research-input.xlsx"
+            pd.DataFrame(
+                {
+                    "organization_name": ["QG Research Org"],
+                    "contact_primary_email": [""],
+                    "website": ["example.org"],
+                }
+            ).to_excel(dataset_path, index=False)
+
+            plan_result = asyncio.run(
+                server._execute_tool(  # pylint: disable=protected-access
+                    "hotpass.plan.research",
+                    {
+                        "dataset_path": str(dataset_path),
+                        "row_id": "0",
+                        "allow_network": True,
+                    },
+                )
+            )
+            if not plan_result.get("success"):
+                raise RuntimeError(plan_result.get("error") or "plan research failed")
+
+            crawl_result = asyncio.run(
+                server._execute_tool(  # pylint: disable=protected-access
+                    "hotpass.crawl",
+                    {
+                        "query_or_url": "https://example.org",
+                        "allow_network": True,
+                    },
+                )
+            )
+            if not crawl_result.get("success"):
+                raise RuntimeError(crawl_result.get("error") or "crawl failed")
+
+    except Exception as exc:  # pragma: no cover - defensive guard
+        return StepResult(
+            step_id="research-tools-execute",
+            description="Exercise hotpass.plan.research and hotpass.crawl tools",
+            passed=False,
+            message=f"Research tool execution failed: {exc}",
+            duration_seconds=time.time() - start,
+        )
+
+    return StepResult(
+        step_id="research-tools-execute",
+        description="Exercise hotpass.plan.research and hotpass.crawl tools",
+        passed=True,
+        message="Research planning and crawl MCP tools executed successfully",
         duration_seconds=time.time() - start,
     )
 
@@ -188,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
         _import_server(),
         _check_required_tools(),
         _check_schema_shapes(),
+        _exercise_research_tools(),
     ]
 
     summary = _build_summary(results)
