@@ -77,11 +77,16 @@ src/hotpass/cli/progress.py
 src/hotpass/cli/shared.py
 src/hotpass/cli/commands/__init__.py
 src/hotpass/cli/commands/backfill.py
+src/hotpass/cli/commands/contracts.py
 src/hotpass/cli/commands/dashboard.py
 src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/doctor.py
+src/hotpass/cli/commands/enrich.py
 src/hotpass/cli/commands/init.py
 src/hotpass/cli/commands/orchestrate.py
+src/hotpass/cli/commands/overview.py
+src/hotpass/cli/commands/qa.py
+src/hotpass/cli/commands/refine.py
 src/hotpass/cli/commands/resolve.py
 src/hotpass/cli/commands/run.py
 src/hotpass/cli/commands/version.py
@@ -120,6 +125,9 @@ src/hotpass/linkage/config.py
 src/hotpass/linkage/review.py
 src/hotpass/linkage/runner.py
 src/hotpass/linkage/settings.py
+src/hotpass/mcp/__init__.py
+src/hotpass/mcp/__main__.py
+src/hotpass/mcp/server.py
 src/hotpass/ml/__init__.py
 src/hotpass/ml/tracking.py
 src/hotpass/pipeline/__init__.py

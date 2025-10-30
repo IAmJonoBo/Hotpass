@@ -1,0 +1,239 @@
+#!/usr/bin/env python
+"""Profile linter for Hotpass industry profiles.
+
+This tool validates that all profiles follow the complete 4-block schema:
+- Block 1: ingest (data source configuration)
+- Block 2: refine (normalization and validation)
+- Block 3: enrich (enrichment configuration)
+- Block 4: compliance (POPIA and data governance)
+
+Usage:
+    python tools/profile_lint.py                    # Lint all profiles
+    python tools/profile_lint.py --profile aviation # Lint specific profile
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+class ProfileLintError(Exception):
+    """Raised when a profile fails validation."""
+
+
+def load_profile(profile_path: Path) -> dict[str, Any]:
+    """Load a profile YAML file.
+
+    Args:
+        profile_path: Path to the profile file
+
+    Returns:
+        Parsed profile dictionary
+
+    Raises:
+        ProfileLintError: If profile cannot be loaded
+    """
+    try:
+        with open(profile_path) as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        raise ProfileLintError(f"Failed to load profile {profile_path}: {e}")
+
+
+def validate_profile_structure(profile: dict[str, Any], profile_name: str) -> list[str]:
+    """Validate that a profile has all required blocks and fields.
+
+    Args:
+        profile: The profile dictionary
+        profile_name: Name of the profile for error messages
+
+    Returns:
+        List of validation errors (empty if valid)
+    """
+    errors = []
+
+    # Check required top-level fields
+    required_fields = ["name", "display_name"]
+    for field in required_fields:
+        if field not in profile:
+            errors.append(f"Missing required field: {field}")
+
+    # Check Block 1: ingest
+    if "ingest" not in profile:
+        errors.append("Missing Block 1: ingest")
+    else:
+        ingest = profile["ingest"]
+        required_ingest_fields = ["sources", "chunk_size"]
+        for field in required_ingest_fields:
+            if field not in ingest:
+                errors.append(f"ingest block missing required field: {field}")
+
+        # Validate sources structure
+        if "sources" in ingest and not isinstance(ingest["sources"], list):
+            errors.append("ingest.sources must be a list")
+
+    # Check Block 2: refine
+    if "refine" not in profile:
+        errors.append("Missing Block 2: refine")
+    else:
+        refine = profile["refine"]
+        required_refine_fields = ["mappings", "deduplication", "expectations"]
+        for field in required_refine_fields:
+            if field not in refine:
+                errors.append(f"refine block missing required field: {field}")
+
+        # Validate mappings structure
+        if "mappings" in refine and not isinstance(refine["mappings"], dict):
+            errors.append("refine.mappings must be a dictionary")
+
+        # Validate deduplication structure
+        if "deduplication" in refine:
+            dedupe = refine["deduplication"]
+            if not isinstance(dedupe, dict):
+                errors.append("refine.deduplication must be a dictionary")
+            else:
+                if "strategy" not in dedupe:
+                    errors.append("refine.deduplication missing 'strategy' field")
+                if "threshold" not in dedupe:
+                    errors.append("refine.deduplication missing 'threshold' field")
+
+    # Check Block 3: enrich
+    if "enrich" not in profile:
+        errors.append("Missing Block 3: enrich")
+    else:
+        enrich = profile["enrich"]
+        required_enrich_fields = ["allow_network", "fetcher_chain"]
+        for field in required_enrich_fields:
+            if field not in enrich:
+                errors.append(f"enrich block missing required field: {field}")
+
+        # Validate fetcher_chain
+        if "fetcher_chain" in enrich:
+            if not isinstance(enrich["fetcher_chain"], list):
+                errors.append("enrich.fetcher_chain must be a list")
+
+    # Check Block 4: compliance
+    if "compliance" not in profile:
+        errors.append("Missing Block 4: compliance")
+    else:
+        compliance = profile["compliance"]
+        required_compliance_fields = ["policy", "pii_fields"]
+        for field in required_compliance_fields:
+            if field not in compliance:
+                errors.append(f"compliance block missing required field: {field}")
+
+        # Validate pii_fields
+        if "pii_fields" in compliance and not isinstance(compliance["pii_fields"], list):
+            errors.append("compliance.pii_fields must be a list")
+
+    return errors
+
+
+def lint_profile(profile_path: Path) -> tuple[bool, list[str]]:
+    """Lint a single profile.
+
+    Args:
+        profile_path: Path to the profile file
+
+    Returns:
+        Tuple of (success, errors)
+    """
+    try:
+        profile = load_profile(profile_path)
+        errors = validate_profile_structure(profile, profile_path.stem)
+        return len(errors) == 0, errors
+    except ProfileLintError as e:
+        return False, [str(e)]
+
+
+def lint_all_profiles(profiles_dir: Path) -> dict[str, tuple[bool, list[str]]]:
+    """Lint all profiles in a directory.
+
+    Args:
+        profiles_dir: Directory containing profile YAML files
+
+    Returns:
+        Dictionary mapping profile names to (success, errors) tuples
+    """
+    results = {}
+
+    for profile_path in profiles_dir.glob("*.yaml"):
+        success, errors = lint_profile(profile_path)
+        results[profile_path.stem] = (success, errors)
+
+    return results
+
+
+def main() -> int:
+    """Main entry point for profile linter.
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    parser = argparse.ArgumentParser(description="Lint Hotpass industry profiles for completeness")
+    parser.add_argument(
+        "--profile",
+        type=str,
+        help="Specific profile name to lint (e.g., 'aviation')",
+    )
+    parser.add_argument(
+        "--profiles-dir",
+        type=Path,
+        default=Path("src/hotpass/profiles"),
+        help="Directory containing profiles",
+    )
+
+    args = parser.parse_args()
+
+    if not args.profiles_dir.exists():
+        print(f"Error: Profiles directory not found: {args.profiles_dir}", file=sys.stderr)
+        return 1
+
+    # Lint specific profile or all profiles
+    if args.profile:
+        profile_path = args.profiles_dir / f"{args.profile}.yaml"
+        if not profile_path.exists():
+            print(f"Error: Profile not found: {profile_path}", file=sys.stderr)
+            return 1
+
+        print(f"Linting profile: {args.profile}")
+        success, errors = lint_profile(profile_path)
+
+        if success:
+            print(f"✓ {args.profile}: PASS")
+            return 0
+        else:
+            print(f"✗ {args.profile}: FAIL")
+            for error in errors:
+                print(f"  - {error}")
+            return 1
+    else:
+        # Lint all profiles
+        print(f"Linting all profiles in {args.profiles_dir}")
+        results = lint_all_profiles(args.profiles_dir)
+
+        all_passed = True
+        for profile_name, (success, errors) in sorted(results.items()):
+            if success:
+                print(f"✓ {profile_name}: PASS")
+            else:
+                print(f"✗ {profile_name}: FAIL")
+                for error in errors:
+                    print(f"  - {error}")
+                all_passed = False
+
+        print()
+        print(f"Total profiles: {len(results)}")
+        print(f"Passed: {sum(1 for s, _ in results.values() if s)}")
+        print(f"Failed: {sum(1 for s, _ in results.values() if not s)}")
+
+        return 0 if all_passed else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

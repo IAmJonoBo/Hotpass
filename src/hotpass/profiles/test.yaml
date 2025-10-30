@@ -1,0 +1,102 @@
+name: test
+display_name: Test Profile
+
+# Block 1: Ingest - Data source configuration
+ingest:
+  sources:
+    - name: Test Source
+      format: xlsx
+      path_pattern: "tests/data/*.xlsx"
+      priority: 1
+  chunk_size: 100
+  staging_enabled: false
+  staging_format: parquet
+
+# Block 2: Refine - Normalization and validation
+refine:
+  # Column mappings (synonyms)
+  mappings:
+    organization_name:
+      - name
+      - company
+    contact_email:
+      - email
+    contact_phone:
+      - phone
+
+  # Entity resolution / deduplication
+  deduplication:
+    strategy: simple
+    threshold: 0.90
+
+  # Normalization rules
+  normalization:
+    phone_format: E164
+    country_code: US
+
+  # Quality expectations
+  expectations:
+    - expect_column_values_to_not_be_null:
+        column: organization_name
+
+  # Quality thresholds
+  quality_thresholds:
+    email: 0.70
+    phone: 0.70
+    website: 0.50
+
+  # Required and optional fields
+  required_fields:
+    - organization_name
+  optional_fields:
+    - contact_email
+    - contact_phone
+
+# Block 3: Enrich - Data enrichment configuration
+enrich:
+  allow_network: false
+  fetcher_chain:
+    - deterministic
+  backfillable_fields:
+    - contact_email
+  confidence_threshold: 0.5
+  provenance_required: true
+
+# Block 4: Compliance - Data governance
+compliance:
+  policy: TEST
+  jurisdiction: TEST
+  consent_required: false
+  pii_fields:
+    - contact_email
+  retention_days: 30
+  anonymization_on_request: false
+  audit_trail_required: true
+
+# Legacy fields for backwards compatibility
+default_country_code: US
+organization_term: organization
+organization_type_term: type
+organization_category_term: category
+email_validation_threshold: 0.70
+phone_validation_threshold: 0.70
+website_validation_threshold: 0.50
+
+source_priorities:
+  Test Source: 1
+
+column_synonyms:
+  organization_name:
+    - name
+    - company
+  contact_email:
+    - email
+  contact_phone:
+    - phone
+
+required_fields:
+  - organization_name
+
+optional_fields:
+  - contact_email
+  - contact_phone
