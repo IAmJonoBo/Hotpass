@@ -103,7 +103,7 @@ def _load_checkpoint_config(name: str) -> dict[str, object]:
     """Load a checkpoint configuration from the data_expectations/checkpoints directory."""
     checkpoint_path = _resource_path("data_expectations", f"checkpoints/{name}")
     with checkpoint_path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        return cast(dict[str, object], json.load(handle))
 
 
 def validate_with_frictionless(
@@ -334,4 +334,4 @@ def load_schema_descriptor(name: str) -> dict[str, object]:
     """Return a raw schema descriptor for downstream metadata exporters."""
     schema_path = _resource_path("schemas", name)
     with schema_path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        return cast(dict[str, object], json.load(handle))

@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
-import subprocess
+import subprocess  # nosec B404 - required for kubectl CLI interaction
 import sys
 import time
 from collections.abc import Callable, Mapping
@@ -78,7 +78,7 @@ class AwsIdentityVerifier:
 
     @staticmethod
     def _default_run_command(args: list[str]) -> str:
-        result = subprocess.run(args, capture_output=True, check=True, text=True)
+        result = subprocess.run(args, capture_output=True, check=True, text=True)  # nosec B603
         return result.stdout.strip()
 
     def verify(self) -> AwsIdentitySummary:
@@ -185,7 +185,7 @@ class RunnerLifecycleVerifier:
 
     @staticmethod
     def _default_run_command(args: list[str]) -> str:
-        result = subprocess.run(args, capture_output=True, check=True, text=True)
+        result = subprocess.run(args, capture_output=True, check=True, text=True)  # nosec B603
         return result.stdout.strip()
 
     def _list_runner_pods(self) -> list[str]:

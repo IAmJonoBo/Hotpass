@@ -103,7 +103,7 @@ class VaultSecretManager:
         if not client_token:
             msg = "Vault login response missing client token"
             raise VaultError(msg)
-        return client_token
+        return cast(str, client_token)
 
     @classmethod
     def from_env(

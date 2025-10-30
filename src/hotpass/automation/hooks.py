@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import pandas as pd
@@ -18,9 +18,11 @@ from hotpass.automation.http import (
 from hotpass.telemetry.metrics import PipelineMetrics
 
 try:  # pragma: no cover - optional dependency during CLI only usage
-    from hotpass.observability import get_pipeline_metrics
+    from hotpass.observability import get_pipeline_metrics as _get_metrics
+
+    get_pipeline_metrics: Callable[[], PipelineMetrics] | None = _get_metrics
 except Exception:  # pragma: no cover - fallback in minimal environments
-    get_pipeline_metrics = None  # type: ignore[assignment]
+    get_pipeline_metrics = None
 
 
 def _ensure_metrics(metrics: PipelineMetrics | None) -> PipelineMetrics | None:

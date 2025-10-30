@@ -5,7 +5,7 @@ import logging
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import polars as pl
@@ -115,7 +115,7 @@ def _latest_iso_date(values: Iterable[object | None]) -> str | None:
     latest = max(parsed)
     if pd.isna(latest):
         return None
-    return latest.date().isoformat()
+    return cast(str, latest.date().isoformat())
 
 
 def _summarise_quality(row: dict[str, str | None]) -> dict[str, object]:

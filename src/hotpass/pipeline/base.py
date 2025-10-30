@@ -3,10 +3,13 @@ from __future__ import annotations
 import logging
 import random
 from collections.abc import Mapping
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    from ..enrichment.intent.runner import IntentRunResult
 
 from ..domain.party import PartyStore
 from ..pipeline_reporting import generate_recommendations
@@ -39,6 +42,8 @@ from .ingestion import apply_redaction, ingest_sources
 from .validation import validate_dataset
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["PipelineConfig", "PipelineResult", "execute_pipeline"]
 
 
 def execute_pipeline(config: PipelineConfig) -> PipelineResult:
@@ -381,7 +386,7 @@ def _handle_empty_pipeline(
     metrics: dict[str, Any],
     audit_trail: list[dict[str, Any]],
     redaction_events: list[dict[str, Any]],
-    intent_result,
+    intent_result: IntentRunResult | None,
 ) -> PipelineResult:
     hooks = config.runtime_hooks
     perf_counter = hooks.perf_counter

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -248,11 +248,14 @@ def deploy_pipeline(
     if not deployments_to_apply:
         return []
 
-    return runner.deploy(
-        *deployments_to_apply,
-        build=build_image,
-        push=push_image,
-        print_next_steps_message=False,
+    return cast(
+        list[Any],
+        runner.deploy(
+            *deployments_to_apply,
+            build=build_image,
+            push=push_image,
+            print_next_steps_message=False,
+        ),
     )
 
 
