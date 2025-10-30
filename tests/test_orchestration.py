@@ -9,6 +9,7 @@ import zipfile
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from datetime import date, datetime
+from importlib import util
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -55,27 +56,20 @@ _duckdb_stub = types.ModuleType("duckdb")
 _duckdb_stub.DuckDBPyConnection = type("DuckDBPyConnection", (), {})
 sys.modules.setdefault("duckdb", _duckdb_stub)
 
-_polars_stub = types.ModuleType("polars")
+if util.find_spec("polars") is None:
+    _polars_stub = types.ModuleType("polars")
 
+    class _StubPolarsFrame:
+        def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover - stub
+            return
 
-class _StubPolarsFrame:
-    def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover - stub
-        return
-
-
-_polars_stub.DataFrame = _StubPolarsFrame
-_polars_stub.LazyFrame = _StubPolarsFrame
-_polars_stub.Series = _StubPolarsFrame
-_polars_stub.Expr = _StubPolarsFrame
-_polars_stub.col = lambda *_args, **_kwargs: _StubPolarsFrame()
-_polars_stub.concat = lambda *_args, **_kwargs: _StubPolarsFrame()
-sys.modules.setdefault("polars", _polars_stub)
-
-_pyarrow_stub = types.ModuleType("pyarrow")
-_pyarrow_stub.Table = type("Table", (), {})
-_pyarrow_stub.dataset = types.ModuleType("pyarrow.dataset")
-sys.modules.setdefault("pyarrow", _pyarrow_stub)
-sys.modules.setdefault("pyarrow.dataset", _pyarrow_stub.dataset)
+    _polars_stub.DataFrame = _StubPolarsFrame
+    _polars_stub.LazyFrame = _StubPolarsFrame
+    _polars_stub.Series = _StubPolarsFrame
+    _polars_stub.Expr = _StubPolarsFrame
+    _polars_stub.col = lambda *_args, **_kwargs: _StubPolarsFrame()
+    _polars_stub.concat = lambda *_args, **_kwargs: _StubPolarsFrame()
+    sys.modules.setdefault("polars", _polars_stub)
 
 sys.modules.setdefault("frictionless", types.ModuleType("frictionless"))
 
@@ -88,7 +82,6 @@ if TYPE_CHECKING:
 pytest.importorskip("frictionless")
 
 orchestration = importlib.import_module("hotpass.orchestration")
-
 PipelineOrchestrationError = orchestration.PipelineOrchestrationError
 PipelineRunOptions = orchestration.PipelineRunOptions
 PipelineRunSummary = orchestration.PipelineRunSummary
