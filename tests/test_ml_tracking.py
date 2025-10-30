@@ -108,9 +108,7 @@ def test_log_training_run_records_metrics(mlflow_config: MLflowConfig, tmp_path:
     init_mlflow(mlflow_config)
 
     # Train a simple model
-    X_train = pd.DataFrame(
-        {"feature1": [0.1, 0.2, 0.3, 0.4], "feature2": [0.5, 0.6, 0.7, 0.8]}
-    )
+    X_train = pd.DataFrame({"feature1": [0.1, 0.2, 0.3, 0.4], "feature2": [0.5, 0.6, 0.7, 0.8]})
     y_train = pd.Series([0, 0, 1, 1])
 
     model = LogisticRegression(max_iter=100, random_state=42)
@@ -173,9 +171,7 @@ def test_log_training_run_with_artifacts(mlflow_config: MLflowConfig, tmp_path: 
     expect(run.data.metrics["test_metric"] == 0.9, "Metrics should be logged")
 
 
-def test_train_lead_scoring_model_with_mlflow(
-    mlflow_config: MLflowConfig, tmp_path: Path
-):
+def test_train_lead_scoring_model_with_mlflow(mlflow_config: MLflowConfig, tmp_path: Path):
     """Test that train_lead_scoring_model logs to MLflow when enabled."""
     import os
 

@@ -13,7 +13,7 @@ from hotpass.quality import (  # noqa: E402
 )
 
 try:
-    from great_expectations.validator.validator import (  # type: ignore  # noqa: F401
+    from great_expectations.validator.validator import (  # noqa: F401
         Validator,
     )
 
@@ -422,9 +422,7 @@ def _make_stub_ge_runtime(
             self.result = result
 
     class _StubValidation:
-        def __init__(
-            self, results: list[_StubExpectationResult], success: bool
-        ) -> None:
+        def __init__(self, results: list[_StubExpectationResult], success: bool) -> None:
             self.results = results
             self.success = success
 
@@ -452,9 +450,7 @@ def _make_stub_ge_runtime(
         def expect_column_values_to_not_be_null(self, column: str) -> None:
             self.expectation_calls.append(("not_null", column))
 
-        def expect_column_values_to_be_between(
-            self, column: str, **kwargs: object
-        ) -> None:
+        def expect_column_values_to_be_between(self, column: str, **kwargs: object) -> None:
             self.expectation_calls.append(("between", column, kwargs))
 
         def expect_column_values_to_match_regex(
@@ -466,9 +462,7 @@ def _make_stub_ge_runtime(
         ) -> None:
             self.expectation_calls.append(("match_regex", column, pattern, mostly))
 
-        def expect_column_values_to_be_in_set(
-            self, column: str, values: set[str]
-        ) -> None:
+        def expect_column_values_to_be_in_set(self, column: str, values: set[str]) -> None:
             self.expectation_calls.append(("in_set", column, values))
 
         def validate(self) -> _StubValidation:
@@ -634,8 +628,7 @@ def test_run_expectations_ge_with_invalid_quality_score():
 
     assert result.success is False
     assert any(
-        "quality_score" in str(f).lower() or "between" in str(f).lower()
-        for f in result.failures
+        "quality_score" in str(f).lower() or "between" in str(f).lower() for f in result.failures
     )
 
 
@@ -733,10 +726,7 @@ def test_run_expectations_ge_with_wrong_country():
     result = run_expectations(df)
 
     assert result.success is False
-    assert any(
-        "country" in str(f).lower() or "in_set" in str(f).lower()
-        for f in result.failures
-    )
+    assert any("country" in str(f).lower() or "in_set" in str(f).lower() for f in result.failures)
 
 
 @pytest.mark.skipif(not HAS_GE, reason="Great Expectations not available")

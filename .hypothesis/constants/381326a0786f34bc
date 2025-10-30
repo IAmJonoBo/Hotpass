@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/init.py
+# hypothesis_version: 6.142.4
+
+['--force', '--path', 'Generated artefacts:', 'README.md', 'build', 'config', 'data', 'deployments', 'dist', 'init', 'prefect', 'profiles', 'quickstart.toml', 'quickstart.yaml', 'register', 'store_true', 'utf-8']

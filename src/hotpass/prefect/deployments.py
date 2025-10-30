@@ -15,8 +15,8 @@ try:  # pragma: no cover - exercised via tests when Prefect is installed
 
     PREFECT_AVAILABLE = True
 except ImportError:  # pragma: no cover - handled in tests
-    runner = None  # type: ignore[assignment]
-    import_object = None  # type: ignore[assignment]
+    runner = None
+    import_object = None
     PREFECT_AVAILABLE = False
 
 
@@ -74,18 +74,14 @@ class DeploymentSpec:
     enforce_parameter_schema: bool
 
     @classmethod
-    def from_mapping(
-        cls, identifier: str, payload: Mapping[str, Any]
-    ) -> DeploymentSpec:
+    def from_mapping(cls, identifier: str, payload: Mapping[str, Any]) -> DeploymentSpec:
         """Build a deployment spec from a parsed manifest mapping."""
 
         schedule_block = payload.get("schedule")
         schedule: DeploymentSchedule | None = None
         if isinstance(schedule_block, Mapping):
             if "value" not in schedule_block:
-                msg = (
-                    f"Schedule definition for {identifier} must include a 'value' field"
-                )
+                msg = f"Schedule definition for {identifier} must include a 'value' field"
                 raise ValueError(msg)
             schedule = DeploymentSchedule(
                 kind=str(schedule_block.get("kind", "cron")).lower(),
@@ -129,9 +125,7 @@ class DeploymentSpec:
             paused=bool(paused_value) if paused_value is not None else False,
             concurrency_limit=concurrency_limit,
             job_variables=dict(job_variables),
-            enforce_parameter_schema=bool(
-                payload.get("enforce_parameter_schema", True)
-            ),
+            enforce_parameter_schema=bool(payload.get("enforce_parameter_schema", True)),
         )
 
     def load_flow(self) -> Any:
@@ -227,9 +221,7 @@ def deploy_pipeline(
 
     specs = load_deployment_specs(base_dir)
     flow_filter = set(flows) if flows is not None else None
-    selected = [
-        spec for spec in specs if flow_filter is None or spec.identifier in flow_filter
-    ]
+    selected = [spec for spec in specs if flow_filter is None or spec.identifier in flow_filter]
 
     def _apply_overrides(spec: DeploymentSpec) -> DeploymentSpec:
         updated = spec
@@ -252,9 +244,7 @@ def deploy_pipeline(
             updated = replace(updated, schedule=updated_schedule)
         return updated
 
-    deployments_to_apply = [
-        build_runner_deployment(_apply_overrides(spec)) for spec in selected
-    ]
+    deployments_to_apply = [build_runner_deployment(_apply_overrides(spec)) for spec in selected]
     if not deployments_to_apply:
         return []
 

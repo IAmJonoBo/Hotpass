@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/prefect/deployments.py
+# hypothesis_version: 6.142.4
+
+['**/*', '.json', '.yaml', '.yml', 'DeploymentSchedule', 'DeploymentSpec', 'PREFECT_AVAILABLE', 'UTC', 'active', 'anchor_date', 'concurrency_limit', 'cron', 'deploy_pipeline', 'description', 'flow', 'id', 'interval', 'job_variables', 'kind', 'name', 'parameters', 'paused', 'prefect', 'rrule', 'schedule', 'seconds', 'tags', 'timezone', 'utf-8', 'value', 'work_pool', 'work_queue']

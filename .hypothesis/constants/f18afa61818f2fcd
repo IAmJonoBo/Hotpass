@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/linkage/runner.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.05, 0.1, 0.15, 0.2, 0.45, 1.0, ':memory:', '__linkage_id', '__linkage_id_l', '__linkage_id_r', '_l', '_r', 'classification', 'cluster_id', 'first', 'left', 'left_', 'left_index', 'linkage_email', 'linkage_name', 'linkage_phone', 'linkage_province', 'linkage_slug', 'linkage_website', 'match_count', 'match_probability', 'matches', 'metadata', 'records', 'reject', 'review', 'review_count', 'review_queue', 'right_', 'right_index', 'thresholds', 'unique_id', 'utf-8', 'w', '|']

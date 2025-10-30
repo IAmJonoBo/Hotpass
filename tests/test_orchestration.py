@@ -170,9 +170,7 @@ def test_run_pipeline_once_success(mock_pipeline_result, tmp_path):
 
         summary = run_pipeline_once(options)
 
-    expect(
-        summary.success is True, "Pipeline summary should mark execution as successful"
-    )
+    expect(summary.success is True, "Pipeline summary should mark execution as successful")
     expect(summary.total_records == 3, "Expected three records in the refined output")
     expect(
         summary.archive_path == tmp_path / "dist" / "archive.zip",
@@ -207,9 +205,7 @@ def test_run_pipeline_task_success(mock_pipeline_result, tmp_path):
 
         result = run_pipeline_task(mock_config)
 
-        expect(
-            result["success"] is True, "Task helper should mark execution as successful"
-        )
+        expect(result["success"] is True, "Task helper should mark execution as successful")
         expect(
             result["total_records"] == 3,
             "Expected three refined records in task summary",
@@ -219,12 +215,8 @@ def test_run_pipeline_task_success(mock_pipeline_result, tmp_path):
             "Elapsed time should be reported in task summary",
         )
         expect(result["backfill"] is False, "Backfill flag should default to False")
-        expect(
-            result["incremental"] is False, "Incremental flag should default to False"
-        )
-        expect(
-            result.get("since") is None, "Since parameter should be omitted by default"
-        )
+        expect(result["incremental"] is False, "Incremental flag should default to False")
+        expect(result.get("since") is None, "Since parameter should be omitted by default")
         expect(
             "quality_report" in result,
             "Quality report data should be present in summary",
@@ -327,9 +319,7 @@ def test_run_pipeline_once_injects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_
         captured["runner_config"] = pipeline_config
         captured["metrics"] = metrics
         captured["extra"] = extra
-        refined_rows = [
-            {"id": index} for index in range(7)
-        ]
+        refined_rows = [{"id": index} for index in range(7)]
         quality_report = SimpleNamespace(
             to_dict=lambda: {"rows": len(refined_rows)},
             expectations_passed=True,
@@ -432,9 +422,7 @@ def test_refinement_pipeline_flow_with_options(mock_pipeline_result, tmp_path):
             dist_dir=str(tmp_path / "dist"),
         )
 
-        expect(
-            result["success"] is True, "Flow should succeed when archive is requested"
-        )
+        expect(result["success"] is True, "Flow should succeed when archive is requested")
         expect(mock_run.call_count == 1, "Pipeline should execute exactly once in flow")
 
         # Verify config was built with correct options
@@ -451,9 +439,7 @@ def test_refinement_pipeline_flow_with_options(mock_pipeline_result, tmp_path):
             config_arg.incremental is False,
             "Incremental flag should default to False in flow",
         )
-        expect(
-            config_arg.since is None, "Since parameter should default to None in flow"
-        )
+        expect(config_arg.since is None, "Since parameter should default to None in flow")
 
 
 def test_refinement_pipeline_flow_propagates_runtime_overrides(
@@ -507,9 +493,7 @@ def test_refinement_pipeline_flow_propagates_runtime_overrides(
         telemetry_otlp_timeout=5.5,
     )
 
-    expect(
-        result["success"] is True, "Flow should surface success from pipeline summary."
-    )
+    expect(result["success"] is True, "Flow should surface success from pipeline summary.")
     expect(len(captured) == 1, "Pipeline should execute exactly once.")
 
     options = captured[0]
@@ -660,9 +644,7 @@ def test_backfill_flow_processes_multiple_runs(
             "Extracted payload should match archived version identifier",
         )
         expected_output = (
-            restore_root
-            / "outputs"
-            / f"refined-{run['run_date']}-{run['version']}.xlsx"
+            restore_root / "outputs" / f"refined-{run['run_date']}-{run['version']}.xlsx"
         )
         expect(
             config.pipeline.output_path == expected_output,
@@ -675,9 +657,7 @@ def test_backfill_flow_processes_multiple_runs(
     )
 
 
-def test_backfill_flow_is_idempotent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-02-01", "version": "baseline"}
@@ -756,9 +736,7 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "rehydrated"
     run_info = {"run_date": "2024-04-01", "version": "replay"}
-    _write_archive(
-        archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"]
-    )
+    _write_archive(archive_root, date.fromisoformat(run_info["run_date"]), run_info["version"])
 
     calls: list[Path] = []
 
@@ -780,9 +758,7 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
         yield
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
-    monkeypatch.setattr(
-        orchestration, "prefect_concurrency", _failing_concurrency, raising=False
-    )
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _failing_concurrency, raising=False)
 
     result = backfill_pipeline_flow(
         runs=[run_info],
@@ -841,16 +817,12 @@ async def test_run_with_prefect_concurrency_acquires_and_releases(
     )
 
     expect(result is summary, "Expected concurrency helper to return callback result")
-    expect(
-        ("callback",) in events, "Callback should execute within the concurrency guard"
-    )
+    expect(("callback",) in events, "Callback should execute within the concurrency guard")
     expect(
         ("enter", "hotpass/tests", "2") in events,
         "Concurrency context should be entered",
     )
-    expect(
-        ("exit", "hotpass/tests", "2") in events, "Concurrency context should be exited"
-    )
+    expect(("exit", "hotpass/tests", "2") in events, "Concurrency context should be exited")
 
 
 @pytest.mark.anyio("asyncio")
@@ -1031,9 +1003,7 @@ def test_execute_with_concurrency_uses_async_path(
         events.append(("callback",))
         return summary
 
-    monkeypatch.setattr(
-        orchestration, "prefect_concurrency", _tracking_concurrency, raising=False
-    )
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _tracking_concurrency, raising=False)
     monkeypatch.setattr(anyio.to_thread, "run_sync", _run_sync)
 
     result = _execute_with_concurrency("hotpass/tests", 3, _callback)
@@ -1044,9 +1014,7 @@ def test_execute_with_concurrency_uses_async_path(
         ("enter", "hotpass/tests", "3") in events,
         "Concurrency context should be entered",
     )
-    expect(
-        ("exit", "hotpass/tests", "3") in events, "Concurrency context should be exited"
-    )
+    expect(("exit", "hotpass/tests", "3") in events, "Concurrency context should be exited")
 
 
 def test_execute_with_concurrency_returns_immediate_without_slots(
@@ -1097,9 +1065,7 @@ def test_execute_with_concurrency_falls_back_when_anyio_raises(
     def _failing_run(*_args: object, **_kwargs: object) -> PipelineRunSummaryType:
         raise RuntimeError("anyio unavailable")
 
-    monkeypatch.setattr(
-        orchestration, "prefect_concurrency", _tracking_concurrency, raising=False
-    )
+    monkeypatch.setattr(orchestration, "prefect_concurrency", _tracking_concurrency, raising=False)
     monkeypatch.setattr(anyio, "run", _failing_run)
 
     result = _execute_with_concurrency("hotpass/tests", 1, _callback)

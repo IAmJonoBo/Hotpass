@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/column_mapping.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.1, 0.5, 0.7, 1.0, 100, 1024, '[^a-z0-9\\s]', '\\s+', '^[\\d\\s\\+\\-\\(\\)]+$', '^https?://|www\\.', 'categorical', 'coerce', 'column_count', 'columns', 'date', 'dtype', 'duplicate_percentage', 'duplicate_rows', 'email', 'empty', 'ignore', 'inferred_types', 'mapped', 'memory_usage_mb', 'missing_count', 'missing_percentage', 'numeric', 'phone', 'row_count', 'sample_values', 'suggestions', 'text', 'unique_count', 'unique_percentage', 'unmapped', 'url']

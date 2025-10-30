@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/benchmarks.py
+# hypothesis_version: 6.142.4
+
+[0.0, 'Aggregation seconds', 'DuckDB sort seconds', 'Expectations seconds', 'Load rows per second', 'Load seconds', 'Pandas sort seconds', 'Polars sort speedup', 'Polars write seconds', 'Rows per second', 'Total seconds', 'Write seconds', 'ZA', 'aggregation_seconds', 'default', 'duckdb_sort_seconds', 'expectations_seconds', 'load_rows_per_second', 'load_seconds', 'metrics', 'pandas_sort_seconds', 'polars_sort_speedup', 'polars_write_seconds', 'rows_per_second', 'runs', 'samples', 'source_load_seconds', 'total_seconds', 'write_seconds']

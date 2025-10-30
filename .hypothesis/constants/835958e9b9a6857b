@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline_reporting.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.5, 0.75, ':', 'Aggregation seconds', 'Expectations seconds', 'Load rows per second', 'Load seconds', 'Rows per second', 'Total seconds', 'Unnamed expectation', 'Write seconds', 'aggregation_seconds', 'expectations_seconds', 'load_rows_per_second', 'load_seconds', 'low', 'mean', 'priority', 'rows_per_second', 'source_load_seconds', 'string', 'total_seconds', 'write_seconds']

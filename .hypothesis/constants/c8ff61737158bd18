@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/data_sources/agents/tasks.py
+# hypothesis_version: 6.142.4
+
+['; ', 'AgentTaskDefinition', 'AgentTaskKind', 'Web Crawl', 'available', 'cached', 'compliance', 'confidence', 'contacts', 'crawler', 'credentials', 'description', 'domain', 'email', 'execute_agent_tasks', 'identifier', 'kind', 'location', 'metadata', 'name', 'notes', 'organization_name', 'pages', 'phone', 'policies', 'provider', 'query', 'reference', 'requires_credentials', 'result_count', 'results', 'retrieved_at', 'robots_allowed', 'role', 'search', 'source', 'source_dataset', 'task', 'terms_of_service', 'tos_accepted', 'tos_url', 'website']

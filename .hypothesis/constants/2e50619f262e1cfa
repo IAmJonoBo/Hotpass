@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/contracts/types.py
+# hypothesis_version: 6.142.4
+
+['# Dataset schemas', '### Example', '$schema', '---', 'Column', 'ContractRowModel', 'DatasetContract', 'Description', 'FieldContract', 'No', 'Required', 'Type', 'Yes', '[^0-9a-zA-Z]+', '_', '_dataframe_schema', '_row_model', '```', '```json', '```{note}', 'boolean', 'column', 'constraints', 'description', 'fields', 'integer', 'name', 'number', 'primaryKey', 'required', 'schema_filename', 'string', 'title', 'type', 'utf-8', 'value']

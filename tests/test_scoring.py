@@ -15,6 +15,7 @@ from hotpass.transform.scoring import (
     score_prospects,
     train_lead_scoring_model,
 )
+from tests.helpers.assertions import expect
 
 
 def test_lead_scorer_ranges():
@@ -34,9 +35,12 @@ def test_lead_scorer_ranges():
         intent_score=0.0,
     )
 
-    assert 0.0 <= high.value <= 1.0
-    assert 0.0 <= low.value <= 1.0
-    assert high.value > low.value
+    expect(
+        0.0 <= high.value <= 1.0,
+        f"High score {high.value} should be between 0.0 and 1.0",
+    )
+    expect(0.0 <= low.value <= 1.0, f"Low score {low.value} should be between 0.0 and 1.0")
+    expect(high.value > low.value, "High score should be greater than low score")
 
 
 def test_lead_scorer_accepts_custom_weights():
@@ -47,14 +51,15 @@ def test_lead_scorer_accepts_custom_weights():
         phone_confidence=0.0,
         source_priority=0.0,
     )
-    assert (
+    expect(
         score.value
         == scorer.score(
             completeness=0.5,
             email_confidence=0.0,
             phone_confidence=0.0,
             source_priority=0.0,
-        ).value
+        ).value,
+        "Score should be deterministic with same weights",
     )
 
 
@@ -72,9 +77,7 @@ def _build_training_frame() -> pd.DataFrame:
 
 
 def test_train_lead_scoring_model_reports_metrics(tmp_path: Path) -> None:
-    pytest.importorskip(
-        "sklearn", reason="scikit-learn extra required for training tests"
-    )
+    pytest.importorskip("sklearn", reason="scikit-learn extra required for training tests")
     dataset = _build_training_frame()
     metrics_path = tmp_path / "metrics.json"
     result = train_lead_scoring_model(
@@ -83,25 +86,35 @@ def test_train_lead_scoring_model_reports_metrics(tmp_path: Path) -> None:
         metrics_path=metrics_path,
     )
 
-    assert metrics_path.exists()
+    expect(metrics_path.exists(), "Metrics file should be created")
     feature_frame = dataset.drop(columns=["won"])
     scored = score_prospects(result.model, feature_frame)
-    assert "lead_score" in scored.columns
-    assert scored["lead_score"].between(0.0, 1.0).all()
+    expect("lead_score" in scored.columns, "Scored frame should have lead_score column")
+    expect(
+        scored["lead_score"].between(0.0, 1.0).all(),
+        "All lead scores should be between 0.0 and 1.0",
+    )
     ranked = scored.sort_values("lead_score", ascending=False)
-    assert ranked.iloc[0]["lead_score"] >= ranked.iloc[-1]["lead_score"]
+    expect(
+        ranked.iloc[0]["lead_score"] >= ranked.iloc[-1]["lead_score"],
+        "Ranked scores should be in descending order",
+    )
 
-    assert result.metrics["roc_auc"] >= 0.5
-    assert result.metrics["precision"] > 0.0
-    assert result.metrics["recall"] > 0.0
-    assert result.metadata["target_column"] == "won"
-    assert result.metadata["feature_names"] == tuple(feature_frame.columns)
+    expect(result.metrics["roc_auc"] >= 0.5, "ROC AUC should be at least 0.5")
+    expect(result.metrics["precision"] > 0.0, "Precision should be positive")
+    expect(result.metrics["recall"] > 0.0, "Recall should be positive")
+    expect(
+        result.metadata["target_column"] == "won",
+        "Target column metadata should match input",
+    )
+    expect(
+        result.metadata["feature_names"] == tuple(feature_frame.columns),
+        "Feature names metadata should match input",
+    )
 
 
 def test_train_lead_scoring_model_enforces_thresholds() -> None:
-    pytest.importorskip(
-        "sklearn", reason="scikit-learn extra required for training tests"
-    )
+    pytest.importorskip("sklearn", reason="scikit-learn extra required for training tests")
     # Create a dataset with all same target (poor model performance)
     dataset = _build_training_frame().copy()
     # Ensure we have both classes but poor separation
@@ -111,9 +124,7 @@ def test_train_lead_scoring_model_enforces_thresholds() -> None:
     dataset.loc[:, "completeness"] = 0.5
     dataset.loc[:, "email_confidence"] = 0.5
 
-    with pytest.raises(
-        RuntimeError, match="Validation metrics below required thresholds"
-    ):
+    with pytest.raises(RuntimeError, match="Validation metrics below required thresholds"):
         train_lead_scoring_model(
             dataset,
             target_column="won",
@@ -144,9 +155,7 @@ def test_score_prospects_calibrates_predictions() -> None:
 
 
 def test_build_daily_list_exports(tmp_path):
-    pytest.importorskip(
-        "sklearn", reason="scikit-learn extra required for training tests"
-    )
+    pytest.importorskip("sklearn", reason="scikit-learn extra required for training tests")
     refined = pd.DataFrame(
         {
             "organization_slug": [
@@ -230,6 +239,6 @@ def test_build_daily_list_exports(tmp_path):
         output_path=output_path,
     )
 
-    assert output_path.exists()
-    assert len(daily) <= 2
-    assert daily.iloc[0]["lead_score"] <= 1.0
+    expect(output_path.exists(), "Daily list should be written to output path")
+    expect(len(daily) <= 2, "Daily list should respect top_n limit")
+    expect(daily.iloc[0]["lead_score"] <= 1.0, "Lead scores should not exceed 1.0")

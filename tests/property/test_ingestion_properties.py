@@ -83,9 +83,7 @@ def _unicode_strings() -> SearchStrategy[str]:
 
 
 def _row_strategy() -> SearchStrategy[dict[str, object]]:
-    email_local = st.text(
-        string.ascii_lowercase + string.digits, min_size=1, max_size=12
-    )
+    email_local = st.text(string.ascii_lowercase + string.digits, min_size=1, max_size=12)
     phone_digits = st.text(string.digits, min_size=9, max_size=12)
     list_strategy = st.lists(_unicode_strings(), min_size=1, max_size=3)
     return st.fixed_dictionaries(
@@ -128,9 +126,7 @@ def _row_strategy() -> SearchStrategy[dict[str, object]]:
                 ),
                 _unicode_strings(),
             ),
-            "priority": st.one_of(
-                st.none(), st.sampled_from(["High", "Medium", "Low"])
-            ),
+            "priority": st.one_of(st.none(), st.sampled_from(["High", "Medium", "Low"])),
             "contact_names": list_strategy,
             "contact_roles": list_strategy,
             "contact_emails": st.lists(
@@ -147,9 +143,7 @@ def _row_strategy() -> SearchStrategy[dict[str, object]]:
     )
 
 
-def _apply_duplicates(
-    frame: pd.DataFrame, pairs: Iterable[tuple[str, str]]
-) -> pd.DataFrame:
+def _apply_duplicates(frame: pd.DataFrame, pairs: Iterable[tuple[str, str]]) -> pd.DataFrame:
     if not pairs:
         return frame
     columns = list(frame.columns)
@@ -259,18 +253,14 @@ def test_ingest_sources_handles_messy_frames(
     for original, slug in zip(
         frame["organization_name"], combined_one["organization_slug"], strict=True
     ):
-        expect(
-            slug == slugify(original), "slugified organization name should match helper"
-        )
+        expect(slug == slugify(original), "slugified organization name should match helper")
         expect(slug is None or slug.isascii(), "slug outputs should remain ASCII-safe")
 
     if "province" in frame.columns:
         province_source = frame["province"]
         if isinstance(province_source, pd.DataFrame):
             province_source = province_source.iloc[:, 0]
-        for original, normalized in zip(
-            province_source, combined_one["province"], strict=True
-        ):
+        for original, normalized in zip(province_source, combined_one["province"], strict=True):
             expect(
                 normalized == normalize_province(original),
                 "province normalization must align with helper",

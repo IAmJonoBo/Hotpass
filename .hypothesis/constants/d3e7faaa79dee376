@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/registries/sacaa.py
+# hypothesis_version: 6.142.4
+
+[404, 500, 'SACAARegistryAdapter', 'addresses', 'air_operator', 'aircraft', 'certificate_number', 'code', 'contacts', 'data', 'email', 'entity_type', 'expiry_date', 'extra', 'fax', 'issue_date', 'legal_name', 'message', 'meta', 'no_results', 'not_found', 'officers', 'operator_type', 'phone', 'provider_meta', 'query', 'query_param', 'registered_name', 'registration_number', 'responsible_persons', 'sacaa', 'status', 'status_code', 'status_effective', 'trading_name', 'type']

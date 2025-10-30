@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/scripts/compliance/check_scancode.py
+# hypothesis_version: 6.142.4
+
+['--policy', '--report', '__main__', 'allowed', 'fail_on_unknown', 'files', 'forbidden', 'license_expression', 'licenses', 'utf-8']

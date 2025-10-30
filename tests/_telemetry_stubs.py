@@ -37,9 +37,7 @@ class DummyMeter:
         self.histograms[name] = histogram
         return histogram
 
-    def create_observable_gauge(
-        self, name: str, callbacks: list[Any], **_: Any
-    ) -> SimpleNamespace:
+    def create_observable_gauge(self, name: str, callbacks: list[Any], **_: Any) -> SimpleNamespace:
         gauge = SimpleNamespace(callbacks=list(callbacks))
         self.gauges[name] = gauge
         return gauge
@@ -194,7 +192,7 @@ class DummyMetrics:
         def add(amount: int, attributes: dict[str, Any] | None = None) -> None:
             counter.calls.append((amount, attributes or {}))
 
-        counter.add = add  # type: ignore[attr-defined]
+        counter.add = add
         return counter
 
     def _histogram(self, name: str) -> SimpleNamespace:
@@ -203,7 +201,7 @@ class DummyMetrics:
         def record(value: float, attributes: dict[str, Any] | None = None) -> None:
             histogram.calls.append((value, attributes or {}))
 
-        histogram.record = record  # type: ignore[attr-defined]
+        histogram.record = record
         return histogram
 
     def _observe_quality_score(self, *_: Any) -> list[Any]:
@@ -264,9 +262,7 @@ class DummyMetrics:
         provider: str | None = None,
         extra_attributes: Mapping[str, Any] | None = None,
     ) -> None:
-        attributes = self._acquisition_attributes(
-            scope, agent, provider, extra_attributes
-        )
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
         self.acquisition_duration.record(seconds, attributes)
 
     def record_acquisition_records(
@@ -278,9 +274,7 @@ class DummyMetrics:
         provider: str | None = None,
         extra_attributes: Mapping[str, Any] | None = None,
     ) -> None:
-        attributes = self._acquisition_attributes(
-            scope, agent, provider, extra_attributes
-        )
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
         self.acquisition_records.add(count, attributes)
 
     def record_acquisition_warnings(
@@ -292,9 +286,7 @@ class DummyMetrics:
         provider: str | None = None,
         extra_attributes: Mapping[str, Any] | None = None,
     ) -> None:
-        attributes = self._acquisition_attributes(
-            scope, agent, provider, extra_attributes
-        )
+        attributes = self._acquisition_attributes(scope, agent, provider, extra_attributes)
         self.acquisition_warnings.add(count, attributes)
 
     @staticmethod

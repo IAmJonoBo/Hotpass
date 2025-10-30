@@ -20,11 +20,11 @@ import phonenumbers
 from phonenumbers import carrier, geocoder, number_type
 
 try:  # pragma: no cover - optional dependency for MX lookups
-    import dns.resolver  # type: ignore[import-untyped]
+    import dns.resolver
 
     _DNS_AVAILABLE = True
 except ImportError:  # pragma: no cover - handled gracefully
-    dns = None  # type: ignore
+    dns = None
     _DNS_AVAILABLE = False
 
 EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
@@ -110,9 +110,7 @@ class EmailValidator:
         *,
         dns_lookup: Callable[[str], Iterable[str]] | None = None,
         cache_ttl: timedelta = DEFAULT_CACHE_TTL,
-        smtp_probe: (
-            Callable[[str, str, tuple[str, ...]], SMTPProbeResult | None] | None
-        ) = None,
+        smtp_probe: Callable[[str, str, tuple[str, ...]], SMTPProbeResult | None] | None = None,
     ) -> None:
         self._dns_lookup = dns_lookup or self._default_dns_lookup
         self._cache_ttl = cache_ttl
@@ -126,7 +124,7 @@ class EmailValidator:
         if not _DNS_AVAILABLE:
             return ()
         try:
-            answers = dns.resolver.resolve(domain, "MX", lifetime=3.0)  # type: ignore[attr-defined]
+            answers = dns.resolver.resolve(domain, "MX", lifetime=3.0)
         except Exception:  # pragma: no cover - network dependent
             return ()
         return tuple(str(rdata.exchange).rstrip(".") for rdata in answers)
@@ -211,9 +209,7 @@ class PhoneValidator:
     def __init__(self) -> None:
         self._cache: dict[tuple[str, str], PhoneValidationResult] = {}
 
-    def validate(
-        self, number: str | None, *, country_code: str
-    ) -> PhoneValidationResult | None:
+    def validate(self, number: str | None, *, country_code: str) -> PhoneValidationResult | None:
         if not number:
             return None
         candidate = number.strip()
@@ -253,9 +249,7 @@ class PhoneValidator:
             confidence = 0.1
             reason = "number_invalid"
         result = PhoneValidationResult(
-            number=phonenumbers.format_number(
-                parsed, phonenumbers.PhoneNumberFormat.E164
-            ),
+            number=phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164),
             status=status,
             confidence=confidence,
             reason=reason,
@@ -296,9 +290,7 @@ class ContactValidationSummary:
 
     def overall_confidence(self) -> float:
         confidences = [
-            value
-            for value in [self.email_confidence(), self.phone_confidence()]
-            if value > 0
+            value for value in [self.email_confidence(), self.phone_confidence()] if value > 0
         ]
         if not confidences:
             return 0.0
@@ -356,9 +348,7 @@ class ContactValidationService:
             key = (phone, country_code.upper())
             cached_phone = self._phone_cache.get(key)
             if cached_phone is None and key not in self._phone_cache:
-                cached_phone = self.phone_validator.validate(
-                    phone, country_code=country_code
-                )
+                cached_phone = self.phone_validator.validate(phone, country_code=country_code)
                 self._phone_cache[key] = cached_phone
             summary.phone = cached_phone
         return summary

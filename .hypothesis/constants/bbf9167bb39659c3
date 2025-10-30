@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/features/compliance.py
+# hypothesis_version: 6.142.4
+
+[0.5, 'compliance', 'contact_primary_name', 'hotpass_pipeline', 'organization_slug']

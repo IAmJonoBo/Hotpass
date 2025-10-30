@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/transform/normalize.py
+# hypothesis_version: 6.142.4
+
+[10000, ' -', ' -/', '/', '@', 'NFKC', 'ZA', '[^0-9+]+', 'family', 'full', 'given', 'https', 'https?://', 'middle', 'stdnum.exceptions', 'stdnum.numdb', 'stdnum.util', 'title', 'www.']

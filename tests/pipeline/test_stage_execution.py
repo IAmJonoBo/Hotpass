@@ -7,6 +7,12 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from tests.pipeline.fixtures import (
+    ModularStageArtifacts,
+    build_aggregation_result,
+    build_modular_stage_artifacts,
+    build_validation_result,
+)
 
 from hotpass.compliance import PIIRedactionConfig
 from hotpass.pipeline import (
@@ -27,12 +33,6 @@ from hotpass.pipeline import (
 )
 from hotpass.pipeline.base import execute_pipeline
 from hotpass.pipeline.config import PipelineResult
-from tests.pipeline.fixtures import (
-    ModularStageArtifacts,
-    build_aggregation_result,
-    build_modular_stage_artifacts,
-    build_validation_result,
-)
 
 
 def expect(condition: bool, message: str) -> None:

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/scripts/idp/bootstrap.py
+# hypothesis_version: 6.142.4
+
+[', ', '--assume-yes', '--env-file', '--execute', '--extra', '--extras', '--overwrite', '--prefect-profile', '--vault-address', '.env.hotpass', 'Generate SBOM', '__main__', 'append', 'create', 'dev', 'docs', 'hotpass-dev', 'prefect', 'profile', 'python', 'run', 'store_true', 'sync', 'utf-8', 'uv', 'uv sync ', 'uv venv', 'venv']

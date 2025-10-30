@@ -50,10 +50,9 @@ def _noop_prefect_decorator(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
 
 
 try:  # pragma: no cover - verified via unit tests
-    from prefect.logging import get_run_logger as prefect_get_run_logger
-
     from prefect import flow as prefect_flow_decorator
     from prefect import task as prefect_task_decorator
+    from prefect.logging import get_run_logger as prefect_get_run_logger
 except ImportError:  # pragma: no cover - exercised in fallback tests
     PREFECT_AVAILABLE = False
 else:
@@ -190,13 +189,9 @@ class AgentToolPolicy:
     auto_approved_roles: frozenset[str] = field(default_factory=frozenset)
 
     def __post_init__(self) -> None:
-        normalised = {
-            role: frozenset(tools) for role, tools in self.allowed_tools_by_role.items()
-        }
+        normalised = {role: frozenset(tools) for role, tools in self.allowed_tools_by_role.items()}
         object.__setattr__(self, "allowed_tools_by_role", normalised)
-        object.__setattr__(
-            self, "auto_approved_roles", frozenset(self.auto_approved_roles)
-        )
+        object.__setattr__(self, "auto_approved_roles", frozenset(self.auto_approved_roles))
 
     def is_tool_allowed(self, role: str, tool: str) -> bool:
         allowed = self.allowed_tools_by_role.get(role)
@@ -315,9 +310,7 @@ def evaluate_agent_request(
         return approval
 
     auto_approver = f"policy:{request.role}"
-    _safe_log(
-        logger, logging.INFO, "Auto-approving agent request %s", request.request_id
-    )
+    _safe_log(logger, logging.INFO, "Auto-approving agent request %s", request.request_id)
     return AgentApprovalDecision(
         approved=True,
         approver=auto_approver,
@@ -358,9 +351,7 @@ def broker_agent_run(
 
     timestamp = datetime.now(tz=UTC)
     try:
-        decision = evaluate_agent_request(
-            request=request, policy=policy, approval=approval
-        )
+        decision = evaluate_agent_request(request=request, policy=policy, approval=approval)
     except AgentApprovalError as exc:
         log_agent_action(
             AgentAuditRecord(
@@ -371,11 +362,7 @@ def broker_agent_run(
                 action=request.action,
                 status="denied",
                 approved=False,
-                approver=(
-                    "manual"
-                    if policy.requires_manual_approval(request.role)
-                    else "policy"
-                ),
+                approver=("manual" if policy.requires_manual_approval(request.role) else "policy"),
                 timestamp=timestamp,
                 notes=str(exc),
             ),
@@ -501,9 +488,7 @@ def _execute_pipeline(
                     archive_dir=archive_root,
                 )
             except Exception as exc:  # pragma: no cover - exercised via unit tests
-                raise PipelineOrchestrationError(
-                    f"Failed to create archive: {exc}"
-                ) from exc
+                raise PipelineOrchestrationError(f"Failed to create archive: {exc}") from exc
 
         total_records = len(getattr(result, "refined", []))
     except Exception as exc:
@@ -519,9 +504,7 @@ def _execute_pipeline(
         archive_path=archive_path,
     )
 
-    emitter.emit_complete(
-        outputs=build_output_datasets(config.output_path, archive_path)
-    )
+    emitter.emit_complete(outputs=build_output_datasets(config.output_path, archive_path))
     return summary
 
 
@@ -555,9 +538,7 @@ def run_pipeline_once(options: PipelineRunOptions) -> PipelineRunSummary:
 
     runner_kwargs = dict(options.runner_kwargs or {})
 
-    with telemetry_session(
-        telemetry_options, additional_attributes=telemetry_context
-    ) as metrics:
+    with telemetry_session(telemetry_options, additional_attributes=telemetry_context) as metrics:
         runner_name = getattr(runner, "__name__", "")
         if metrics is not None and runner_name == "run_enhanced_pipeline":
             runner_kwargs.setdefault("metrics", metrics)
@@ -584,9 +565,7 @@ def run_pipeline_task(
         Pipeline execution results
     """
     logger = get_run_logger()
-    _safe_log(
-        logger, logging.INFO, "Running pipeline with input_dir=%s", config.input_dir
-    )
+    _safe_log(logger, logging.INFO, "Running pipeline with input_dir=%s", config.input_dir)
 
     summary = _execute_pipeline(
         config,
@@ -625,9 +604,7 @@ def run_pipeline_task(
     return payload
 
 
-def _lookup_nested(
-    mapping: Mapping[str, Any] | None, keys: tuple[str, ...]
-) -> Any | None:
+def _lookup_nested(mapping: Mapping[str, Any] | None, keys: tuple[str, ...]) -> Any | None:
     current: Any = mapping
     for key in keys:
         if not isinstance(current, Mapping) or key not in current:
@@ -641,9 +618,7 @@ def _sanitise_component(value: str) -> str:
     return cleaned or "default"
 
 
-def _format_archive_path(
-    root: Path, pattern: str, run_date: date, version: str
-) -> Path:
+def _format_archive_path(root: Path, pattern: str, run_date: date, version: str) -> Path:
     try:
         relative = pattern.format(date=run_date, version=version)
     except Exception as exc:  # pragma: no cover - formatting errors are unexpected
@@ -665,9 +640,7 @@ def rehydrate_archive_task(archive_path: Path, restore_dir: Path) -> Path:
     return restore_dir
 
 
-ThreadRunner = Callable[
-    [Callable[[], PipelineRunSummary]], Awaitable[PipelineRunSummary]
-]
+ThreadRunner = Callable[[Callable[[], PipelineRunSummary]], Awaitable[PipelineRunSummary]]
 
 
 async def _run_with_prefect_concurrency(
@@ -784,9 +757,7 @@ def backfill_pipeline_flow(
             raise PipelineOrchestrationError(msg)
         run_date_value = _coerce_run_date(run_date_raw)
         version_value = str(version_raw)
-        runs_normalised.append(
-            {"run_date": run_date_value.isoformat(), "version": version_value}
-        )
+        runs_normalised.append({"run_date": run_date_value.isoformat(), "version": version_value})
 
     archive_root_path = Path(archive_root)
     restore_root_path = Path(restore_root)
@@ -845,9 +816,7 @@ def backfill_pipeline_flow(
         if telemetry:
             config_model = config_model.merge({"telemetry": telemetry})
 
-        output_path = (
-            outputs_root / f"refined-{iso_date}-{_sanitise_component(version)}.xlsx"
-        )
+        output_path = outputs_root / f"refined-{iso_date}-{_sanitise_component(version)}.xlsx"
         run_updates: dict[str, Any] = {
             "pipeline": {
                 "input_dir": extracted,
@@ -1006,9 +975,7 @@ def refinement_pipeline_flow(
     if run_id:
         config_updates["pipeline"]["run_id"] = run_id
     if flow_run_name:
-        config_updates.setdefault("orchestrator", {})[
-            "run_name_template"
-        ] = flow_run_name
+        config_updates.setdefault("orchestrator", {})["run_name_template"] = flow_run_name
 
     if excel_chunk_size is not None:
         config_updates["pipeline"]["excel_chunk_size"] = int(excel_chunk_size)

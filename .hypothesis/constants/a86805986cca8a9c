@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/export.py
+# hypothesis_version: 6.142.4
+
+['.csv', '.parquet', '.xls', '.xlsx', '@context', 'Data', 'Summary', 'daily_list_path', 'daily_list_records', 'duckdb_sort_seconds', 'expectations_passed', 'intent_digest_path', 'invalid_records', 'openpyxl', 'parquet_path', 'path', 'polars_write_seconds', 'rows_per_second', 'ssot.schema.json', 'tableSchema', 'total_records', 'total_seconds', 'url', 'utf-8', 'write_completed', 'write_seconds', 'write_started']

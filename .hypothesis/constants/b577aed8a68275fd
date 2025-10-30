@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/version.py
+# hypothesis_version: 6.142.4
+
+['--add', '--bump', '--dataset', '--description', '--get', '--init', '--repo-root', '--set', '--status', '--tag', '.', 'Checksum', 'Component', 'DATASET', 'Description', 'PATH', 'Semantic Version', 'Timestamp', 'VERSION', 'Value', 'Version description', 'build', 'cyan', 'error', 'green', 'has_changes', 'initialized', 'major', 'minor', 'patch', 'refined_data', 'register', 'status_output', 'store_true', 'version']

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/entity_resolution.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.5, 0.75, 0.9, '-', '.csv', '.json', '.ndjson', '.parquet', '.xls', '.xlsx', '<none>', 'NFKD', 'Row', '[^a-z0-9]+', 'address_primary', 'coerce', 'completeness_score', 'data_quality_score', 'date', 'entity_id', 'first', 'first_seen', 'last_updated', 'name_variants', 'nan', 'object', 'organization_name', 'organization_slug', 'priority_score', 'province', 'records', 'status', 'status_history', 'website']

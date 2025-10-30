@@ -76,9 +76,7 @@ class CLIProfile(BaseModel):
 
     @model_validator(mode="after")
     def _ensure_intent(self) -> CLIProfile:
-        if (
-            self.features.enrichment or self.features.compliance
-        ) and not self.declared_intent:
+        if (self.features.enrichment or self.features.compliance) and not self.declared_intent:
             raise ProfileIntentError(
                 "Profiles enabling enrichment or compliance must declare intent statements "
                 "via the 'intent' field."

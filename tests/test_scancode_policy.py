@@ -30,8 +30,11 @@ def test_evaluate_passes_allowed_license(tmp_path: Path) -> None:
         "allowed:\n  - MIT\nforbidden: []\nfail_on_unknown: false\n",
         encoding="utf-8",
     )
+
     from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
+
+    exit_code = evaluate(report, policy)
+    expect(exit_code == 0, "Should pass when license is in allowed list")
 
 
 def test_evaluate_blocks_forbidden_license(tmp_path: Path) -> None:
@@ -54,5 +57,8 @@ def test_evaluate_blocks_forbidden_license(tmp_path: Path) -> None:
         "allowed:\n  - MIT\nforbidden:\n  - GPL-3.0\nfail_on_unknown: true\n",
         encoding="utf-8",
     )
+
     from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
+
+    exit_code = evaluate(report, policy)
+    expect(exit_code != 0, "Should fail when license is in forbidden list")

@@ -101,48 +101,53 @@ def test_build_party_store_from_refined_creates_entities() -> None:
     )
 
     from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
+
+    expect(len(store.parties) == 2, "Should create exactly 2 parties (1 org, 1 person)")
     org = next(party for party in store.parties if party.kind == PartyKind.ORGANISATION)
     contact = next(party for party in store.parties if party.kind == PartyKind.PERSON)
 
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
+    expect(org.display_name == "Aero School", "Organization name should match")
+    expect(contact.display_name == "Jane Doe", "Contact name should match")
 
     org_aliases = [alias for alias in store.aliases if alias.party_id == org.party_id]
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-        alias.alias == "Aero School" and alias.alias_type == AliasType.LEGAL
-        for alias in org_aliases
+    expect(
+        any(
+            alias.alias == "Aero School" and alias.alias_type == AliasType.LEGAL
+            for alias in org_aliases
+        ),
+        "Should have legal alias for organization",
     )
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-        alias.alias == "SACAA Cleaned" and alias.alias_type == AliasType.HISTORIC
-        for alias in org_aliases
+    expect(
+        any(
+            alias.alias == "SACAA Cleaned" and alias.alias_type == AliasType.HISTORIC
+            for alias in org_aliases
+        ),
+        "Should have historic alias from source dataset",
     )
 
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-        method.method_type == ContactMethodType.EMAIL
-        and method.value == "jane.doe@aero.example"
-        and method.is_primary
-        for method in store.contact_methods
-        if method.party_id == contact.party_id
+    expect(
+        any(
+            method.method_type == ContactMethodType.EMAIL
+            and method.value == "jane.doe@aero.example"
+            and method.is_primary
+            for method in store.contact_methods
+            if method.party_id == contact.party_id
+        ),
+        "Should have primary email contact method",
     )
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-        role.object_party_id == org.party_id
-        and role.subject_party_id == contact.party_id
-        for role in store.roles
+    expect(
+        any(
+            role.object_party_id == org.party_id and role.subject_party_id == contact.party_id
+            for role in store.roles
+        ),
+        "Should have relationship between contact and organization",
     )
 
 
 def test_render_dictionary_includes_party_fields() -> None:
     markdown = render_dictionary()
     from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
-    from tests.helpers.assertions import expect
-expect(\1, "condition failed: \1")
+
+    expect("Party" in markdown, "Dictionary should include Party entity")
+    expect("Alias" in markdown, "Dictionary should include Alias entity")
+    expect("ContactMethod" in markdown, "Dictionary should include ContactMethod entity")

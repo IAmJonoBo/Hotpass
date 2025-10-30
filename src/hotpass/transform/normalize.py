@@ -61,8 +61,8 @@ InvalidFormat = _invalid_format
 stdnum_clean: StdnumCleanFunc = _stdnum_clean
 
 try:  # pragma: no cover - optional modules for locale-specific numbers
-    from stdnum.za import postcode as za_postcode  # type: ignore[attr-defined]
-    from stdnum.za import vat as za_vat  # type: ignore[attr-defined]
+    from stdnum.za import postcode as za_postcode
+    from stdnum.za import vat as za_vat
 except ImportError:  # pragma: no cover - fallback if optional modules missing
     za_postcode = None
     za_vat = None
@@ -147,9 +147,7 @@ def normalize_phone(value: object | None, *, country_code: str = "ZA") -> str | 
         parsed = phonenumbers.parse(digits, country_code)
     except phonenumbers.NumberParseException:
         return None
-    if not phonenumbers.is_possible_number(parsed) or not phonenumbers.is_valid_number(
-        parsed
-    ):
+    if not phonenumbers.is_possible_number(parsed) or not phonenumbers.is_valid_number(parsed):
         return None
     return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 

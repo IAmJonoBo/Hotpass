@@ -39,9 +39,7 @@ class DummySession:
         if self._error is not None:
             raise self._error
         key = (url, tuple(sorted((params or {}).items())) if params else None)
-        self.calls.append(
-            {"url": url, "params": params, "headers": headers, "timeout": timeout}
-        )
+        self.calls.append({"url": url, "params": params, "headers": headers, "timeout": timeout})
         try:
             payload = self._responses[key]
         except KeyError as exc:  # pragma: no cover - defensive
