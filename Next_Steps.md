@@ -32,6 +32,7 @@
 - [x] 2025-10-30 — Fixed critical syntax errors from malformed expect() migration in test files, created parseable stubs for 7 corrupted test files (backed up to /tmp/broken_tests/), applied code formatting to 136 files, removed 34 unused type: ignore comments, reduced mypy errors from 246 to 212, migrated 19 test assertions to expect() helper (test_scoring.py, test_benchmarks.py), all quality gates verified (392 tests passing, 77% coverage, lint clean, fitness passing, secrets clean, CodeQL clean).【F:tests/test_scoring.py†L1-L246】【F:tests/test_benchmarks.py†L1-L23】【F:tests/domain/test_party_model.py†L1-L149】
 - [x] 2025-10-31 — Normalised ML tracking tag casting and run metadata handling, restored lint baseline, and re-baselined QA gates (owner: Engineering).【F:src/hotpass/ml/tracking.py†L1-L214】【c56720†L1-L123】
 - [x] 2025-10-31 — Reinstated end-to-end regression tests for column mapping, configuration profiles, dashboard helpers, enrichment validators, entity resolution, and observability after removing placeholder stubs; verified full pytest suite and linting remain green.【F:tests/test_column_mapping.py†L1-L107】【F:tests/test_config.py†L1-L77】【F:tests/test_dashboard.py†L1-L188】【F:tests/test_enhancements.py†L1-L41】【F:tests/test_enrichment_validators.py†L1-L79】【F:tests/test_entity_resolution.py†L1-L133】【F:tests/test_observability.py†L1-L160】
+- [x] 2025-10-31 — Converted dashboard accessibility harness to require real Streamlit imports and replaced bare assertions with `expect()` helpers to keep Bandit B101 satisfied while improving coverage signals for `hotpass.dashboard`.【F:tests/accessibility/test_dashboard_accessibility.py†L1-L236】【e430f9†L1-L182】
 - [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
 
 ## Deliverables
@@ -54,7 +55,7 @@
 - [x] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (pass: build succeeds with expected heading hierarchy warnings in legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
-- [x] Coverage — `pytest --cov=src --cov=tests` (77% after current work; 392 tests passing, 13 skipped; expanded ML tracking stub coverage on 2025-10-29, maintained through 2025-10-30 syntax fixes and assertion migrations).【7b2a43†L1-L193】
+- [x] Coverage — `pytest --cov=src --cov=tests` (85% after restoring dashboard accessibility checks; 426 tests passing, 7 skipped; increased dashboard module coverage via live dependency exercises).【e430f9†L1-L182】
 - [x] Fitness Functions — `uv run python scripts/quality/fitness_functions.py` (pass: all quality checks satisfied on 2025-10-30).
 
 ## Links
