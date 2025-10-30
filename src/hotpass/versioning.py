@@ -8,7 +8,7 @@ import subprocess
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +59,11 @@ class DatasetVersion:
             )
 
     @classmethod
-    def from_dict(cls, data: dict) -> DatasetVersion:
+    def from_dict(cls, data: dict[str, Any]) -> DatasetVersion:
         """Create DatasetVersion from dictionary."""
         return cls(**data)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -284,7 +284,7 @@ class DVCManager:
             logger.error(f"Failed to push DVC metadata: {e}")
             return False
 
-    def status(self) -> dict:
+    def status(self) -> dict[str, Any]:
         """Get DVC status information.
 
         Returns:
@@ -316,7 +316,7 @@ class DVCManager:
 def record_version_metadata(
     output_path: Path,
     version: DatasetVersion,
-    metadata: dict | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> Path:
     """Record version metadata alongside the output file.
 
