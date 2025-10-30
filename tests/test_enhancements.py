@@ -1,19 +1,42 @@
-"""FIXME: This test file was corrupted and needs reconstruction.
+"""Compatibility re-export tests for pipeline enhancements."""
 
-The original file has been backed up to /tmp/broken_tests/ for reference.
-This is a temporary placeholder to allow other tests to run.
+from __future__ import annotations
 
-Context: Malformed expect() migration left broken assertions throughout.
-See: https://github.com/IAmJonoBo/Hotpass/issues/XXX
-"""
+import importlib
 
-import pytest
-
-pytestmark = pytest.mark.skip(
-    reason="Test file needs reconstruction - corrupted by malformed expect() calls"
-)
+from hotpass import pipeline_enhancements
+from hotpass.pipeline.features import ComplianceFeature, EnhancedPipelineConfig
+from tests.helpers.assertions import expect
 
 
-def test_placeholder() -> None:
-    """Placeholder test to allow file to be parsed."""
-    pass
+def test_reexported_symbols_match_pipeline_features() -> None:
+    expect(
+        pipeline_enhancements.ComplianceFeature is ComplianceFeature,
+        "ComplianceFeature should be re-exported",
+    )
+    expect(
+        pipeline_enhancements.EnhancedPipelineConfig is EnhancedPipelineConfig,
+        "EnhancedPipelineConfig should match pipeline.features module",
+    )
+
+
+def test___all___declares_public_surface() -> None:
+    public = set(pipeline_enhancements.__all__)
+    expected = {
+        "ComplianceFeature",
+        "EnhancedPipelineConfig",
+        "EnrichmentFeature",
+        "EntityResolutionFeature",
+        "FeatureContext",
+        "GeospatialFeature",
+        "PipelineFeatureStrategy",
+        "TraceFactory",
+        "default_trace_factory",
+    }
+    expect(public == expected, "__all__ should list the compatibility exports")
+
+
+def test_module_import_is_idempotent() -> None:
+    # Re-import to ensure no side effects or missing dependencies
+    module = importlib.reload(pipeline_enhancements)
+    expect(hasattr(module, "ComplianceFeature"), "Reloaded module should expose ComplianceFeature")
