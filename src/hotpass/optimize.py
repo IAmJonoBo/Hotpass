@@ -22,7 +22,7 @@ class DataOptimizer:
         self.original_shape = self.df.shape
         logger.info("Loaded %d records", self.original_shape[0])
 
-    def normalize_organization_name(self, name) -> str:
+    def normalize_organization_name(self, name: str | None) -> str:
         """Normalize organization names for better matching using existing utilities."""
         name = clean_string(name)
         if not name:
@@ -42,15 +42,15 @@ class DataOptimizer:
         name = re.sub(r"\s+", " ", name).strip()
         return name
 
-    def find_duplicates(self):
+    def find_duplicates(self) -> dict[str, list[int]]:
         """Find potential duplicate organizations using normalized name matching."""
         logger.info("Finding potential duplicates...")
         self.df["normalized_name"] = self.df["organization_name"].apply(
             self.normalize_organization_name
         )
 
-        duplicate_groups = {}
-        name_to_indices = {}
+        duplicate_groups: dict[str, list[int]] = {}
+        name_to_indices: dict[str, list[int]] = {}
 
         for idx, row in self.df.iterrows():
             name = row["normalized_name"]
@@ -67,7 +67,7 @@ class DataOptimizer:
         logger.info("Found %d potential duplicate groups", len(duplicate_groups))
         return duplicate_groups
 
-    def validate_website(self, url):
+    def validate_website(self, url: str | None) -> bool:
         """Basic website validation - check if URL format is valid."""
         if pd.isna(url) or not url:
             return False
@@ -84,7 +84,7 @@ class DataOptimizer:
 
         return url_pattern.match(str(url)) is not None
 
-    def validate_emails(self):
+    def validate_emails(self) -> None:
         """Validate and clean email addresses using existing normalization."""
         logger.info("Validating and cleaning emails...")
 
@@ -119,7 +119,7 @@ class DataOptimizer:
             "last_updated": None,
         }
 
-    def validate_organization_names_online(self):
+    def validate_organization_names_online(self) -> None:
         """Validate organization names against external registries."""
         logger.info("Validating organization names against external registries...")
 
@@ -197,7 +197,7 @@ class DataOptimizer:
             "confidence": 0.5 if detected_province else 0.0,
         }
 
-    def geocode_addresses(self):
+    def geocode_addresses(self) -> None:
         """Geocode and validate addresses for missing location data."""
         logger.info("Geocoding and validating addresses...")
 
@@ -264,7 +264,7 @@ class DataOptimizer:
 
         return self.df
 
-    def save_optimized_data(self, output_path: str):
+    def save_optimized_data(self, output_path: str) -> None:
         """Save the optimized dataset."""
         self.df.to_excel(output_path, index=False)
         logger.info("Optimized data saved to %s", output_path)

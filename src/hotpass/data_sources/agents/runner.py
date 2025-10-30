@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -48,7 +49,7 @@ class AcquisitionManager:
         self._metrics: PipelineMetrics | None = None
 
     @staticmethod
-    def _observability():
+    def _observability() -> ModuleType:
         from ... import observability
 
         return observability

@@ -193,7 +193,7 @@ class DummyMetrics:
             counter.calls.append((amount, attributes or {}))
 
         counter.add = add
-        return counter
+        return counter  # type: ignore[return-value]
 
     def _histogram(self, name: str) -> SimpleNamespace:
         histogram = self.meter.create_histogram(name)
@@ -202,7 +202,7 @@ class DummyMetrics:
             histogram.calls.append((value, attributes or {}))
 
         histogram.record = record
-        return histogram
+        return histogram  # type: ignore[return-value]
 
     def _observe_quality_score(self, *_: Any) -> list[Any]:
         return [self.observation_factory(self._latest_quality_score)]

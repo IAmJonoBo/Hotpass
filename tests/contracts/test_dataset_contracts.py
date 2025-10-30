@@ -10,7 +10,17 @@ import pytest
 
 from hotpass import contracts
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+
+def _find_repo_root() -> Path:
+    """Find repository root by looking for pyproject.toml marker."""
+    current = Path(__file__).resolve()
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists():
+            return parent
+    raise RuntimeError("Could not find repository root (no pyproject.toml found)")
+
+
+REPO_ROOT = _find_repo_root()
 SCHEMAS_DIR = REPO_ROOT / "schemas"
 DOC_PATH = REPO_ROOT / "docs" / "reference" / "schemas.md"
 
