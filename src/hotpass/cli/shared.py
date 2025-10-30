@@ -318,11 +318,17 @@ def load_config(path: Path) -> dict[str, Any]:
     suffix = path.suffix.lower()
     text = path.read_text(encoding="utf-8")
     if suffix in {".toml", ".tml"}:
-        return tomllib.loads(text)
-    if suffix == ".json":
-        return json.loads(text)
-    msg = f"Unsupported configuration format: {path}"
-    raise ValueError(msg)
+        data: Any = tomllib.loads(text)
+    elif suffix == ".json":
+        data = json.loads(text)
+    else:
+        msg = f"Unsupported configuration format: {path}"
+        raise ValueError(msg)
+
+    if not isinstance(data, dict):
+        msg = f"Configuration payload at {path} must be a mapping"
+        raise TypeError(msg)
+    return dict(data)
 
 
 def infer_report_format(report_path: Path) -> str | None:

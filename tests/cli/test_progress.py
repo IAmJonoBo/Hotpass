@@ -145,3 +145,17 @@ def test_pipeline_progress_replays_high_volume_fixture() -> None:
         any(count > 0 for count in suppressed_counts),
         "suppression summary should report suppressed updates",
     )
+
+
+def test_render_progress_without_console_uses_null_context() -> None:
+    with cli.render_progress(None) as progress_context:
+        expect(progress_context is None, "render_progress should yield None when console missing")
+
+
+def test_render_progress_with_console_uses_pipeline_progress() -> None:
+    console = Console(record=True)
+    with cli.render_progress(console) as progress_context:
+        expect(
+            isinstance(progress_context, cli.PipelineProgress),
+            "render_progress should yield PipelineProgress when console available",
+        )

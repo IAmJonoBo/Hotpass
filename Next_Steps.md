@@ -33,6 +33,7 @@
 - [x] 2025-10-31 — Normalised ML tracking tag casting and run metadata handling, restored lint baseline, and re-baselined QA gates (owner: Engineering).【F:src/hotpass/ml/tracking.py†L1-L214】【c56720†L1-L123】
 - [x] 2025-10-31 — Reinstated end-to-end regression tests for column mapping, configuration profiles, dashboard helpers, enrichment validators, entity resolution, and observability after removing placeholder stubs; verified full pytest suite and linting remain green.【F:tests/test_column_mapping.py†L1-L107】【F:tests/test_config.py†L1-L77】【F:tests/test_dashboard.py†L1-L188】【F:tests/test_enhancements.py†L1-L41】【F:tests/test_enrichment_validators.py†L1-L79】【F:tests/test_entity_resolution.py†L1-L133】【F:tests/test_observability.py†L1-L160】
 - [x] 2025-10-31 — Converted dashboard accessibility harness to require real Streamlit imports and replaced bare assertions with `expect()` helpers to keep Bandit B101 satisfied while improving coverage signals for `hotpass.dashboard`.【F:tests/accessibility/test_dashboard_accessibility.py†L1-L236】【e430f9†L1-L182】
+- [x] 2025-10-30 — Tightened CLI progress/context typing, re-exported helpers, and added regression tests so mypy passes on the CLI surface while ensuring context managers stay exercised.【F:src/hotpass/cli/main.py†L1-L94】【F:src/hotpass/cli/progress.py†L1-L412】【F:src/hotpass/cli/__init__.py†L1-L20】【F:tests/cli/test_progress.py†L1-L167】
 - [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
 
 ## Deliverables
@@ -49,6 +50,7 @@
   - [x] Added `hotpass.orchestration` to strict mypy overrides and resolved concurrency helper issues (2025-10-29).【F:pyproject.toml†L116-L126】【F:src/hotpass/orchestration.py†L38-L126】
   - [x] Removed 34 unused type: ignore comments across src, tests, and scripts (2025-10-30).
   - [x] Normalised ML tracking metadata conversions to eliminate three `no-any-return` diagnostics (2025-10-31).【F:src/hotpass/ml/tracking.py†L90-L191】
+  - [x] CLI entrypoints and progress helpers now pass targeted mypy checks following context manager typing improvements (2025-10-30).【F:src/hotpass/cli/main.py†L1-L94】【F:src/hotpass/cli/progress.py†L1-L412】【c34ff1†L1-L2】
 - [x] Security — `uv run bandit -r src scripts` (pass: 16 low severity subprocess usage patterns are documented as tolerated per project standards).【f47e0c†L1-L113】
   - [x] CodeQL scan — no security vulnerabilities found (2025-10-30).
 - [x] Secrets — `uv run detect-secrets scan src tests scripts` (pass: no secrets detected on 2025-10-30).

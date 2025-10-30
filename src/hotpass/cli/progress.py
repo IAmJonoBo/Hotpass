@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Callable, Iterable, Mapping
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
-from typing import Any
+from types import TracebackType
+from typing import Any, cast
 
 from rich.console import Console
 from rich.progress import (
@@ -271,7 +272,12 @@ class PipelineProgress:
         self._progress.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:  # pragma: no cover - delegated cleanup
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:  # pragma: no cover - delegated cleanup
         self._progress.__exit__(exc_type, exc, tb)
 
     def handle_event(self, event: str, payload: dict[str, Any]) -> None:
@@ -376,12 +382,14 @@ class PipelineProgress:
             self._progress.log(f"[dim]Suppressed {suppressed} aggregate progress update(s)[/dim]")
 
 
-def render_progress(console: Console | None) -> Any:
+def render_progress(
+    console: Console | None,
+) -> AbstractContextManager[PipelineProgress | None]:
     """Return a context manager for pipeline progress rendering."""
 
     if console is None:
         return nullcontext(None)
-    return PipelineProgress(console)
+    return cast(AbstractContextManager[PipelineProgress | None], PipelineProgress(console))
 
 
 def _convert_paths(data: dict[str, Any]) -> dict[str, Any]:
