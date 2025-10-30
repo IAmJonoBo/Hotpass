@@ -11,11 +11,16 @@ from typing import Protocol, cast
 from .builder import CLIBuilder
 from .commands import (
     backfill,
+    contracts,
     dashboard,
     deploy,
     doctor,
+    enrich,
     init,
     orchestrate,
+    overview,
+    qa,
+    refine,
     resolve,
     run,
     version,
@@ -46,6 +51,14 @@ def build_parser() -> argparse.ArgumentParser:
         description="Hotpass CLI",
         epilog=EPILOG,
     )
+    # Register new UPGRADE.md commands first
+    builder.register(overview.register())
+    builder.register(refine.register())
+    builder.register(enrich.register())
+    builder.register(qa.register())
+    builder.register(contracts.register())
+
+    # Register existing commands
     builder.register(run.register())
     builder.register(backfill.register())
     builder.register(doctor.register())

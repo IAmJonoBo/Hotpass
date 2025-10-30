@@ -2,11 +2,16 @@
 
 __all__ = [
     "backfill",
-    "deploy",
+    "contracts",
     "dashboard",
+    "deploy",
     "doctor",
+    "enrich",
     "init",
     "orchestrate",
+    "overview",
+    "qa",
+    "refine",
     "resolve",
     "run",
     "version",
