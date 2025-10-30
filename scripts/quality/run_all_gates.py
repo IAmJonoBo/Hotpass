@@ -18,7 +18,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 
 
 @dataclass
@@ -32,307 +31,178 @@ class GateResult:
     duration_seconds: float
 
 
-def run_qg1_cli_integrity() -> GateResult:
-    """QG-1: CLI Integrity Gate."""
+def _summarize_success(payload: dict[str, object] | None) -> str:
+    """Build a concise success message from a gate payload."""
+    if not isinstance(payload, dict):
+        return "Gate completed successfully"
+
+    stats = payload.get("stats")
+    summary: str | None = None
+    if isinstance(stats, dict):
+        total = (
+            stats.get("total_checks")
+            or stats.get("total_steps")
+            or stats.get("total")
+            or stats.get("total_items")
+        )
+        passed = stats.get("passed")
+        if isinstance(total, int) and isinstance(passed, int):
+            summary = f"{passed}/{total} checks passed"
+
+    artifacts = payload.get("artifacts")
+    if isinstance(artifacts, dict):
+        artifact_path = (
+            artifacts.get("output_workbook")
+            or artifacts.get("data_docs")
+            or artifacts.get("run_dir")
+            or artifacts.get("summary")
+        )
+        if isinstance(artifact_path, str):
+            summary = f"{summary or 'Gate completed successfully'}; artifacts at {artifact_path}"
+
+    data_docs = payload.get("data_docs")
+    if isinstance(data_docs, str):
+        summary = f"{summary or 'Gate completed successfully'}; Data Docs at {data_docs}"
+
+    return summary or "Gate completed successfully"
+
+
+def _summarize_failure(payload: dict[str, object] | None, fallback: str) -> str:
+    """Build a concise failure message from a gate payload."""
+    if not isinstance(payload, dict):
+        return fallback
+
+    entries = payload.get("steps") or payload.get("checks") or payload.get("results")
+    if isinstance(entries, list):
+        failures: list[str] = []
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            status = item.get("status")
+            if status in {"failed", "fail", False}:
+                identifier = item.get("id") or item.get("checkpoint")
+                message = item.get("message") or item.get("detail")
+                if identifier and message:
+                    failures.append(f"{identifier}: {message}")
+                elif message:
+                    failures.append(str(message))
+        if failures:
+            return "; ".join(failures)
+    error = payload.get("error")
+    if isinstance(error, str):
+        return error
+    return fallback
+
+
+def _invoke_gate_script(
+    script_rel_path: str,
+    gate_id: str,
+    gate_name: str,
+    *,
+    extra_args: list[str] | None = None,
+) -> GateResult:
+    """Execute a gate script and translate the result into GateResult."""
     import time
 
     start = time.time()
 
     try:
-        # Check that overview command works
+        cmd = [
+            sys.executable,
+            script_rel_path,
+            "--json",
+        ]
+        if extra_args:
+            cmd.extend(extra_args)
+
         result = subprocess.run(
-            ["uv", "run", "hotpass", "overview"],
+            cmd,
             capture_output=True,
             text=True,
-            timeout=30,
-        )
-
-        if result.returncode != 0:
-            return GateResult(
-                gate_id="QG-1",
-                name="CLI Integrity",
-                passed=False,
-                message=f"overview command failed: {result.stderr}",
-                duration_seconds=time.time() - start,
-            )
-
-        # Check that all required verbs are present
-        required_verbs = ["refine", "enrich", "qa", "contracts", "overview"]
-        output_lower = result.stdout.lower()
-
-        missing_verbs = [verb for verb in required_verbs if verb not in output_lower]
-
-        if missing_verbs:
-            return GateResult(
-                gate_id="QG-1",
-                name="CLI Integrity",
-                passed=False,
-                message=f"Missing CLI verbs: {', '.join(missing_verbs)}",
-                duration_seconds=time.time() - start,
-            )
-
-        return GateResult(
-            gate_id="QG-1",
-            name="CLI Integrity",
-            passed=True,
-            message="All CLI verbs present and functional",
-            duration_seconds=time.time() - start,
-        )
-
-    except Exception as e:
-        return GateResult(
-            gate_id="QG-1",
-            name="CLI Integrity",
-            passed=False,
-            message=f"Error running CLI integrity check: {e}",
-            duration_seconds=time.time() - start,
-        )
-
-
-def run_qg2_data_quality() -> GateResult:
-    """QG-2: Data Quality Gate."""
-    import time
-
-    start = time.time()
-
-    try:
-        result = subprocess.run(
-            [
-                sys.executable,
-                "scripts/quality/run_qg2.py",
-                "--json",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=180,
+            timeout=300,
         )
 
         payload: dict[str, object] | None = None
-        if result.stdout.strip():
-            payload = json.loads(result.stdout)
+        stdout = result.stdout.strip()
+        if stdout:
+            try:
+                payload = json.loads(stdout)
+            except json.JSONDecodeError:
+                payload = None
 
         if result.returncode == 0:
-            if isinstance(payload, dict):
-                stats = payload.get("stats", {}) if isinstance(payload.get("stats"), dict) else {}
-                passed = stats.get("passed") if isinstance(stats, dict) else None
-                total = stats.get("total") if isinstance(stats, dict) else None
-                docs_dir = payload.get("data_docs")
-                message = (
-                    f"{passed}/{total} checkpoints passed; Data Docs at {docs_dir}"
-                    if passed is not None and total is not None and docs_dir
-                    else "Data quality validation succeeded"
-                )
-            else:
-                message = "Data quality validation succeeded"
-
+            message = _summarize_success(payload)
             return GateResult(
-                gate_id="QG-2",
-                name="Data Quality",
+                gate_id=gate_id,
+                name=gate_name,
                 passed=True,
                 message=message,
                 duration_seconds=time.time() - start,
             )
 
-        failure_message = result.stderr.strip() or "Data quality validation failed"
-        if isinstance(payload, dict):
-            raw_results = payload.get("results", [])
-            items = raw_results if isinstance(raw_results, list) else []
-            failed_checks = [
-                f"{item.get('checkpoint')}: {item.get('message')}"
-                for item in items
-                if isinstance(item, dict) and item.get("status") == "failed"
-            ]
-            if failed_checks:
-                failure_message = "; ".join(failed_checks)
+        failure_message = result.stderr.strip() or "Gate script reported failure"
+        failure_message = _summarize_failure(payload, failure_message)
 
         return GateResult(
-            gate_id="QG-2",
-            name="Data Quality",
+            gate_id=gate_id,
+            name=gate_name,
             passed=False,
             message=failure_message,
             duration_seconds=time.time() - start,
         )
-    except Exception as e:
+    except Exception as exc:  # pragma: no cover - defensive guard
         return GateResult(
-            gate_id="QG-2",
-            name="Data Quality",
+            gate_id=gate_id,
+            name=gate_name,
             passed=False,
-            message=f"Error checking data quality: {e}",
+            message=f"Error running gate script {script_rel_path}: {exc}",
             duration_seconds=time.time() - start,
         )
+
+
+def run_qg1_cli_integrity() -> GateResult:
+    """QG-1: CLI Integrity Gate."""
+    return _invoke_gate_script(
+        "scripts/quality/run_qg1.py",
+        "QG-1",
+        "CLI Integrity",
+    )
+
+
+def run_qg2_data_quality() -> GateResult:
+    """QG-2: Data Quality Gate."""
+    return _invoke_gate_script(
+        "scripts/quality/run_qg2.py",
+        "QG-2",
+        "Data Quality",
+    )
 
 
 def run_qg3_enrichment_chain() -> GateResult:
     """QG-3: Enrichment Chain Gate."""
-    import time
-
-    start = time.time()
-
-    try:
-        # Run enrichment pipeline tests
-        result = subprocess.run(
-            [
-                "uv",
-                "run",
-                "pytest",
-                "tests/enrichment/test_quality_gates.py::TestQG3EnrichmentChainGate",
-                "-v",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-
-        if result.returncode != 0:
-            return GateResult(
-                gate_id="QG-3",
-                name="Enrichment Chain",
-                passed=False,
-                message=f"Enrichment tests failed: {result.stdout}",
-                duration_seconds=time.time() - start,
-            )
-
-        return GateResult(
-            gate_id="QG-3",
-            name="Enrichment Chain",
-            passed=True,
-            message="Enrichment chain tests passed",
-            duration_seconds=time.time() - start,
-        )
-
-    except Exception as e:
-        return GateResult(
-            gate_id="QG-3",
-            name="Enrichment Chain",
-            passed=False,
-            message=f"Error running enrichment tests: {e}",
-            duration_seconds=time.time() - start,
-        )
+    return _invoke_gate_script(
+        "scripts/quality/run_qg3.py",
+        "QG-3",
+        "Enrichment Chain",
+    )
 
 
 def run_qg4_mcp_discoverability() -> GateResult:
     """QG-4: MCP Discoverability Gate."""
-    import time
-
-    start = time.time()
-
-    try:
-        # Check that MCP server has all required tools
-        from hotpass.mcp.server import HotpassMCPServer
-
-        server = HotpassMCPServer()
-        tool_names = [tool.name for tool in server.tools]
-
-        required_tools = [
-            "hotpass.refine",
-            "hotpass.enrich",
-            "hotpass.qa",
-            "hotpass.explain_provenance",
-        ]
-
-        missing_tools = [tool for tool in required_tools if tool not in tool_names]
-
-        if missing_tools:
-            return GateResult(
-                gate_id="QG-4",
-                name="MCP Discoverability",
-                passed=False,
-                message=f"Missing MCP tools: {', '.join(missing_tools)}",
-                duration_seconds=time.time() - start,
-            )
-
-        return GateResult(
-            gate_id="QG-4",
-            name="MCP Discoverability",
-            passed=True,
-            message=f"{len(tool_names)} MCP tools registered and discoverable",
-            duration_seconds=time.time() - start,
-        )
-
-    except Exception as e:
-        return GateResult(
-            gate_id="QG-4",
-            name="MCP Discoverability",
-            passed=False,
-            message=f"Error checking MCP discoverability: {e}",
-            duration_seconds=time.time() - start,
-        )
+    return _invoke_gate_script(
+        "scripts/quality/run_qg4.py",
+        "QG-4",
+        "MCP Discoverability",
+    )
 
 
 def run_qg5_docs_instruction() -> GateResult:
     """QG-5: Docs/Instruction Gate."""
-    import time
-
-    start = time.time()
-
-    try:
-        copilot_instructions = Path(".github/copilot-instructions.md")
-        agents_md = Path("AGENTS.md")
-
-        if not copilot_instructions.exists():
-            return GateResult(
-                gate_id="QG-5",
-                name="Docs/Instructions",
-                passed=False,
-                message=".github/copilot-instructions.md missing",
-                duration_seconds=time.time() - start,
-            )
-
-        if not agents_md.exists():
-            return GateResult(
-                gate_id="QG-5",
-                name="Docs/Instructions",
-                passed=False,
-                message="AGENTS.md missing",
-                duration_seconds=time.time() - start,
-            )
-
-        # Check content
-        copilot_text = copilot_instructions.read_text().lower()
-        agents_text = agents_md.read_text().lower()
-
-        if len(copilot_text) < 100 or len(agents_text) < 100:
-            return GateResult(
-                gate_id="QG-5",
-                name="Docs/Instructions",
-                passed=False,
-                message="Documentation files are too short",
-                duration_seconds=time.time() - start,
-            )
-
-        # Check for required terms
-        required_terms = ["profile", "deterministic", "provenance"]
-        missing_in_copilot = [t for t in required_terms if t not in copilot_text]
-        missing_in_agents = [t for t in required_terms if t not in agents_text]
-
-        if missing_in_copilot or missing_in_agents:
-            return GateResult(
-                gate_id="QG-5",
-                name="Docs/Instructions",
-                passed=False,
-                message=(
-                    f"Missing terms in docs: "
-                    f"copilot={missing_in_copilot}, agents={missing_in_agents}"
-                ),
-                duration_seconds=time.time() - start,
-            )
-
-        return GateResult(
-            gate_id="QG-5",
-            name="Docs/Instructions",
-            passed=True,
-            message="All documentation present with required terminology",
-            duration_seconds=time.time() - start,
-        )
-
-    except Exception as e:
-        return GateResult(
-            gate_id="QG-5",
-            name="Docs/Instructions",
-            passed=False,
-            message=f"Error checking docs: {e}",
-            duration_seconds=time.time() - start,
-        )
+    return _invoke_gate_script(
+        "scripts/quality/run_qg5.py",
+        "QG-5",
+        "Docs/Instructions",
+    )
 
 
 def main() -> int:

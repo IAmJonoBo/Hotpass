@@ -27,6 +27,20 @@ may be supplied before the subcommand or repeated per subcommand thanks to the p
 parent structure. Profiles defined in TOML or YAML load via `--profile` and can merge
 additional configuration files and feature toggles.
 
+## Core commands
+
+The unified CLI exposes five primary verbs that map to the workflows described in
+`UPGRADE.md`:
+
+- `uv run hotpass overview` — list available commands, profiles, and shortcuts for agents.
+- `uv run hotpass refine` — execute the deterministic data refinement pipeline.
+- `uv run hotpass enrich` — enrich refined data with deterministic and optional research sources.
+- `uv run hotpass qa` — run quality gates (`fitness`, `data-quality`, `docs`, `contracts`, `cli`, `ta`).
+- `uv run hotpass contracts` — emit contract bundles (YAML/JSON) for downstream systems.
+
+The sections below retain backward-compatible documentation for legacy verbs until the
+Sprint 5 docs refresh is published.
+
 ## Canonical configuration schema
 
 The CLI now materialises every run from the canonical `HotpassConfig` schema defined in

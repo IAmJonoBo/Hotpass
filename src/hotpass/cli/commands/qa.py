@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -37,7 +38,16 @@ def build(
         type=str,
         nargs="?",
         default="all",
-        choices=["all", "contracts", "docs", "profiles", "ta", "fitness", "data-quality"],
+        choices=[
+            "all",
+            "cli",
+            "contracts",
+            "docs",
+            "profiles",
+            "ta",
+            "fitness",
+            "data-quality",
+        ],
         help="Which QA checks to run (default: all)",
     )
 
@@ -81,6 +91,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     # Define QA check runners
     checks_to_run = []
+
+    if namespace.target in ("all", "cli"):
+        checks_to_run.append(("CLI Integrity", run_cli_integrity))
 
     if namespace.target in ("all", "fitness"):
         checks_to_run.append(("Fitness Functions", run_fitness_functions))
@@ -152,58 +165,117 @@ def run_fitness_functions() -> tuple[bool, str]:
         return False, f"Error running fitness functions: {e}"
 
 
+def run_cli_integrity() -> tuple[bool, str]:
+    """Run CLI integrity checks (QG-1)."""
+    try:
+        return _run_gate_script("scripts/quality/run_qg1.py")
+    except Exception as e:
+        return False, f"Error running CLI integrity checks: {e}"
+
+
+def _summarize_gate_success(payload: dict[str, Any] | None) -> str:
+    if not isinstance(payload, dict):
+        return "Gate completed successfully"
+
+    stats = payload.get("stats")
+    summary: str | None = None
+    if isinstance(stats, dict):
+        total = (
+            stats.get("total_checks")
+            or stats.get("total_steps")
+            or stats.get("total")
+            or stats.get("total_items")
+        )
+        passed = stats.get("passed")
+        if isinstance(total, int) and isinstance(passed, int):
+            summary = f"{passed}/{total} checks passed"
+
+    artifacts = payload.get("artifacts")
+    if isinstance(artifacts, dict):
+        artifact_path = (
+            artifacts.get("output_workbook")
+            or artifacts.get("data_docs")
+            or artifacts.get("run_dir")
+            or artifacts.get("summary")
+        )
+        if isinstance(artifact_path, str):
+            summary = f"{summary or 'Gate completed successfully'}; artifacts at {artifact_path}"
+
+    data_docs = payload.get("data_docs")
+    if isinstance(data_docs, str):
+        summary = f"{summary or 'Gate completed successfully'}; Data Docs at {data_docs}"
+
+    return summary or "Gate completed successfully"
+
+
+def _summarize_gate_failure(payload: dict[str, Any] | None, fallback: str) -> str:
+    if not isinstance(payload, dict):
+        return fallback
+
+    entries = payload.get("steps") or payload.get("checks") or payload.get("results")
+    if isinstance(entries, list):
+        failures: list[str] = []
+        for item in entries:
+            if not isinstance(item, dict):
+                continue
+            status = item.get("status")
+            if status in {"fail", "failed", False}:
+                identifier = item.get("id") or item.get("checkpoint")
+                message = item.get("message") or item.get("detail") or item.get("error")
+                if identifier and message:
+                    failures.append(f"{identifier}: {message}")
+                elif message:
+                    failures.append(str(message))
+        if failures:
+            return "; ".join(failures)
+    error = payload.get("error")
+    if isinstance(error, str):
+        return error
+    return fallback
+
+
+def _run_gate_script(
+    script_path: str,
+    *,
+    profile_name: str | None = None,
+    extra_args: list[str] | None = None,
+) -> tuple[bool, str]:
+    """Invoke a gate script and return success flag + summary message."""
+    cmd = [sys.executable, script_path, "--json"]
+    if profile_name:
+        cmd.extend(["--profile", profile_name])
+    if extra_args:
+        cmd.extend(extra_args)
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    payload: dict[str, Any] | None = None
+    if result.stdout.strip():
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            payload = None
+
+    if result.returncode == 0:
+        return True, _summarize_gate_success(payload)
+
+    failure_message = result.stderr.strip() or "Gate script reported failure"
+    failure_message = _summarize_gate_failure(payload, failure_message)
+    return False, failure_message
+
+
 def run_data_quality(profile_name: str | None = None) -> tuple[bool, str]:
     """Run Great Expectations data quality checks."""
     try:
-        cmd = [
-            sys.executable,
+        return _run_gate_script(
             "scripts/quality/run_qg2.py",
-            "--json",
-        ]
-        if profile_name:
-            cmd.extend(["--profile", profile_name])
-
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=180,
+            profile_name=profile_name,
         )
-
-        payload: dict[str, object] | None = None
-        if result.stdout.strip():
-            try:
-                payload = json.loads(result.stdout)
-            except json.JSONDecodeError as exc:
-                return False, f"Failed to parse data quality output: {exc}"
-
-        if result.returncode == 0:
-            if isinstance(payload, dict):
-                stats = payload.get("stats")
-                stats_dict = stats if isinstance(stats, dict) else {}
-                passed = stats_dict.get("passed")
-                total = stats_dict.get("total")
-                docs_dir = payload.get("data_docs")
-                if passed is not None and total is not None and isinstance(docs_dir, str):
-                    return True, (
-                        f"Data quality checks passed ({passed}/{total}); Data Docs: {docs_dir}"
-                    )
-            return True, "Data quality checks passed"
-
-        failure_message = result.stderr.strip() or "Data quality checks failed"
-        if isinstance(payload, dict):
-            raw_results = payload.get("results", [])
-            items = raw_results if isinstance(raw_results, list) else []
-            failures = [
-                f"{item.get('checkpoint')}: {item.get('message')}"
-                for item in items
-                if isinstance(item, dict) and item.get("status") == "failed"
-            ]
-            if failures:
-                failure_message = "; ".join(failures)
-
-        return False, failure_message
     except Exception as e:
         return False, f"Error running data quality checks: {e}"
 
@@ -262,30 +334,7 @@ def run_contract_checks() -> tuple[bool, str]:
 def run_docs_checks() -> tuple[bool, str]:
     """Run documentation checks (QG-5)."""
     try:
-        copilot_instructions = Path(".github/copilot-instructions.md")
-        agents_md = Path("AGENTS.md")
-
-        if not copilot_instructions.exists():
-            return False, "Missing .github/copilot-instructions.md"
-
-        if not agents_md.exists():
-            return False, "Missing AGENTS.md"
-
-        # Check content
-        copilot_text = copilot_instructions.read_text().lower()
-        agents_text = agents_md.read_text().lower()
-
-        required_terms = ["profile", "deterministic", "provenance"]
-        missing_terms = []
-
-        for term in required_terms:
-            if term not in copilot_text or term not in agents_text:
-                missing_terms.append(term)
-
-        if missing_terms:
-            return False, f"Missing required terms: {', '.join(missing_terms)}"
-
-        return True, "Documentation checks passed"
+        return _run_gate_script("scripts/quality/run_qg5.py")
     except Exception as e:
         return False, f"Error checking documentation: {e}"
 
@@ -293,12 +342,52 @@ def run_docs_checks() -> tuple[bool, str]:
 def run_ta_checks() -> tuple[bool, str]:
     """Run technical acceptance checks (all quality gates)."""
     try:
-        # This will run QG-1 through QG-5
-        # For now, just check that they're documented
-        impl_plan = Path("IMPLEMENTATION_PLAN.md")
-        if not impl_plan.exists():
-            return False, "IMPLEMENTATION_PLAN.md missing"
+        cmd = [
+            sys.executable,
+            "scripts/quality/run_all_gates.py",
+            "--json",
+        ]
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
-        return True, "TA infrastructure ready (gates coming in Sprint 5)"
+        payload: dict[str, Any] | None = None
+        if result.stdout.strip():
+            try:
+                payload = json.loads(result.stdout)
+            except json.JSONDecodeError:
+                payload = None
+
+        if result.returncode == 0 and isinstance(payload, dict):
+            summary = payload.get("summary", {})
+            gates = payload.get("gates", [])
+            total = summary.get("total")
+            passed = summary.get("passed")
+            if isinstance(total, int) and isinstance(passed, int):
+                message = f"Technical Acceptance: {passed}/{total} gates passed"
+            else:
+                message = "Technical Acceptance gates passed"
+
+            failed_gates: list[str] = []
+            for gate in gates if isinstance(gates, list) else []:
+                if not isinstance(gate, dict):
+                    continue
+                if not gate.get("passed"):
+                    gate_id = gate.get("id", "unknown")
+                    gate_message = gate.get("message") or gate.get("error") or "failed"
+                    failed_gates.append(f"{gate_id}: {gate_message}")
+
+            if failed_gates:
+                message = f"Technical Acceptance failed: {'; '.join(failed_gates)}"
+                return False, message
+
+            return True, message
+
+        failure_message = result.stderr.strip() or "Technical Acceptance checks failed"
+        failure_message = _summarize_gate_failure(payload, failure_message)
+        return False, failure_message
     except Exception as e:
         return False, f"Error running TA checks: {e}"

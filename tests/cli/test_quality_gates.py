@@ -6,8 +6,20 @@ in IMPLEMENTATION_PLAN.md to ensure compliance with UPGRADE.md requirements.
 
 from __future__ import annotations
 
+import json
 import subprocess
+import sys
 from pathlib import Path
+
+import pandas as pd
+
+PROVENANCE_COLUMNS = [
+    "provenance_source",
+    "provenance_timestamp",
+    "provenance_confidence",
+    "provenance_strategy",
+    "provenance_network_status",
+]
 
 
 def expect(condition: bool, message: str) -> None:
@@ -91,12 +103,26 @@ class TestQG1CLIIntegrity:
         for cmd in required_commands:
             expect(cmd in output_lower, f"hotpass --help must show {cmd}")
 
+    def test_qg1_script_emits_json_summary(self):
+        """QG-1h: Gate script should emit JSON summary and pass."""
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_qg1.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_qg1.py should exit successfully")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"run_qg1.py output must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "run_qg1.py payload should be a dict")
+        expect(payload.get("passed") is True, "QG-1 gate should pass on healthy repo")
+
 
 class TestQG2DataQuality:
     """QG-2: Data Quality Gate.
 
     Ensures Great Expectations validation works and catches quality issues.
-    Note: Full implementation coming in Sprint 3.
     """
 
     def test_qa_command_supports_data_quality(self):
@@ -105,14 +131,41 @@ class TestQG2DataQuality:
             ["uv", "run", "hotpass", "qa", "--help"], capture_output=True, text=True
         )
         expect(result.returncode == 0, "qa --help should work")
-        # This will be expanded in Sprint 3
+        expect("data-quality" in result.stdout.lower(), "qa --help must mention data-quality target")
+        expect("cli" in result.stdout.lower(), "qa --help must mention cli target")
+
+    def test_qg2_script_generates_summary(self):
+        """QG-2b: Gate script should run checkpoints and emit JSON."""
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_qg2.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_qg2.py should exit successfully")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"run_qg2.py output must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "run_qg2.py payload should be a dict")
+        expect(payload.get("passed") is True, "QG-2 gate should pass on sample data")
+
+        stats = payload.get("stats")
+        expect(isinstance(stats, dict), "QG-2 payload must include stats")
+        total = stats.get("total")
+        expect(isinstance(total, int), "QG-2 stats.total must be an integer")
+        results = payload.get("results")
+        expect(isinstance(results, list), "QG-2 payload must include results list")
+        expect(len(results) == total, "QG-2 stats.total must match results length")
+
+        data_docs = payload.get("data_docs")
+        expect(isinstance(data_docs, str), "QG-2 payload must include data_docs path")
+        expect(Path(data_docs).exists(), "QG-2 Data Docs directory must exist")
 
 
 class TestQG3EnrichmentChain:
     """QG-3: Enrichment Chain Gate.
 
     Ensures enrichment works offline with provenance tracking.
-    Note: Full implementation coming in Sprint 2.
     """
 
     def test_enrich_command_has_network_flag(self):
@@ -126,12 +179,39 @@ class TestQG3EnrichmentChain:
             "enrich should have --allow-network flag",
         )
 
+    def test_qg3_script_runs_enrichment(self, tmp_path: Path):
+        """QG-3b: Gate script should refine deterministic enrichment output."""
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_qg3.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_qg3.py should exit successfully")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"run_qg3.py output must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "run_qg3.py payload should be a dict")
+        expect(payload.get("passed") is True, "QG-3 gate should pass on deterministic workflow")
+
+        artifacts = payload.get("artifacts")
+        expect(isinstance(artifacts, dict), "QG-3 payload must include artifacts")
+        output_workbook = artifacts.get("output_workbook")
+        expect(isinstance(output_workbook, str), "QG-3 artifacts must include output workbook path")
+        expect(Path(output_workbook).exists(), "QG-3 output workbook must exist")
+
+        # Copy artifact to tmp to confirm readability
+        copied = tmp_path / "enriched.xlsx"
+        copied.write_bytes(Path(output_workbook).read_bytes())
+        df = pd.read_excel(copied)
+        for column in PROVENANCE_COLUMNS:
+            expect(column in df.columns, f"QG-3 output must include {column}")
+
 
 class TestQG4MCPDiscoverability:
     """QG-4: MCP Discoverability Gate.
 
     Ensures MCP tools are discoverable and functional.
-    Note: Full testing in Sprint 5.
     """
 
     def test_mcp_server_module_exists(self):
@@ -148,6 +228,26 @@ class TestQG4MCPDiscoverability:
             expect(len(server.tools) > 0, "MCP server should have tools registered")
         except ImportError as e:
             raise AssertionError(f"MCP server should be importable: {e}")
+
+    def test_qg4_script_validates_tools(self):
+        """QG-4c: Gate script should report required tools."""
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_qg4.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_qg4.py should exit successfully")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"run_qg4.py output must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "run_qg4.py payload should be a dict")
+        expect(payload.get("passed") is True, "QG-4 gate should pass on healthy repo")
+        steps = payload.get("steps")
+        expect(isinstance(steps, list), "QG-4 payload must include steps")
+        tool_step = next((step for step in steps if step.get("id") == "required-tools"), None)
+        expect(isinstance(tool_step, dict), "QG-4 steps must include required-tools step")
+        expect(tool_step.get("status") == "passed", "QG-4 required-tools step must pass")
 
 
 class TestQG5DocsInstruction:
@@ -198,6 +298,21 @@ class TestQG5DocsInstruction:
             "profile" in content or "aviation" in content or "generic" in content,
             "AGENTS.md must mention profiles",
         )
+
+    def test_qg5_script_validates_docs(self):
+        """QG-5e: Gate script should validate docs."""
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_qg5.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_qg5.py should exit successfully")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"run_qg5.py output must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "run_qg5.py payload should be a dict")
+        expect(payload.get("passed") is True, "QG-5 gate should pass on current documentation")
 
     def test_implementation_plan_exists(self):
         """QG-5e: IMPLEMENTATION_PLAN.md should exist."""

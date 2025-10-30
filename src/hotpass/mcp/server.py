@@ -122,7 +122,16 @@ class HotpassMCPServer:
                     "properties": {
                         "target": {
                             "type": "string",
-                            "enum": ["all", "contracts", "docs", "profiles", "ta", "fitness"],
+                            "enum": [
+                                "all",
+                                "cli",
+                                "contracts",
+                                "docs",
+                                "profiles",
+                                "ta",
+                                "fitness",
+                                "data-quality",
+                            ],
                             "description": "Which QA checks to run",
                             "default": "all",
                         }
