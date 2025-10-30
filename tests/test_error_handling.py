@@ -13,6 +13,7 @@ from hotpass.error_handling import (  # noqa: E402
     HotpassError,
     ValidationError,
 )
+from tests.helpers.assertions import expect
 
 
 def test_error_context_to_dict():
@@ -27,10 +28,10 @@ def test_error_context_to_dict():
 
     data = context.to_dict()
 
-    assert data["category"] == "validation_failure"
-    assert data["severity"] == "warning"
-    assert data["message"] == "Test error"
-    assert data["details"]["field"] == "email"
+    expect(data["category"] == "validation_failure", "Category should be 'validation_failure'")
+    expect(data["severity"] == "warning", "Severity should be 'warning'")
+    expect(data["message"] == "Test error", "Message should match")
+    expect(data["details"]["field"] == "email", "Field detail should be 'email'")
 
 
 def test_validation_error_create():
@@ -42,9 +43,12 @@ def test_validation_error_create():
         row=5,
     )
 
-    assert error.context.category == ErrorCategory.VALIDATION_FAILURE
-    assert error.context.source_row == 5
-    assert "email" in error.context.message
+    expect(
+        error.context.category == ErrorCategory.VALIDATION_FAILURE,
+        "Error category should be VALIDATION_FAILURE",
+    )
+    expect(error.context.source_row == 5, "Source row should be 5")
+    expect("email" in error.context.message, "Message should contain 'email'")
 
 
 def test_error_report_add_error():
@@ -65,8 +69,8 @@ def test_error_report_add_error():
     report.add_error(error_ctx)
     report.add_error(warning_ctx)
 
-    assert len(report.errors) == 1
-    assert len(report.warnings) == 1
+    expect(len(report.errors) == 1, "Should have 1 error")
+    expect(len(report.warnings) == 1, "Should have 1 warning")
 
 
 def test_error_report_has_critical_errors():
@@ -81,8 +85,8 @@ def test_error_report_has_critical_errors():
 
     report.add_error(critical_ctx)
 
-    assert report.has_critical_errors()
-    assert report.has_errors()
+    expect(report.has_critical_errors(), "Should have critical errors")
+    expect(report.has_errors(), "Should have errors")
 
 
 def test_error_report_get_summary():
@@ -106,9 +110,12 @@ def test_error_report_get_summary():
 
     summary = report.get_summary()
 
-    assert summary["total_errors"] == 1
-    assert summary["total_warnings"] == 1
-    assert "validation_failure" in summary["errors_by_category"]
+    expect(summary["total_errors"] == 1, "Total errors should be 1")
+    expect(summary["total_warnings"] == 1, "Total warnings should be 1")
+    expect(
+        "validation_failure" in summary["errors_by_category"],
+        "Should have validation_failure category",
+    )
 
 
 def test_error_report_to_markdown():
@@ -126,9 +133,9 @@ def test_error_report_to_markdown():
 
     markdown = report.to_markdown()
 
-    assert "# Error Report" in markdown
-    assert "Test error" in markdown
-    assert "Fix it this way" in markdown
+    expect("# Error Report" in markdown, "Should contain '# Error Report'")
+    expect("Test error" in markdown, "Should contain error message")
+    expect("Fix it this way" in markdown, "Should contain suggested fix")
 
 
 def test_error_handler_fail_fast():
@@ -159,8 +166,8 @@ def test_error_handler_accumulate():
     handler.handle_error(error_ctx)
 
     report = handler.get_report()
-    assert report.has_errors()
-    assert len(report.errors) == 1
+    expect(report.has_errors(), "Report should have errors")
+    expect(len(report.errors) == 1, "Report should have 1 error")
 
 
 def test_error_context_with_location():
@@ -174,9 +181,9 @@ def test_error_context_with_location():
         source_column="email",
     )
 
-    assert context.source_file == "test.xlsx"
-    assert context.source_row == 10
-    assert context.source_column == "email"
+    expect(context.source_file == "test.xlsx", "Source file should match")
+    expect(context.source_row == 10, "Source row should be 10")
+    expect(context.source_column == "email", "Source column should be 'email'")
 
 
 def test_error_report_to_json():
@@ -196,19 +203,19 @@ def test_error_report_to_json():
     json_str = json.dumps(summary)
     data = json.loads(json_str)
 
-    assert "total_errors" in data
-    assert "total_warnings" in data
-    assert data["total_errors"] == 1
+    expect("total_errors" in data, "Should contain 'total_errors' key")
+    expect("total_warnings" in data, "Should contain 'total_warnings' key")
+    expect(data["total_errors"] == 1, "Total errors should be 1")
 
 
 def test_error_report_empty():
     """Test empty error report."""
     report = ErrorReport()
 
-    assert not report.has_errors()
-    assert not report.has_critical_errors()
-    assert len(report.errors) == 0
-    assert len(report.warnings) == 0
+    expect(not report.has_errors(), "Empty report should not have errors")
+    expect(not report.has_critical_errors(), "Empty report should not have critical errors")
+    expect(len(report.errors) == 0, "Empty report should have 0 errors")
+    expect(len(report.warnings) == 0, "Empty report should have 0 warnings")
 
 
 def test_hotpass_error_with_context():
@@ -221,8 +228,8 @@ def test_hotpass_error_with_context():
 
     error = HotpassError(context)
 
-    assert error.context == context
-    assert "File not found" in str(error)
+    expect(error.context == context, "Error context should match")
+    expect("File not found" in str(error), "Error string should contain message")
 
 
 def test_error_report_info_not_counted_as_error():
@@ -237,9 +244,9 @@ def test_error_report_info_not_counted_as_error():
 
     report.add_error(info_ctx)
 
-    assert not report.has_errors()
+    expect(not report.has_errors(), "INFO severity should not count as error")
     # INFO goes to warnings
-    assert len(report.warnings) == 1
+    expect(len(report.warnings) == 1, "INFO should be counted as warning")
 
 
 def test_error_handler_with_warning():
@@ -256,7 +263,7 @@ def test_error_handler_with_warning():
     handler.handle_error(warning_ctx)
 
     report = handler.get_report()
-    assert len(report.warnings) == 1
+    expect(len(report.warnings) == 1, "Should have 1 warning")
 
 
 def test_error_handler_with_critical_not_recoverable_raises():
@@ -289,7 +296,7 @@ def test_error_handler_with_critical_recoverable_no_raise():
     handler.handle_error(critical_ctx)
 
     report = handler.get_report()
-    assert report.has_critical_errors()
+    expect(report.has_critical_errors(), "Report should have critical errors")
 
 
 def test_error_report_get_by_category():
@@ -312,8 +319,14 @@ def test_error_report_get_by_category():
     )
 
     summary = report.get_summary()
-    assert summary["errors_by_category"][ErrorCategory.VALIDATION_FAILURE.value] == 1
-    assert summary["errors_by_category"][ErrorCategory.FILE_NOT_FOUND.value] == 1
+    expect(
+        summary["errors_by_category"][ErrorCategory.VALIDATION_FAILURE.value] == 1,
+        "Should have 1 validation failure",
+    )
+    expect(
+        summary["errors_by_category"][ErrorCategory.FILE_NOT_FOUND.value] == 1,
+        "Should have 1 file not found error",
+    )
 
 
 def test_error_context_all_fields():
@@ -332,12 +345,15 @@ def test_error_context_all_fields():
 
     data = context.to_dict()
 
-    assert data["category"] == ErrorCategory.VALIDATION_FAILURE.value
-    assert data["severity"] == ErrorSeverity.ERROR.value
-    assert data["message"] == "Complete error"
-    assert data["details"]["key"] == "value"
-    assert data["suggested_fix"] == "Fix suggestion"
-    assert data["source_file"] == "data.xlsx"
-    assert data["source_row"] == 100
-    assert data["source_column"] == "email"
-    assert data["recoverable"] is True
+    expect(
+        data["category"] == ErrorCategory.VALIDATION_FAILURE.value,
+        "Category should be VALIDATION_FAILURE",
+    )
+    expect(data["severity"] == ErrorSeverity.ERROR.value, "Severity should be ERROR")
+    expect(data["message"] == "Complete error", "Message should match")
+    expect(data["details"]["key"] == "value", "Details should match")
+    expect(data["suggested_fix"] == "Fix suggestion", "Suggested fix should match")
+    expect(data["source_file"] == "data.xlsx", "Source file should match")
+    expect(data["source_row"] == 100, "Source row should be 100")
+    expect(data["source_column"] == "email", "Source column should be 'email'")
+    expect(data["recoverable"] is True, "Should be recoverable")
