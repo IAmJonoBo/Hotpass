@@ -462,17 +462,6 @@ def build_default_modules() -> TelemetryModules:
     try:  # pragma: no cover - exercised in integration tests
         from opentelemetry import metrics as otel_metrics
         from opentelemetry import trace as otel_trace
-
-        try:
-            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
-                OTLPMetricExporter,
-            )
-            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-                OTLPSpanExporter,
-            )
-        except ImportError:  # pragma: no cover - optional exporter dependency
-            OTLPMetricExporter = None
-            OTLPSpanExporter = None
         from opentelemetry.sdk.metrics import MeterProvider
         from opentelemetry.sdk.metrics.export import (
             ConsoleMetricExporter,
