@@ -26,9 +26,25 @@ def test_bootstrap_metrics_returns_none_when_disabled() -> None:
     )
 
 
-def test_telemetry_session_initializes_and_shuts_down(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_bootstrap_options_normalise_attributes() -> None:
+    options = TelemetryBootstrapOptions(
+        resource_attributes={"keep": "value", "drop": None},
+        exporter_settings={"console": {"timeout": 10}, "invalid": "noop"},
+    )
+
+    merged_attributes = options.merged_resource_attributes(
+        {"extra": "1", "skip": None}
+    )
+    expect("drop" not in merged_attributes, "None-valued attributes should be removed.")
+    expect(merged_attributes["keep"] == "value", "Original attributes should be preserved.")
+    expect(merged_attributes["extra"] == "1", "Additional attributes should merge correctly.")
+
+    settings = options.merged_exporter_settings()
+    expect("invalid" not in settings, "Non-mapping exporter settings should be ignored.")
+    expect(settings["console"]["timeout"] == 10, "Mapping exporter settings should persist.")
+
+
+def test_telemetry_session_initializes_and_shuts_down(monkeypatch: pytest.MonkeyPatch) -> None:
     options = TelemetryBootstrapOptions(enabled=True, exporters=("console",))
     metrics = Mock(name="metrics")
     captured: dict[str, object] = {}

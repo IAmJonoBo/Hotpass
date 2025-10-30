@@ -7,7 +7,7 @@ import sys
 import types
 import zipfile
 from collections.abc import Callable
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime
 from importlib import util
 from pathlib import Path
@@ -91,6 +91,7 @@ run_pipeline_once = orchestration.run_pipeline_once
 run_pipeline_task = orchestration.run_pipeline_task
 _run_with_prefect_concurrency = orchestration._run_with_prefect_concurrency
 _execute_with_concurrency = orchestration._execute_with_concurrency
+_format_archive_path = orchestration._format_archive_path
 
 if not TYPE_CHECKING:
     PipelineRunOptionsType = PipelineRunOptions  # type: ignore[assignment]
@@ -176,6 +177,18 @@ def test_run_pipeline_once_success(mock_pipeline_result, tmp_path):
     expect(
         summary.archive_path == tmp_path / "dist" / "archive.zip",
         "Archive path should include the dist directory",
+    )
+
+
+def test_format_archive_path_invalid_pattern(tmp_path: Path) -> None:
+    """Archive path helper should raise an orchestration error when formatting fails."""
+
+    with pytest.raises(PipelineOrchestrationError) as captured:
+        _format_archive_path(tmp_path, "{bad", date.today(), "v1")
+
+    expect(
+        "Invalid archive pattern" in str(captured.value),
+        "Formatting errors should surface as orchestration exceptions",
     )
 
 
@@ -265,6 +278,108 @@ def test_run_pipeline_once_archiving_error(mock_pipeline_result, tmp_path):
     expect(
         "Failed to create archive" in str(exc.value),
         "Archiving errors should raise a descriptive orchestration error",
+    )
+
+
+def test_run_pipeline_once_injects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Enhanced runner should receive telemetry metrics when available."""
+
+    config = HotpassConfig().merge(
+        {
+            "pipeline": {
+                "input_dir": tmp_path,
+                "output_path": tmp_path / "out.xlsx",
+                "archive": False,
+                "dist_dir": tmp_path / "dist",
+            },
+            "features": {"observability": True},
+            "telemetry": {
+                "enabled": True,
+                "service_name": "hotpass-tests",
+                "environment": "qa",
+                "exporters": ["console"],
+                "resource_attributes": {"region": "eu"},
+            },
+        }
+    )
+
+    metrics_token = object()
+    captured: dict[str, object] = {}
+
+    @contextmanager
+    def _tracking_session(
+        options: object,
+        *,
+        additional_attributes: dict[str, str] | None = None,
+        auto_shutdown: bool = True,
+    ):
+        captured["session_options"] = options
+        captured["attributes"] = dict(additional_attributes or {})
+        captured["auto_shutdown"] = auto_shutdown
+        yield metrics_token
+
+    def _enhanced_runner(
+        pipeline_config: object,
+        *,
+        metrics: object | None = None,
+        extra: str | None = None,
+    ) -> object:
+        captured["runner_config"] = pipeline_config
+        captured["metrics"] = metrics
+        captured["extra"] = extra
+        refined_rows = [
+            {"id": index} for index in range(7)
+        ]
+        quality_report = SimpleNamespace(
+            to_dict=lambda: {"rows": len(refined_rows)},
+            expectations_passed=True,
+        )
+        return SimpleNamespace(refined=refined_rows, quality_report=quality_report)
+
+    _enhanced_runner.__name__ = "run_enhanced_pipeline"
+
+    monkeypatch.setattr(orchestration, "telemetry_session", _tracking_session)
+
+    options = PipelineRunOptions(
+        config=config,
+        profile_name="aviation",
+        runner=_enhanced_runner,
+        runner_kwargs={"extra": "value"},
+        telemetry_context={"hotpass.custom": "demo", "skip": None},
+    )
+
+    summary = run_pipeline_once(options)
+
+    expect(summary.total_records == 7, "Summary should reflect enhanced runner output")
+    expect(captured["metrics"] is metrics_token, "Metrics token should be injected into runner")
+    expect(captured.get("extra") == "value", "Additional runner kwargs should propagate")
+
+    attributes = captured["attributes"]
+    expect(
+        attributes["hotpass.command"] == "prefect.run_pipeline_once",
+        "Default telemetry command should be recorded.",
+    )
+    expect(
+        attributes["hotpass.profile"] == "aviation",
+        "Telemetry context should include the profile identifier.",
+    )
+    expect(
+        attributes.get("skip") is None,
+        "Telemetry context should drop keys with null values.",
+    )
+    expect(
+        attributes["hotpass.custom"] == "demo",
+        "Custom telemetry context entries should propagate.",
+    )
+
+    session_options = captured["session_options"]
+    expect(
+        getattr(session_options, "service_name", None) == "hotpass-tests",
+        "Telemetry session should receive the configured service name.",
+    )
+    expect(
+        getattr(session_options, "environment", None) == "qa",
+        "Telemetry session should receive the configured environment.",
     )
 
 
@@ -831,6 +946,55 @@ async def test_run_with_prefect_concurrency_releases_on_callback_error() -> None
     expect(
         ("exit", "hotpass/tests", "1") in events,
         "Concurrency context should release resources after callback failure",
+    )
+
+
+@pytest.mark.anyio("asyncio")
+async def test_run_with_prefect_concurrency_releases_on_run_sync_error() -> None:
+    """Concurrency guard should release slots when the thread runner fails."""
+
+    events: list[tuple[str, ...]] = []
+
+    @asynccontextmanager
+    async def _tracking_concurrency(key: str, occupy: int):
+        events.append(("enter", key, str(occupy)))
+        try:
+            yield
+        finally:
+            events.append(("exit", key, str(occupy)))
+
+    async def _run_sync(
+        func: Callable[[], PipelineRunSummaryType],
+        *_args: object,
+        **_kwargs: object,
+    ) -> PipelineRunSummaryType:
+        events.append(("run_sync",))
+        raise RuntimeError("run_sync failure")
+
+    def _callback() -> PipelineRunSummaryType:
+        events.append(("callback",))
+        return PipelineRunSummary(
+            success=True,
+            total_records=0,
+            elapsed_seconds=0.0,
+            output_path=Path("/tmp/unused.xlsx"),
+            quality_report={},
+        )
+
+    with pytest.raises(RuntimeError):
+        await _run_with_prefect_concurrency(
+            _tracking_concurrency,
+            "hotpass/tests",
+            2,
+            _callback,
+            run_sync=_run_sync,
+        )
+
+    expect(("run_sync",) in events, "Thread runner should be invoked before propagating errors")
+    expect(("callback",) not in events, "Callback should not execute when run_sync fails early")
+    expect(
+        ("exit", "hotpass/tests", "2") in events,
+        "Concurrency context should exit after run_sync failure",
     )
 
 
