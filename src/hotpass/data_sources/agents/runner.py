@@ -52,7 +52,7 @@ class AcquisitionManager:
     def _observability() -> ModuleType:
         from ... import observability
 
-        return observability  # type: ignore[no-any-return]
+        return observability
 
     def _get_metrics(self) -> PipelineMetrics:
         if self._metrics is None:

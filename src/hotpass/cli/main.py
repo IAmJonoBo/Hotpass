@@ -55,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(deploy.register())
     builder.register(init.register())
     builder.register(version.register())
-    parser = cast(argparse.ArgumentParser, builder.build())
+    parser = builder.build()
     return parser
 
 
