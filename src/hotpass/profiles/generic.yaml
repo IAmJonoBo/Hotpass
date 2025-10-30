@@ -1,17 +1,129 @@
 name: generic
 display_name: Generic Business
-default_country_code: ZA
 
+# Block 1: Ingest - Data source configuration
+ingest:
+  sources: []  # No predefined sources for generic profile
+  chunk_size: 5000
+  staging_enabled: false
+  staging_format: parquet
+
+# Block 2: Refine - Normalization and validation
+refine:
+  # Column mappings (synonyms)
+  mappings:
+    organization_name:
+      - name
+      - company
+      - business
+      - entity
+      - organization
+      - company_name
+      - business_name
+      - organisation
+    contact_email:
+      - email
+      - email_address
+      - e-mail
+      - e_mail
+      - mail
+      - contact_email
+      - primary_email
+    contact_phone:
+      - phone
+      - telephone
+      - phone_number
+      - tel
+      - mobile
+      - cell
+      - cellphone
+      - contact_number
+    website:
+      - url
+      - website
+      - web
+      - homepage
+      - site
+      - web_address
+    address:
+      - address
+      - location
+      - street_address
+      - mailing_address
+      - physical_address
+
+  # Entity resolution / deduplication
+  deduplication:
+    strategy: entity_resolution
+    threshold: 0.80
+    blocking_keys:
+      - organization_name_normalized
+
+  # Normalization rules
+  normalization:
+    phone_format: E164
+    country_code: ZA
+
+  # Quality expectations
+  expectations:
+    - expect_column_values_to_not_be_null:
+        column: organization_name
+
+  # Quality thresholds
+  quality_thresholds:
+    email: 0.85
+    phone: 0.85
+    website: 0.75
+
+  # Required and optional fields
+  required_fields:
+    - organization_name
+  optional_fields:
+    - contact_primary_email
+    - contact_primary_phone
+    - website
+    - province
+    - address_primary
+
+# Block 3: Enrich - Data enrichment configuration
+enrich:
+  allow_network: false  # Default to offline
+  fetcher_chain:
+    - deterministic
+    - lookup_tables
+    - research
+  backfillable_fields:
+    - contact_email
+    - contact_phone
+    - website
+  confidence_threshold: 0.7
+  provenance_required: true
+
+# Block 4: Compliance - POPIA and data governance
+compliance:
+  policy: POPIA
+  jurisdiction: ZA
+  consent_required: false  # More relaxed for generic business data
+  pii_fields:
+    - contact_email
+    - contact_phone
+  retention_days: 730  # 2 years
+  anonymization_on_request: true
+  audit_trail_required: true
+
+# Legacy fields for backwards compatibility
+default_country_code: ZA
 organization_term: organization
 organization_type_term: organization_type
 organization_category_term: category
-
 email_validation_threshold: 0.85
 phone_validation_threshold: 0.85
 website_validation_threshold: 0.75
 
+# Legacy source priorities (empty for generic)
 source_priorities: {}
 
+# Legacy column synonyms (moved to refine.mappings)
 column_synonyms:
   organization_name:
     - name
@@ -52,13 +164,3 @@ column_synonyms:
     - street_address
     - mailing_address
     - physical_address
-
-required_fields:
-  - organization_name
-
-optional_fields:
-  - contact_primary_email
-  - contact_primary_phone
-  - website
-  - province
-  - address_primary

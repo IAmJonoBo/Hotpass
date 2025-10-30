@@ -174,6 +174,20 @@ class HotpassMCPServer:
                     "required": ["query_or_url"],
                 },
             ),
+            MCPTool(
+                name="hotpass.ta.check",
+                description="Run Technical Acceptance checks (all quality gates)",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "gate": {
+                            "type": "integer",
+                            "description": "Specific gate to run (1-5), or omit to run all",
+                            "enum": [1, 2, 3, 4, 5],
+                        }
+                    },
+                },
+            ),
         ]
 
     async def handle_request(self, request: MCPRequest) -> MCPResponse:
@@ -227,6 +241,8 @@ class HotpassMCPServer:
             return await self._explain_provenance(args)
         elif tool_name == "hotpass.crawl":
             return await self._run_crawl(args)
+        elif tool_name == "hotpass.ta.check":
+            return await self._run_ta_check(args)
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
 
@@ -298,13 +314,74 @@ class HotpassMCPServer:
 
     async def _explain_provenance(self, args: dict[str, Any]) -> dict[str, Any]:
         """Explain provenance for a row."""
-        # This is a placeholder - will be fully implemented in Sprint 2
-        return {
-            "success": False,
-            "message": "Provenance explanation not yet fully implemented (coming in Sprint 2)",
-            "row_id": args.get("row_id"),
-            "dataset_path": args.get("dataset_path"),
-        }
+        try:
+            import pandas as pd
+            from pathlib import Path
+
+            dataset_path = Path(args["dataset_path"])
+            if not dataset_path.exists():
+                return {
+                    "success": False,
+                    "error": f"Dataset not found: {dataset_path}",
+                }
+
+            # Load the dataset
+            df = pd.read_excel(dataset_path)
+
+            # Find the row by ID
+            row_id = args["row_id"]
+            try:
+                row_index = int(row_id)
+            except ValueError:
+                # Try to find by a column value
+                if "id" in df.columns:
+                    rows = df[df["id"] == row_id]
+                    if rows.empty:
+                        return {"success": False, "error": f"Row ID {row_id} not found"}
+                    row_index = rows.index[0]
+                else:
+                    return {"success": False, "error": "Invalid row ID format"}
+
+            if row_index >= len(df):
+                return {"success": False, "error": f"Row index {row_index} out of range"}
+
+            row = df.iloc[row_index]
+
+            # Extract provenance columns if they exist
+            provenance_info = {}
+            provenance_columns = [
+                "provenance_source",
+                "provenance_timestamp",
+                "provenance_confidence",
+                "provenance_strategy",
+                "provenance_network_status",
+            ]
+
+            for col in provenance_columns:
+                if col in df.columns:
+                    provenance_info[col] = str(row.get(col, "N/A"))
+
+            if not provenance_info:
+                return {
+                    "success": True,
+                    "row_id": row_id,
+                    "message": "No provenance information found in dataset",
+                }
+
+            return {
+                "success": True,
+                "row_id": row_id,
+                "row_index": row_index,
+                "provenance": provenance_info,
+                "organization_name": str(row.get("organization_name", "N/A")),
+            }
+
+        except Exception as e:
+            logger.error(f"Error explaining provenance: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Failed to explain provenance: {str(e)}",
+            }
 
     async def _run_crawl(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run crawler (guarded operation)."""
@@ -314,6 +391,39 @@ class HotpassMCPServer:
             "message": "Crawler not yet fully implemented (coming in Sprint 2)",
             "query_or_url": args.get("query_or_url"),
         }
+
+    async def _run_ta_check(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run Technical Acceptance checks (all quality gates)."""
+        gate = args.get("gate")
+        cmd = ["python", "scripts/quality/run_all_gates.py", "--json"]
+
+        if gate:
+            cmd.extend(["--gate", str(gate)])
+
+        result = await self._run_command(cmd)
+
+        if result["returncode"] == 0:
+            # Parse JSON output
+            try:
+                import json
+
+                output_data = json.loads(result["stdout"])
+                return {
+                    "success": True,
+                    "summary": output_data.get("summary", {}),
+                    "gates": output_data.get("gates", []),
+                }
+            except json.JSONDecodeError:
+                return {
+                    "success": result["returncode"] == 0,
+                    "output": result["stdout"],
+                }
+        else:
+            return {
+                "success": False,
+                "error": result["stderr"],
+                "output": result["stdout"],
+            }
 
     async def _run_command(self, cmd: list[str]) -> dict[str, Any]:
         """Run a command asynchronously."""

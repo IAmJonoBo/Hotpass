@@ -63,6 +63,27 @@ def _module_length_check(module: str, max_lines: int) -> Callable[[], None]:
     return _check
 
 
+def check_profile_completeness(profile_name: str) -> None:
+    """Check that a profile has all 4 required blocks."""
+    import yaml
+
+    profile_path = PROJECT_ROOT / "src" / "hotpass" / "profiles" / f"{profile_name}.yaml"
+    if not profile_path.exists():
+        raise FitnessFailure(f"Profile {profile_name} not found at {profile_path}")
+
+    try:
+        with open(profile_path) as f:
+            profile = yaml.safe_load(f)
+    except Exception as e:
+        raise FitnessFailure(f"Failed to load profile {profile_name}: {e}")
+
+    required_blocks = ["ingest", "refine", "enrich", "compliance"]
+    missing = [block for block in required_blocks if block not in profile]
+
+    if missing:
+        raise FitnessFailure(f"Profile {profile_name} missing blocks: {missing}")
+
+
 def main() -> None:
     module_thresholds = {
         "pipeline/base.py": 500,
@@ -82,6 +103,10 @@ def main() -> None:
             "build_default_registry",
         ),
         lambda: check_public_api("__init__.py", ["run_pipeline", "PipelineConfig"]),
+        # Profile completeness checks (Sprint 3)
+        lambda: check_profile_completeness("aviation"),
+        lambda: check_profile_completeness("generic"),
+        lambda: check_profile_completeness("test"),
     ]
 
     failures: list[str] = []

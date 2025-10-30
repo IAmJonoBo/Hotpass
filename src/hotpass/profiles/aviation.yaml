@@ -1,20 +1,151 @@
 name: aviation
 display_name: Aviation & Flight Training
-default_country_code: ZA
 
+# Block 1: Ingest - Data source configuration
+ingest:
+  sources:
+    - name: SACAA Cleaned
+      format: xlsx
+      path_pattern: "data/*sacaa*.xlsx"
+      priority: 3
+    - name: Reachout Database
+      format: xlsx
+      path_pattern: "data/*reachout*.xlsx"
+      priority: 2
+    - name: Contact Database
+      format: xlsx
+      path_pattern: "data/*contact*.xlsx"
+      priority: 1
+  chunk_size: 5000
+  staging_enabled: true
+  staging_format: parquet
+
+# Block 2: Refine - Normalization and validation
+refine:
+  # Column mappings (synonyms)
+  mappings:
+    organization_name:
+      - school_name
+      - institution_name
+      - provider_name
+      - company_name
+      - account_name
+      - organisation_name
+      - Name of Organisation
+    contact_email:
+      - email
+      - email_address
+      - primary_email
+      - contact_email_address
+      - Contact Email Address
+      - e-mail
+      - e_mail
+      - mail
+    contact_phone:
+      - phone
+      - telephone
+      - phone_number
+      - contact_number
+      - Contact Number
+      - tel
+      - mobile
+      - cell
+      - cellphone
+    website:
+      - url
+      - website_url
+      - web_address
+      - Website URL
+      - homepage
+      - site
+      - web
+    province:
+      - state
+      - region
+      - area
+      - Province
+      - territory
+
+  # Entity resolution / deduplication
+  deduplication:
+    strategy: entity_resolution
+    threshold: 0.85
+    blocking_keys:
+      - organization_name_normalized
+
+  # Normalization rules
+  normalization:
+    phone_format: E164
+    country_code: ZA
+
+  # Quality expectations
+  expectations:
+    - expect_column_values_to_not_be_null:
+        column: organization_name
+    - expect_column_values_to_match_regex:
+        column: contact_email
+        regex: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+
+  # Quality thresholds
+  quality_thresholds:
+    email: 0.85
+    phone: 0.85
+    website: 0.75
+
+  # Required and optional fields
+  required_fields:
+    - organization_name
+  optional_fields:
+    - contact_primary_email
+    - contact_primary_phone
+    - website
+    - province
+    - address_primary
+
+# Block 3: Enrich - Data enrichment configuration
+enrich:
+  allow_network: false  # Default to offline, can be overridden by env/CLI
+  fetcher_chain:
+    - deterministic  # Always try deterministic first
+    - lookup_tables  # Local lookup tables
+    - research       # Only if network enabled
+  backfillable_fields:
+    - contact_email
+    - contact_phone
+    - website
+    - province
+  confidence_threshold: 0.7
+  provenance_required: true
+
+# Block 4: Compliance - POPIA and data governance
+compliance:
+  policy: POPIA
+  jurisdiction: ZA
+  consent_required: true
+  pii_fields:
+    - contact_email
+    - contact_phone
+    - contact_name
+  retention_days: 365
+  anonymization_on_request: true
+  audit_trail_required: true
+
+# Legacy fields for backwards compatibility
+default_country_code: ZA
 organization_term: flight_school
 organization_type_term: school_type
 organization_category_term: training_category
-
 email_validation_threshold: 0.85
 phone_validation_threshold: 0.85
 website_validation_threshold: 0.75
 
+# Legacy source priorities (moved to ingest block)
 source_priorities:
   SACAA Cleaned: 3
   Reachout Database: 2
   Contact Database: 1
 
+# Legacy column synonyms (moved to refine.mappings)
 column_synonyms:
   organization_name:
     - school_name
@@ -57,13 +188,3 @@ column_synonyms:
     - area
     - Province
     - territory
-
-required_fields:
-  - organization_name
-
-optional_fields:
-  - contact_primary_email
-  - contact_primary_phone
-  - website
-  - province
-  - address_primary
