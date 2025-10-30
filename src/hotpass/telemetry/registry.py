@@ -474,6 +474,7 @@ def build_default_modules() -> TelemetryModules:
     try:  # pragma: no cover - exercised in integration tests
         from opentelemetry import metrics as otel_metrics
         from opentelemetry import trace as otel_trace
+
         try:
             from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
                 OTLPMetricExporter,

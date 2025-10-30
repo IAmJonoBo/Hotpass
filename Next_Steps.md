@@ -29,7 +29,6 @@
 - [x] 2025-10-30 — Added `pytest-asyncio` to the core dependency set so async fixtures are always available in baseline environments.【F:pyproject.toml†L12-L43】
 - [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
 
-
 ## Deliverables
 
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】

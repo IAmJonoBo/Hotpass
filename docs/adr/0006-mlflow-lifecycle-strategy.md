@@ -54,6 +54,7 @@ result = train_lead_scoring_model(
 ```
 
 Logged artifacts include:
+
 - Trained sklearn model
 - Training parameters (random_state, validation_size, solver config)
 - Validation metrics (ROC AUC, precision, recall)
@@ -102,6 +103,7 @@ MLflow configuration is hierarchical:
    - `MLFLOW_ARTIFACT_LOCATION`
 
 2. **Programmatic config** via `MLflowConfig`:
+
    ```python
    config = MLflowConfig(
        tracking_uri="sqlite:///mlflow.db",
@@ -117,6 +119,7 @@ MLflow configuration is hierarchical:
 ### Graceful Degradation
 
 MLflow is optional:
+
 - Training succeeds even if MLflow is unavailable
 - `enable_mlflow=False` bypasses tracking entirely
 - Import errors are caught and logged, not fatal
@@ -156,11 +159,13 @@ This preserves existing workflows while enabling progressive adoption.
 ### 1. DVC (Data Version Control)
 
 **Pros**:
+
 - Git-like interface familiar to developers
 - Strong data versioning capabilities
 - Already adopted for dataset versioning
 
 **Cons**:
+
 - No built-in experiment tracking or metrics logging
 - Limited model registry features
 - Requires separate tool for serving models
@@ -170,11 +175,13 @@ This preserves existing workflows while enabling progressive adoption.
 ### 2. Weights & Biases (W&B)
 
 **Pros**:
+
 - Excellent visualisation and collaboration features
 - Native integrations with popular ML frameworks
 - Hosted service reduces operational burden
 
 **Cons**:
+
 - Cloud dependency (data leaves premises)
 - Licensing costs for team use
 - Less control over artifact storage
@@ -184,11 +191,13 @@ This preserves existing workflows while enabling progressive adoption.
 ### 3. Custom Registry (Database + S3)
 
 **Pros**:
+
 - Full control over storage and schema
 - No external dependencies
 - Tailored to specific needs
 
 **Cons**:
+
 - High development and maintenance cost
 - Reinventing standard tooling
 - Lack of UI and visualisation tools
@@ -198,10 +207,12 @@ This preserves existing workflows while enabling progressive adoption.
 ### 4. Manual Git Tagging
 
 **Pros**:
+
 - Zero additional dependencies
 - Simple and auditable
 
 **Cons**:
+
 - No structured metadata or metrics
 - No experiment comparison
 - Difficult to query or automate
@@ -229,12 +240,14 @@ src/hotpass/ml/
 ### Environment Setup
 
 Development:
+
 ```bash
 export MLFLOW_TRACKING_URI="sqlite:///mlflow.db"
 uv run mlflow ui
 ```
 
 Production (example):
+
 ```bash
 export MLFLOW_TRACKING_URI="postgresql://user:pass@db:5432/mlflow"
 export MLFLOW_ARTIFACT_LOCATION="s3://hotpass-mlflow-artifacts/"
@@ -263,6 +276,7 @@ This ADR satisfies **Phase 4, Task T4.1** of the Hotpass roadmap:
 > If model training exists or is planned, run MLflow Tracking with a DB backend; log code, params, metrics, and artefacts. Create a Model Registry with stage gates ("Staging" → "Production"); document promotion policy.
 
 Acceptance criteria met:
+
 - [x] MLflow Tracking operational with SQLite backend
 - [x] Model Registry with stage gates implemented
 - [x] Promotion workflow documented in how-to guide

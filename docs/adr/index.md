@@ -28,16 +28,16 @@ navigation) keeps the guidance actionable.
 
 ## Decision catalogue
 
-| ADR | Title | Status | Notes |
-| --- | ----- | ------ | ----- |
-| [0001](0001-qa-tooling.md) | QA tooling guardrails | Accepted | Defines the consolidated QA suite referenced in the README preflight checks. |
-| [0002](0002-governance-automation.md) | Governance automation | Accepted | Establishes Data Docs + lineage requirements; the updated navigation surfaces both deliverables. |
-| [0003](0003-data-contracts.md) | Data contracts | Accepted | Contracts and schema exports remain in sync via the generator noted in the schema reference. |
-| [0004](0004-checkpoint-validation-strategy.md) | Checkpoint validation strategy | Accepted | Documentation now links directly to Data Docs and refresh tooling. |
-| [0005](0005-prefect-deployment-manifests.md) | Prefect deployment manifests | Proposed | Pending PR `prefect/deployment-manifests`; status tracked in ROADMAP.md. |
-| [0006](0006-telemetry-bootstrap.md) | Telemetry bootstrap | Accepted | Observability docs and quickstarts align with the bootstrap decision. |
-| [0006B](0006-mlflow-lifecycle-strategy.md) | MLflow lifecycle strategy | Accepted | Continues to guide MLflow references in tutorials/how-tos. |
-| [0007](0007-cli-onboarding.md) | CLI onboarding commands | Accepted | Establishes `hotpass init` / `doctor` workflow and docs coverage. |
+| ADR                                            | Title                          | Status   | Notes                                                                                            |
+| ---------------------------------------------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------ |
+| [0001](0001-qa-tooling.md)                     | QA tooling guardrails          | Accepted | Defines the consolidated QA suite referenced in the README preflight checks.                     |
+| [0002](0002-governance-automation.md)          | Governance automation          | Accepted | Establishes Data Docs + lineage requirements; the updated navigation surfaces both deliverables. |
+| [0003](0003-data-contracts.md)                 | Data contracts                 | Accepted | Contracts and schema exports remain in sync via the generator noted in the schema reference.     |
+| [0004](0004-checkpoint-validation-strategy.md) | Checkpoint validation strategy | Accepted | Documentation now links directly to Data Docs and refresh tooling.                               |
+| [0005](0005-prefect-deployment-manifests.md)   | Prefect deployment manifests   | Proposed | Pending PR `prefect/deployment-manifests`; status tracked in ROADMAP.md.                         |
+| [0006](0006-telemetry-bootstrap.md)            | Telemetry bootstrap            | Accepted | Observability docs and quickstarts align with the bootstrap decision.                            |
+| [0006B](0006-mlflow-lifecycle-strategy.md)     | MLflow lifecycle strategy      | Accepted | Continues to guide MLflow references in tutorials/how-tos.                                       |
+| [0007](0007-cli-onboarding.md)                 | CLI onboarding commands        | Accepted | Establishes `hotpass init` / `doctor` workflow and docs coverage.                                |
 
 ## How to contribute
 

@@ -187,9 +187,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 build_pipeline_job_name(base_config),
                 run_id=base_config.run_id,
             )
-            emitter.emit_start(
-                inputs=discover_input_datasets(base_config.input_dir)
-            )
+            emitter.emit_start(inputs=discover_input_datasets(base_config.input_dir))
 
             lineage_outputs = build_output_datasets(base_config.output_path)
             archive_path: Path | None = None
@@ -205,9 +203,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                     console.print(
                         "[bold green]✓[/bold green] Pipeline completed successfully!"
                     )
-                    console.print(
-                        f"[dim]Refined data written to:[/dim] {output_path}"
-                    )
+                    console.print(f"[dim]Refined data written to:[/dim] {output_path}")
 
                 if interactive and console and report.recommendations:
                     console.print()
@@ -309,9 +305,13 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 emitter.emit_fail(message, outputs=lineage_outputs)
                 logger.log_error(f"Data contract validation failed: {message}")
                 if console:
-                    console.print("[bold red]✗ Data contract validation failed[/bold red]")
+                    console.print(
+                        "[bold red]✗ Data contract validation failed[/bold red]"
+                    )
                     source_hint = (
-                        context.source_file if context and context.source_file else "unknown"
+                        context.source_file
+                        if context and context.source_file
+                        else "unknown"
                     )
                     console.print(f"[dim]Source:[/dim] {source_hint}")
                     details = context.details if context else "Unavailable"

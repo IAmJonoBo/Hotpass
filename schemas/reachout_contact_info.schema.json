@@ -3,11 +3,7 @@
   "name": "reachout_contact_info",
   "title": "Reachout contact info sheet",
   "description": "Contract defining the Contact Info sheet in Reachout Database.xlsx",
-  "primaryKey": [
-    "ID",
-    "Email",
-    "Phone"
-  ],
+  "primaryKey": ["ID", "Email", "Phone"],
   "fields": [
     {
       "name": "ID",

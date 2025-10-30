@@ -4,17 +4,6 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from tests._telemetry_stubs import (
-    DummyConsoleMetricExporter,
-    DummyConsoleSpanExporter,
-    DummyMeterProvider,
-    DummyMetricReader,
-    DummyMetrics,
-    DummyResource,
-    DummySpanProcessor,
-    DummyTracerProvider,
-    build_modules,
-)
 
 import hotpass.observability as observability
 from hotpass.data_sources.agents import (
@@ -30,6 +19,17 @@ from hotpass.telemetry.registry import (
     TelemetryModules,
     TelemetryPolicy,
     TelemetryRegistry,
+)
+from tests._telemetry_stubs import (
+    DummyConsoleMetricExporter,
+    DummyConsoleSpanExporter,
+    DummyMeterProvider,
+    DummyMetricReader,
+    DummyMetrics,
+    DummyResource,
+    DummySpanProcessor,
+    DummyTracerProvider,
+    build_modules,
 )
 
 

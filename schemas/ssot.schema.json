@@ -3,9 +3,7 @@
   "name": "ssot",
   "title": "Hotpass single source of truth",
   "description": "Schema for the refined Hotpass dataset exported via the pipeline",
-  "primaryKey": [
-    "organization_slug"
-  ],
+  "primaryKey": ["organization_slug"],
   "fields": [
     {
       "name": "organization_name",

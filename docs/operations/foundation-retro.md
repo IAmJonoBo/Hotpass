@@ -14,11 +14,11 @@ pull request.
 
 ## Scope reconciliation
 
-| Theme | Delivered capabilities | Follow-ups |
-| ----- | ---------------------- | ---------- |
-| Data refinement baseline | CLI workflow to ingest, normalise, and export the canonical spreadsheet datasets; deterministic schema regeneration into `schemas/`; regression coverage for critical transforms. | Monitor property-based coverage as Phase 2 expands idempotency checks. |
-| Governance & documentation | Programme roadmap (`ROADMAP.md` + `docs/roadmap.md`), governance charter, and evidence ledger refreshed; Diátaxis navigation surfaces contracts, Data Docs, and lineage references. | Keep `docs/governance/data-governance-navigation.md` updated with every governance artefact change. |
-| Operational readiness | Prefect bootstrapping scripts, telemetry instrumentation, and ARC runner manifests landed with lifecycle verifier support. | Execute the snapshot-backed lifecycle verifier on each infrastructure change until live clusters are available. |
+| Theme                      | Delivered capabilities                                                                                                                                                              | Follow-ups                                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Data refinement baseline   | CLI workflow to ingest, normalise, and export the canonical spreadsheet datasets; deterministic schema regeneration into `schemas/`; regression coverage for critical transforms.   | Monitor property-based coverage as Phase 2 expands idempotency checks.                                          |
+| Governance & documentation | Programme roadmap (`ROADMAP.md` + `docs/roadmap.md`), governance charter, and evidence ledger refreshed; Diátaxis navigation surfaces contracts, Data Docs, and lineage references. | Keep `docs/governance/data-governance-navigation.md` updated with every governance artefact change.             |
+| Operational readiness      | Prefect bootstrapping scripts, telemetry instrumentation, and ARC runner manifests landed with lifecycle verifier support.                                                          | Execute the snapshot-backed lifecycle verifier on each infrastructure change until live clusters are available. |
 
 All planned Phase 1 deliverables reached “done” with the exception of the live
 ARC smoke test; Platform will complete that once staging access opens in Phase 5.

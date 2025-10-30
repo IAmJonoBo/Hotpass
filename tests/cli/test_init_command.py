@@ -12,7 +12,9 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def test_init_bootstraps_workspace(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_init_bootstraps_workspace(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
     target = tmp_path / "workspace"
     exit_code = cli.main(["init", "--path", str(target)])
     captured = capsys.readouterr()
@@ -36,10 +38,17 @@ def test_init_bootstraps_workspace(tmp_path: Path, capsys: pytest.CaptureFixture
     prefect_file = target / "prefect" / "deployments" / "quickstart.yaml"
     data_readme = target / "data" / "README.md"
 
-    expect("Bootstrap Hotpass workspace" in config_file.read_text(), "config template not written")
+    expect(
+        "Bootstrap Hotpass workspace" in config_file.read_text(),
+        "config template not written",
+    )
     expect("quickstart" in profile_file.read_text(), "profile template not written")
-    expect("verify-environment" in prefect_file.read_text(), "prefect template not written")
-    expect("drop spreadsheets" in data_readme.read_text(), "data README missing content")
+    expect(
+        "verify-environment" in prefect_file.read_text(), "prefect template not written"
+    )
+    expect(
+        "drop spreadsheets" in data_readme.read_text(), "data README missing content"
+    )
 
 
 def test_init_requires_force_for_non_empty_directory(
@@ -53,7 +62,10 @@ def test_init_requires_force_for_non_empty_directory(
     captured = capsys.readouterr()
 
     expect(exit_code == 1, "init should fail when directory is not empty")
-    expect("not empty" in captured.err or "not empty" in captured.out, "failure message missing")
+    expect(
+        "not empty" in captured.err or "not empty" in captured.out,
+        "failure message missing",
+    )
     expect((target / "config").exists() is False, "should not create files on failure")
 
 
@@ -70,4 +82,6 @@ def test_init_force_overwrites_existing_files(
 
     expect(exit_code == 0, "init should succeed with --force")
     expect("Generated artefacts" in captured.out, "expected overwrite summary")
-    expect("Bootstrap Hotpass workspace" in config_file.read_text(), "file not overwritten")
+    expect(
+        "Bootstrap Hotpass workspace" in config_file.read_text(), "file not overwritten"
+    )

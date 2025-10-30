@@ -94,20 +94,35 @@ def test_deploy_command_invokes_prefect_with_overrides(
     exit_code = args.handler(args, None)
 
     expect(exit_code == 0, "Deploy command should exit successfully.")
-    expect(recorded.get("flows") == ("refinement",), "Expected selected flow to be forwarded.")
+    expect(
+        recorded.get("flows") == ("refinement",),
+        "Expected selected flow to be forwarded.",
+    )
     expect(
         recorded.get("base_dir") == manifest_dir,
         "Manifest directory override should be passed to the Prefect helper.",
     )
-    expect(recorded.get("build_image") is True, "Build flag should propagate to deploy helper.")
-    expect(recorded.get("push_image") is True, "Push flag should propagate to deploy helper.")
+    expect(
+        recorded.get("build_image") is True,
+        "Build flag should propagate to deploy helper.",
+    )
+    expect(
+        recorded.get("push_image") is True,
+        "Push flag should propagate to deploy helper.",
+    )
     expect(
         recorded.get("deployment_name") == "custom-deployment",
         "Deployment name override should be forwarded.",
     )
-    expect(recorded.get("schedule") == "0 6 * * *", "Schedule override should be forwarded.")
+    expect(
+        recorded.get("schedule") == "0 6 * * *",
+        "Schedule override should be forwarded.",
+    )
     expect(recorded.get("disable_schedule") is False, "Schedule should remain enabled.")
-    expect(recorded.get("work_pool") == "prefect-pool", "Work pool override should be forwarded.")
+    expect(
+        recorded.get("work_pool") == "prefect-pool",
+        "Work pool override should be forwarded.",
+    )
 
 
 def test_deploy_command_disables_schedule(
@@ -125,18 +140,26 @@ def test_deploy_command_disables_schedule(
 
     monkeypatch.setattr(deployments_module, "deploy_pipeline", _record)
 
-    args = cli_parser.parse_args(["deploy", "--schedule", "none", "--log-format", "json"])
+    args = cli_parser.parse_args(
+        ["deploy", "--schedule", "none", "--log-format", "json"]
+    )
 
     exit_code = args.handler(args, None)
 
-    expect(exit_code == 0, "Deploy command should still exit successfully when disabling schedule.")
     expect(
-        recorded.get("flows") is None, "No flow selection should forward `None` to deploy helper."
+        exit_code == 0,
+        "Deploy command should still exit successfully when disabling schedule.",
+    )
+    expect(
+        recorded.get("flows") is None,
+        "No flow selection should forward `None` to deploy helper.",
     )
     expect(recorded.get("schedule") is None, "Schedule override should be cleared.")
     expect(
-        recorded.get("disable_schedule") is True, "Schedule should be disabled when passing 'none'."
+        recorded.get("disable_schedule") is True,
+        "Schedule should be disabled when passing 'none'.",
     )
     expect(
-        recorded.get("work_pool") is None, "No work pool override should be forwarded by default."
+        recorded.get("work_pool") is None,
+        "No work pool override should be forwarded by default.",
     )

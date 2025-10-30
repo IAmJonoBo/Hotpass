@@ -8,56 +8,56 @@ phases and governance gates.
 ## Phase 1 — Foundation alignment
 
 - [x] **T1.1 Programme guardrails** — Roadmap, governance charter, and evidence
-  ledger refreshed; retro plan captured in
-  [`docs/operations/foundation-retro.md`](docs/operations/foundation-retro.md) to
-  guide the upcoming Programme review.
+      ledger refreshed; retro plan captured in
+      [`docs/operations/foundation-retro.md`](docs/operations/foundation-retro.md) to
+      guide the upcoming Programme review.
 - [x] **T1.2 Operational readiness** — Prefect bootstrap, telemetry wiring, and
-  ARC lifecycle verifier (with snapshot mode) prepared Platform for the staged
-  runner rollout documented in the ARC how-to guide.
+      ARC lifecycle verifier (with snapshot mode) prepared Platform for the staged
+      runner rollout documented in the ARC how-to guide.
 
 ## Phase 2 — Contracts, validation, and data hygiene
 
 - [x] **T2.1 Canonical dataset contracts** — Pandera table models, JSON Schema
-  exports, and the regenerated documentation set are live. Round-trip tests
-  exercise the contract registry so new datasets remain governed.
+      exports, and the regenerated documentation set are live. Round-trip tests
+      exercise the contract registry so new datasets remain governed.
   - Delivered via `contracts/new-dataset-schemas`; follow-up PRs will extend the
     contract catalogue as new workbooks arrive.
 - [x] **T2.2 Great Expectations gates** — Keep checkpoints and Data Docs in
-  sync, ensuring the docs landing page points to the validation artefacts.
+      sync, ensuring the docs landing page points to the validation artefacts.
   - Delivered via `docs/data-governance-nav`: the new
     [`docs/governance/data-governance-navigation.md`](docs/governance/data-governance-navigation.md)
     page surfaces Data Docs, schema exports, lineage, and evidence packs from the
     docs landing page.
 - [x] **T2.3 Property-based tests** — Expand Hypothesis coverage for ingestion
-  and export idempotency scenarios.
+      and export idempotency scenarios.
   - Delivered via `tests/property/test_ingestion_properties.py`, reinforcing
     ingestion deduplication, Unicode handling, and deterministic slugs/provinces.
 
 ## Phase 3 — Pipelines (ingest, backfill, refine, publish)
 
 - [x] **T3.1 Prefect 3 deployments** — Commit deployment manifests and ensure
-  `prefect deploy` produces idempotent schedules.
+      `prefect deploy` produces idempotent schedules.
   - Verified in-repo via CLI integration tests (`tests/cli/test_deploy_command.py`) and Prefect flow overrides (`tests/test_orchestration.py`).
 - [ ] **T3.2 OpenLineage + Marquez** — Harden lineage emission and document the
-  local Marquez stack.
+      local Marquez stack.
   - Completed PR: `observability/marquez-bootstrap` (2025-10-28) introduced the
     compose stack and quickstart guide; ongoing maintenance tasks live in
     `docs/roadmap.md`.
 - [x] **T3.3 Persist refined outputs + data versioning** — Parquet outputs and
-  DVC snapshots are live with CLI support.
+      DVC snapshots are live with CLI support.
 
 ## Phase 4 — ML lifecycle (conditional)
 
 - [x] **T4.1 MLflow tracking + registry** — Tracking, registry, and promotion
-  workflows are merged with comprehensive coverage.
+      workflows are merged with comprehensive coverage.
 
 ## Phase 5 — CI/CD & ephemeral runners
 
 - [ ] **T5.1 Quality gates** — Migrate the GitHub Actions QA workflow to uv and
-  enforce coverage thresholds.
+      enforce coverage thresholds.
   - Upcoming PR: `ci/uv-quality-gates` aligned with the platform team schedule.
 - [ ] **T5.2 Security scanning** — Codify CodeQL, detect-secrets diff mode, and
-  Bandit SARIF uploads.
+      Bandit SARIF uploads.
   - Upcoming PR: `security/codeql-and-secrets` blocked on runner availability.
 - [ ] **T5.3 Docker buildx cache** — Enable cache reuse across PR builds.
   - Upcoming PR: `ci/docker-cache` queued after quality gate hardening.
@@ -66,18 +66,18 @@ phases and governance gates.
 - [x] **T5.5 Ephemeral runners** — Roll out ARC manifests and AWS OIDC wiring (pending stakeholder confirmation that programme expectations are met).
   - Completed via updated ARC smoke workflow and lifecycle verifier that now confirm AWS role assumptions alongside runner drain; staging rollout follows the refreshed runbook and workflow configuration.【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L110】
 - [ ] **T5.6 Telemetry instrumentation** — Propagate OpenTelemetry exporters
-  through CLI and Prefect.
+      through CLI and Prefect.
   - Completed PR: `telemetry/bootstrap` (2025-12-02) delivered shared bootstrap
     logic; follow-up docs tracked separately.
 
 ## Phase 6 — Documentation & UX
 
 - [ ] **T6.1 Diátaxis docs structure** — Maintain the Tutorials/How-to/Reference/
-  Explanations balance and surface governance artefacts from the landing page.
+      Explanations balance and surface governance artefacts from the landing page.
   - In flight: `docs/data-governance-nav` (this PR) and follow-on PRs for the
     `hotpass doctor` quickstart once the CLI work lands.
 - [ ] **T6.2 CLI UX (`hotpass doctor` / `hotpass init`)** — Introduce guided
-  onboarding and diagnostics commands.
+      onboarding and diagnostics commands.
   - Upcoming PR: `cli/doctor-and-init` (design pending from product UX).
 
 ## Quick links
