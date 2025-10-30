@@ -29,7 +29,7 @@ def _fallback_clean(number: str, deletechars: str = " ") -> str:
 
 _numdb_module: ModuleType | None
 try:  # pragma: no cover - optional dependency
-    _numdb_module = cast(ModuleType, import_module("stdnum.numdb"))
+    _numdb_module = import_module("stdnum.numdb")
 except ImportError:  # pragma: no cover - fallback when stdnum is absent
     _numdb_module = None
 
@@ -182,7 +182,7 @@ def normalize_vat_number(value: object | None) -> str | None:
         validated = za_vat.compact(za_vat.validate(cleaned))
     except InvalidFormat:
         return None
-    return validated
+    return validated  # type: ignore[no-any-return]
 
 
 def normalize_postal_code(value: object | None) -> str | None:
@@ -193,7 +193,7 @@ def normalize_postal_code(value: object | None) -> str | None:
     cleaned = stdnum_clean(text, " -")
     if za_postcode is not None:
         try:
-            return za_postcode.validate(cleaned)
+            return za_postcode.validate(cleaned)  # type: ignore[no-any-return]
         except InvalidFormat:
             return None
     if cleaned.isdigit() and 3 <= len(cleaned) <= 6:
