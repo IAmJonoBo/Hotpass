@@ -1,5 +1,9 @@
 # Hotpass Guidance for AI Agents
 
+## Project Purpose
+
+Hotpass is a data refinement platform that transforms messy spreadsheets into a governed single source of truth. It normalizes columns, resolves duplicates, enriches data, and publishes quality signals with industry-ready profiles, POPIA compliance, and production-grade orchestration.
+
 ## Orientation
 
 - Python 3.13 project managed with uv; run `uv sync --extra dev --extra docs` once and prefer `uv run ...` for every command.
@@ -41,3 +45,38 @@
 - Compliance & quality: `compliance.py`, `quality.py`, `artifacts.py`.
 - Interfaces & orchestration: `cli.py`, `cli_enhanced.py`, `orchestration.py`, `observability.py`.
 - Tests to mirror: `tests/test_pipeline.py`, `tests/test_cli.py`, `tests/test_pipeline_enhanced.py`, `tests/test_compliance.py`, `tests/test_geospatial.py`, `tests/test_enrichment.py`.
+
+## Acceptance Criteria for Changes
+
+When submitting changes, ensure:
+
+1. **Tests pass**: All relevant test suites run successfully (`uv run pytest`)
+2. **Linting clean**: No ruff, mypy, or bandit violations in changed code
+3. **Documentation updated**: Sync docs if changing public APIs or behavior
+4. **Backwards compatible**: Existing pipelines, configs, and outputs remain valid unless explicitly breaking
+5. **Security checked**: No secrets committed; run `uv run detect-secrets scan` on new files
+6. **Observability preserved**: Metrics, logs, and traces maintain their contract for monitoring tools
+7. **No bare assertions**: Use `expect(..., message)` helper in pytest files per `docs/how-to-guides/assert-free-pytest.md`
+
+## Common Pitfalls
+
+- **Chunk size changes**: Modifying `ExcelReadOptions.chunk_size` semantics breaks memory profiling and staging logic. Keep validation and behavior intact.
+- **SSOT column reordering**: Downstream tools expect the exact order in `SSOT_COLUMNS`. Add new columns at the end or coordinate schema migration.
+- **Missing optional deps**: Code must gracefully fall back when Great Expectations, Prefect, Presidio, or OpenTelemetry are unavailable. Always guard imports and preserve core functionality.
+- **Breaking provenance schema**: JSON structure in `add_provenance_columns` is consumed by compliance audits. Additions are safe; changes to existing keys require migration.
+- **Pipeline event names**: CLI progress UI depends on exact `PIPELINE_EVENT_*` constants. Renaming breaks visual feedback; add new events instead.
+- **Industry profile defaults**: Changes to `config.get_default_profile` or profiles under `src/hotpass/profiles/` affect production pipelines. Document and test cross-profile behavior.
+
+## Dependencies Overview
+
+| Extra          | Key Packages                    | Purpose                                              |
+| -------------- | ------------------------------- | ---------------------------------------------------- |
+| `dev`          | pytest, ruff, mypy, pre-commit  | Testing, linting, type checking, commit hooks        |
+| `docs`         | sphinx, myst-parser             | Documentation generation                             |
+| `orchestration`| prefect>=3.0                    | Workflow scheduling and monitoring                   |
+| `enrichment`   | requests, trafilatura           | Web scraping and data enrichment                     |
+| `geospatial`   | geopandas, geopy                | Geocoding and spatial operations                     |
+| `compliance`   | presidio-analyzer, presidio-anonymizer | PII detection and POPIA compliance           |
+| `dashboards`   | streamlit                       | Interactive data exploration UI                      |
+
+Install combinations as needed: `uv sync --extra dev --extra orchestration --extra geospatial` or use `make sync EXTRAS="dev orchestration geospatial"` for convenience.
