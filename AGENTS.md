@@ -176,3 +176,228 @@ network_access = true
 2. Run **Setup script** (Option A or B).
 3. Execute the **Agent run command**.
 4. Upload `dist/refined.xlsx` as artifact.
+
+---
+
+## 8) CLI Commands (UPGRADE.md Aligned)
+
+As of the UPGRADE.md implementation, Hotpass provides these CLI verbs:
+
+### Discovery & Overview
+```bash
+uv run hotpass overview
+```
+Shows all available commands, quick start examples, and system status.
+
+### Core Pipeline Commands
+
+**Refine** (clean and normalize data):
+```bash
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile aviation \
+  --archive
+```
+
+**Enrich** (add data from deterministic and optional network sources):
+```bash
+# Deterministic only (safe, offline)
+uv run hotpass enrich \
+  --input ./dist/refined.xlsx \
+  --output ./dist/enriched.xlsx \
+  --profile aviation \
+  --allow-network=false
+
+# With network (requires FEATURE_ENABLE_REMOTE_RESEARCH=1 and ALLOW_NETWORK_RESEARCH=1)
+uv run hotpass enrich \
+  --input ./dist/refined.xlsx \
+  --output ./dist/enriched-network.xlsx \
+  --profile aviation \
+  --allow-network=true
+```
+
+**QA** (quality assurance checks):
+```bash
+uv run hotpass qa all          # All checks
+uv run hotpass qa fitness      # Fitness functions only
+uv run hotpass qa profiles     # Profile validation
+uv run hotpass qa docs         # Documentation checks
+uv run hotpass qa ta           # Technical acceptance
+```
+
+**Contracts** (generate data contracts):
+```bash
+uv run hotpass contracts emit \
+  --profile aviation \
+  --format yaml \
+  --output ./contracts/aviation.yaml
+```
+
+### Key Principles
+
+1. **Profile-First**: Always specify `--profile <name>`. Profiles contain critical business logic (column mappings, validation rules, compliance settings).
+
+2. **Deterministic-First**: Enrichment defaults to offline/deterministic sources. Network enrichment requires explicit enablement via environment variables + `--allow-network=true` flag.
+
+3. **Provenance Tracking**: All enriched data includes provenance columns showing source, timestamp, confidence, and strategy.
+
+---
+
+## 9) MCP (Model Context Protocol) Tools
+
+Hotpass exposes an MCP stdio server that allows AI assistants (GitHub Copilot, Codex, Agent HQ) to call Hotpass operations as tools.
+
+### Starting the MCP Server
+
+```bash
+python -m hotpass.mcp.server
+# OR with uv
+uv run python -m hotpass.mcp.server
+```
+
+The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
+
+### Available MCP Tools
+
+1. **`hotpass.refine`**
+   - Description: Run the Hotpass refinement pipeline
+   - Inputs:
+     - `input_path` (required): Directory or file with data to refine
+     - `output_path` (required): Where to write refined output
+     - `profile` (default: "generic"): Industry profile
+     - `archive` (default: false): Create archive of refined output
+
+2. **`hotpass.enrich`**
+   - Description: Enrich refined data with additional information
+   - Inputs:
+     - `input_path` (required): Refined input file
+     - `output_path` (required): Where to write enriched output
+     - `profile` (default: "generic"): Industry profile
+     - `allow_network` (default: false): Enable network-based enrichment
+
+3. **`hotpass.qa`**
+   - Description: Run quality assurance checks
+   - Inputs:
+     - `target` (default: "all"): Which checks to run (all | fitness | profiles | contracts | docs | ta)
+
+4. **`hotpass.explain_provenance`**
+   - Description: Explain data provenance for a specific row
+   - Inputs:
+     - `row_id` (required): ID of the row to explain
+     - `dataset_path` (required): Path to the dataset file
+
+5. **`hotpass.crawl`** (guarded, optional)
+   - Description: Execute research crawler (requires network permission)
+   - Inputs:
+     - `query_or_url` (required): Query string or URL to crawl
+     - `profile` (default: "generic"): Industry profile
+     - `backend` (default: "deterministic"): Backend to use (deterministic | research)
+
+### MCP Tool Discovery
+
+Tools are discoverable via the `tools/list` JSON-RPC method:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "id": 1
+}
+```
+
+Response includes all 5 tools with their schemas.
+
+### MCP Security
+
+- **Network operations**: Require explicit user approval (per Copilot CLI defaults)
+- **File access**: Follows workspace permissions
+- **API keys**: Read from environment variables only (never in tool arguments)
+- **Audit logging**: MCP calls logged for compliance (when configured)
+
+### Using MCP with Copilot CLI
+
+```bash
+# Discover Hotpass tools
+/mcp list
+
+# Call a tool
+/mcp call hotpass.refine input_path=./data output_path=./dist/refined.xlsx profile=aviation
+```
+
+### Using MCP with Agent HQ / Codex
+
+Agents can call tools directly via the MCP protocol:
+
+```javascript
+const result = await callTool("hotpass.refine", {
+  input_path: "./data",
+  output_path: "./dist/refined.xlsx",
+  profile: "aviation",
+  archive: true
+});
+```
+
+---
+
+## 10) Quality Gates (Automated Testing)
+
+The UPGRADE.md implementation includes 5 quality gates (QG) that verify system integrity:
+
+- **QG-1**: CLI Integrity - All CLI verbs discoverable and functional
+- **QG-2**: Data Quality - Great Expectations validation passes
+- **QG-3**: Enrichment Chain - Offline enrichment works with provenance
+- **QG-4**: MCP Discoverability - All MCP tools discoverable and callable
+- **QG-5**: Docs/Instructions - Agent documentation complete and accurate
+
+Run all quality gate tests:
+```bash
+uv run pytest tests/cli/test_quality_gates.py -v
+```
+
+Expected: 20/20 tests passing.
+
+---
+
+## 11) Complete Agent Workflow Example
+
+```bash
+# 1. Discover available commands
+uv run hotpass overview
+
+# 2. Refine raw data
+uv run hotpass refine \
+  --input-dir ./data \
+  --output-path ./dist/refined.xlsx \
+  --profile aviation \
+  --archive
+
+# 3. Enrich with deterministic sources only (safe)
+uv run hotpass enrich \
+  --input ./dist/refined.xlsx \
+  --output ./dist/enriched.xlsx \
+  --profile aviation \
+  --allow-network=false
+
+# 4. Run quality checks
+uv run hotpass qa all
+
+# 5. Generate data contract
+uv run hotpass contracts emit \
+  --profile aviation \
+  --format yaml \
+  --output ./contracts/aviation.yaml
+
+# 6. Review provenance in enriched file
+# (Check columns: provenance_source, provenance_timestamp, provenance_confidence)
+```
+
+---
+
+## 12) References for Agents
+
+- **UPGRADE.md**: Full specification of CLI/MCP requirements and quality gates
+- **IMPLEMENTATION_PLAN.md**: Detailed implementation plan with sprint breakdown
+- **docs/agent-instructions.md**: Comprehensive agent workflows and troubleshooting
+- **.github/copilot-instructions.md**: Project-wide guidance for all AI agents
+- **tests/cli/test_quality_gates.py**: Quality gate test implementations
