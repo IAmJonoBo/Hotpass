@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 from rich.console import Console
@@ -101,7 +102,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         return 1
 
 
-def emit_contracts(namespace: argparse.Namespace, industry_profile, console: Console) -> int:
+def emit_contracts(namespace: argparse.Namespace, industry_profile: Any, console: Console) -> int:
     """Emit data contracts for the profile."""
     try:
         # Build contract structure
@@ -162,13 +163,15 @@ def emit_contracts(namespace: argparse.Namespace, industry_profile, console: Con
         return 1
 
 
-def validate_contracts(namespace: argparse.Namespace, industry_profile, console: Console) -> int:
+def validate_contracts(
+    namespace: argparse.Namespace, industry_profile: Any, console: Console
+) -> int:
     """Validate existing contracts against the profile."""
     console.print("[yellow]Contract validation not yet implemented[/yellow]", file=sys.stderr)
     return 0
 
 
-def build_schema_fields(profile) -> dict:
+def build_schema_fields(profile: Any) -> dict[str, Any]:
     """Build schema field definitions from profile."""
     fields = {}
 
@@ -194,7 +197,7 @@ def build_schema_fields(profile) -> dict:
     return fields
 
 
-def generate_examples(profile) -> dict:
+def generate_examples(profile: Any) -> dict[str, Any]:
     """Generate example data for the profile."""
     return {
         "valid_record": {

@@ -1,0 +1,68 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      uv_extras:
+        description: 'Space-separated uv extras to install (e.g. "dev")'
+        required: false
+        default: "dev"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    env:
+      UV_EXTRAS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.uv_extras != '' && github.event.inputs.uv_extras || 'dev' }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
+        with:
+          python-version: "3.13"
+
+      - name: Synchronise dependencies
+        env:
+          HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
+        run: bash scripts/uv_sync_extras.sh
+
+      - name: QG-1 - CLI Integrity
+        run: |
+          echo "Running QG-1: CLI Integrity"
+          uv run pytest tests/cli/test_quality_gates.py::TestQG1CLIIntegrity -v
+
+      - name: QG-2 - Data Quality
+        run: |
+          echo "Running QG-2: Data Quality"
+          uv run pytest tests/cli/test_quality_gates.py::TestQG2DataQuality -v
+
+      - name: QG-3 - Enrichment Chain
+        run: |
+          echo "Running QG-3: Enrichment Chain"
+          uv run pytest tests/cli/test_quality_gates.py::TestQG3EnrichmentChain -v
+
+      - name: QG-4 - MCP Discoverability
+        run: |
+          echo "Running QG-4: MCP Discoverability"
+          uv run pytest tests/cli/test_quality_gates.py::TestQG4MCPDiscoverability -v
+
+      - name: QG-5 - Docs/Instructions
+        run: |
+          echo "Running QG-5: Docs/Instructions"
+          uv run pytest tests/cli/test_quality_gates.py::TestQG5DocsInstruction -v
+
+      - name: All Quality Gates Summary
+        if: always()
+        run: |
+          echo "================================"
+          echo "Quality Gates Summary"
+          echo "================================"
+          uv run python scripts/quality/run_all_gates.py --json

@@ -9,8 +9,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
-
 
 def expect(condition: bool, message: str) -> None:
     """Assert-free test helper per docs/how-to-guides/assert-free-pytest.md."""

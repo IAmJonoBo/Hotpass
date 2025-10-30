@@ -9,10 +9,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 # Configure logging
@@ -52,7 +50,7 @@ class MCPResponse:
 class HotpassMCPServer:
     """MCP stdio server for Hotpass operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the MCP server."""
         self.tools = self._register_tools()
         logger.info(f"Initialized Hotpass MCP server with {len(self.tools)} tools")
@@ -212,6 +210,16 @@ class HotpassMCPServer:
                 tool_name = request.params.get("name")
                 tool_args = request.params.get("arguments", {})
 
+                # Ensure tool_name is a string
+                if not isinstance(tool_name, str):
+                    return MCPResponse(
+                        error={
+                            "code": -32602,
+                            "message": "Invalid params: tool name must be a string",
+                        },
+                        id=request.id,
+                    )
+
                 result = await self._execute_tool(tool_name, tool_args)
                 return MCPResponse(result=result, id=request.id)
 
@@ -315,8 +323,9 @@ class HotpassMCPServer:
     async def _explain_provenance(self, args: dict[str, Any]) -> dict[str, Any]:
         """Explain provenance for a row."""
         try:
-            import pandas as pd
             from pathlib import Path
+
+            import pandas as pd
 
             dataset_path = Path(args["dataset_path"])
             if not dataset_path.exists():
@@ -464,13 +473,14 @@ class HotpassMCPServer:
                     response = await self.handle_request(request)
 
                     # Build JSON-RPC response
-                    response_data = {"jsonrpc": "2.0"}
+                    response_data: dict[str, Any] = {"jsonrpc": "2.0"}
                     if response.error:
                         response_data["error"] = response.error
                     else:
                         response_data["result"] = response.result
                     if response.id is not None:
-                        response_data["id"] = response.id
+                        response_id: int | str = response.id
+                        response_data["id"] = response_id
 
                     # Write response to stdout
                     print(json.dumps(response_data), flush=True)

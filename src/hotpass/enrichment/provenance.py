@@ -57,7 +57,7 @@ class ProvenanceEntry:
 class ProvenanceTracker:
     """Tracks provenance for enriched data rows."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize provenance tracker."""
         self._entries: dict[int, list[ProvenanceEntry]] = {}
 
@@ -143,7 +143,7 @@ class ProvenanceTracker:
             DataFrame with provenance columns added
         """
         # Initialize provenance columns
-        provenance_data = {
+        provenance_data: dict[str, list[Any]] = {
             "provenance_source": [],
             "provenance_timestamp": [],
             "provenance_confidence": [],

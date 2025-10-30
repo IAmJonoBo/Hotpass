@@ -194,3 +194,95 @@ class PipelineMetrics:
         if extra_attributes:
             attributes.update(extra_attributes)
         return attributes
+
+    def record_enrichment_duration(
+        self,
+        seconds: float,
+        *,
+        fetcher: str,
+        strategy: str = "unknown",
+        network_used: bool = False,
+    ) -> None:
+        """Record duration of an enrichment operation.
+
+        Args:
+            seconds: Duration in seconds
+            fetcher: Name of the fetcher used
+            strategy: Enrichment strategy (deterministic, research, backfill)
+            network_used: Whether network was accessed
+        """
+        if not hasattr(self, "enrichment_duration"):
+            self.enrichment_duration = self._meter.create_histogram(
+                name="hotpass.enrichment.duration",
+                description="Duration of enrichment operations",
+                unit="seconds",
+            )
+
+        attributes = {
+            "fetcher": fetcher,
+            "strategy": strategy,
+            "network_used": str(network_used),
+        }
+        self.enrichment_duration.record(seconds, attributes)
+
+    def record_enrichment_cache_hit(self, fetcher: str) -> None:
+        """Record a cache hit for an enrichment fetcher.
+
+        Args:
+            fetcher: Name of the fetcher
+        """
+        if not hasattr(self, "enrichment_cache_hits"):
+            self.enrichment_cache_hits = self._meter.create_counter(
+                name="hotpass.enrichment.cache_hits",
+                description="Number of enrichment cache hits",
+                unit="hits",
+            )
+
+        self.enrichment_cache_hits.add(1, {"fetcher": fetcher})
+
+    def record_enrichment_cache_miss(self, fetcher: str) -> None:
+        """Record a cache miss for an enrichment fetcher.
+
+        Args:
+            fetcher: Name of the fetcher
+        """
+        if not hasattr(self, "enrichment_cache_misses"):
+            self.enrichment_cache_misses = self._meter.create_counter(
+                name="hotpass.enrichment.cache_misses",
+                description="Number of enrichment cache misses",
+                unit="misses",
+            )
+
+        self.enrichment_cache_misses.add(1, {"fetcher": fetcher})
+
+    def record_enrichment_records(
+        self,
+        count: int,
+        *,
+        fetcher: str,
+        strategy: str = "unknown",
+        confidence: float | None = None,
+    ) -> None:
+        """Record number of records enriched.
+
+        Args:
+            count: Number of records enriched
+            fetcher: Name of the fetcher used
+            strategy: Enrichment strategy
+            confidence: Optional average confidence score
+        """
+        if not hasattr(self, "enrichment_records"):
+            self.enrichment_records = self._meter.create_counter(
+                name="hotpass.enrichment.records",
+                description="Number of records enriched",
+                unit="records",
+            )
+
+        attributes: dict[str, Any] = {
+            "fetcher": fetcher,
+            "strategy": strategy,
+        }
+        if confidence is not None:
+            attributes["confidence_bucket"] = f"{int(confidence * 10) * 10}%"
+
+        self.enrichment_records.add(count, attributes)
