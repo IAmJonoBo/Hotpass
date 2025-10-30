@@ -1,6 +1,7 @@
 """Command modules powering the Hotpass CLI."""
 
 __all__ = [
+    "crawl",
     "backfill",
     "contracts",
     "dashboard",
@@ -10,6 +11,7 @@ __all__ = [
     "init",
     "orchestrate",
     "overview",
+    "plan",
     "qa",
     "refine",
     "resolve",

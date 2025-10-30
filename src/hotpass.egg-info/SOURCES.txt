@@ -83,6 +83,8 @@ src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/doctor.py
 src/hotpass/cli/commands/enrich.py
 src/hotpass/cli/commands/init.py
+src/hotpass/cli/commands/crawl.py
+src/hotpass/cli/commands/plan.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/overview.py
 src/hotpass/cli/commands/qa.py
@@ -106,6 +108,8 @@ src/hotpass/domain/party/dictionary.py
 src/hotpass/domain/party/loader.py
 src/hotpass/domain/party/models.py
 src/hotpass/domain/party/schemas.py
+src/hotpass/research/__init__.py
+src/hotpass/research/orchestrator.py
 src/hotpass/enrichment/__init__.py
 src/hotpass/enrichment/performance.py
 src/hotpass/enrichment/pipeline.py

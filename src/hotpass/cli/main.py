@@ -11,6 +11,7 @@ from typing import Protocol, cast
 from .builder import CLIBuilder
 from .commands import (
     backfill,
+    crawl,
     contracts,
     dashboard,
     deploy,
@@ -19,6 +20,7 @@ from .commands import (
     init,
     orchestrate,
     overview,
+    plan,
     qa,
     refine,
     resolve,
@@ -57,6 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(enrich.register())
     builder.register(qa.register())
     builder.register(contracts.register())
+    builder.register(plan.register())
+    builder.register(crawl.register())
 
     # Register existing commands
     builder.register(run.register())

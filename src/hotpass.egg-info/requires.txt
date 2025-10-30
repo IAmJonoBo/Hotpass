@@ -63,6 +63,7 @@ linkify-it-py>=2.0.3
 trafilatura>=1.12.0
 playwright>=1.47.0
 requests>=2.32.0
+scrapy>=2.12.0
 
 [entity_resolution]
 splink>=3.9.0

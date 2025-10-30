@@ -117,6 +117,24 @@ enrich:
   confidence_threshold: 0.7
   provenance_required: true
 
+# Authority sources drive adaptive research planner lookups
+authority_sources:
+  - name: South African Civil Aviation Authority
+    url: https://www.caa.co.za/
+    cache_key: sacaa
+    category: registry
+  - name: Aviation Training Directory
+    url: https://www.aviationpros.com/directory
+    cache_key: aviation-directory
+    category: directory
+
+research_backfill:
+  fields:
+    - contact_primary_email
+    - contact_primary_phone
+    - website
+  confidence_threshold: 0.7
+
 # Block 4: Compliance - POPIA and data governance
 compliance:
   policy: POPIA

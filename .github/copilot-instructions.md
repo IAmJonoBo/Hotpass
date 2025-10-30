@@ -45,7 +45,15 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
    ```bash
    uv run hotpass qa all
    ```
-6. **Expose MCP tools (when needed)**
+6. **Plan adaptive research (optional)**
+   ```bash
+   uv run hotpass plan research \\
+     --dataset ./dist/refined.xlsx \\
+     --row-id 0 \\
+     --allow-network=false
+   ```
+   Review step outcomes before enabling network enrichment or crawling.
+7. **Expose MCP tools (when needed)**
    ```bash
    uv run python -m hotpass.mcp.server
    ```

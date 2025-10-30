@@ -13,6 +13,11 @@ from hotpass.evidence import (  # noqa: E402
 )
 
 
+def expect(condition: bool, message: str) -> None:
+    if not condition:
+        raise AssertionError(message)
+
+
 def test_record_consent_audit_log_deterministic(tmp_path):
     """Consent audit logging accepts a deterministic clock for reproducible tests."""
 
@@ -28,12 +33,12 @@ def test_record_consent_audit_log_deterministic(tmp_path):
         clock=_clock,
     )
 
-    assert path.name == "consent_audit_run-42_20250101T120000Z.json"
+    expect(path.name == "consent_audit_run-42_20250101T120000Z.json", "Audit file name should include run and timestamp")
 
     payload = json.loads(path.read_text(encoding="utf-8"))
-    assert payload["recorded_at"] == fixed_time.isoformat()
-    assert payload["run_id"] == "run-42"
-    assert payload["report"] == {"status": "ok"}
+    expect(payload["recorded_at"] == fixed_time.isoformat(), "Recorded timestamp should match injected clock")
+    expect(payload["run_id"] == "run-42", "Run id should persist")
+    expect(payload["report"] == {"status": "ok"}, "Report payload should round-trip")
 
 
 def test_record_export_access_event_deterministic(tmp_path):
@@ -55,14 +60,14 @@ def test_record_export_access_event_deterministic(tmp_path):
         clock=_clock,
     )
 
-    assert log_path.parent == tmp_path / "logs"
-    assert log_path.name == "export_access_20250102T063000Z.json"
+    expect(log_path.parent == tmp_path / "logs", "Export log should land in provided directory")
+    expect(log_path.name == "export_access_20250102T063000Z.json", "Log name should embed timestamp")
 
     payload = json.loads(log_path.read_text(encoding="utf-8"))
-    assert payload["recorded_at"] == fixed_time.isoformat()
-    assert payload["total_records"] == 3
+    expect(payload["recorded_at"] == fixed_time.isoformat(), "Recorded timestamp should match injected clock")
+    expect(payload["total_records"] == 3, "Total records should be persisted")
     # pragma: allowlist nextline secret
     expected_sha = "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"
-    assert payload["sha256"] == expected_sha
-    assert payload["context"] == {"task": "prefect"}
-    assert payload["output_path"] == str(output_file.resolve())
+    expect(payload["sha256"] == expected_sha, "SHA256 digest should match input data")
+    expect(payload["context"] == {"task": "prefect"}, "Context metadata should persist")
+    expect(payload["output_path"] == str(output_file.resolve()), "Output path should be absolute")

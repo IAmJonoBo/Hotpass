@@ -37,6 +37,8 @@ The unified CLI exposes five primary verbs that map to the workflows described i
 - `uv run hotpass enrich` — enrich refined data with deterministic and optional research sources.
 - `uv run hotpass qa` — run quality gates (`fitness`, `data-quality`, `docs`, `contracts`, `cli`, `ta`).
 - `uv run hotpass contracts` — emit contract bundles (YAML/JSON) for downstream systems.
+- `uv run hotpass plan research --dataset ./dist/refined.xlsx --row-id 0 --allow-network` — generate an adaptive research plan that combines local snapshots, deterministic enrichment, optional network fetchers, and crawl/backfill recommendations.
+- `uv run hotpass crawl "https://example.test" --allow-network` — trigger the crawler-only pathway (uses the same orchestrator engine but skips deterministic enrichment).
 
 The sections below retain backward-compatible documentation for legacy verbs until the
 Sprint 5 docs refresh is published.

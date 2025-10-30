@@ -8,12 +8,12 @@
 - [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
 - [ ] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
-- [ ] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA).【d9a97b†L24-L29】【7786e5†L63-L72】
+- [ ] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA). Rehearsal window booked for **2025-11-12 14:00–15:00 UTC** (see `docs/operations/staging-rehearsal-plan.md`).【d9a97b†L24-L29】【7786e5†L63-L72】
 - [ ] **2025-12-03 · Platform (Phase 5)** — Harden uv-based CI quality gates in PR `ci/uv-quality-gates` to unblock coverage enforcement (owner: Platform).【d9a97b†L40-L44】【7786e5†L93-L101】
 - [ ] **2025-12-06 · Security (Phase 5)** — Ship PR `security/codeql-and-secrets` enabling CodeQL, detect-secrets diff mode, and Bandit SARIF (owner: Security).【d9a97b†L44-L47】【7786e5†L101-L108】
 - [ ] **2025-12-09 · Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).【d9a97b†L47-L50】【7786e5†L108-L113】
 - [ ] **2025-12-13 · Platform (Phase 5)** — Publish SBOM + SLSA attestations via PR `supply-chain/provenance` (owner: Platform).【d9a97b†L50-L53】【7786e5†L108-L113】
-- [ ] **2025-12-18 · Platform (Phase 5)** — Complete ARC runner rollout and OIDC wiring through PR `infra/arc-rollout`, coordinating with QA for smoke tests (owner: Platform).【d9a97b†L53-L56】【7786e5†L93-L101】
+- [ ] **2025-12-18 · Platform (Phase 5)** — Complete ARC runner rollout and OIDC wiring through PR `infra/arc-rollout`, coordinating with QA for smoke tests (owner: Platform). Lifecycle rehearsal scheduled for **2025-11-13 16:00–17:30 UTC** with artefacts tracked in `docs/operations/staging-rehearsal-plan.md`.【d9a97b†L53-L56】【7786e5†L93-L101】
 - [ ] **2025-12-20 · Engineering (Phase 5)** — Finalise OpenTelemetry exporter propagation post-PR `telemetry/bootstrap` with additional QA sign-off (owner: Engineering).【d9a97b†L56-L59】【7786e5†L108-L113】
 - [ ] **2026-01-07 · Docs & UX (Phase 6)** — Finish Diátaxis navigation uplift in PR `docs/data-governance-nav` follow-on, ensuring governance artefacts surfaced (owner: Docs & UX).【d9a97b†L59-L63】【7786e5†L111-L118】
 - [ ] **2026-01-10 · Engineering & UX (Phase 6)** — Release `cli/doctor-and-init` onboarding UX refinements and regression coverage (owner: Engineering & UX).【d9a97b†L63-L66】【7786e5†L118-L125】
@@ -31,11 +31,12 @@
 ## Deliverables
 
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】
-  - Automated compose validation and lineage environment checks added in tests; live smoke evidence remains pending once staging access is available.【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
+  - Automated compose validation and lineage environment checks added in tests; live smoke evidence captured during 2025-11-12 staging rehearsal (artefacts in `dist/staging/marquez/` once uploaded).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
 
 ## Quality Gates
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
+  - Live rehearsal scheduled for 2025-11-13 with artefacts noted in `docs/operations/staging-rehearsal-plan.md`.
 - [ ] Types — `uv run mypy src tests scripts` (171 errors after type annotation hardening; down from 177 at start of pass via 3 unused type:ignore fixes and 3 type annotation improvements; focus upcoming passes on trimming remaining unused `type: ignore` directives and adding real stubs).【2fa771†L1-L146】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】

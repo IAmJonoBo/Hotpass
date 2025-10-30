@@ -248,6 +248,23 @@ uv run hotpass contracts emit \
   --output ./contracts/aviation.yaml
 ```
 
+### Research Planning & Crawling
+
+**Plan research** (surface local snapshots, deterministic updates, network requirements):
+
+```bash
+uv run hotpass plan research \
+  --dataset ./dist/refined.xlsx \
+  --row-id 0 \
+  --allow-network=false
+```
+
+**Crawl** (execute orchestrator crawl-only flow):
+
+```bash
+uv run hotpass crawl "https://example.test" --allow-network=true
+```
+
 ### Key Principles
 
 1. **Profile-First**: Always specify `--profile <name>`. Profiles contain critical business logic (column mappings, validation rules, compliance settings).

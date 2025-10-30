@@ -11,7 +11,13 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
+import pandas as pd
+
+from hotpass.config import get_default_profile, load_industry_profile
+from hotpass.research import ResearchContext, ResearchOrchestrator
 
 # Configure logging
 logging.basicConfig(
@@ -157,6 +163,50 @@ class HotpassMCPServer:
                 },
             ),
             MCPTool(
+                name="hotpass.plan.research",
+                description="Plan deterministic and network research for an entity",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "profile": {
+                            "type": "string",
+                            "description": "Industry profile to use",
+                            "default": "generic",
+                        },
+                        "dataset_path": {
+                            "type": "string",
+                            "description": "Optional dataset (Excel/CSV) containing the entity row",
+                        },
+                        "row_id": {
+                            "type": "string",
+                            "description": "Row identifier or index when using dataset_path",
+                        },
+                        "entity": {
+                            "type": "string",
+                            "description": "Entity name to match when row_id not supplied",
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "Free-text research query",
+                        },
+                        "urls": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Target URLs to crawl deterministically",
+                        },
+                        "allow_network": {
+                            "type": "boolean",
+                            "description": "Enable network access during the plan",
+                            "default": False,
+                        },
+                        "row": {
+                            "type": "object",
+                            "description": "Optional dataset row supplied directly to the planner",
+                        },
+                    },
+                },
+            ),
+            MCPTool(
                 name="hotpass.crawl",
                 description="Execute research crawler (requires network permission)",
                 input_schema={
@@ -256,6 +306,8 @@ class HotpassMCPServer:
             return await self._run_qa(args)
         elif tool_name == "hotpass.explain_provenance":
             return await self._explain_provenance(args)
+        elif tool_name == "hotpass.plan.research":
+            return await self._run_plan_research(args)
         elif tool_name == "hotpass.crawl":
             return await self._run_crawl(args)
         elif tool_name == "hotpass.ta.check":
@@ -401,14 +453,106 @@ class HotpassMCPServer:
                 "error": f"Failed to explain provenance: {str(e)}",
             }
 
-    async def _run_crawl(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Run crawler (guarded operation)."""
-        # This is a guarded operation - placeholder for Sprint 2
+    async def _run_plan_research(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Plan deterministic and network research using the orchestrator."""
+
+        profile_name = args.get("profile") or "generic"
+        profile = self._load_industry_profile(profile_name)
+
+        row = None
+        dataset_path = args.get("dataset_path")
+        if dataset_path:
+            row = self._load_dataset_row(Path(dataset_path), args.get("row_id"), args.get("entity"))
+
+        if row is None and isinstance(args.get("row"), dict):
+            row = pd.Series(args["row"])  # type: ignore[assignment]
+
+        context = ResearchContext(
+            profile=profile,
+            row=row,
+            entity_name=args.get("entity"),
+            query=args.get("query"),
+            urls=args.get("urls", []),
+            allow_network=bool(args.get("allow_network", False)),
+        )
+
+        orchestrator = ResearchOrchestrator()
+        outcome = orchestrator.plan(context)
         return {
-            "success": False,
-            "message": "Crawler not yet fully implemented (coming in Sprint 2)",
-            "query_or_url": args.get("query_or_url"),
+            "success": outcome.success,
+            "outcome": outcome.to_dict(),
         }
+
+    async def _run_crawl(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Execute a crawl-only orchestrator pass."""
+
+        query_or_url = args.get("query_or_url")
+        if not isinstance(query_or_url, str) or not query_or_url.strip():
+            return {
+                "success": False,
+                "error": "query_or_url must be a non-empty string",
+            }
+
+        profile_name = args.get("profile") or "generic"
+        profile = self._load_industry_profile(profile_name)
+        allow_network = bool(args.get("allow_network", False))
+
+        orchestrator = ResearchOrchestrator()
+        outcome = orchestrator.crawl(
+            profile=profile,
+            query_or_url=query_or_url,
+            allow_network=allow_network,
+        )
+
+        return {
+            "success": outcome.success,
+            "outcome": outcome.to_dict(),
+        }
+
+    def _load_industry_profile(self, profile_name: str):
+        if profile_name == "generic":
+            return get_default_profile("generic")
+        try:
+            return load_industry_profile(profile_name)
+        except Exception:  # pragma: no cover - fallback when profile missing
+            logger.warning("Falling back to generic profile for %s", profile_name)
+            return get_default_profile("generic")
+
+    def _load_dataset_row(
+        self,
+        dataset_path: Path,
+        row_identifier: str | None,
+        entity: str | None,
+    ) -> pd.Series | None:
+        if not dataset_path.exists():
+            raise FileNotFoundError(f"Dataset not found: {dataset_path}")
+
+        if dataset_path.suffix.lower() in {".xlsx", ".xls", ".xlsm"}:
+            frame = pd.read_excel(dataset_path)
+        else:
+            frame = pd.read_csv(dataset_path)
+
+        if frame.empty:
+            return None
+
+        if row_identifier is not None:
+            try:
+                index = int(row_identifier)
+                return frame.iloc[index]
+            except (ValueError, IndexError):
+                pass
+            if "id" in frame.columns:
+                match = frame[frame["id"].astype(str) == row_identifier]
+                if not match.empty:
+                    return match.iloc[0]
+
+        if entity and "organization_name" in frame.columns:
+            mask = frame["organization_name"].astype(str).str.casefold() == entity.casefold()
+            match = frame[mask]
+            if not match.empty:
+                return match.iloc[0]
+
+        return None
 
     async def _run_ta_check(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run Technical Acceptance checks (all quality gates)."""

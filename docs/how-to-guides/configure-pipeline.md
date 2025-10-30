@@ -31,6 +31,16 @@ column_synonyms:
   organization_name:
     - facility_name
     - provider_name
+authority_sources:
+  - name: US HCRIS Registry
+    url: https://data.cms.gov/
+    cache_key: hcris
+    category: registry
+research_backfill:
+  fields:
+    - contact_primary_email
+    - website
+  confidence_threshold: 0.7
 ```
 
 Reload the profile in Python:
@@ -39,6 +49,8 @@ Reload the profile in Python:
 from hotpass.config import load_industry_profile
 healthcare = load_industry_profile("healthcare")
 ```
+
+`authority_sources` declares authoritative registries the adaptive research orchestrator should consult before falling back to web search, while `research_backfill` lists which optional fields may be repopulated during the backfill pass and the minimum confidence score required to accept network results.
 
 ## 2. Tune the pipeline configuration
 

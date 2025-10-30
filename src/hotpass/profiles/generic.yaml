@@ -99,6 +99,23 @@ enrich:
   confidence_threshold: 0.7
   provenance_required: true
 
+authority_sources:
+  - name: National Business Registry
+    url: https://www.gov.example/business-registry
+    cache_key: national-registry
+    category: registry
+  - name: OpenCorporates
+    url: https://opencorporates.com/
+    cache_key: opencorporates
+    category: directory
+
+research_backfill:
+  fields:
+    - contact_primary_email
+    - contact_primary_phone
+    - website
+  confidence_threshold: 0.65
+
 # Block 4: Compliance - POPIA and data governance
 compliance:
   policy: POPIA

@@ -22,6 +22,17 @@ class ProfileConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    class AuthoritySource(BaseModel):
+        name: str
+        url: str | None = None
+        description: str | None = None
+        cache_key: str | None = None
+        category: Literal["registry", "directory", "dataset"] = "registry"
+
+    class ResearchBackfill(BaseModel):
+        fields: tuple[str, ...] = Field(default_factory=tuple)
+        confidence_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
+
     name: str = "generic"
     display_name: str = "Generic Business"
     default_country_code: str = "ZA"
@@ -36,6 +47,14 @@ class ProfileConfig(BaseModel):
     required_fields: Sequence[str] = Field(default_factory=list)
     optional_fields: Sequence[str] = Field(default_factory=list)
     custom_validators: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
+    authority_sources: tuple[AuthoritySource, ...] = Field(default_factory=tuple)
+    research_backfill: ResearchBackfill | None = None
+
+    @property
+    def backfill_fields(self) -> tuple[str, ...]:
+        if self.research_backfill is None:
+            return tuple(self.optional_fields)
+        return self.research_backfill.fields
 
     @field_validator("source_priorities", mode="after")
     @classmethod

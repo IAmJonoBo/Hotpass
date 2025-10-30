@@ -131,6 +131,43 @@ def validate_profile_structure(profile: dict[str, Any], profile_name: str) -> li
         if "pii_fields" in compliance and not isinstance(compliance["pii_fields"], list):
             errors.append("compliance.pii_fields must be a list")
 
+    # Check authority sources (optional)
+    authority_sources = profile.get("authority_sources")
+    if authority_sources is not None:
+        if not isinstance(authority_sources, list):
+            errors.append("authority_sources must be a list when present")
+        else:
+            for index, source in enumerate(authority_sources):
+                if not isinstance(source, dict):
+                    errors.append(f"authority_sources[{index}] must be a mapping")
+                    continue
+                if "name" not in source:
+                    errors.append(f"authority_sources[{index}] missing 'name'")
+                cache_key = source.get("cache_key")
+                if cache_key is not None and not isinstance(cache_key, str):
+                    errors.append(f"authority_sources[{index}].cache_key must be a string")
+                category = source.get("category", "registry")
+                if category not in {"registry", "directory", "dataset"}:
+                    errors.append(
+                        f"authority_sources[{index}].category must be registry|directory|dataset"
+                    )
+
+    # Check research backfill configuration (optional)
+    research_backfill = profile.get("research_backfill")
+    if research_backfill is not None:
+        if not isinstance(research_backfill, dict):
+            errors.append("research_backfill must be a mapping when present")
+        else:
+            fields = research_backfill.get("fields")
+            if fields is not None and not isinstance(fields, list):
+                errors.append("research_backfill.fields must be a list")
+            threshold = research_backfill.get("confidence_threshold")
+            if threshold is not None and not isinstance(threshold, (int, float)):
+                errors.append("research_backfill.confidence_threshold must be numeric")
+            elif isinstance(threshold, (int, float)):
+                if not 0 <= threshold <= 1:
+                    errors.append("research_backfill.confidence_threshold must be between 0 and 1")
+
     return errors
 
 
