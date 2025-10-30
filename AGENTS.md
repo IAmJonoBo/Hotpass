@@ -8,7 +8,7 @@ This note tells Codex how to run Hotpass end‑to‑end and what internet access
 
 ### Purpose
 
-Build/install the project, then run the pipeline on a dataset.
+Build/install Hotpass so agents can ingest spreadsheet workbooks and orchestrated research crawlers, clean and backfill data, map relationships, and run deeper analysis through the CLI and MCP automations.
 
 ### 1.1 Internet access policy
 

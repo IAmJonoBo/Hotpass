@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: hotpass
-  description: Hotpass data refinement platform with Prefect orchestration and Streamlit observability.
+  description: Hotpass spreadsheet and crawler orchestration platform for cleaning, backfilling, relationship mapping, and analysis with Prefect orchestration and Streamlit observability.
   tags:
     - data-pipeline
     - prefect
@@ -23,7 +23,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: hotpass-dashboard
-  description: Streamlit dashboard for monitoring Hotpass quality signals and orchestrations.
+  description: Streamlit dashboard for monitoring Hotpass crawler runs, quality signals, and orchestrations.
   annotations:
     github.com/project-slug: IAmJonoBo/Hotpass
     backstage.io/techdocs-ref: dir:./docs

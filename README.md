@@ -1,6 +1,6 @@
 # Hotpass
 
-Hotpass refines messy spreadsheets into a governed single source of truth. The platform normalises columns, resolves duplicates, enriches data, and publishes quality signals so teams can trust the results.
+Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchestrated research crawlers managed through the CLI and MCP server. It cleans, normalises, backfills, maps relationships, and publishes analysis-ready outputs so teams can run deeper investigations with trusted data.
 
 ## Why Hotpass
 

@@ -6,6 +6,7 @@ Hotpass is a data refinement platform that transforms messy spreadsheets into a 
 
 ## Orientation
 
+- Mission snapshot: Hotpass ingests spreadsheet workbooks (primarily XLSX) and orchestrated research crawlers to clean, backfill, map relationships, and surface deeper analysis that operators drive via the CLI and MCP-managed automations.
 - Python 3.13 project managed with uv; run `uv sync --extra dev --extra docs` once and prefer `uv run ...` for every command.
 - Primary CLI lives in `src/hotpass/cli.py` (exposed as `uv run hotpass`); enhanced features hang off `cli_enhanced.py` and `pipeline_enhanced.py`.
 - Core package code sits under `src/hotpass/`; automation scripts are in `scripts/`; documentation (MyST + Sphinx) is under `docs/`.
@@ -13,7 +14,7 @@ Hotpass is a data refinement platform that transforms messy spreadsheets into a 
 
 ## Architecture Map
 
-- `hotpass.pipeline` orchestrates the end-to-end refinement: Excel ingest via `data_sources`, normalisation + slug generation, provenance tracking, quality scoring, progress events, and Excel output through `formatting` + `artifacts`.
+- `hotpass.pipeline` orchestrates the end-to-end refinement: Excel ingest via `data_sources`, crawler-fed research payloads, normalisation + slug generation, provenance tracking, quality scoring, relationship mapping, and Excel output through `formatting` + `artifacts`.
 - `data_sources` adapters (`load_reachout_database`, `load_contact_database`, `load_sacaa_cleaned`) use `ExcelReadOptions` for chunked reads and optional parquet staging; keep column semantics and chunking guards intact.
 - Supporting modules (`normalization`, `entity_resolution`, `pipeline_reporting`, `quality`) provide deterministic helpers. Preserve `SSOT_COLUMNS`, slug rules, and `QualityReport` serialization because downstream consumers and tests rely on them.
 - Enhanced workloads flow through `pipeline_enhancements`: gated by `EnhancedPipelineConfig` to enable entity resolution, geospatial normalisation, web enrichment, and POPIA compliance. Every branch must degrade gracefully when optional deps (Splink, requests, trafilatura, Presidio) are missing—log and return the original frame.

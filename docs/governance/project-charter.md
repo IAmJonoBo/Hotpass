@@ -1,22 +1,22 @@
 ---
 title: Governance — project charter
 summary: Mission, personas, guardrails, and governance rhythms for the Hotpass modernisation programme.
-last_updated: 2025-10-25
+last_updated: 2025-10-30
 ---
 
-Hotpass refines messy spreadsheets into a governed single source of truth. This charter links the programme mission to the personas we serve, the constraints we must respect, and the boundaries we will not cross.
+Hotpass ingests spreadsheet workbooks (primarily XLSX) alongside orchestrated research crawlers, cleans and backfills the data, maps relationships, and publishes analysis-ready intelligence that operators steer through the CLI and MCP-managed automations. This charter links the programme mission to the personas we serve, the constraints we must respect, and the boundaries we will not cross.
 
 ## Mission
 
-- Deliver a governed, industry-ready data refinement pipeline that keeps stakeholders confident in data quality, compliance, and operational readiness.
-- Shorten the time from ingesting messy source files to publishing a trustworthy single source of truth.
-- Embed observability, documentation, and quality gates so changes ship safely and remain auditable.
+- Deliver a governed, industry-ready ingestion and analysis platform that coordinates spreadsheet loading, crawler-led research, relationship mapping, and refinement while preserving compliance and operational readiness.
+- Shorten the time from ingesting messy source files or crawler payloads to publishing connected, trustworthy outputs for downstream analysis.
+- Embed observability, documentation, and quality gates so humans and Copilot automations can ship deeper investigations safely and auditably.
 
 ## Strategic context
 
-- **Problem statement**: Organisations rely on ad-hoc spreadsheets that duplicate entities, miss compliance rules, and lack observability. Manual cleanup is error-prone and slow.
-- **Opportunity**: Hotpass provides configurable validation profiles, enrichment, and orchestration with traceable outputs, enabling faster, repeatable refinement.
-- **Value hypothesis**: Teams that standardise on Hotpass will reduce refinement cycle time by 60%, surface compliance issues before downstream systems ingest data, and unlock shared dashboards for operational visibility.
+- **Problem statement**: Organisations rely on ad-hoc spreadsheets and scattered research crawlers that duplicate entities, leave gaps, and lack observability. Manual cleanup, backfilling, and relationship tracking are error-prone and slow.
+- **Opportunity**: Hotpass coordinates spreadsheet ingestion with orchestrated crawlers, configurable validation, enrichment, and relationship mapping so refinements, backfills, and deeper analysis remain repeatable and traceable.
+- **Value hypothesis**: Teams that standardise on Hotpass will reduce refinement cycle time by 60%, surface compliance and coverage gaps before downstream systems ingest data, and unlock connected insights for investigations and operations.
 
 ## Personas and needs
 

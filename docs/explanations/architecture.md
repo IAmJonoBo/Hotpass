@@ -1,10 +1,10 @@
 ---
 title: Explanation — architecture overview
 summary: High-level view of Hotpass components and how data flows between them.
-last_updated: 2025-10-28
+last_updated: 2025-10-30
 ---
 
-Hotpass ingests disparate spreadsheets, applies validation, enrichment, and consolidation logic, and emits a governed single source of truth. The platform is composed of the following layers.
+Hotpass ingests spreadsheet workbooks and orchestrated research crawlers, applies cleaning, backfilling, relationship mapping, validation, and enrichment logic, and emits governed, analysis-ready outputs. The platform is composed of the following layers.
 
 ## Architecture views
 

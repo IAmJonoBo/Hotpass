@@ -1,14 +1,14 @@
 ---
 title: Governance — pipeline gap analysis
 summary: Findings from the audit-first review ahead of the online research and validation overhaul.
-last_updated: 2025-10-26
+last_updated: 2025-10-30
 ---
 
 This report captures repository context, current QA posture, and critical gaps that should be closed before the online research and validation overhaul proceeds.
 
 ## Repository context snapshot
 
-- **Mission**: Hotpass converts messy spreadsheets into a governed single source of truth with Prefect orchestration, enrichment, and compliance features. (See the [project charter](project-charter.md) for programme context.)
+- **Mission**: Hotpass coordinates spreadsheet ingest and orchestrated research crawlers to clean, backfill, map relationships, and publish analysis-ready outputs with Prefect orchestration, enrichment, and compliance features. (See the [project charter](project-charter.md) for programme context.)
 - **Documentation system**: The docs follow the Diátaxis framework with detailed architecture, governance, security, and roadmap content under `docs/` (see [architecture overview](../explanations/architecture.md)).
 - **Contribution workflow**: Contributors are expected to run the full QA suite (pytest + coverage, Ruff lint/format, mypy, Bandit, detect-secrets, build) and keep `Next_Steps.md` up to date before raising PRs.【F:README.md†L18-L37】
 
