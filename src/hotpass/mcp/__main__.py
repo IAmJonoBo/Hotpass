@@ -6,8 +6,8 @@ Usage:
     uv run python -m hotpass.mcp.server
 """
 
-from .server import main
 import asyncio
+from .server import main
 
 if __name__ == "__main__":
     asyncio.run(main())
