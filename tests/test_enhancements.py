@@ -30,8 +30,10 @@ def test_generate_recommendations_good_quality():
 
     recommendations = generate_recommendations(df, expectation_summary, quality_dist)
 
-    assert len(recommendations) > 0
-    assert any("looks good" in rec.lower() for rec in recommendations)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_generate_recommendations_poor_quality():
@@ -50,9 +52,11 @@ def test_generate_recommendations_poor_quality():
 
     recommendations = generate_recommendations(df, expectation_summary, quality_dist)
 
-    assert len(recommendations) > 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     # Should have critical or warning recommendations
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         "critical" in rec.lower() or "warning" in rec.lower() for rec in recommendations
     )
 
@@ -73,16 +77,23 @@ def test_pipeline_with_formatting(sample_data_dir: Path, tmp_path: Path):
     result = run_pipeline(config)
 
     # Check that output was created
-    assert output_path.exists()
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Check that quality report includes new fields
-    assert hasattr(result.quality_report, "recommendations")
-    assert hasattr(result.quality_report, "audit_trail")
-    assert hasattr(result.quality_report, "conflict_resolutions")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
-    assert isinstance(result.quality_report.recommendations, list)
-    assert isinstance(result.quality_report.audit_trail, list)
-    assert isinstance(result.quality_report.conflict_resolutions, list)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_pipeline_with_audit_trail(sample_data_dir: Path, tmp_path: Path):
@@ -99,12 +110,15 @@ def test_pipeline_with_audit_trail(sample_data_dir: Path, tmp_path: Path):
     result = run_pipeline(config)
 
     # Check audit trail
-    assert len(result.quality_report.audit_trail) > 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Should have start and complete events
     events = [entry["event"] for entry in result.quality_report.audit_trail]
-    assert "pipeline_start" in events
-    assert "pipeline_complete" in events
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_pipeline_uses_profile_thresholds(sample_data_dir: Path, tmp_path: Path):
@@ -132,8 +146,10 @@ def test_pipeline_uses_profile_thresholds(sample_data_dir: Path, tmp_path: Path)
     result = run_pipeline(config)
 
     # Pipeline should complete successfully
-    assert result.refined is not None
-    assert result.quality_report is not None
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_quality_report_to_dict_includes_new_fields():
@@ -155,11 +171,16 @@ def test_quality_report_to_dict_includes_new_fields():
 
     report_dict = report.to_dict()
 
-    assert "recommendations" in report_dict
-    assert "audit_trail" in report_dict
-    assert "conflict_resolutions" in report_dict
-    assert report_dict["recommendations"] == ["Test recommendation"]
-    assert report_dict["audit_trail"] == [{"event": "test"}]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_quality_report_markdown_includes_recommendations():
@@ -187,7 +208,11 @@ def test_quality_report_markdown_includes_recommendations():
 
     markdown = report.to_markdown()
 
-    assert "## Recommendations" in markdown
-    assert "Improve email coverage" in markdown
-    assert "Add more phone numbers" in markdown
-    assert "## Conflict Resolutions" in markdown
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

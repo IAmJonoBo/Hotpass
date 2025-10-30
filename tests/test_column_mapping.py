@@ -24,8 +24,10 @@ def test_column_mapper_exact_match():
 
     result = mapper.map_columns(source_columns, confidence_threshold=0.7)
 
-    assert result["mapped"]["organization_name"] == "organization_name"
-    assert result["mapped"]["contact_email"] == "contact_email"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_column_mapper_synonym_match():
@@ -40,8 +42,10 @@ def test_column_mapper_synonym_match():
 
     result = mapper.map_columns(source_columns, confidence_threshold=0.7)
 
-    assert result["mapped"]["company"] == "organization_name"
-    assert result["mapped"]["email"] == "contact_email"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_column_mapper_fuzzy_match():
@@ -57,8 +61,10 @@ def test_column_mapper_fuzzy_match():
     result = mapper.map_columns(source_columns, confidence_threshold=0.7)
 
     # Should map with high confidence due to similarity
-    assert "organization name" in result["mapped"]
-    assert "contactemail" in result["mapped"]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_column_mapper_no_match():
@@ -72,7 +78,8 @@ def test_column_mapper_no_match():
 
     result = mapper.map_columns(source_columns, confidence_threshold=0.7)
 
-    assert len(result["unmapped"]) > 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_column_mapper_apply_mapping():
@@ -89,9 +96,12 @@ def test_column_mapper_apply_mapping():
 
     result_df = mapper.apply_mapping(df, mapping)
 
-    assert "organization_name" in result_df.columns
-    assert "contact_email" in result_df.columns
-    assert result_df["organization_name"].iloc[0] == "Acme Inc"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_infer_column_types_email():
@@ -104,7 +114,8 @@ def test_infer_column_types_email():
 
     types = infer_column_types(df)
 
-    assert types["email"] == "email"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_infer_column_types_phone():
@@ -117,7 +128,8 @@ def test_infer_column_types_phone():
 
     types = infer_column_types(df)
 
-    assert types["phone"] == "phone"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_infer_column_types_url():
@@ -130,7 +142,8 @@ def test_infer_column_types_url():
 
     types = infer_column_types(df)
 
-    assert types["website"] == "url"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_profile_dataframe():
@@ -145,8 +158,13 @@ def test_profile_dataframe():
 
     profile = profile_dataframe(df)
 
-    assert profile["row_count"] == 3
-    assert profile["column_count"] == 3
-    assert "name" in profile["columns"]
-    assert profile["columns"]["name"]["missing_count"] == 1
-    assert profile["duplicate_rows"] == 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

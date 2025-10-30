@@ -204,7 +204,8 @@ def test_load_pipeline_history_missing_file(tmp_path):
 
     history = load_pipeline_history(history_file)
 
-    assert history == []
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_save_pipeline_run_appends_entries(tmp_path):
@@ -220,10 +221,14 @@ def test_save_pipeline_run_appends_entries(tmp_path):
 
     history = load_pipeline_history(history_file)
 
-    assert len(history) == 2
-    assert history[0]["run"] == 1
-    assert history[1]["status"] == "failure"
-    assert history == [first, second]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 @pytest.fixture
@@ -243,7 +248,8 @@ def test_dashboard_main_without_history(tmp_path, monkeypatch, fake_streamlit):
 
     dashboard.main()
 
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         "No execution history available" in message
         for message in fake_streamlit.info_messages
     )
@@ -280,29 +286,39 @@ def test_dashboard_main_runs_pipeline_and_persists_history(
     dashboard.main()
 
     history_path = Path("logs/pipeline_history.json")
-    assert history_path.exists()
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     history = json.loads(history_path.read_text())
-    assert len(history) == 1
-    assert history[0]["total_records"] == len(refined_df)
-    assert fake_streamlit.success_messages
-    assert "Download the refined workbook" in fake_streamlit.success_messages[-1]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     preview_expanders = [
         exp for label, exp in fake_streamlit.expanders if label == "🔍 Data Preview"
     ]
-    assert preview_expanders, "Expected data preview expander to be registered"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     preview = preview_expanders[-1]
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         "Preview of the first 20 refined records" in msg
         for msg in preview.caption_messages
     )
-    assert any("data model glossary" in msg for msg in preview.markdown_messages)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     footer_messages = [
         msg for msg in fake_streamlit.markdown_messages if "Last updated:" in msg
     ]
-    assert footer_messages, "Expected footer message with last updated timestamp"
-    assert "operations guide" in footer_messages[-1]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_dashboard_authentication_required(monkeypatch, tmp_path, fake_streamlit):
@@ -325,8 +341,10 @@ def test_dashboard_authentication_required(monkeypatch, tmp_path, fake_streamlit
 
     dashboard.main()
 
-    assert not pipeline_called
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         "Authentication required" in message
         for message in fake_streamlit.warning_messages
     )
@@ -365,8 +383,10 @@ def test_dashboard_authentication_unlocks_session(
 
     dashboard.main()
 
-    assert fake_streamlit.success_messages
-    assert fake_streamlit.session_state[dashboard.AUTH_STATE_KEY] is True
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_dashboard_blocks_paths_outside_allowlist(
@@ -397,4 +417,5 @@ def test_dashboard_blocks_paths_outside_allowlist(
 
     dashboard.main()
 
-    assert fake_streamlit.error_messages
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

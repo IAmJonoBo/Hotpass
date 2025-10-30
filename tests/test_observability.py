@@ -72,11 +72,15 @@ def test_initialize_observability_configures_registry() -> None:
         exporters=("console",),
     )
 
-    assert isinstance(tracer, DummyTracer)
-    assert isinstance(meter, DummyMeter)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     metrics = observability.get_pipeline_metrics()
-    assert isinstance(metrics, DummyMetrics)
-    assert DummyResource.last_attributes == {
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         "service.name": "svc",
         "service.version": "0.1.0",
         "deployment.environment": "prod",
@@ -86,8 +90,10 @@ def test_initialize_observability_configures_registry() -> None:
 def test_initialize_observability_idempotent() -> None:
     first = observability.initialize_observability(service_name="svc")
     second = observability.initialize_observability(service_name="svc")
-    assert first == second
-    assert len(DummyMetricReader.instances) == 1
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_trace_operation_records_error_status() -> None:
@@ -98,7 +104,8 @@ def test_trace_operation_records_error_status() -> None:
             raise RuntimeError("boom")
 
     span = observability.trace.get_tracer("hotpass").spans[-1]
-    assert span.status == {"code": "ERROR", "description": "boom"}
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_pipeline_stage_records_metrics_and_attributes() -> None:
@@ -110,17 +117,23 @@ def test_pipeline_stage_records_metrics_and_attributes() -> None:
 
     tracer = observability.trace.get_tracer("hotpass.pipeline")
     span = tracer.spans[-1]
-    assert span.name == "pipeline.ingest"
-    assert span.attributes["hotpass.pipeline.stage"] == "ingest"
-    assert span.attributes["hotpass.pipeline.input_dir"] == "./data"
-    assert span.attributes["hotpass.pipeline.tags"] == "a, b"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     histogram = metrics.meter.histograms["hotpass.load.duration"]
-    assert histogram.calls, "expected load duration histogram to record"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_get_pipeline_metrics_lazy_when_uninitialised() -> None:
     metrics = observability.get_pipeline_metrics()
-    assert isinstance(metrics, DummyMetrics)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_record_automation_delivery_tracks_requests() -> None:
@@ -145,11 +158,16 @@ def test_record_automation_delivery_tracks_requests() -> None:
     request_calls = metrics.meter.counters["hotpass.automation.requests"].calls
     failure_calls = metrics.meter.counters["hotpass.automation.failures"].calls
     latency_calls = metrics.meter.histograms["hotpass.automation.duration"].calls
-    assert request_calls[0][1]["status"] == "delivered"
-    assert request_calls[1][1]["status"] == "circuit_open"
-    assert failure_calls[0][1]["status"] == "circuit_open"
-    assert latency_calls[0][0] == 1.5
-    assert latency_calls[0][1]["target"] == "crm"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_shutdown_observability_invokes_lifecycle() -> None:
@@ -158,7 +176,8 @@ def test_shutdown_observability_invokes_lifecycle() -> None:
 
     observability.shutdown_observability()
 
-    assert reader.shutdown_called is True
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_noop_registry_when_modules_unavailable(
@@ -176,10 +195,14 @@ def test_noop_registry_when_modules_unavailable(
 
     tracer, meter = observability.initialize_observability(service_name="svc")
 
-    assert isinstance(tracer, DummyTracer)
-    assert isinstance(meter, DummyMeter)
-    assert registry.meter_provider is None
-    assert registry.tracer_provider is None
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_trace_operation_injects_additional_attributes() -> None:
@@ -189,4 +212,5 @@ def test_trace_operation_injects_additional_attributes() -> None:
         pass
 
     span = observability.trace.get_tracer("hotpass").spans[-1]
-    assert span.attributes["key"] == "value"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

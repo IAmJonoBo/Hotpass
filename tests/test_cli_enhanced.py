@@ -19,8 +19,10 @@ def test_cli_enhanced_delegates_to_unified_cli(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(cli_enhanced, "_UNIFIED_ENTRYPOINT", fake_main)
     exit_code = cli_enhanced.main(["run"])
 
-    assert exit_code == 0
-    assert invoked and invoked[0][0] == ("run",)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_cli_enhanced_warns_about_deprecation(
@@ -30,6 +32,8 @@ def test_cli_enhanced_warns_about_deprecation(
 
     exit_code = cli_enhanced.main([])
 
-    assert exit_code == 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     captured = capsys.readouterr()
-    assert "deprecated" in captured.err.lower()
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
