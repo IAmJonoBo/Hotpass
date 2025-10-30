@@ -50,9 +50,10 @@ def _noop_prefect_decorator(*_args: Any, **_kwargs: Any) -> Callable[[F], F]:
 
 
 try:  # pragma: no cover - verified via unit tests
+    from prefect.logging import get_run_logger as prefect_get_run_logger
+
     from prefect import flow as prefect_flow_decorator
     from prefect import task as prefect_task_decorator
-    from prefect.logging import get_run_logger as prefect_get_run_logger
 except ImportError:  # pragma: no cover - exercised in fallback tests
     PREFECT_AVAILABLE = False
 else:
@@ -664,7 +665,9 @@ def rehydrate_archive_task(archive_path: Path, restore_dir: Path) -> Path:
     return restore_dir
 
 
-ThreadRunner = Callable[[Callable[[], PipelineRunSummary]], Awaitable[PipelineRunSummary]]
+ThreadRunner = Callable[
+    [Callable[[], PipelineRunSummary]], Awaitable[PipelineRunSummary]
+]
 
 
 async def _run_with_prefect_concurrency(

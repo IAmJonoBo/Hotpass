@@ -109,7 +109,7 @@ Set the `DVC_REMOTE_CONFIGURED` environment variable:
 
 ```yaml
 env:
-  DVC_REMOTE_CONFIGURED: 'true'
+  DVC_REMOTE_CONFIGURED: "true"
 ```
 
 ## Recovery Workflow
@@ -117,11 +117,12 @@ env:
 To restore a specific dataset version:
 
 1. **Trigger workflow with specific version**:
+
    ```yaml
    workflow_dispatch:
      inputs:
        restore_version:
-         description: 'Dataset version to restore (e.g., 1.2.3)'
+         description: "Dataset version to restore (e.g., 1.2.3)"
          required: false
    ```
 

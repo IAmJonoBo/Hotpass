@@ -163,11 +163,13 @@ This downloads the data files tracked by the `.dvc` files in your repository.
 To restore data to a specific version:
 
 1. Check out the git commit with the desired data version:
+
    ```bash
    git checkout refined_data-v1.0.0
    ```
 
 2. Pull the data from the remote:
+
    ```bash
    dvc pull
    ```

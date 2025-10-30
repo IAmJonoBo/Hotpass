@@ -82,25 +82,25 @@ The doctor flags missing governance intent or data owners and injects safe defau
 
 ## Shared options
 
-| Option | Description |
-| --- | --- |
-| `--profile NAME` | Named profile (TOML/YAML) to apply before CLI flags. |
-| `--profile-search-path PATH` | Additional directory to search when resolving named profiles. Repeat the flag to merge multiple locations. |
-| `--config FILE` | TOML or JSON configuration file merged before CLI flags. Repeat to layer multiple files. |
-| `--log-format [rich \| json]` | Structured logging format. Rich enables interactive output and progress bars. |
-| `--sensitive-field FIELD` | Field name to mask in structured logs. Repeat for multiple masks. |
-| `--interactive` / `--no-interactive` | Control inline prompts when rich logging is enabled. |
-| `--qa-mode [default \| strict \| relaxed]` | Apply guardrail presets (strict enables additional validation; relaxed disables audit prompts). |
-| `--observability` / `--no-observability` | Toggle OpenTelemetry exporters regardless of profile defaults. |
-| `--telemetry-service-name TEXT` | Override the default service name reported to OpenTelemetry (default: `hotpass`). |
-| `--telemetry-environment TEXT` | Set the `deployment.environment` resource attribute (default: `HOTPASS_ENVIRONMENT`). |
-| `--telemetry-exporter NAME` | Append telemetry exporters (`console`, `noop`, `otlp`). Repeat to enable multiple exporters. |
-| `--telemetry-resource-attr KEY=VALUE` | Attach additional resource attributes. Repeat per key/value pair. |
-| `--telemetry-otlp-endpoint URL` | Configure the OTLP gRPC endpoint for trace export (for example `grpc://collector:4317`). |
-| `--telemetry-otlp-metrics-endpoint URL` | Override the OTLP metrics endpoint when different from the trace endpoint. |
-| `--telemetry-otlp-header KEY=VALUE` | Supply OTLP headers such as authentication tokens. Repeat per header. |
-| `--telemetry-otlp-insecure` / `--telemetry-otlp-secure` | Toggle TLS validation for OTLP exporters (default: secure). |
-| `--telemetry-otlp-timeout FLOAT` | Set the OTLP exporter timeout in seconds. |
+| Option                                                  | Description                                                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `--profile NAME`                                        | Named profile (TOML/YAML) to apply before CLI flags.                                                       |
+| `--profile-search-path PATH`                            | Additional directory to search when resolving named profiles. Repeat the flag to merge multiple locations. |
+| `--config FILE`                                         | TOML or JSON configuration file merged before CLI flags. Repeat to layer multiple files.                   |
+| `--log-format [rich \| json]`                           | Structured logging format. Rich enables interactive output and progress bars.                              |
+| `--sensitive-field FIELD`                               | Field name to mask in structured logs. Repeat for multiple masks.                                          |
+| `--interactive` / `--no-interactive`                    | Control inline prompts when rich logging is enabled.                                                       |
+| `--qa-mode [default \| strict \| relaxed]`              | Apply guardrail presets (strict enables additional validation; relaxed disables audit prompts).            |
+| `--observability` / `--no-observability`                | Toggle OpenTelemetry exporters regardless of profile defaults.                                             |
+| `--telemetry-service-name TEXT`                         | Override the default service name reported to OpenTelemetry (default: `hotpass`).                          |
+| `--telemetry-environment TEXT`                          | Set the `deployment.environment` resource attribute (default: `HOTPASS_ENVIRONMENT`).                      |
+| `--telemetry-exporter NAME`                             | Append telemetry exporters (`console`, `noop`, `otlp`). Repeat to enable multiple exporters.               |
+| `--telemetry-resource-attr KEY=VALUE`                   | Attach additional resource attributes. Repeat per key/value pair.                                          |
+| `--telemetry-otlp-endpoint URL`                         | Configure the OTLP gRPC endpoint for trace export (for example `grpc://collector:4317`).                   |
+| `--telemetry-otlp-metrics-endpoint URL`                 | Override the OTLP metrics endpoint when different from the trace endpoint.                                 |
+| `--telemetry-otlp-header KEY=VALUE`                     | Supply OTLP headers such as authentication tokens. Repeat per header.                                      |
+| `--telemetry-otlp-insecure` / `--telemetry-otlp-secure` | Toggle TLS validation for OTLP exporters (default: secure).                                                |
+| `--telemetry-otlp-timeout FLOAT`                        | Set the OTLP exporter timeout in seconds.                                                                  |
 
 ## Subcommands
 
@@ -192,15 +192,15 @@ Create or update Prefect deployments defined in the repository manifests.
 uv run hotpass deploy --flow refinement
 ```
 
-| Option               | Description                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------------ |
+| Option               | Description                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
 | `--flow TEXT`        | Deployment manifest identifier (repeat to register multiple manifests; default registers all). |
-| `--manifest-dir DIR` | Directory containing manifest files (default: `prefect/`).                                 |
-| `--build-image`      | Build the deployment image before registration.                                            |
-| `--push-image`       | Push the built image to the configured registry.                                           |
-| `--name TEXT`        | Override the Prefect deployment name for the selected manifests.                           |
-| `--schedule TEXT`    | Apply a cron schedule in UTC. Use `none`/`off` to disable scheduling.                       |
-| `--work-pool TEXT`   | Target Prefect work pool name when registering deployments.                                |
+| `--manifest-dir DIR` | Directory containing manifest files (default: `prefect/`).                                     |
+| `--build-image`      | Build the deployment image before registration.                                                |
+| `--push-image`       | Push the built image to the configured registry.                                               |
+| `--name TEXT`        | Override the Prefect deployment name for the selected manifests.                               |
+| `--schedule TEXT`    | Apply a cron schedule in UTC. Use `none`/`off` to disable scheduling.                          |
+| `--work-pool TEXT`   | Target Prefect work pool name when registering deployments.                                    |
 
 ### `dashboard`
 
@@ -225,9 +225,9 @@ Run configuration and environment diagnostics. The command honours shared option
 uv run hotpass doctor --config ./config/pipeline.quickstart.toml --autofix
 ```
 
-| Option       | Description                                                        |
-| ------------ | ------------------------------------------------------------------ |
-| `--autofix`  | Apply safe governance autofixes (for example default data owners). |
+| Option      | Description                                                        |
+| ----------- | ------------------------------------------------------------------ |
+| `--autofix` | Apply safe governance autofixes (for example default data owners). |
 
 The doctor reports Python version compatibility, input/output directory readiness, and the
 results of the underlying `ConfigDoctor` diagnostics. Exit code `1` indicates an error that
@@ -241,10 +241,10 @@ Scaffold a workspace with sample configuration, profile, and Prefect deployment 
 uv run hotpass init --path ./workspace
 ```
 
-| Option     | Description                                                         |
-| ---------- | ------------------------------------------------------------------- |
-| `--path`   | Destination directory for the generated workspace (default: `.`).   |
-| `--force`  | Overwrite files when the destination already contains artefacts.    |
+| Option    | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| `--path`  | Destination directory for the generated workspace (default: `.`). |
+| `--force` | Overwrite files when the destination already contains artefacts.  |
 
 The generated workspace includes `config/pipeline.quickstart.toml`, a matching profile,
 and a Prefect deployment sample that executes the quickstart pipeline.

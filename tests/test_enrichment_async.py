@@ -67,7 +67,9 @@ async def test_enrich_dataframe_with_websites_async_processes_in_parallel(monkey
     monkeypatch.setattr(enrichment, "extract_website_content", fake_extract)
 
     start = time.time()
-    result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=5)
+    result = await enrich_dataframe_with_websites_async(
+        df, website_column="website", concurrency=5
+    )
     elapsed = time.time() - start
 
     # With 5 tasks at 0.05s each, sequential would take 0.25s
@@ -112,7 +114,9 @@ async def test_enrich_dataframe_with_websites_async_respects_concurrency(monkeyp
 
     monkeypatch.setattr(enrichment, "extract_website_content", fake_extract)
 
-    result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
+    result = await enrich_dataframe_with_websites_async(
+        df, website_column="website", concurrency=3
+    )
 
     assert result["website_enriched"].sum() == 10
     # Due to the async nature and timing, we should see some concurrency
@@ -145,7 +149,9 @@ async def test_enrich_dataframe_with_websites_async_handles_exceptions(monkeypat
 
     monkeypatch.setattr(enrichment, "extract_website_content", fake_extract)
 
-    result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
+    result = await enrich_dataframe_with_websites_async(
+        df, website_column="website", concurrency=3
+    )
 
     # Good URLs should still be enriched
     assert result["website_enriched"].sum() == 2
@@ -167,7 +173,9 @@ async def test_enrich_dataframe_with_websites_async_missing_column():
     """Test async enrichment with missing column."""
     df = pd.DataFrame({"other_column": ["value"]})
 
-    result = await enrich_dataframe_with_websites_async(df, website_column="nonexistent")
+    result = await enrich_dataframe_with_websites_async(
+        df, website_column="nonexistent"
+    )
 
     assert result.equals(df)
 
@@ -233,7 +241,9 @@ async def test_enrich_dataframe_with_websites_async_with_null_values():
         }
 
     with patch.object(enrichment, "extract_website_content", fake_extract):
-        result = await enrich_dataframe_with_websites_async(df, website_column="website")
+        result = await enrich_dataframe_with_websites_async(
+            df, website_column="website"
+        )
 
     # Only 2 valid URLs should be processed
     assert call_count == 2
@@ -271,5 +281,7 @@ async def test_concurrent_wrapper_raises_in_event_loop():
     """Test that concurrent wrapper raises when called from event loop."""
     df = pd.DataFrame({"website": ["https://test.example"]})
 
-    with pytest.raises(RuntimeError, match="must not be invoked from an active event loop"):
+    with pytest.raises(
+        RuntimeError, match="must not be invoked from an active event loop"
+    ):
         enrich_dataframe_with_websites_concurrent(df, website_column="website")

@@ -105,7 +105,9 @@ class TelemetrySettings(BaseModel):
         if self.otlp_metrics_endpoint:
             otlp_payload["metrics_endpoint"] = self.otlp_metrics_endpoint
         if self.otlp_headers:
-            otlp_payload["headers"] = {str(k): str(v) for k, v in self.otlp_headers.items()}
+            otlp_payload["headers"] = {
+                str(k): str(v) for k, v in self.otlp_headers.items()
+            }
         if self.otlp_insecure:
             otlp_payload["insecure"] = True
         if self.otlp_timeout is not None:
@@ -642,9 +644,7 @@ class HotpassConfig(BaseModel):
 
         from hotpass.pipeline.features.config import EnhancedPipelineConfig
 
-        enable_observability = (
-            self.features.observability or self.telemetry.enabled
-        )
+        enable_observability = self.features.observability or self.telemetry.enabled
 
         enhanced = EnhancedPipelineConfig(
             enable_entity_resolution=self.features.entity_resolution,

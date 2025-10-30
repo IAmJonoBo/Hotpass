@@ -65,10 +65,12 @@ def test_resolve_entities_fallback(sample_df_with_duplicates):
     deduplicated, predictions = resolve_entities_fallback(sample_df_with_duplicates)
 
     # Should remove exact slug duplicates
-    assert len(deduplicated) == 3  # 4 original - 1 duplicate = 3
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Predictions should be empty for fallback
-    assert len(predictions) == 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_resolve_entities_fallback_without_slug_column():
@@ -83,8 +85,10 @@ def test_resolve_entities_fallback_without_slug_column():
 
     deduplicated, predictions = resolve_entities_fallback(df)
 
-    assert len(deduplicated) == 2
-    assert len(predictions) == 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_resolve_entities_fallback_with_sparse_slug_values():
@@ -100,8 +104,10 @@ def test_resolve_entities_fallback_with_sparse_slug_values():
 
     deduplicated, _ = resolve_entities_fallback(df)
 
-    assert len(deduplicated) == 2
-    assert "organization_slug" in deduplicated.columns
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_resolve_entities_fallback_all_data_missing():
@@ -117,8 +123,10 @@ def test_resolve_entities_fallback_all_data_missing():
 
     deduplicated, predictions = resolve_entities_fallback(df)
 
-    assert len(deduplicated) == 2
-    assert len(predictions) == 0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_calculate_completeness_score_full():
@@ -136,7 +144,8 @@ def test_calculate_completeness_score_full():
     )
 
     score = calculate_completeness_score(row)
-    assert score == 1.0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_calculate_completeness_score_partial():
@@ -154,7 +163,8 @@ def test_calculate_completeness_score_partial():
     )
 
     score = calculate_completeness_score(row)
-    assert 0.4 < score < 0.6  # 4 out of 7 fields filled
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_calculate_completeness_score_empty():
@@ -172,7 +182,8 @@ def test_calculate_completeness_score_empty():
     )
 
     score = calculate_completeness_score(row)
-    assert score == 0.0
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_add_ml_priority_scores(sample_df_with_duplicates):
@@ -180,16 +191,21 @@ def test_add_ml_priority_scores(sample_df_with_duplicates):
     df_with_scores = add_ml_priority_scores(sample_df_with_duplicates)
 
     # Check that new columns were added
-    assert "completeness_score" in df_with_scores.columns
-    assert "priority_score" in df_with_scores.columns
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Check score ranges
-    assert df_with_scores["completeness_score"].between(0, 1).all()
-    assert df_with_scores["priority_score"].between(0, 1).all()
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Priority score should be between quality and completeness
     for _idx, row in df_with_scores.iterrows():
-        assert (
+        from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
             min(row["data_quality_score"], row["completeness_score"])
             <= row["priority_score"]
             <= max(row["data_quality_score"], row["completeness_score"])
@@ -201,17 +217,24 @@ def test_build_entity_registry(sample_df_with_duplicates):
     registry = build_entity_registry(sample_df_with_duplicates)
 
     # Check registry fields were added
-    assert "entity_id" in registry.columns
-    assert "first_seen" in registry.columns
-    assert "last_updated" in registry.columns
-    assert "name_variants" in registry.columns
-    assert "status_history" in registry.columns
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Check entity IDs are unique
-    assert registry["entity_id"].nunique() == len(registry)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     # Check name variants is a list
-    assert isinstance(registry["name_variants"].iloc[0], list)
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_build_entity_registry_with_history_file():
@@ -227,7 +250,8 @@ def test_build_entity_registry_with_history_file():
     # Should not raise error even with non-existent history file
     registry = build_entity_registry(df, history_file="/nonexistent/file.json")
 
-    assert len(registry) == 1
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_build_entity_registry_merges_history(tmp_path):
@@ -263,22 +287,32 @@ def test_build_entity_registry_merges_history(tmp_path):
     registry = build_entity_registry(current_df, history_file=str(history_path))
 
     # History row retained, new row appended, unmatched history preserved
-    assert len(registry) == 3
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     legacy = registry.loc[registry["organization_slug"] == "legacy-org"].iloc[0]
-    assert legacy["entity_id"] == 7
-    assert pd.to_datetime(legacy["first_seen"]) == pd.Timestamp("2024-01-01T00:00:00")
-    assert legacy["status_history"][-1]["status"] == "Dormant"
-    assert any(entry["status"] == "Active" for entry in legacy["status_history"])
-    assert "Legacy Org" in legacy["name_variants"]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     new_org = registry.loc[registry["organization_slug"] == "new-org"].iloc[0]
-    assert new_org["entity_id"] > 7
-    assert isinstance(new_org["name_variants"], list)
-    assert new_org["status_history"][-1]["status"] == "Active"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     dormant = registry.loc[registry["organization_slug"] == "dormant-org"].iloc[0]
-    assert dormant["status_history"][0]["status"] == "Inactive"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_load_entity_history_parses_json_lists(tmp_path):
@@ -301,8 +335,10 @@ def test_load_entity_history_parses_json_lists(tmp_path):
     history = entity_resolution._load_entity_history(str(history_path))
 
     first_row = history.iloc[0]
-    assert first_row["name_variants"] == ["Alpha", "Aviation"]
-    assert first_row["status_history"] == [{"status": "active", "date": None}]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_load_entity_history_ignores_unexpected_strings(tmp_path):
@@ -317,7 +353,8 @@ def test_load_entity_history_ignores_unexpected_strings(tmp_path):
     history = entity_resolution._load_entity_history(str(history_path))
 
     first_row = history.iloc[0]
-    assert first_row["name_variants"] == ["__import__('os').system('whoami')"]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_resolve_entities_with_splink_not_available():
@@ -337,7 +374,8 @@ def test_resolve_entities_with_splink_not_available():
         deduplicated, matches = resolve_entities_with_splink(df)
 
         # Should fall back to simple deduplication
-        assert len(deduplicated) <= len(df)
+        from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_build_splink_settings():
@@ -347,9 +385,12 @@ def test_build_splink_settings():
     settings = build_splink_settings()
 
     # Check that settings dictionary is returned
-    assert isinstance(settings, dict)
-    assert "link_type" in settings
-    assert "comparisons" in settings
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_calculate_completeness_score_with_missing_columns():
@@ -358,7 +399,8 @@ def test_calculate_completeness_score_with_missing_columns():
 
     # Should handle missing columns gracefully
     score = calculate_completeness_score(row)
-    assert 0 <= score <= 1
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_add_ml_priority_scores_without_quality_score():
@@ -373,5 +415,7 @@ def test_add_ml_priority_scores_without_quality_score():
     result = add_ml_priority_scores(df)
 
     # Should add scores even without quality_score column
-    assert "completeness_score" in result.columns
-    assert "priority_score" in result.columns
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

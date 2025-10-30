@@ -106,7 +106,9 @@ def _normalise_tag_value(value: Any) -> str | None:
     return repr(value)
 
 
-def _iter_artifact_entries(artifacts: Mapping[str, Path] | None) -> Iterable[tuple[str, Path]]:
+def _iter_artifact_entries(
+    artifacts: Mapping[str, Path] | None,
+) -> Iterable[tuple[str, Path]]:
     """Yield artifact entries that exist on disk."""
 
     if not artifacts:

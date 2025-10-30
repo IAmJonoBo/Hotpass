@@ -124,17 +124,23 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         path
         for path, wrote in (
             _write_file(
-                target / "config" / "pipeline.quickstart.toml", SAMPLE_CONFIG, namespace.force
+                target / "config" / "pipeline.quickstart.toml",
+                SAMPLE_CONFIG,
+                namespace.force,
             ),
             _write_file(
-                target / "config" / "profiles" / "quickstart.toml", SAMPLE_PROFILE, namespace.force
+                target / "config" / "profiles" / "quickstart.toml",
+                SAMPLE_PROFILE,
+                namespace.force,
             ),
             _write_file(
                 target / "prefect" / "deployments" / "quickstart.yaml",
                 SAMPLE_PREFECT_DEPLOYMENT,
                 namespace.force,
             ),
-            _write_file(target / "data" / "README.md", SAMPLE_DATA_README, namespace.force),
+            _write_file(
+                target / "data" / "README.md", SAMPLE_DATA_README, namespace.force
+            ),
         )
         if wrote
     )

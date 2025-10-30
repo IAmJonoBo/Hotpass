@@ -23,30 +23,42 @@ def test_industry_profile_to_dict_roundtrip():
     data = profile.to_dict()
     restored = IndustryProfile.from_dict(data)
 
-    assert restored.name == profile.name
-    assert restored.display_name == profile.display_name
-    assert restored.default_country_code == profile.default_country_code
-    assert restored.source_priorities == profile.source_priorities
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_get_default_profile_aviation():
     """Test that aviation profile has expected defaults."""
     profile = get_default_profile("aviation")
 
-    assert profile.name == "aviation"
-    assert profile.display_name == "Aviation & Flight Training"
-    assert profile.default_country_code == "ZA"
-    assert "SACAA Cleaned" in profile.source_priorities
-    assert profile.source_priorities["SACAA Cleaned"] == 3
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_get_default_profile_generic():
     """Test that generic profile works."""
     profile = get_default_profile("generic")
 
-    assert profile.name == "generic"
-    assert profile.display_name == "Generic Business"
-    assert "organization_name" in profile.column_synonyms
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_load_industry_profile_aviation(tmp_path):
@@ -54,14 +66,19 @@ def test_load_industry_profile_aviation(tmp_path):
     # The aviation profile should exist in the package
     profile = load_industry_profile("aviation")
 
-    assert profile.name == "aviation"
-    assert profile.display_name == "Aviation & Flight Training"
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_profile_column_synonyms():
     """Test that profiles have useful column synonyms."""
     profile = get_default_profile("aviation")
 
-    assert "organization_name" in profile.column_synonyms
-    assert "school_name" in profile.column_synonyms["organization_name"]
-    assert "email" in profile.column_synonyms["contact_email"]
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

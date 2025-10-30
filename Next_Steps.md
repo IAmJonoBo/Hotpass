@@ -31,7 +31,6 @@
 - [x] 2025-10-31 — Tightened telemetry bootstrap/registry strict mypy coverage and expanded orchestration async regression tests to exercise concurrency fallbacks and telemetry injection.【F:pyproject.toml†L118-L135】【F:src/hotpass/telemetry/bootstrap.py†L15-L68】【F:src/hotpass/telemetry/registry.py†L17-L219】【F:tests/test_orchestration.py†L302-L353】【F:tests/test_telemetry_bootstrap.py†L15-L60】
 - [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
 
-
 ## Deliverables
 
 - [ ] Marquez lineage smoke evidence captured with screenshots/log export following quickstart (Owner: QA & Engineering).【b3de0d†L1-L42】

@@ -38,7 +38,9 @@ class _Session:
         self._payloads = payloads
         self.request_count = 0
 
-    def get(self, url: str, headers: dict[str, str], timeout: float) -> _Response:  # noqa: ARG002
+    def get(
+        self, url: str, headers: dict[str, str], timeout: float
+    ) -> _Response:  # noqa: ARG002
         self.request_count += 1
         try:
             payload = next(self._payloads)
@@ -140,7 +142,9 @@ def test_verifier_succeeds_when_runners_idle() -> None:
 
 
 def test_verifier_raises_when_timeout_expires() -> None:
-    payloads = iter([{"total_count": 1, "runners": [{"busy": True, "name": "hotpass-arc-1"}]}] * 4)
+    payloads = iter(
+        [{"total_count": 1, "runners": [{"busy": True, "name": "hotpass-arc-1"}]}] * 4
+    )
     command_results = iter(["runner-pod", "runner-pod"])  # pods never drain
     clock_values = iter([0.0, 1.0, 2.0, 3.1])
 
@@ -221,8 +225,12 @@ def test_identity_verifier_prefers_boto3_when_available() -> None:
         def __init__(self, profile_name: str | None = None) -> None:
             captured["profile"] = profile_name
 
-        def client(self, service_name: str, region_name: str | None = None) -> _StubClient:
-            expect(service_name == "sts", "Identity verifier should request an STS client")
+        def client(
+            self, service_name: str, region_name: str | None = None
+        ) -> _StubClient:
+            expect(
+                service_name == "sts", "Identity verifier should request an STS client"
+            )
             captured["region"] = region_name
             return _StubClient(profile=captured.get("profile"))
 
@@ -236,7 +244,9 @@ def test_identity_verifier_prefers_boto3_when_available() -> None:
     ).verify()
 
     expect(summary.source == "boto3", "Verifier should prefer boto3 when available")
-    expect(summary.account == "123456789012", "Account should surface from STS response")
+    expect(
+        summary.account == "123456789012", "Account should surface from STS response"
+    )
     expect(captured.get("region") == "eu-west-1", "Region should be forwarded to boto3")
     expect(captured.get("profile") == "staging", "Profile should be forwarded to boto3")
 
@@ -268,7 +278,9 @@ def test_identity_verifier_falls_back_to_cli() -> None:
 
     expect(summary.source == "aws-cli", "Fallback should surface CLI as the source")
     expect(len(command.calls) == 1, "CLI fallback should run exactly once")
-    expect(command.calls[0][0] == "aws", "CLI fallback should invoke the aws executable")
+    expect(
+        command.calls[0][0] == "aws", "CLI fallback should invoke the aws executable"
+    )
     expect("--profile" in command.calls[0], "Profile should be passed to the CLI")
     expect("--region" in command.calls[0], "Region should be passed to the CLI")
 
@@ -298,7 +310,10 @@ def test_identity_verifier_handles_generic_import_error() -> None:
         run_command=command,
     ).verify()
 
-    expect(summary.source == "aws-cli", "Generic import failures should fall back to the CLI")
+    expect(
+        summary.source == "aws-cli",
+        "Generic import failures should fall back to the CLI",
+    )
     expect(len(command.calls) == 1, "CLI should execute once during fallback")
 
 
@@ -321,8 +336,13 @@ def test_identity_verifier_raises_when_cli_missing() -> None:
         error = exc
 
     expect(error is not None, "Missing CLI should raise an exception")
-    expect(isinstance(error, RuntimeError), "Missing CLI should surface as a runtime error")
-    expect("aws cli" in str(error).lower(), "Error message should mention AWS CLI availability")
+    expect(
+        isinstance(error, RuntimeError), "Missing CLI should surface as a runtime error"
+    )
+    expect(
+        "aws cli" in str(error).lower(),
+        "Error message should mention AWS CLI availability",
+    )
 
 
 def test_cli_reports_identity_in_json_mode(tmp_path: Path) -> None:
@@ -338,7 +358,9 @@ def test_cli_reports_identity_in_json_mode(tmp_path: Path) -> None:
     captured: dict[str, Any] = {}
 
     class _StubIdentityVerifier:
-        def __init__(self, *, region: str | None, profile: str | None, **_: Any) -> None:
+        def __init__(
+            self, *, region: str | None, profile: str | None, **_: Any
+        ) -> None:
             captured["region"] = region
             captured["profile"] = profile
 
@@ -384,7 +406,10 @@ def test_cli_reports_identity_in_json_mode(tmp_path: Path) -> None:
     payload = json.loads(stdout.getvalue() or "{}")
     expect(payload.get("success") is True, "JSON payload should indicate success")
     identity = payload.get("identity") or {}
-    expect(identity.get("source") == "stub", "Identity details should be included in output")
+    expect(
+        identity.get("source") == "stub",
+        "Identity details should be included in output",
+    )
     expect(captured.get("region") == "eu-west-1", "Region flag should be forwarded")
     expect(captured.get("profile") == "staging", "Profile flag should be forwarded")
     expect(stderr.getvalue() == "", "No stderr output expected on success")
@@ -403,7 +428,9 @@ def test_cli_treats_empty_region_as_none(tmp_path: Path) -> None:
     captured: dict[str, Any] = {}
 
     class _StubIdentityVerifier:
-        def __init__(self, *, region: str | None, profile: str | None, **_: Any) -> None:
+        def __init__(
+            self, *, region: str | None, profile: str | None, **_: Any
+        ) -> None:
             captured["region"] = region
             captured["profile"] = profile
 
@@ -490,7 +517,9 @@ def test_cli_reports_error_when_identity_fails(tmp_path: Path) -> None:
     finally:
         lifecycle.AwsIdentityVerifier = original_identity  # type: ignore[misc]
 
-    expect(exit_code == 1, "CLI should exit with failure when identity verification fails")
+    expect(
+        exit_code == 1, "CLI should exit with failure when identity verification fails"
+    )
     expect(
         "Runner scale set is unhealthy" in stdout.getvalue(),
         "CLI should report unhealthy state on failure",

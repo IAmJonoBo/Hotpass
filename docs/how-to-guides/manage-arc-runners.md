@@ -81,7 +81,7 @@ Install dependencies for the smoke workflow with `uv sync --extra orchestration 
 OIDC verification step prefers before falling back to the AWS CLI.
 
 > ℹ️ Set a repository or organisation variable named `AWS_REGION` before dispatching the workflow. The smoke test validates this
->    variable explicitly and fails early with a clear error if it is absent.
+> variable explicitly and fails early with a clear error if it is absent.
 
 ## 4. Validate runner lifecycle
 

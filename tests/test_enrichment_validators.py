@@ -36,11 +36,16 @@ def test_email_validator_prefers_smtp_probe(smtp_validator: EmailValidator) -> N
 
     result = smtp_validator.validate("alice@hotpass.example")
 
-    assert result is not None
-    assert result.smtp_status == ValidationStatus.UNDELIVERABLE
-    assert result.status is ValidationStatus.UNDELIVERABLE
-    assert result.reason == "smtp_denied"
-    assert pytest.approx(result.confidence, rel=1e-3) == 0.25
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
 
 def test_contact_validation_service_combines_channels(
@@ -55,15 +60,21 @@ def test_contact_validation_service_combines_channels(
         country_code="ZA",
     )
 
-    assert summary.email is not None
-    assert summary.phone is not None
-    assert summary.overall_confidence() > 0
-    assert summary.deliverability_score() >= summary.email_confidence() / 2
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     # Second run should reuse cached results
     summary_again = service.validate_contact(
         email="alice@hotpass.example",
         phone="+27123456789",
         country_code="ZA",
     )
-    assert summary_again.email is summary.email
-    assert summary_again.phone is summary.phone
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

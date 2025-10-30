@@ -102,9 +102,7 @@ def apply_excel_formatting(
     # workbook to reflect Pandas' own rounding semantics (banker's rounding),
     # so we explicitly coerce values before applying any styling.
     datetime_columns = [
-        column
-        for column in df.columns
-        if is_datetime64_any_dtype(df[column])
+        column for column in df.columns if is_datetime64_any_dtype(df[column])
     ]
     for column in datetime_columns:
         col_index = df.columns.get_loc(column) + 1

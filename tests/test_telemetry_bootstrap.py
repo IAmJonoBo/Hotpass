@@ -73,19 +73,28 @@ def test_telemetry_session_initializes_and_shuts_down(monkeypatch: pytest.Monkey
         options,
         additional_attributes={"hotpass.command": "test"},
     ) as context:
-        expect(context is metrics, "Telemetry session should yield metrics from bootstrap.")
+        expect(
+            context is metrics, "Telemetry session should yield metrics from bootstrap."
+        )
 
-    expect(shutdown_mock.call_count == 1, "Shutdown should be called when session exits.")
+    expect(
+        shutdown_mock.call_count == 1, "Shutdown should be called when session exits."
+    )
 
     stored = captured["options"]
-    expect(isinstance(stored, TelemetryBootstrapOptions), "Bootstrap should receive options.")
+    expect(
+        isinstance(stored, TelemetryBootstrapOptions),
+        "Bootstrap should receive options.",
+    )
     expect(
         captured["attributes"].get("hotpass.command") == "test",
         "Additional telemetry attributes should pass through.",
     )
 
 
-def test_telemetry_session_skip_bootstrap_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_telemetry_session_skip_bootstrap_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     options = TelemetryBootstrapOptions(enabled=False)
     bootstrap_mock = Mock(name="bootstrap")
     shutdown_mock = Mock(name="shutdown")
@@ -102,5 +111,10 @@ def test_telemetry_session_skip_bootstrap_when_disabled(monkeypatch: pytest.Monk
     with telemetry_session(options) as context:
         expect(context is None, "Disabled telemetry session should yield None.")
 
-    expect(bootstrap_mock.call_count == 0, "Bootstrap should not be called when disabled.")
-    expect(shutdown_mock.call_count == 0, "Shutdown should not run when telemetry is disabled.")
+    expect(
+        bootstrap_mock.call_count == 0, "Bootstrap should not be called when disabled."
+    )
+    expect(
+        shutdown_mock.call_count == 0,
+        "Shutdown should not run when telemetry is disabled.",
+    )

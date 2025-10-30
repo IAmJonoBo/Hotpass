@@ -17,7 +17,12 @@ def expect(condition: bool, message: str) -> None:
 
 
 def _load_compose() -> dict[str, Any]:
-    compose_path = Path(__file__).resolve().parents[2] / "infra" / "marquez" / "docker-compose.yaml"
+    compose_path = (
+        Path(__file__).resolve().parents[2]
+        / "infra"
+        / "marquez"
+        / "docker-compose.yaml"
+    )
     payload = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
     expect(isinstance(payload, dict), "Compose file should parse into a mapping.")
     return payload
@@ -30,7 +35,10 @@ def test_marquez_compose_exposes_expected_services() -> None:
     services = payload.get("services", {})
 
     expect("marquez" in services, "Compose stack should include the Marquez service.")
-    expect("marquez-db" in services, "Compose stack should include the PostgreSQL backing store.")
+    expect(
+        "marquez-db" in services,
+        "Compose stack should include the PostgreSQL backing store.",
+    )
 
     marquez = services.get("marquez", {})
     depends_on = marquez.get("depends_on") or {}
@@ -49,9 +57,13 @@ def test_marquez_compose_exposes_expected_services() -> None:
 
     db_service = services.get("marquez-db", {})
     db_env = db_service.get("environment", {})
-    expect(db_env.get("POSTGRES_DB") == "marquez", "Database name should be set for Marquez.")
     expect(
-        db_env.get("POSTGRES_USER") == "marquez", "Database user should match the Marquez defaults."
+        db_env.get("POSTGRES_DB") == "marquez",
+        "Database name should be set for Marquez.",
+    )
+    expect(
+        db_env.get("POSTGRES_USER") == "marquez",
+        "Database user should match the Marquez defaults.",
     )
     expect(
         db_env.get("POSTGRES_PASSWORD") == "marquez",
@@ -65,7 +77,10 @@ def test_marquez_compose_declares_persistent_volume() -> None:
     payload = _load_compose()
     volumes = payload.get("volumes", {})
 
-    expect("marquez_db" in volumes, "Persistent volume for Marquez database should be declared.")
+    expect(
+        "marquez_db" in volumes,
+        "Persistent volume for Marquez database should be declared.",
+    )
     volume_def = volumes.get("marquez_db", {})
     expect(
         isinstance(volume_def, dict),

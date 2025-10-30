@@ -3,7 +3,7 @@ name: ARC runner smoke test
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
 
 permissions:
   id-token: write

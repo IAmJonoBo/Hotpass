@@ -70,11 +70,23 @@ def sample_result() -> PipelineResult:
 def test_enhanced_pipeline_config_defaults():
     config = EnhancedPipelineConfig()
 
-    expect(not config.enable_entity_resolution, "Entity resolution should be disabled by default.")
-    expect(not config.enable_geospatial, "Geospatial enrichment should be disabled by default.")
-    expect(not config.enable_enrichment, "Web enrichment should be disabled by default.")
-    expect(not config.enable_compliance, "Compliance checks should be disabled by default.")
-    expect(not config.enable_observability, "Observability should be disabled by default.")
+    expect(
+        not config.enable_entity_resolution,
+        "Entity resolution should be disabled by default.",
+    )
+    expect(
+        not config.enable_geospatial,
+        "Geospatial enrichment should be disabled by default.",
+    )
+    expect(
+        not config.enable_enrichment, "Web enrichment should be disabled by default."
+    )
+    expect(
+        not config.enable_compliance, "Compliance checks should be disabled by default."
+    )
+    expect(
+        not config.enable_observability, "Observability should be disabled by default."
+    )
     expect(
         config.entity_resolution_threshold == 0.75,
         "Default entity resolution threshold should be 0.75.",
@@ -115,7 +127,9 @@ def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
     captured: dict[str, object] = {}
 
     def _fake_bootstrap(
-        options: TelemetryBootstrapOptions, *, additional_attributes: Mapping[str, str] | None
+        options: TelemetryBootstrapOptions,
+        *,
+        additional_attributes: Mapping[str, str] | None,
     ) -> Mock:
         captured["options"] = options
         captured["attributes"] = dict(additional_attributes or {})
@@ -137,7 +151,9 @@ def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
     )
     expect(options.enabled is True, "Telemetry should be enabled when requested.")
     expect(options.environment == "qa", "Environment override should propagate.")
-    expect(options.service_name == "hotpass", "Default service name should be 'hotpass'.")
+    expect(
+        options.service_name == "hotpass", "Default service name should be 'hotpass'."
+    )
     expect(
         options.resource_attributes["hotpass.profile"] == "aviation",
         "Profile attribute should propagate to resource attributes.",

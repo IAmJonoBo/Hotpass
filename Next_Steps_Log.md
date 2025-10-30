@@ -3,6 +3,7 @@
 _Updated 2025-10-29_
 
 ## Tasks
+
 - [x] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
 - [x] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/pipeline/fixtures/stage_inputs.py†L1-L111】
 - [x] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).【F:tests/cli/test_progress.py†L1-L149】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
@@ -21,6 +22,7 @@ _Updated 2025-10-29_
 - [x] **2025-10-28 · Engineering (Phase 4)** — Finalise MLflow tracking and registry (Phase 4 T4.1 complete; PR `mlflow/lifecycle`).【d9a97b†L34-L37】【7786e5†L75-L91】
 
 ## Steps
+
 - [x] Bootstrap environment with `pip install -e .[dev]` (2025-10-28).
 - [x] Baseline QA audit (`pytest`, `ruff`, `mypy`, `bandit`, `detect-secrets`, `uv build`) — commands rerun on 2025-10-29; see Quality Gates for current failures by gate.
 - [x] Repository context review — README, doc structure (Diátaxis), governance roadmap, CI workflows, CODEOWNERS, and PR template catalogued to confirm documentation strategy + quality expectations (2025-10-29).【376708†L1-L40】【153305†L1-L43】【d7a74a†L1-L120】【a24b00†L1-L5】【d59c13†L1-L12】【8695aa†L1-L26】
@@ -37,7 +39,7 @@ _Updated 2025-10-29_
 - [x] Exercised telemetry-focused pytest suites (`tests/test_pipeline_enhanced.py`, `tests/test_telemetry_bootstrap.py`, `tests/cli/test_telemetry_options.py`) to validate bootstrap wiring (2025-12-02).【0e3de5†L1-L87】
 - [x] Added Prefect deploy CLI integration coverage ensuring manifest overrides map to runner registration (2025-12-27).【F:tests/cli/test_deploy_command.py†L1-L78】
 - [x] Automated Marquez stack validation and lineage environment guardrails via targeted tests (2025-12-27).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
-- [x] Cleared lint gate regressions by sorting Prefect exports and normalising pyarrow stubs; reran targeted CLI/lineage tests to confirm behaviour (2025-10-29).【F:src/hotpass/prefect/__init__.py†L1-L19】【F:tests/test_lineage.py†L1-L40】【F:tests/cli/test_deploy_command.py†L1-L40】【F:tests/cli/test_run_lineage_integration.py†L1-L40】【F:tests/data_sources/test_acquisition_agents.py†L1-L33】【F:tests/fixtures/lineage.py†L1-L32】【F:tests/test_orchestration_lineage.py†L1-L34】【d33bd5†L1-L113】
+- [x] Cleared lint gate regressions by sorting Prefect exports and normalising pyarrow stubs; reran targeted CLI/lineage tests to confirm behaviour (2025-10-29).【F:src/hotpass/prefect/**init**.py†L1-L19】【F:tests/test_lineage.py†L1-L40】【F:tests/cli/test_deploy_command.py†L1-L40】【F:tests/cli/test_run_lineage_integration.py†L1-L40】【F:tests/data_sources/test_acquisition_agents.py†L1-L33】【F:tests/fixtures/lineage.py†L1-L32】【F:tests/test_orchestration_lineage.py†L1-L34】【d33bd5†L1-L113】
 - [x] Pair platform + QA to run ARC lifecycle verification via `scripts/arc/verify_runner_lifecycle.py` and GitHub workflow smoke job ahead of PR `infra/arc-rollout` (target 2025-12-18). Snapshot scenario exercised locally with recorded output; live cluster follow-up remains on the Platform roadmap.【F:scripts/arc/examples/hotpass_arc_idle.json†L1-L12】【e5372e†L1-L3】
 - [x] Added OIDC identity verification to the ARC smoke workflow and lifecycle script so staging rehearsals confirm AWS role assumptions alongside runner drain (2025-12-29).【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
 - [x] Hardened ARC identity verification to tolerate missing boto3 installations and absent AWS CLI binaries, added targeted regression coverage, and enforced GitHub region configuration validation ahead of staging rehearsals (2025-12-30).【F:scripts/arc/verify_runner_lifecycle.py†L1-L220】【F:tests/scripts/test_arc_runner_verifier.py†L1-L340】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L80】【F:docs/how-to-guides/manage-arc-runners.md†L70-L110】
@@ -46,6 +48,7 @@ _Updated 2025-10-29_
 - [x] Delivered CLI doctor/init onboarding workflow with targeted QA run and documentation updates (2025-12-08).【f5a08d†L1-L82】【e4f00a†L1-L3】【bf7d68†L1-L2】【cce017†L1-L23】【549e24†L1-L59】
 
 ## Deliverables
+
 - [x] Dataset contract module under `src/hotpass/contracts/` with Pydantic and Pandera coverage (Owner: Engineering).
 - [x] Deterministic schema regeneration utilities syncing `schemas/*.json` and models (Owner: Engineering).
 - [x] `docs/reference/schemas.md` generated from contracts plus toctree registration (Owner: Docs/Engineering).
@@ -56,14 +59,15 @@ _Updated 2025-10-29_
 - [x] Modular pipeline orchestration regression coverage and CLI progress high-volume fixture available for QA rehearsals (Owner: QA & Engineering).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
 
 ## Quality Gates
-  - [x] Targeted regression suite covers boto3 import failures, missing AWS CLI binaries, and CLI error handling (`uv run pytest tests/scripts/test_arc_runner_verifier.py`).【F:tests/scripts/test_arc_runner_verifier.py†L1-L360】
+
+- [x] Targeted regression suite covers boto3 import failures, missing AWS CLI binaries, and CLI error handling (`uv run pytest tests/scripts/test_arc_runner_verifier.py`).【F:tests/scripts/test_arc_runner_verifier.py†L1-L360】
 - [x] Tests — `uv run pytest --cov=src --cov=tests` (pass: Prefect deployment stubs restored module state; CLI overrides now exercised).【da4ec2†L1-L120】【F:tests/test_deployment_specs.py†L1-L269】
 - [x] Tests — `uv run pytest tests/property/test_ingestion_properties.py` (pass; exercises ingestion deduplication/idempotency under messy fixtures).【7d0f96†L1-L13】
 - [x] Tests (doctor/init) — `pytest tests/cli/test_doctor_command.py tests/cli/test_init_command.py` (pass; targeted coverage for new subcommands).【f5a08d†L1-L82】
 - [x] Tests (telemetry focus) — `uv run pytest tests/test_pipeline_enhanced.py tests/test_telemetry_bootstrap.py tests/cli/test_telemetry_options.py` (pass; validates bootstrap wiring).【0e3de5†L1-L87】
 - [x] Tests — `pytest tests/cli/test_deploy_command.py tests/infrastructure/test_marquez_stack.py tests/test_lineage.py` (pass; validates Prefect deployment overrides and Marquez stack configuration).【F:tests/cli/test_deploy_command.py†L1-L78】【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
   - [x] Targeted format applied to new CLI/test modules via `ruff format` (pass).【d7b838†L1-L3】
-- [x] Lint — `uv run ruff check` (pass: sorted Prefect exports and replaced `setattr` pyarrow stubs to satisfy lint).【5809ed†L1-L2】【F:src/hotpass/prefect/__init__.py†L1-L19】【F:tests/test_lineage.py†L1-L32】【F:tests/cli/test_deploy_command.py†L1-L40】【F:tests/cli/test_run_lineage_integration.py†L1-L40】【F:tests/data_sources/test_acquisition_agents.py†L1-L33】【F:tests/fixtures/lineage.py†L1-L32】【F:tests/test_orchestration_lineage.py†L1-L34】
+- [x] Lint — `uv run ruff check` (pass: sorted Prefect exports and replaced `setattr` pyarrow stubs to satisfy lint).【5809ed†L1-L2】【F:src/hotpass/prefect/**init**.py†L1-L19】【F:tests/test_lineage.py†L1-L32】【F:tests/cli/test_deploy_command.py†L1-L40】【F:tests/cli/test_run_lineage_integration.py†L1-L40】【F:tests/data_sources/test_acquisition_agents.py†L1-L33】【F:tests/fixtures/lineage.py†L1-L32】【F:tests/test_orchestration_lineage.py†L1-L34】
   - [x] Verified lineage and deployment CLI suites after lint-driven refactors (`uv run pytest tests/cli/test_deploy_command.py tests/cli/test_run_lineage_integration.py tests/test_lineage.py tests/data_sources/test_acquisition_agents.py tests/test_orchestration_lineage.py`).【d33bd5†L1-L113】
   - [x] Targeted mypy for doctor/init modules and tests (pass).【bf7d68†L1-L2】
   - [x] Targeted bandit scan for doctor/init modules (pass).【cce017†L1-L23】

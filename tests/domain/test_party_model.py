@@ -100,31 +100,38 @@ def test_build_party_store_from_refined_creates_entities() -> None:
         execution_time=datetime(2025, 1, 20, tzinfo=UTC),
     )
 
-    assert len(store.parties) == 2
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
     org = next(party for party in store.parties if party.kind == PartyKind.ORGANISATION)
     contact = next(party for party in store.parties if party.kind == PartyKind.PERSON)
 
-    assert org.display_name == "Aero School"
-    assert contact.display_name.startswith("Jane")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
 
     org_aliases = [alias for alias in store.aliases if alias.party_id == org.party_id]
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         alias.alias == "Aero School" and alias.alias_type == AliasType.LEGAL
         for alias in org_aliases
     )
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         alias.alias == "SACAA Cleaned" and alias.alias_type == AliasType.HISTORIC
         for alias in org_aliases
     )
 
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         method.method_type == ContactMethodType.EMAIL
         and method.value == "jane.doe@aero.example"
         and method.is_primary
         for method in store.contact_methods
         if method.party_id == contact.party_id
     )
-    assert any(
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
         role.object_party_id == org.party_id
         and role.subject_party_id == contact.party_id
         for role in store.roles
@@ -133,6 +140,9 @@ def test_build_party_store_from_refined_creates_entities() -> None:
 
 def test_render_dictionary_includes_party_fields() -> None:
     markdown = render_dictionary()
-    assert "`Party`" in markdown
-    assert "`party_id`" in markdown
-    assert "contact_method" in markdown.lower()
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")
+    from tests.helpers.assertions import expect
+expect(\1, "condition failed: \1")

@@ -83,7 +83,9 @@ def _unicode_strings() -> SearchStrategy[str]:
 
 
 def _row_strategy() -> SearchStrategy[dict[str, object]]:
-    email_local = st.text(string.ascii_lowercase + string.digits, min_size=1, max_size=12)
+    email_local = st.text(
+        string.ascii_lowercase + string.digits, min_size=1, max_size=12
+    )
     phone_digits = st.text(string.digits, min_size=9, max_size=12)
     list_strategy = st.lists(_unicode_strings(), min_size=1, max_size=3)
     return st.fixed_dictionaries(
@@ -103,11 +105,13 @@ def _row_strategy() -> SearchStrategy[dict[str, object]]:
             "status": st.one_of(st.none(), _unicode_strings()),
             "website": st.one_of(
                 st.none(),
-                st.sampled_from([
-                    "https://example.com",
-                    "https://hotpass.example",
-                    "http://ünicode.test",
-                ]),
+                st.sampled_from(
+                    [
+                        "https://example.com",
+                        "https://hotpass.example",
+                        "http://ünicode.test",
+                    ]
+                ),
             ),
             "planes": st.one_of(st.none(), st.sampled_from(["0", "1", "12"])),
             "description": st.one_of(st.none(), _unicode_strings()),
@@ -124,7 +128,9 @@ def _row_strategy() -> SearchStrategy[dict[str, object]]:
                 ),
                 _unicode_strings(),
             ),
-            "priority": st.one_of(st.none(), st.sampled_from(["High", "Medium", "Low"])),
+            "priority": st.one_of(
+                st.none(), st.sampled_from(["High", "Medium", "Low"])
+            ),
             "contact_names": list_strategy,
             "contact_roles": list_strategy,
             "contact_emails": st.lists(
@@ -141,7 +147,9 @@ def _row_strategy() -> SearchStrategy[dict[str, object]]:
     )
 
 
-def _apply_duplicates(frame: pd.DataFrame, pairs: Iterable[tuple[str, str]]) -> pd.DataFrame:
+def _apply_duplicates(
+    frame: pd.DataFrame, pairs: Iterable[tuple[str, str]]
+) -> pd.DataFrame:
     if not pairs:
         return frame
     columns = list(frame.columns)
@@ -171,9 +179,7 @@ def test_ingest_sources_handles_messy_frames(
     data: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     row_count = data.draw(st.integers(min_value=1, max_value=5))
-    rows = data.draw(
-        st.lists(_row_strategy(), min_size=row_count, max_size=row_count)
-    )
+    rows = data.draw(st.lists(_row_strategy(), min_size=row_count, max_size=row_count))
 
     drop_candidates = data.draw(
         st.lists(
@@ -253,7 +259,9 @@ def test_ingest_sources_handles_messy_frames(
     for original, slug in zip(
         frame["organization_name"], combined_one["organization_slug"], strict=True
     ):
-        expect(slug == slugify(original), "slugified organization name should match helper")
+        expect(
+            slug == slugify(original), "slugified organization name should match helper"
+        )
         expect(slug is None or slug.isascii(), "slug outputs should remain ASCII-safe")
 
     if "province" in frame.columns:
