@@ -335,3 +335,50 @@ def load_schema_descriptor(name: str) -> dict[str, object]:
     schema_path = _resource_path("schemas", name)
     with schema_path.open("r", encoding="utf-8") as handle:
         return cast(dict[str, object], json.load(handle))
+
+
+def validate_profile_with_ge(profile_name: str) -> tuple[bool, str]:
+    """
+    Run Great Expectations validation for a profile's expectation suites.
+
+    This function validates that all expectation suites for a given profile
+    are valid and can be loaded. It's used in QG-2 (Data Quality) checks.
+
+    Args:
+        profile_name: Name of the profile to validate (e.g., 'aviation', 'generic')
+
+    Returns:
+        Tuple of (success: bool, message: str) indicating validation result
+    """
+    try:
+        # Get list of expectation suites for this profile
+        suites_dir = _project_root() / "data_expectations" / "suites"
+
+        if not suites_dir.exists():
+            return False, f"Expectation suites directory not found: {suites_dir}"
+
+        # Find suite files matching the profile
+        suite_files = list(suites_dir.glob("*.json"))
+
+        if not suite_files:
+            return False, f"No expectation suites found in {suites_dir}"
+
+        # Load and validate each suite
+        loaded_suites = []
+        errors = []
+
+        for suite_file in suite_files:
+            try:
+                suite_name = suite_file.name
+                suite = _load_expectation_suite(suite_name)
+                loaded_suites.append(suite.name or suite_name)
+            except Exception as e:
+                errors.append(f"{suite_file.name}: {str(e)}")
+
+        if errors:
+            return False, "Failed to load suites:\n  " + "\n  ".join(errors)
+
+        return True, f"Successfully validated {len(loaded_suites)} expectation suites"
+
+    except Exception as e:
+        return False, f"Error validating profile with GE: {e}"

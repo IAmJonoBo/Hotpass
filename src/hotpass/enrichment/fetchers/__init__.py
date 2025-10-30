@@ -69,7 +69,7 @@ class Fetcher(Protocol):
 class FetcherRegistry:
     """Registry of available fetchers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the fetcher registry."""
         self._deterministic_fetchers: list[Fetcher] = []
         self._research_fetchers: list[Fetcher] = []

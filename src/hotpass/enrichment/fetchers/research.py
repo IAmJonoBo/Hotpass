@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 import pandas as pd
 
@@ -35,10 +36,10 @@ try:
     TRAFILATURA_AVAILABLE = True
 except ImportError:
     TRAFILATURA_AVAILABLE = False
-    trafilatura = None  # type: ignore[assignment]
+    trafilatura = None
 
 
-def requires_network(func: Callable) -> Callable:
+def requires_network(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator to guard network operations.
 
     This decorator ensures that:
@@ -54,7 +55,9 @@ def requires_network(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(self, row: pd.Series, profile: IndustryProfile, allow_network: bool = False):
+    def wrapper(
+        self: Any, row: pd.Series, profile: IndustryProfile, allow_network: bool = False
+    ) -> Any:
         # Check if network is allowed by parameter
         if not allow_network:
             logger.debug("Network fetch skipped: allow_network=False")

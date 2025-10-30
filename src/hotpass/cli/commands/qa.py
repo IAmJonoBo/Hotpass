@@ -36,7 +36,7 @@ def build(
         type=str,
         nargs="?",
         default="all",
-        choices=["all", "contracts", "docs", "profiles", "ta", "fitness"],
+        choices=["all", "contracts", "docs", "profiles", "ta", "fitness", "data-quality"],
         help="Which QA checks to run (default: all)",
     )
 
@@ -83,6 +83,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     if namespace.target in ("all", "fitness"):
         checks_to_run.append(("Fitness Functions", run_fitness_functions))
+
+    if namespace.target in ("all", "data-quality"):
+        checks_to_run.append(("Data Quality (GE)", lambda: run_data_quality(profile_name)))
 
     if namespace.target in ("all", "profiles"):
         checks_to_run.append(("Profile Validation", lambda: run_profile_validation(profile_name)))
@@ -146,6 +149,17 @@ def run_fitness_functions() -> tuple[bool, str]:
             return False, f"Fitness functions failed:\n{result.stdout}"
     except Exception as e:
         return False, f"Error running fitness functions: {e}"
+
+
+def run_data_quality(profile_name: str | None = None) -> tuple[bool, str]:
+    """Run Great Expectations data quality checks."""
+    try:
+        from hotpass.validation import validate_profile_with_ge
+
+        profile = profile_name or "generic"
+        return validate_profile_with_ge(profile)
+    except Exception as e:
+        return False, f"Error running data quality checks: {e}"
 
 
 def run_profile_validation(profile_name: str | None = None) -> tuple[bool, str]:

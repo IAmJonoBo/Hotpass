@@ -289,7 +289,10 @@ def run_qg5_docs_instruction() -> GateResult:
                 gate_id="QG-5",
                 name="Docs/Instructions",
                 passed=False,
-                message=f"Missing terms in docs: copilot={missing_in_copilot}, agents={missing_in_agents}",
+                message=(
+                    f"Missing terms in docs: "
+                    f"copilot={missing_in_copilot}, agents={missing_in_agents}"
+                ),
                 duration_seconds=time.time() - start,
             )
 
@@ -351,7 +354,7 @@ def main() -> int:
         print("=" * 70)
         print()
 
-    for gate_num, (gate_name, gate_func) in gates_to_run.items():
+    for _gate_num, (gate_name, gate_func) in gates_to_run.items():
         if not args.json:
             print(f"Running {gate_name}...")
 
@@ -387,6 +390,8 @@ def main() -> int:
             },
         }
         print(json.dumps(output, indent=2))
+        # Return based on gate results
+        return 0 if all(r.passed for r in results) else 1
     else:
         print("=" * 70)
         print("Summary")
