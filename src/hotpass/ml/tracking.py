@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterable, Mapping, Sequence
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -43,7 +44,7 @@ class MLflowConfig:
         )
 
 
-def _load_mlflow(module: ModuleType | None) -> ModuleType:
+def _load_mlflow(module: ModuleType | None) -> Any:
     """Import the mlflow module or return the provided override."""
 
     if module is not None:
@@ -92,8 +93,8 @@ def _normalise_tag_value(value: Any) -> str | None:
     if value is None:
         return None
     if isinstance(value, Enum):
-        return value.value
-    if isinstance(value, (str, int, float, bool)):
+        return str(value.value)
+    if isinstance(value, str | int | float | bool):
         return str(value)
     if isinstance(value, datetime):
         return value.isoformat()
@@ -101,7 +102,7 @@ def _normalise_tag_value(value: Any) -> str | None:
         return str(value)
     if isinstance(value, set):
         return ", ".join(str(item) for item in sorted(value))
-    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+    if isinstance(value, Sequence) and not isinstance(value, (str | bytes | bytearray)):
         return ", ".join(str(item) for item in value)
     return repr(value)
 
@@ -140,13 +141,15 @@ def log_training_run(
     Returns the run ID of the logged run.
     """
     mlflow = _load_mlflow(mlflow_module)
-    infer_signature = mlflow.models.infer_signature
+    infer_signature = cast(Any, mlflow.models.infer_signature)
 
     if run_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         run_name = f"{model_name}_{timestamp}"
 
-    with mlflow.start_run(run_name=run_name) as run:
+    run_context = cast(AbstractContextManager[Any], mlflow.start_run(run_name=run_name))
+
+    with run_context as run:
         # Log parameters
         mlflow.log_params(params)
 
@@ -184,7 +187,8 @@ def log_training_run(
             else:
                 mlflow.log_artifacts(str(path), artifact_path=name)
 
-        return run.info.run_id
+        run_id = cast(str, getattr(run.info, "run_id", str(run.info)))
+        return run_id
 
 
 def promote_model(

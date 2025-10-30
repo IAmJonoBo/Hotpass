@@ -286,9 +286,7 @@ class NullLineageEmitter(LineageEmitter):
         self._client = None
         self._active = False
 
-    def emit_start(
-        self, *, inputs: Iterable[DatasetSpec] | None = None
-    ) -> None:  # noqa: D401, ARG002
+    def emit_start(self, *, inputs: Iterable[DatasetSpec] | None = None) -> None:  # noqa: D401, ARG002
         return
 
     def emit_complete(
