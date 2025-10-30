@@ -3,11 +3,38 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib import import_module, util
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 from pandas.api.types import is_datetime64_any_dtype
+
+
+def _ensure_pyarrow_parquet_format() -> None:
+    """Provide a backwards-compatible ParquetFileFormat attribute for PyArrow."""
+
+    dataset_spec = util.find_spec("pyarrow.dataset")
+    if dataset_spec is None:
+        return
+
+    dataset_module = import_module("pyarrow.dataset")
+    if hasattr(dataset_module, "ParquetFileFormat"):
+        return
+
+    parquet_spec = util.find_spec("pyarrow._dataset_parquet")
+    if parquet_spec is None:
+        return
+
+    parquet_module = import_module("pyarrow._dataset_parquet")
+    parquet_format = getattr(parquet_module, "ParquetFileFormat", None)
+    if parquet_format is None:
+        return
+
+    dataset_module.ParquetFileFormat = parquet_format  # type: ignore[attr-defined]
+
+
+_ensure_pyarrow_parquet_format()
 
 
 @dataclass

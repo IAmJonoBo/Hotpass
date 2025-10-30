@@ -25,6 +25,8 @@
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [x] 2025-10-29 — Hardened Prefect concurrency helper with strict mypy coverage and async tests to exercise context manager paths (owner: Engineering).【F:pyproject.toml†L116-L126】【F:tests/test_orchestration.py†L566-L661】【F:src/hotpass/orchestration.py†L38-L126】
 - [x] 2025-10-30 — Extended orchestration concurrency coverage with asyncio-only fixtures, strict mypy for the orchestrator, and expect()-style assertions (owner: Engineering).【F:tests/test_orchestration.py†L1-L120】【F:tests/test_orchestration.py†L566-L908】【F:pyproject.toml†L118-L125】【F:src/hotpass/pipeline/orchestrator.py†L1-L108】
+- [x] 2025-10-30 — Restored PyArrow dataset compatibility and limited test-time stubs so real imports are preserved; reran the full coverage suite to confirm Parquet exports succeed.【F:src/hotpass/formatting.py†L1-L64】【F:tests/test_orchestration.py†L1-L68】【80b40e†L1-L143】
+- [x] 2025-10-30 — Added `pytest-asyncio` to the core dependency set so async fixtures are always available in baseline environments.【F:pyproject.toml†L12-L43】
 - [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
 
 
@@ -36,11 +38,11 @@
 ## Quality Gates
 
 - [ ] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace (offline snapshot verification completed; awaiting staging access for live run). Updated workflow now installs the `platform` extra and verifies OIDC identity via STS to unblock staging rehearsal once access is granted.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [ ] Format — `uv run ruff format --check` (fails: 118 files would be reformatted, repo-wide drift).【670e83†L1-L87】
-- [ ] Types — `uv run mypy src tests scripts` (fails: 169 errors across legacy modules, including telemetry stubs and Prefect fixtures).【571738†L1-L33】【8a3cb6†L1-L38】  
+- [x] Format — `uv run ruff format --check`.【06287e†L1-L2】
+- [ ] Types — `uv run mypy src tests scripts` (fails: 274 errors across telemetry stubs, Prefect fixtures, and older pipelines; focus upcoming passes on trimming unused `type: ignore` directives and adding real stubs).【fc0cdd†L1-L48】【edda3b†L1-L110】
   - [x] Orchestrator module now included in strict subset with green mypy run via `make qa`.【F:pyproject.toml†L118-L125】【F:Makefile†L4-L7】【F:src/hotpass/pipeline/orchestrator.py†L38-L108】
   - [x] Added `hotpass.orchestration` to strict mypy overrides and resolved concurrency helper issues (2025-10-29).【F:pyproject.toml†L116-L126】【F:src/hotpass/orchestration.py†L38-L126】
-- [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【586f55†L1-L118】
+- [ ] Security — `uv run bandit -r src scripts` (fails: low severity subprocess usage and try/except pass patterns).【f47e0c†L1-L113】
 - [ ] Docs — `uv run sphinx-build -n -W -b html docs docs/_build/html` (fails: existing heading hierarchy/toctree gaps across legacy pages, unchanged by this work).【5436cb†L1-L118】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
@@ -65,7 +67,7 @@
 - Keep this file actionable: move completed checklist items to `Next_Steps_Log.md` whenever tasks close so future updates remain focused on open work.
 - Prefect pipeline task payload fix merged; continue monitoring downstream Prefect deployments for regressions when toggling `backfill`/`incremental` flags.
 - Ingestion now normalises column headers and restores missing optional fields before slug/province transforms; monitor downstream consumers for assumptions about duplicate column names.
-- Format gate currently red because repository-wide drift predates this work; coordinate with maintainers before applying automated formatting across the codebase.
+- Format gate now green after restoring repo baseline; continue coordinating with maintainers before applying broad formatting updates.
 - Bandit reports tolerated `try/except/pass`; confirm acceptable risk or remediate while touching orchestration.
 - Watch list: monitor uv core build availability and Semgrep CA bundle rollout for future updates (owners retained from prior plan).
 - Marquez compose stack introduced for lineage verification; automated tests now guard compose configuration and lineage environment variables while we schedule live smoke tests for CLI + Prefect flows.
