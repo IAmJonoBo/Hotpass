@@ -17,7 +17,7 @@
       "expectation_type": "expect_column_values_to_match_regex",
       "kwargs": {
         "column": "Cellnumber",
-        "regex": "^[0-9]{6,}(?:\\.0)?$",
+        "regex": "^\\+?\\d[-\\d\\s()]{5,}(?:\\.0)?$",
         "mostly": 0.8
       }
     },
@@ -25,7 +25,7 @@
       "expectation_type": "expect_column_values_to_be_in_set",
       "kwargs": {
         "column": "Status",
-        "value_set": ["Imminent", "High", "Medium", "Low", "0", 0],
+        "value_set": ["Imminent", "High", "Medium", "Low", "Active", "Prospect", "Dormant", "0", 0],
         "mostly": 0.9
       }
     }

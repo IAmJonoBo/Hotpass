@@ -9,7 +9,7 @@
       "expectation_type": "expect_column_values_to_not_be_null",
       "kwargs": {
         "column": "Organisation Name",
-        "mostly": 0.15
+        "mostly": 0.16
       }
     },
     {
