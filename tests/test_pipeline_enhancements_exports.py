@@ -21,9 +21,7 @@ def expect(condition: bool, message: str) -> None:
 
 
 def test_pipeline_enhancements_reexports_feature_types() -> None:
-    expect(
-        "ComplianceFeature" in exported_symbols, "Compliance feature should be exported"
-    )
+    expect("ComplianceFeature" in exported_symbols, "Compliance feature should be exported")
     expect("EnhancedPipelineConfig" in exported_symbols, "Config should be exported")
     expect(
         ExportedComplianceFeature is ComplianceFeature,

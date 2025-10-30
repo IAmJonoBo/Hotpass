@@ -143,12 +143,8 @@ def test_execute_agent_tasks_combines_search_crawl_and_api(
             ),
         ),
         tasks=(
-            AgentTaskDefinition(
-                name="search", kind=AgentTaskKind.SEARCH, options=search_options
-            ),
-            AgentTaskDefinition(
-                name="crawl", kind=AgentTaskKind.CRAWL, options=crawl_options
-            ),
+            AgentTaskDefinition(name="search", kind=AgentTaskKind.SEARCH, options=search_options),
+            AgentTaskDefinition(name="crawl", kind=AgentTaskKind.CRAWL, options=crawl_options),
             AgentTaskDefinition(
                 name="api",
                 kind=AgentTaskKind.API,
@@ -157,9 +153,7 @@ def test_execute_agent_tasks_combines_search_crawl_and_api(
             ),
         ),
     )
-    credential_store = MemoryCredentialStore(
-        value="token", cached=True, reference="vault:demo"
-    )
+    credential_store = MemoryCredentialStore(value="token", cached=True, reference="vault:demo")
     context = _build_context(agent)
 
     result = execute_agent_tasks(agent, context, provider_registry, credential_store)
@@ -223,17 +217,11 @@ def test_execute_agent_tasks_falls_back_to_providers_when_no_tasks(
         ),
         tasks=(),
     )
-    credential_store = MemoryCredentialStore(
-        value=None, cached=False, reference="ref-1"
-    )
+    credential_store = MemoryCredentialStore(value=None, cached=False, reference="ref-1")
     context = _build_context(agent)
 
     result = execute_agent_tasks(agent, context, provider_registry, credential_store)
 
-    expect(
-        result.records == [], "Missing credentials should block fallback task records"
-    )
+    expect(result.records == [], "Missing credentials should block fallback task records")
     expect(result.warnings, "Fallback execution should emit missing credential warning")
-    expect(
-        credential_store.fetches, "Fallback should still attempt to resolve credentials"
-    )
+    expect(credential_store.fetches, "Fallback should still attempt to resolve credentials")

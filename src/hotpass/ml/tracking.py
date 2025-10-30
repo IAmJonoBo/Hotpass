@@ -49,7 +49,7 @@ def _load_mlflow(module: ModuleType | None) -> ModuleType:
     if module is not None:
         return module
     try:
-        import mlflow  # type: ignore[import-not-found]
+        import mlflow
     except ImportError as exc:  # pragma: no cover - exercised via tests with stub
         msg = (
             "mlflow is required for model tracking. Install the 'ml_scoring' extra "

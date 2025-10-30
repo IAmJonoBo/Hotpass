@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/providers.py
+# hypothesis_version: 6.142.4
+
+[0.5, 0.6, 0.7, ' | ', ', ', 'Aviation Registry', 'Clearbit', 'LinkedIn', 'active', 'address', 'area', 'available', 'aviation', 'aviation_registry', 'cached', 'category', 'clearbit', 'companies', 'companies/find', 'compliance', 'confidence', 'contacts', 'credential_aliases', 'credentials', 'description', 'domain', 'email', 'endpoint', 'fleet', 'fleets', 'linkedin', 'name', 'notes', 'organization', 'phone', 'policies', 'profile_url', 'profiles', 'provider', 'province', 'reference', 'registry', 'retrieved_at', 'robots_allowed', 'source', 'tags', 'terms_of_service', 'title', 'tos_accepted', 'tos_url', 'type', 'unknown', 'url', 'website']

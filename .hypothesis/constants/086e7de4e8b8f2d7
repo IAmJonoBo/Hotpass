@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/pipeline/features/entity_resolution.py
+# hypothesis_version: 6.142.4
+
+[0.9, 'entity_resolution', 'link', 'records']

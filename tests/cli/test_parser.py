@@ -12,7 +12,7 @@ def _get_subcommands(
 ) -> dict[str, argparse.ArgumentParser]:
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
-            return action.choices  # type: ignore[return-value]
+            return action.choices
     raise AssertionError("Parser is missing subcommands")
 
 

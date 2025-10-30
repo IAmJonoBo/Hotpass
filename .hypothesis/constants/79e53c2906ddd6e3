@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/enrichment/intent/runner.py
+# hypothesis_version: 6.142.4
+
+[0.0, ';', '; ', 'IntentRunResult', 'collector', 'count', 'headline', 'identifier', 'insights', 'intent_signal_count', 'intent_signal_score', 'intent_signal_types', 'intent_top_insights', 'last_observed', 'metadata', 'observed_at', 'provenance', 'retrieved_at', 'role', 'run_intent_plan', 'score', 'signal_type', 'slug', 'source', 'target_identifier', 'target_slug', 'types', 'weight_total', 'weighted_score']

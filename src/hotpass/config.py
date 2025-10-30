@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from .config_schema import ProfileConfig
 
 try:
-    import yaml  # type: ignore[import-untyped]
+    import yaml
 except ImportError:  # pragma: no cover - fallback when PyYAML missing at runtime
     yaml = cast("Any", None)
 
@@ -31,9 +31,7 @@ class IndustryProfile(ProfileConfig):
         return self.model_dump(mode="python")
 
 
-def load_industry_profile(
-    profile_name: str, config_dir: Path | None = None
-) -> IndustryProfile:
+def load_industry_profile(profile_name: str, config_dir: Path | None = None) -> IndustryProfile:
     """Load an industry profile from configuration directory."""
     if config_dir is None:
         config_dir = Path(__file__).parent / "profiles"

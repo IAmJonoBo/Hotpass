@@ -48,9 +48,7 @@ def test_policy_requires_service_and_exporters() -> None:
     policy = TelemetryPolicy(allowed_exporters={"console", "noop"})
 
     with pytest.raises(ValueError):
-        policy.validate(
-            TelemetryConfig(service_name="", environment=None, exporters=())
-        )
+        policy.validate(TelemetryConfig(service_name="", environment=None, exporters=()))
 
     with pytest.raises(ValueError):
         policy.validate(

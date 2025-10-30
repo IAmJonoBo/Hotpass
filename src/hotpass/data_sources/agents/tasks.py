@@ -117,9 +117,7 @@ def _policy_allows(policies: Mapping[str, Any] | None) -> tuple[bool, list[str]]
     return not reasons, reasons
 
 
-def _append_warning(
-    state: _TaskState, task: AgentTaskDefinition, reasons: Sequence[str]
-) -> None:
+def _append_warning(state: _TaskState, task: AgentTaskDefinition, reasons: Sequence[str]) -> None:
     reason_text = "; ".join(reasons)
     state.warnings.append(f"{task.name}: {reason_text}")
 
@@ -130,13 +128,9 @@ def _run_search_task(
     context: AgentContext,
     state: _TaskState,
 ) -> None:
-    task_options: Mapping[str, Any] = (
-        task.options if isinstance(task.options, Mapping) else {}
-    )
+    task_options: Mapping[str, Any] = task.options if isinstance(task.options, Mapping) else {}
     raw_policies = task_options.get("policies")
-    policies: Mapping[str, Any] = (
-        raw_policies if isinstance(raw_policies, Mapping) else {}
-    )
+    policies: Mapping[str, Any] = raw_policies if isinstance(raw_policies, Mapping) else {}
     allowed, reasons = _policy_allows(policies)
     if not allowed:
         _append_warning(state, task, reasons)
@@ -151,9 +145,7 @@ def _run_search_task(
     query_keys = _search_queries(agent, state.targets)
     seen = {(target.identifier, target.domain) for target in state.targets}
     for key in query_keys:
-        matches = (
-            dataset.get(key) or dataset.get(key.lower()) or dataset.get(key.upper())
-        )
+        matches = dataset.get(key) or dataset.get(key.lower()) or dataset.get(key.upper())
         if not matches:
             state.provenance.append(
                 {
@@ -212,13 +204,9 @@ def _run_crawl_task(
     context: AgentContext,
     state: _TaskState,
 ) -> None:
-    task_options: Mapping[str, Any] = (
-        task.options if isinstance(task.options, Mapping) else {}
-    )
+    task_options: Mapping[str, Any] = task.options if isinstance(task.options, Mapping) else {}
     raw_policies = task_options.get("policies")
-    policies: Mapping[str, Any] = (
-        raw_policies if isinstance(raw_policies, Mapping) else {}
-    )
+    policies: Mapping[str, Any] = raw_policies if isinstance(raw_policies, Mapping) else {}
     allowed, reasons = _policy_allows(policies)
     if not allowed:
         _append_warning(state, task, reasons)
@@ -262,9 +250,7 @@ def _run_crawl_task(
             role = clean_string(contact.get("role"))
             if role:
                 roles.append(role)
-            email_value = (
-                normalize_email(contact.get("email")) if contact.get("email") else None
-            )
+            email_value = normalize_email(contact.get("email")) if contact.get("email") else None
             if email_value:
                 emails.append(email_value)
             phone_value = (
@@ -317,25 +303,19 @@ def _run_api_task(
     provider_definition = providers.get(provider_name)
     if provider_definition is None:
         missing_provider = task.provider or task.name
-        state.warnings.append(
-            f"{task.name}: provider '{missing_provider}' is not defined"
-        )
+        state.warnings.append(f"{task.name}: provider '{missing_provider}' is not defined")
         return
 
     overrides = task.options if isinstance(task.options, Mapping) else {}
     merged_options = provider_definition.merged_options(overrides)
     raw_policies = merged_options.get("policies")
-    policies: Mapping[str, Any] = (
-        raw_policies if isinstance(raw_policies, Mapping) else {}
-    )
+    policies: Mapping[str, Any] = raw_policies if isinstance(raw_policies, Mapping) else {}
     allowed, reasons = _policy_allows(policies)
     if not allowed:
         _append_warning(state, task, reasons)
         return
 
-    credential_value, cached, reference = credential_store.fetch(
-        provider_definition.name
-    )
+    credential_value, cached, reference = credential_store.fetch(provider_definition.name)
     requires_credentials = merged_options.get("requires_credentials")
     if requires_credentials and credential_value is None:
         state.warnings.append(
@@ -385,9 +365,7 @@ def _create_provider(
     return registry.create(name, options)
 
 
-def _search_queries(
-    agent: AgentDefinition, targets: Sequence[TargetDefinition]
-) -> list[str]:
+def _search_queries(agent: AgentDefinition, targets: Sequence[TargetDefinition]) -> list[str]:
     queries: list[str] = []
     for target in targets:
         if target.identifier:

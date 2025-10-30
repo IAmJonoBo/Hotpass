@@ -45,18 +45,14 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
             sys.modules[module_name] = types.ModuleType(module_name)
 
     module_path = (
-        Path(__file__).resolve().parents[1]
-        / "src"
-        / "hotpass"
-        / "prefect"
-        / "deployments.py"
+        Path(__file__).resolve().parents[1] / "src" / "hotpass" / "prefect" / "deployments.py"
     )
     spec = spec_from_file_location("hotpass.prefect.deployments", module_path)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard
         raise RuntimeError("Unable to load deployment module spec")
 
     hotpass_pkg = types.ModuleType("hotpass")
-    hotpass_pkg.__path__ = []  # type: ignore[attr-defined]
+    hotpass_pkg.__path__ = []
     prefect_pkg = types.ModuleType("hotpass.prefect")
     hotpass_pkg.prefect = prefect_pkg  # type: ignore[attr-defined]
 
@@ -186,8 +182,7 @@ def test_build_runner_deployment_renders_prefect_model(
     )
     if spec.schedule is not None:
         expect(
-            runner_deployment.schedules is not None
-            and len(runner_deployment.schedules) == 1,
+            runner_deployment.schedules is not None and len(runner_deployment.schedules) == 1,
             "Scheduled deployments should yield exactly one schedule entry.",
         )
 
@@ -220,9 +215,7 @@ def test_deploy_pipeline_filters_and_registers(
     )
     expect(len(recorder.calls) == 1, "Runner deploy should have been invoked once.")
     args, kwargs = recorder.calls[0]
-    expect(
-        len(args) == 1, "Only the selected refinement deployment should be registered."
-    )
+    expect(len(args) == 1, "Only the selected refinement deployment should be registered.")
     expect(
         kwargs.get("build") is False,
         "Deploy should skip image builds for in-repo flows.",
@@ -261,9 +254,7 @@ def test_deploy_pipeline_applies_overrides(
         captured.append(spec)
         return original_build(spec)
 
-    monkeypatch.setattr(
-        deployments_module, "build_runner_deployment", _capture, raising=False
-    )
+    monkeypatch.setattr(deployments_module, "build_runner_deployment", _capture, raising=False)
 
     deployments_module.deploy_pipeline(
         flows=("refinement",),

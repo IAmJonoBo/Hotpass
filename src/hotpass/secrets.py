@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Protocol, cast
 
-import requests  # type: ignore[import-untyped]
+import requests
 
 
 class VaultError(RuntimeError):

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/cli/commands/backfill.py
+# hypothesis_version: 6.142.4
+
+['--archive-pattern', '--archive-root', '--concurrency-key', '--concurrency-limit', '--end-date', '--restore-root', '--start-date', '--version', 'append', 'archive_pattern', 'archive_root', 'backfill', 'backfill.run', 'backfill.summary', 'build', 'concurrency_key', 'concurrency_limit', 'end_date', 'latest', 'metrics', 'python', 'register', 'restore_root', 'rich', 'run_date', 'runs', 'start_date', 'successful_runs', 'total_runs', 'version', 'versions']

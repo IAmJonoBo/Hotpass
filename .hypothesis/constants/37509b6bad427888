@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/error_handling.py
+# hypothesis_version: 6.142.4
+
+['# Error Report', '## Errors', '## Summary', '## Warnings', 'actual_columns', 'category', 'configuration_error', 'critical', 'critical_errors', 'data_quality', 'details', 'duplicate_record', 'error', 'errors_by_category', 'expected', 'expected_columns', 'extra_columns', 'extra_fields', 'failures', 'field', 'file_not_found', 'file_path', 'file_read_error', 'info', 'invalid_format', 'issues', 'message', 'missing_columns', 'missing_fields', 'processing_error', 'recoverable', 'recoverable_errors', 'schema_mismatch', 'severity', 'source_column', 'source_file', 'source_row', 'suggested_fix', 'suite', 'table', 'total_errors', 'total_warnings', 'validation_failure', 'value', 'warning']

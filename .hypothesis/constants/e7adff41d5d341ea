@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/telemetry/registry.py
+# hypothesis_version: 6.142.4
+
+[60000, '0.1.0', '; ', 'ERROR', 'HOTPASS_ENVIRONMENT', 'Observation', 'SUCCESS', 'code', 'console', 'description', 'development', 'endpoint', 'headers', 'hotpass', 'insecure', 'metrics_endpoint', 'noop', 'otlp', 'service.name', 'service.version', 'shutdown', 'timeout']

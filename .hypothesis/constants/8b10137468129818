@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/transform/scoring.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.5, 1.0, 1000, ',', ', ', '.csv', '.parquet', '.tsv', 'LeadScore', 'LeadScorer', 'LeadScoringModel', 'build_daily_list', 'completeness', 'dataset_rows', 'email_confidence', 'feature_names', 'first', 'float64', 'int64', 'intent', 'intent_signal_count', 'intent_signal_score', 'intent_top_insights', 'lbfgs', 'lead_score', 'lead_scoring_model', 'left', 'max_iter', 'metadata', 'metrics', 'organization_name', 'organization_slug', 'phone_confidence', 'precision', 'random_state', 'recall', 'records', 'roc_auc', 'score_prospects', 'solver', 'source_priority', 'target_column', 'target_slug', 'train_rows', 'trained_at', 'utf-8', 'validation_rows', 'validation_size']

@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/linkage/comparators.py
+# hypothesis_version: 6.142.4
+
+[0.0, 100.0, 'DOUBLE', '_linkage_email', '_linkage_name', '_linkage_phone', '_linkage_province', '_linkage_slug', '_linkage_website', 'create_function', 'linkage_email', 'linkage_name', 'linkage_phone', 'linkage_province', 'linkage_slug', 'linkage_website', 'object', 'organization_name', 'organization_slug', 'province', 'register_function', 'website']

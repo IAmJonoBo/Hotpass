@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/quality.py
+# hypothesis_version: 6.142.4
+
+[0.0, 0.85, 1.0, 'Batch', 'DataContextConfig', 'EphemeralDataContext', 'ExpectationSuite', 'South Africa', 'Validator', '^\\+\\d{6,}$', '^\\s*$', '^https?://', '__exit__', '_temp_dir_manager', 'address_primary', 'area', 'catch_exceptions', 'checkpoint_store', 'cleanup', 'column', 'contact_primary_name', 'contact_primary_role', 'country', 'country constraint', 'data_quality_flags', 'data_quality_score', 'description', 'expectations_store', 'hotpass', 'hotpass_ssot', 'ignore', 'kwargs', 'notes', 'organization_name', 'organization_slug', 'organization_type', 'planes', 'priority', 'privacy_basis', 'project_manager', 'province', 'selection_provenance', 'source_datasets', 'source_record_ids', 'status', 'type', 'unexpected_list', 'unknown_expectation', 'website', 'website scheme']

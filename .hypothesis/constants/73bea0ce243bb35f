@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/scripts/arc/verify_runner_lifecycle.py
+# hypothesis_version: 6.142.4
+
+[10.0, 600.0, '--aws-profile', '--aws-region', '--namespace', '--no-headers', '--output', '--owner', '--poll-interval', '--profile', '--region', '--repository', '--scale-set', '--snapshot', '--timeout', '--verify-oidc', '-l', '-n', 'Accept', 'Account', 'Arn', 'Session', 'UserId', '__main__', 'account', 'arc-runners', 'arn', 'aws', 'aws-cli', 'boto3', 'busy', 'get', 'get-caller-identity', 'healthy', 'identity', 'iterations', 'json', 'kubectl', 'name', 'pods', 'profile_name', 'r', 'runners', 'session', 'source', 'store_true', 'sts', 'success', 'text', 'total_count', 'unhealthy', 'unknown', 'user_id', 'utf-8']

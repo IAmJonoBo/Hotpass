@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/formatting.py
+# hypothesis_version: 6.142.4
+
+[0.4, 0.6, 0.8, 15.0, 50.0, 100, '.csv', '.json', '.parquet', '.xlsx', '366092', 'A2', 'C6EFCE', 'Calibri', 'Data', 'F0F0F0', 'FF0000', 'FFC7CE', 'FFEB9C', 'FFFFFF', 'Field Completeness', 'Invalid Records', 'Metric', 'No', 'ParquetFileFormat', 'Percentage', 'Quality Metrics', 'Summary', 'Total Records', 'Validation Passed', 'Value', 'Yes', 'center', 'csv', 'data_quality_score', 'excel', 'expectations_passed', 'invalid_records', 'json', 'ms', 'openpyxl', 'parquet', 'pyarrow.dataset', 'records', 'solid', 'top']

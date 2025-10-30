@@ -1,0 +1,4 @@
+# file: /home/runner/work/Hotpass/Hotpass/src/hotpass/geospatial.py
+# hypothesis_version: 6.142.4
+
+[0.0, 50.0, 6371.0088, ' Ave', ' Ave ', ' Ave.', ' Avenue', ' Avenue ', ' Blvd', ' Blvd ', ' Blvd.', ' Boulevard', ' Boulevard ', ' Dr', ' Dr ', ' Dr.', ' Drive', ' Drive ', ' Rd', ' Rd ', ' Rd.', ' Road', ' Road ', ' St', ' St ', ' St.', ' Street', ' Street ', 'EPSG:4326', 'Hotpass/1.0', 'South Africa', 'address', 'any', 'county', 'formatted_address', 'geo_cluster_id', 'geocoded', 'gpd.GeoDataFrame', 'latitude', 'longitude', 'organization_address', 'province', 'raise', 'raw', 'region', 'state']
