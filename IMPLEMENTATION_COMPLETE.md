@@ -71,11 +71,11 @@ uv run pytest tests/cli/test_quality_gates.py::TestQG1CLIIntegrity
 
 ### Key Files:
 1. `.gitignore` - Exclude research artifacts
-2. `scripts/quality/` - 5 files updated
-3. `src/hotpass/cli/commands/` - 3 files updated
-4. `src/hotpass/compliance.py` - Import order
-5. `src/hotpass/mcp/server.py` - Line lengths
-6. `src/hotpass/research/orchestrator.py` - Variable shadowing
+2. `ops/quality/` - 5 files updated
+3. `apps/data-platform/hotpass/cli/commands/` - 3 files updated
+4. `apps/data-platform/hotpass/compliance.py` - Import order
+5. `apps/data-platform/hotpass/mcp/server.py` - Line lengths
+6. `apps/data-platform/hotpass/research/orchestrator.py` - Variable shadowing
 7. `tools/profile_lint.py` - Exception handling
 8. Test files - 4 files updated
 
@@ -154,24 +154,24 @@ Successfully built:
 - `.gitignore`
 
 ### Commit 39e288d (Main fixes)
-- `scripts/quality/fitness_functions.py`
-- `scripts/quality/run_all_gates.py`
-- `scripts/quality/run_qg1.py`
-- `scripts/quality/run_qg4.py`
-- `scripts/quality/ta_history_report.py`
-- `src/hotpass/cli/commands/enrich.py`
-- `src/hotpass/cli/commands/overview.py`
-- `src/hotpass/cli/commands/plan.py`
-- `src/hotpass/cli/main.py`
-- `src/hotpass/compliance.py`
-- `src/hotpass/research/orchestrator.py`
+- `ops/quality/fitness_functions.py`
+- `ops/quality/run_all_gates.py`
+- `ops/quality/run_qg1.py`
+- `ops/quality/run_qg4.py`
+- `ops/quality/ta_history_report.py`
+- `apps/data-platform/hotpass/cli/commands/enrich.py`
+- `apps/data-platform/hotpass/cli/commands/overview.py`
+- `apps/data-platform/hotpass/cli/commands/plan.py`
+- `apps/data-platform/hotpass/cli/main.py`
+- `apps/data-platform/hotpass/compliance.py`
+- `apps/data-platform/hotpass/research/orchestrator.py`
 - `tests/cli/test_research_plan.py`
 - `tests/cli/test_run_lineage_integration.py`
 - `tests/helpers/assertions.py`
 - `tools/profile_lint.py`
 
 ### Commit b42180b
-- `src/hotpass/mcp/server.py`
+- `apps/data-platform/hotpass/mcp/server.py`
 - `tests/mcp/test_research_tools.py`
 
 ---

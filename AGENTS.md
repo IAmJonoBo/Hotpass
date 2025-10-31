@@ -63,12 +63,12 @@ Codex runners start with a lean `dev orchestration` profile. To add or remove ex
 
   ```bash
   export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
-  bash scripts/uv_sync_extras.sh
+  bash ops/uv_sync_extras.sh
   ```
 
 3. After the extras install step, the firewall should be locked down. Declare every required extra up front—additional installs will fail once the firewall is active.
 
-The helper script lives in `scripts/uv_sync_extras.sh` and converts the space-separated list into the correct `uv sync --extra …` flags. Agents using the pip setup can mimic the behaviour with:
+The helper script lives in `ops/uv_sync_extras.sh` and converts the space-separated list into the correct `uv sync --extra …` flags. Agents using the pip setup can mimic the behaviour with:
 
 ```bash
 python -m pip install -U pip
@@ -413,7 +413,7 @@ Expected: 20/20 tests passing.
 For longitudinal tracking run:
 
 ```bash
-python scripts/quality/ta_history_report.py --json
+python ops/quality/ta_history_report.py --json
 ```
 
 This summarises the TA history stored under `dist/quality-gates/history.ndjson` (latest thresholds feed the MCP/CLI TA tooling).

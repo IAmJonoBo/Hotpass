@@ -99,8 +99,8 @@ Run the following checks before shipping telemetry changes:
 ```bash
 uv run pytest tests/test_telemetry_registry.py tests/test_observability.py
 uv run pytest --cov=src --cov=tests --cov-report=term-missing
-uv run ruff check src/hotpass/observability.py src/hotpass/telemetry/
-uv run mypy src/hotpass/telemetry src/hotpass/observability.py
+uv run ruff check apps/data-platform/hotpass/observability.py apps/data-platform/hotpass/telemetry/
+uv run mypy apps/data-platform/hotpass/telemetry apps/data-platform/hotpass/observability.py
 ```
 
 Add new exporters through dedicated tests that cover lifecycle hooks (`shutdown`), policy

@@ -16,8 +16,8 @@ last_updated: 2025-10-27
 
 - Expand OpenTelemetry collector config to export metrics/traces/logs to Grafana Tempo/Loki.
 - Annotate Prefect tasks with `hotpass.dataset` attribute for filtering.
-- Instrument CLI with structured logging and PII redaction (complete; configurable masks redact emails, phone numbers, and other sensitive fields in structured logs).【F:src/hotpass/cli.py†L33-L356】
-- Streamlit dashboard enforces password-gated access and filesystem allowlists before executing pipelines, containing blast radius for misconfigurations.【F:src/hotpass/dashboard.py†L44-L220】【F:tests/test_dashboard.py†L120-L216】
+- Instrument CLI with structured logging and PII redaction (complete; configurable masks redact emails, phone numbers, and other sensitive fields in structured logs).【F:apps/data-platform/hotpass/cli.py†L33-L356】
+- Streamlit dashboard enforces password-gated access and filesystem allowlists before executing pipelines, containing blast radius for misconfigurations.【F:apps/data-platform/hotpass/dashboard.py†L44-L220】【F:tests/test_dashboard.py†L120-L216】
 - Publish SLO dashboard referencing metrics above.
 
 ## Chaos and resilience

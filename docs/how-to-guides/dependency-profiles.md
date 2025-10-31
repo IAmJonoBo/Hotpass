@@ -25,7 +25,7 @@ Each profile is a space-separated string that the helper script converts into `u
 python -m pip install -U uv
 uv venv
 export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
-bash scripts/uv_sync_extras.sh
+bash ops/uv_sync_extras.sh
 ```
 
 ### Using Make targets
@@ -36,7 +36,7 @@ For day-to-day development you can rely on the helper target:
 make sync EXTRAS="dev orchestration"
 ```
 
-Override `EXTRAS` with the space-separated list you need. The target wraps `scripts/uv_sync_extras.sh` so CI and local runs stay consistent.
+Override `EXTRAS` with the space-separated list you need. The target wraps `ops/uv_sync_extras.sh` so CI and local runs stay consistent.
 The script validates the list, echoes the chosen extras, and executes `uv sync --frozen` with the correct switches. If you prefer pip editable installs, mirror the same extras:
 
 ```bash
@@ -52,7 +52,7 @@ python -m pip install -e ".[dev,orchestration,geospatial]"
    python -m pip install -U uv
    uv venv
    export HOTPASS_UV_EXTRAS="dev orchestration compliance"
-   bash scripts/uv_sync_extras.sh
+   bash ops/uv_sync_extras.sh
    ```
 
 2. Declare all required extras before the firewall enable step. Once network access is dropped, additional `uv sync` runs will fail.
@@ -67,12 +67,12 @@ The main pipeline (`.github/workflows/process-data.yml`) now exposes a `uv_extra
 uv_extras: "dev orchestration geospatial"
 ```
 
-For push/PR builds the workflow falls back to the default `dev orchestration` profile. Each job exports the list to `scripts/uv_sync_extras.sh`, keeping every stage aligned.
+For push/PR builds the workflow falls back to the default `dev orchestration` profile. Each job exports the list to `ops/uv_sync_extras.sh`, keeping every stage aligned.
 
 ## Troubleshooting
 
 - **Missing library after firewall enablement** — rerun the job with the correct extras string or prefetch wheels in the setup stage.
-- **Typos in the extras string** — `scripts/uv_sync_extras.sh` rejects empty values but won’t validate the names. Watch the step logs for the final `uv sync` command to confirm the extras applied.
+- **Typos in the extras string** — `ops/uv_sync_extras.sh` rejects empty values but won’t validate the names. Watch the step logs for the final `uv sync` command to confirm the extras applied.
 - **Pip editable installs still required** — pass the same extras in the `.[extra1,extra2]` syntax; ensure the firewall remains open long enough to download wheels.
 - **New dependency surfaced during a run** — add the package to the appropriate optional extra in `pyproject.toml`, update `HOTPASS_UV_EXTRAS` (or run `make sync EXTRAS="…"`) to include that extra, and, if CI relies on it, extend the corresponding workflow input default so ephemeral runners and Codex agents pick it up automatically.
 - **Cache busting** — if you need to force a rebuild, add `--no-cache` to the `uv sync` invocation in the helper script temporarily or clear the runner cache.

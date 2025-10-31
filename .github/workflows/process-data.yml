@@ -28,7 +28,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Ruff lint
         run: uv run ruff check
@@ -72,7 +72,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Accessibility tests
         run: uv run pytest -m accessibility tests/accessibility
@@ -93,10 +93,10 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Run mutation tests
-        run: uv run python scripts/qa/run_mutation_tests.py
+        run: uv run python ops/qa/run_mutation_tests.py
 
   static-analysis:
     runs-on: ubuntu-latest
@@ -114,7 +114,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Run Semgrep
         run: uv run semgrep --config=policy/semgrep/hotpass.yml
@@ -139,7 +139,7 @@ jobs:
         run: scancode --license --info --json-pp scancode-report.json --license-score 0 .
 
       - name: Enforce licence policy
-        run: python scripts/compliance/check_scancode.py --report scancode-report.json --policy policy/licensing/allowlist.yml
+        run: python ops/compliance/check_scancode.py --report scancode-report.json --policy policy/licensing/allowlist.yml
 
       - name: Validate REUSE metadata
         run: reuse lint --dep5-path policy/reuse/dep5
@@ -160,10 +160,10 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Run fitness functions
-        run: uv run python scripts/quality/fitness_functions.py
+        run: uv run python ops/quality/fitness_functions.py
 
   process-data:
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Run Hotpass CLI
         run: uv run hotpass --archive --dist-dir dist
@@ -253,16 +253,16 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Build package
         run: uv run uv build
 
       - name: Generate SBOM
-        run: uv run python scripts/supply_chain/generate_sbom.py
+        run: uv run python ops/supply_chain/generate_sbom.py
 
       - name: Generate provenance
-        run: uv run python scripts/supply_chain/generate_provenance.py
+        run: uv run python ops/supply_chain/generate_provenance.py
 
       - name: Generate supply-chain checksums
         shell: bash
@@ -277,7 +277,7 @@ jobs:
           sha256sum "${files[@]}" > dist/checksums/supply-chain.sha256
 
       - name: Evaluate supply-chain policy
-        run: uv run python scripts/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json
+        run: uv run python ops/supply_chain/evaluate_policy.py dist/sbom/hotpass-sbom.json
 
       - name: Upload supply-chain artefacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5

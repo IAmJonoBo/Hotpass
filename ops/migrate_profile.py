@@ -5,9 +5,9 @@ This tool automates the migration of industry profiles from legacy format
 to the new 4-block schema (ingest, refine, enrich, compliance).
 
 Usage:
-    python scripts/migrate_profile.py <profile_path>
-    python scripts/migrate_profile.py src/hotpass/profiles/aviation.yaml --validate
-    python scripts/migrate_profile.py --check-all
+    python ops/migrate_profile.py <profile_path>
+    python ops/migrate_profile.py apps/data-platform/hotpass/profiles/aviation.yaml --validate
+    python ops/migrate_profile.py --check-all
 """
 
 from __future__ import annotations
@@ -266,13 +266,13 @@ def main() -> int:
     parser.add_argument(
         "--check-all",
         action="store_true",
-        help="Check all profiles in src/hotpass/profiles/",
+        help="Check all profiles in apps/data-platform/hotpass/profiles/",
     )
 
     args = parser.parse_args()
 
     if args.check_all:
-        profiles_dir = Path("src/hotpass/profiles")
+        profiles_dir = Path("apps/data-platform/hotpass/profiles")
         return check_all_profiles(profiles_dir)
 
     if not args.profile:

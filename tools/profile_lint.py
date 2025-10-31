@@ -236,7 +236,7 @@ def main() -> int:
     parser.add_argument(
         "--profiles-dir",
         type=Path,
-        default=Path("src/hotpass/profiles"),
+        default=Path("apps/data-platform/hotpass/profiles"),
         help="Directory containing profiles",
     )
     parser.add_argument(

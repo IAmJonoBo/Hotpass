@@ -9,8 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-collect_dataset = importlib.import_module("scripts.acquisition.collect_dataset")
-guardrails_module = importlib.import_module("scripts.acquisition.guardrails")
+collect_dataset = importlib.import_module("ops.acquisition.collect_dataset")
+guardrails_module = importlib.import_module("ops.acquisition.guardrails")
 
 collect_main = collect_dataset.main
 CollectionGuards = guardrails_module.CollectionGuards

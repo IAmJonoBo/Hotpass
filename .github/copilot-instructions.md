@@ -18,7 +18,7 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
    ```bash
    uv venv
    export HOTPASS_UV_EXTRAS="dev orchestration enrichment"
-   bash scripts/uv_sync_extras.sh
+   bash ops/uv_sync_extras.sh
    ```
 2. **Discover the surface**
    ```bash
@@ -70,11 +70,11 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
 
 ## 3. Repository Map
 
-- `src/hotpass/cli/commands/` — CLI entry points (`overview`, `refine`, `enrich`, `qa`, `contracts`, `resolve`, etc.). Extend parsers here and keep help text concise.
-- `src/hotpass/enrichment/` — Deterministic and research fetchers, pipeline orchestration, and provenance tracking.
-- `src/hotpass/linkage/` — Splink/RapidFuzz entity resolution with optional Label Studio review queues.
-- `src/hotpass/mcp/server.py` — MCP stdio server implementation; mirrors CLI behaviour. Update tool registration when adding new verbs.
-- `scripts/quality/` — Quality gate runners (`run_qg*.py`, `run_all_gates.py`) referenced by CI and `hotpass qa`.
+- `apps/data-platform/hotpass/cli/commands/` — CLI entry points (`overview`, `refine`, `enrich`, `qa`, `contracts`, `resolve`, etc.). Extend parsers here and keep help text concise.
+- `apps/data-platform/hotpass/enrichment/` — Deterministic and research fetchers, pipeline orchestration, and provenance tracking.
+- `apps/data-platform/hotpass/linkage/` — Splink/RapidFuzz entity resolution with optional Label Studio review queues.
+- `apps/data-platform/hotpass/mcp/server.py` — MCP stdio server implementation; mirrors CLI behaviour. Update tool registration when adding new verbs.
+- `ops/quality/` — Quality gate runners (`run_qg*.py`, `run_all_gates.py`) referenced by CI and `hotpass qa`.
 - `docs/` — MyST/Sphinx documentation organised by Diátaxis; `docs/reference/cli.md` is the authoritative CLI spec.
 - `tests/` — Pytest suites using the shared `expect(condition, message)` helper (no bare `assert`).
 
@@ -82,8 +82,8 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
 
 ## 4. QA & Safety Checklist
 
-- **Before PRs**: run `make qa`, `uv run hotpass qa all`, and `uv run python scripts/validation/refresh_data_docs.py`.
-- **Quality gates**: QG‑1 → QG‑5 must stay green. Use `scripts/quality/run_all_gates.py --json` for structured summaries or call `hotpass.ta.check` via MCP.
+- **Before PRs**: run `make qa`, `uv run hotpass qa all`, and `uv run python ops/validation/refresh_data_docs.py`.
+- **Quality gates**: QG‑1 → QG‑5 must stay green. Use `ops/quality/run_all_gates.py --json` for structured summaries or call `hotpass.ta.check` via MCP.
 - **Testing conventions**: Replace bare `assert` with `expect(...)` (see `docs/how-to-guides/assert-free-pytest.md`). Keep fixtures under `tests/data` and `tests/fixtures`.
 - **Optional dependencies**: Handle missing Great Expectations, Prefect, Splink, requests, trafilatura, etc. gracefully. Never import them at module top level without guards.
 - **Security**: Respect POPIA compliance helpers, provenance schema, and audit logging. When touching network code, honour environment toggles and rate-limit guidance.

@@ -9,7 +9,7 @@ from tests.helpers.assertions import expect
 
 pytest.importorskip("license_expression")
 
-from scripts.compliance.check_scancode import evaluate
+from ops.compliance.check_scancode import evaluate
 
 
 def test_evaluate_passes_allowed_license(tmp_path: Path) -> None:

@@ -47,7 +47,7 @@ Sprint 5 docs refresh is published.
 ## Canonical configuration schema
 
 The CLI now materialises every run from the canonical `HotpassConfig` schema defined in
-[`src/hotpass/config_schema.py`](../../src/hotpass/config_schema.py). Profiles, config files,
+[`apps/data-platform/hotpass/config_schema.py`](../../apps/data-platform/hotpass/config_schema.py). Profiles, config files,
 and CLI flags are normalised into that schema before any pipeline code executes, ensuring
 consistent behaviour across CLI, Prefect flows, and agent-triggered runs.
 

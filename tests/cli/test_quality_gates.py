@@ -106,7 +106,7 @@ class TestQG1CLIIntegrity:
     def test_qg1_script_emits_json_summary(self):
         """QG-1h: Gate script should emit JSON summary and pass."""
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_qg1.py", "--json"],
+            [sys.executable, "ops/quality/run_qg1.py", "--json"],
             capture_output=True,
             text=True,
         )
@@ -137,7 +137,7 @@ class TestQG2DataQuality:
     def test_qg2_script_generates_summary(self):
         """QG-2b: Gate script should run checkpoints and emit JSON."""
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_qg2.py", "--json"],
+            [sys.executable, "ops/quality/run_qg2.py", "--json"],
             capture_output=True,
             text=True,
         )
@@ -182,7 +182,7 @@ class TestQG3EnrichmentChain:
     def test_qg3_script_runs_enrichment(self, tmp_path: Path):
         """QG-3b: Gate script should refine deterministic enrichment output."""
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_qg3.py", "--json"],
+            [sys.executable, "ops/quality/run_qg3.py", "--json"],
             capture_output=True,
             text=True,
         )
@@ -216,8 +216,8 @@ class TestQG4MCPDiscoverability:
 
     def test_mcp_server_module_exists(self):
         """QG-4a: MCP server module should exist."""
-        mcp_server = Path("src/hotpass/mcp/server.py")
-        expect(mcp_server.exists(), "MCP server should exist at src/hotpass/mcp/server.py")
+        mcp_server = Path("apps/data-platform/hotpass/mcp/server.py")
+        expect(mcp_server.exists(), "MCP server should exist at apps/data-platform/hotpass/mcp/server.py")
 
     def test_mcp_server_is_importable(self):
         """QG-4b: MCP server should be importable."""
@@ -232,7 +232,7 @@ class TestQG4MCPDiscoverability:
     def test_qg4_script_validates_tools(self):
         """QG-4c: Gate script should report required tools."""
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_qg4.py", "--json"],
+            [sys.executable, "ops/quality/run_qg4.py", "--json"],
             capture_output=True,
             text=True,
         )
@@ -303,7 +303,7 @@ class TestQG5DocsInstruction:
     def test_qg5_script_validates_docs(self):
         """QG-5e: Gate script should validate docs."""
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_qg5.py", "--json"],
+            [sys.executable, "ops/quality/run_qg5.py", "--json"],
             capture_output=True,
             text=True,
         )
@@ -341,7 +341,7 @@ class TestTechnicalAcceptance:
 
     def test_ta5_mcp_server_exists(self):
         """TA-5a: MCP server exists for tool exposure."""
-        mcp_server = Path("src/hotpass/mcp/server.py")
+        mcp_server = Path("apps/data-platform/hotpass/mcp/server.py")
         expect(mcp_server.exists(), "MCP server must exist")
 
     def test_ta6_quality_gates_exist(self):
@@ -362,7 +362,7 @@ class TestTechnicalAcceptance:
             summary_path.unlink()
 
         result = subprocess.run(
-            [sys.executable, "scripts/quality/run_all_gates.py", "--json"],
+            [sys.executable, "ops/quality/run_all_gates.py", "--json"],
             capture_output=True,
             text=True,
         )

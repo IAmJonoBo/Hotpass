@@ -84,8 +84,8 @@ def build_bootstrap_plan(
         ),
         BootstrapStep(
             description="Generate SBOM",
-            command=["uv", "run", "python", "scripts/supply_chain/generate_sbom.py"],
-            dry_run_message="uv run python scripts/supply_chain/generate_sbom.py",
+            command=["uv", "run", "python", "ops/supply_chain/generate_sbom.py"],
+            dry_run_message="uv run python ops/supply_chain/generate_sbom.py",
         ),
         BootstrapStep(
             description="Generate provenance statement",
@@ -93,9 +93,9 @@ def build_bootstrap_plan(
                 "uv",
                 "run",
                 "python",
-                "scripts/supply_chain/generate_provenance.py",
+                "ops/supply_chain/generate_provenance.py",
             ],
-            dry_run_message="uv run python scripts/supply_chain/generate_provenance.py",
+            dry_run_message="uv run python ops/supply_chain/generate_provenance.py",
         ),
     ]
 

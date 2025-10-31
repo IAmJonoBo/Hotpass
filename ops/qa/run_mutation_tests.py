@@ -7,8 +7,8 @@ import subprocess  # nosec B404
 import sys
 
 TARGETS = [
-    "src/hotpass/quality.py",
-    "src/hotpass/pipeline_enhanced.py",
+    "apps/data-platform/hotpass/quality.py",
+    "apps/data-platform/hotpass/pipeline_enhanced.py",
 ]
 
 

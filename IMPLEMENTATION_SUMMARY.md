@@ -17,20 +17,20 @@ This implementation successfully addresses all requirements from the problem sta
 
 #### New Files (3)
 - `.github/workflows/quality-gates.yml` (68 lines)
-- `scripts/migrate_profile.py` (302 lines)
-- `src/hotpass/enrichment/performance.py` (276 lines)
+- `ops/migrate_profile.py` (302 lines)
+- `apps/data-platform/hotpass/enrichment/performance.py` (276 lines)
 
 #### Modified Files (10)
-- `scripts/quality/run_all_gates.py` (+2 lines)
-- `src/hotpass/cli/commands/contracts.py` (+11 lines, type fixes)
-- `src/hotpass/cli/commands/qa.py` (+16 lines, added data-quality)
-- `src/hotpass/enrichment/fetchers/__init__.py` (+1 line, type fix)
-- `src/hotpass/enrichment/fetchers/research.py` (+7 lines, type fixes)
-- `src/hotpass/enrichment/provenance.py` (+3 lines, type fixes)
-- `src/hotpass/mcp/server.py` (+16 lines, type fixes)
-- `src/hotpass/telemetry/metrics.py` (+92 lines, enrichment metrics)
-- `src/hotpass/validation.py` (+47 lines, GE integration)
-- `src/hotpass.egg-info/SOURCES.txt` (+5 lines, metadata)
+- `ops/quality/run_all_gates.py` (+2 lines)
+- `apps/data-platform/hotpass/cli/commands/contracts.py` (+11 lines, type fixes)
+- `apps/data-platform/hotpass/cli/commands/qa.py` (+16 lines, added data-quality)
+- `apps/data-platform/hotpass/enrichment/fetchers/__init__.py` (+1 line, type fix)
+- `apps/data-platform/hotpass/enrichment/fetchers/research.py` (+7 lines, type fixes)
+- `apps/data-platform/hotpass/enrichment/provenance.py` (+3 lines, type fixes)
+- `apps/data-platform/hotpass/mcp/server.py` (+16 lines, type fixes)
+- `apps/data-platform/hotpass/telemetry/metrics.py` (+92 lines, enrichment metrics)
+- `apps/data-platform/hotpass/validation.py` (+47 lines, GE integration)
+- `apps/data-platform/hotpass.egg-info/SOURCES.txt` (+5 lines, metadata)
 
 ## Feature Details
 
@@ -61,7 +61,7 @@ gh workflow run quality-gates.yml
 
 ### 2. Great Expectations Integration
 
-**File:** `src/hotpass/validation.py`
+**File:** `apps/data-platform/hotpass/validation.py`
 
 **New Function:** `validate_profile_with_ge(profile_name: str) -> tuple[bool, str]`
 
@@ -85,12 +85,12 @@ uv run hotpass qa data-quality
 uv run hotpass qa data-quality --profile aviation
 
 # Check all profiles
-python scripts/migrate_profile.py --check-all
+python ops/migrate_profile.py --check-all
 ```
 
 ### 3. Profile Migration Tool
 
-**File:** `scripts/migrate_profile.py` (302 lines)
+**File:** `ops/migrate_profile.py` (302 lines)
 
 **Features:**
 - Automatic migration from legacy to 4-block schema
@@ -108,13 +108,13 @@ python scripts/migrate_profile.py --check-all
 **Usage:**
 ```bash
 # Migrate a single profile
-python scripts/migrate_profile.py src/hotpass/profiles/aviation.yaml
+python ops/migrate_profile.py apps/data-platform/hotpass/profiles/aviation.yaml
 
 # Validate without migrating
-python scripts/migrate_profile.py src/hotpass/profiles/aviation.yaml --validate
+python ops/migrate_profile.py apps/data-platform/hotpass/profiles/aviation.yaml --validate
 
 # Check all profiles
-python scripts/migrate_profile.py --check-all
+python ops/migrate_profile.py --check-all
 ```
 
 **Output:**
@@ -130,7 +130,7 @@ Checking 3 profiles...
 
 ### 4. Performance Optimizations
 
-**File:** `src/hotpass/enrichment/performance.py` (276 lines)
+**File:** `apps/data-platform/hotpass/enrichment/performance.py` (276 lines)
 
 **Classes and Functions:**
 
@@ -200,7 +200,7 @@ results = benchmark_enrichment(
 
 ### 5. OpenTelemetry Enrichment Monitoring
 
-**File:** `src/hotpass/telemetry/metrics.py` (+92 lines)
+**File:** `apps/data-platform/hotpass/telemetry/metrics.py` (+92 lines)
 
 **New Metrics Methods:**
 
@@ -257,33 +257,33 @@ All metrics methods handle missing OpenTelemetry gracefully:
 
 **All 23 type errors resolved across 8 files:**
 
-#### src/hotpass/enrichment/provenance.py (2 fixes)
+#### apps/data-platform/hotpass/enrichment/provenance.py (2 fixes)
 - Added return type annotation to `__init__`
 - Added type annotation to `provenance_data` dict
 
-#### src/hotpass/mcp/server.py (3 fixes)
+#### apps/data-platform/hotpass/mcp/server.py (3 fixes)
 - Added return type to `__init__`
 - Added type guard for tool_name parameter
 - Fixed type annotations for response_data dict
 
-#### src/hotpass/enrichment/fetchers/__init__.py (1 fix)
+#### apps/data-platform/hotpass/enrichment/fetchers/__init__.py (1 fix)
 - Added return type to `FetcherRegistry.__init__`
 
-#### src/hotpass/enrichment/fetchers/research.py (2 fixes)
+#### apps/data-platform/hotpass/enrichment/fetchers/research.py (2 fixes)
 - Fixed Callable type parameters in decorator
 - Removed unused type ignore comment
 
-#### src/hotpass/cli/commands/contracts.py (4 fixes)
+#### apps/data-platform/hotpass/cli/commands/contracts.py (4 fixes)
 - Added `Any` import
 - Fixed type annotations for function parameters
 
-#### scripts/quality/run_all_gates.py (1 fix)
+#### ops/quality/run_all_gates.py (1 fix)
 - Fixed missing return statement in JSON branch
 
-#### scripts/migrate_profile.py (1 fix)
+#### ops/migrate_profile.py (1 fix)
 - Added proper type annotation to loaded profile
 
-#### src/hotpass/enrichment/performance.py (3 fixes)
+#### apps/data-platform/hotpass/enrichment/performance.py (3 fixes)
 - Fixed CacheManager | None type declaration
 - Fixed float/int type consistency in results dict
 
@@ -320,7 +320,7 @@ All pipeline tests passed with no regressions.
 ### Quality Gates Runner: 5/5 PASSED ✅
 
 ```bash
-uv run python scripts/quality/run_all_gates.py --json
+uv run python ops/quality/run_all_gates.py --json
 ```
 
 Output:
@@ -345,7 +345,7 @@ Output:
 ### Profile Migration: 3/3 VALID ✅
 
 ```bash
-python scripts/migrate_profile.py --check-all
+python ops/migrate_profile.py --check-all
 ```
 
 All profiles validated successfully:
@@ -369,7 +369,7 @@ uv run ruff check --select E,F
 
 ### Bandit: 1 LOW SEVERITY (ACCEPTABLE) ✅
 ```bash
-uv run bandit -r scripts/migrate_profile.py src/hotpass/enrichment/performance.py
+uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/performance.py
 # 1 low severity: try-except-pass in benchmark function (intentional)
 ```
 
@@ -381,7 +381,7 @@ uv run bandit -r scripts/migrate_profile.py src/hotpass/enrichment/performance.p
 - Existing commands unchanged
 
 ### New Scripts
-- `scripts/migrate_profile.py` - Profile migration utility
+- `ops/migrate_profile.py` - Profile migration utility
 - `.github/workflows/quality-gates.yml` - CI workflow
 
 ### Library Extensions

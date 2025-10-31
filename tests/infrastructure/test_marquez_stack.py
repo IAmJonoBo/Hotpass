@@ -45,9 +45,27 @@ def test_marquez_compose_exposes_expected_services() -> None:
         "marquez-db" in dependency_keys,
         "Marquez service should depend on the database health check.",
     )
+    marquez_ports = {str(port) for port in marquez.get("ports", [])}
     expect(
-        set(marquez.get("ports", [])) >= {"5000:5000", "3000:3000"},
-        "Marquez service should expose API and UI ports.",
+        any(port.endswith(":5000") for port in marquez_ports),
+        "Marquez service should expose the API port.",
+    )
+
+    expect("marquez-web" in services, "Compose stack should include the Marquez UI service.")
+    marquez_ui = services.get("marquez-web", {})
+    ui_depends_on = marquez_ui.get("depends_on") or {}
+    if isinstance(ui_depends_on, dict):
+        ui_dependency_keys = set(ui_depends_on)
+    else:
+        ui_dependency_keys = set(ui_depends_on)
+    expect(
+        "marquez" in ui_dependency_keys,
+        "Marquez UI should depend on the API service.",
+    )
+    marquez_ui_ports = {str(port) for port in marquez_ui.get("ports", [])}
+    expect(
+        any(port.endswith(":3000") for port in marquez_ui_ports),
+        "Marquez UI service should expose the UI port.",
     )
 
     db_service = services.get("marquez-db", {})

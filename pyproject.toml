@@ -97,8 +97,8 @@ hotpass-enhanced = "hotpass.cli_enhanced:main"
 
 [tool.ruff]
 line-length = 100
-extend-exclude = ["data"]
-src = ["src", "scripts", "tests"]
+extend-exclude = ["data", "frontier-repo-template"]
+src = ["apps/data-platform", "ops", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
@@ -111,8 +111,8 @@ indent-style = "space"
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
-addopts = "--maxfail=1 --disable-warnings --cov=src --cov-report=term-missing"
-pythonpath = ["src"]
+addopts = "--maxfail=1 --disable-warnings --cov=apps/data-platform --cov-report=term-missing"
+pythonpath = ["apps/data-platform"]
 markers = ["accessibility: accessibility semantics checks"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -120,17 +120,17 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.mypy]
 python_version = "3.13"
 namespace_packages = true
-mypy_path = ["src"]
+mypy_path = ["apps/data-platform"]
 files = [
-  "src/hotpass/pipeline/config.py",
-  "src/hotpass/storage/adapters.py",
-  "src/hotpass/domain/party/schemas.py",
-  "src/hotpass/_compat_nameparser.py",
-  "src/hotpass/orchestration.py",
-  "src/hotpass/pipeline/orchestrator.py",
-  "src/hotpass/telemetry/bootstrap.py",
-  "src/hotpass/telemetry/registry.py",
-  "scripts/quality/fitness_functions.py",
+  "apps/data-platform/hotpass/pipeline/config.py",
+  "apps/data-platform/hotpass/storage/adapters.py",
+  "apps/data-platform/hotpass/domain/party/schemas.py",
+  "apps/data-platform/hotpass/_compat_nameparser.py",
+  "apps/data-platform/hotpass/orchestration.py",
+  "apps/data-platform/hotpass/pipeline/orchestrator.py",
+  "apps/data-platform/hotpass/telemetry/bootstrap.py",
+  "apps/data-platform/hotpass/telemetry/registry.py",
+  "ops/quality/fitness_functions.py",
 ]
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -155,7 +155,7 @@ module = ["hotpass.pipeline.orchestrator"]
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["scripts.quality.fitness_functions"]
+module = ["ops.quality.fitness_functions"]
 strict = true
 
 [[tool.mypy.overrides]]
@@ -171,7 +171,7 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
-module = ["scripts.quality.*"]
+module = ["ops.quality.*"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
@@ -249,14 +249,14 @@ ignore_missing_imports = true
 
 [tool.coverage.run]
 branch = true
-source = ["src"]
+source = ["apps/data-platform"]
 omit = [
-  "src/hotpass/optimize.py",
-  "src/hotpass/automation/*",
-  "src/hotpass/telemetry/*",
-  "src/hotpass/linkage/*",
-  "src/hotpass/transform/scoring.py",
-  "src/hotpass/transform/normalize.py",
+  "apps/data-platform/hotpass/optimize.py",
+  "apps/data-platform/hotpass/automation/*",
+  "apps/data-platform/hotpass/telemetry/*",
+  "apps/data-platform/hotpass/linkage/*",
+  "apps/data-platform/hotpass/transform/scoring.py",
+  "apps/data-platform/hotpass/transform/normalize.py",
   "tests/test_ml_tracking.py",
   "tests/test_scoring.py",
 ]
@@ -266,17 +266,20 @@ show_missing = true
 skip_empty = true
 
 [tool.mutmut]
-paths_to_mutate = ["src/hotpass/quality.py", "src/hotpass/pipeline_enhanced.py"]
+paths_to_mutate = [
+  "apps/data-platform/hotpass/quality.py",
+  "apps/data-platform/hotpass/pipeline_enhanced.py",
+]
 tests_dir = [
   "tests/test_quality.py",
   "tests/test_quality_report.py",
   "tests/test_pipeline_enhanced.py",
   "tests/contracts",
 ]
-also_copy = ["src/hotpass"]
+also_copy = ["apps/data-platform/hotpass"]
 
 [tool.setuptools]
-package-dir = { "" = "src" }
+package-dir = { "" = "apps/data-platform" }
 include-package-data = true
 
 [tool.setuptools.data-files]

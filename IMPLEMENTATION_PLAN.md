@@ -22,16 +22,16 @@ This document details the implementation plan for upgrading Hotpass to support f
 ### Current State
 
 - ✅ CLI surface now aligned with UPGRADE.md (`overview`, `refine`, `enrich`, `qa`, `contracts`) with legacy commands maintained where needed.
-- ✅ MCP stdio server (`src/hotpass/mcp/server.py`) exposes the required toolset, including `hotpass.crawl` backed by the adaptive orchestrator.
+- ✅ MCP stdio server (`apps/data-platform/hotpass/mcp/server.py`) exposes the required toolset, including `hotpass.crawl` backed by the adaptive orchestrator.
 - ✅ Enrichment + research orchestration deliver deterministic-first enrichment, provenance, and throttled crawl artefacts.
-- ✅ Quality gates QG‑1 → QG‑5 run locally and in CI via `scripts/quality/run_qg*.py` and the `quality-gates` workflow.
+- ✅ Quality gates QG‑1 → QG‑5 run locally and in CI via `ops/quality/run_qg*.py` and the `quality-gates` workflow.
 - ⚠️ Advanced profile/linkage coverage and TA integration analytics remain in progress (integration tests + QG surfacing still required).
 - ⚠️ Docs/navigation uplift and research-first positioning still pending sign-off.
 
 ### Target State
 
 - ✅ CLI commands: `overview`, `refine`, `enrich`, `qa`, `contracts` (aliased to existing)
-- ✅ MCP server at `src/hotpass/mcp/server.py` with 5 core tools
+- ✅ MCP server at `apps/data-platform/hotpass/mcp/server.py` with 5 core tools
 - ✅ Enrichment with deterministic/research split and network guards
 - ✅ Complete profile schema with all 4 blocks
 - ✅ Quality gates QG-1 through QG-5 automated in CI
@@ -47,7 +47,7 @@ This document details the implementation plan for upgrading Hotpass to support f
 
 #### Implementation Tasks
 
-1. **Create new CLI commands** (`src/hotpass/cli/commands/`)
+1. **Create new CLI commands** (`apps/data-platform/hotpass/cli/commands/`)
 
    - `overview.py` - Display available commands and system status
    - `refine.py` - Wrapper/alias for existing `run.py`
@@ -55,7 +55,7 @@ This document details the implementation plan for upgrading Hotpass to support f
    - `qa.py` - Quality assurance and validation
    - `contracts.py` - Contract emission command
 
-2. **Create MCP server** (`src/hotpass/mcp/`)
+2. **Create MCP server** (`apps/data-platform/hotpass/mcp/`)
 
    - `server.py` - MCP stdio server implementation
    - `tools.py` - Tool definitions and handlers
@@ -121,7 +121,7 @@ def test_qg1_cli_integrity(tmp_path):
 
 #### Implementation Tasks
 
-1. **Create enrichment structure** (`src/hotpass/enrichment/`)
+1. **Create enrichment structure** (`apps/data-platform/hotpass/enrichment/`)
 
    - `fetchers/__init__.py` - Fetcher registry
    - `fetchers/deterministic.py` - Local/offline enrichment
@@ -460,13 +460,13 @@ def test_qg5_docs_instruction_gate():
    - Job 5: QG-5 (Docs/instructions)
    - Matrix testing across profiles
 
-2. **Meta-MCP Tool** (`src/hotpass/mcp/tools/ta_check.py`)
+2. **Meta-MCP Tool** (`apps/data-platform/hotpass/mcp/tools/ta_check.py`)
 
    - `hotpass.ta.check` - Runs all QG checks
    - Returns structured results
    - CLI integration: `hotpass qa ta`
 
-3. **Quality Gate Scripts** (`scripts/quality/`)
+3. **Quality Gate Scripts** (`ops/quality/`)
 
    - `run_qg1.py` - CLI integrity check
    - `run_qg2.py` - GE validation
@@ -501,7 +501,7 @@ def test_qg5_docs_instruction_gate():
    - Persist JSON summary to `dist/quality-gates/latest-ta.json`
    - Append NDJSON history entries for longitudinal tracking
    - Expose artefact paths via CLI/MCP output for downstream analytics (markdown export remains optional)
-   - Provide `scripts/quality/ta_history_report.py` to surface pass-rate analytics (covered by `tests/cli/test_ta_history_report.py`)
+   - Provide `ops/quality/ta_history_report.py` to surface pass-rate analytics (covered by `tests/cli/test_ta_history_report.py`)
 
 #### Quality Gate: QG-4 (MCP Discoverability)
 
@@ -520,7 +520,7 @@ def test_qg5_docs_instruction_gate():
 - ✅ CI runs QG-1 through QG-5 automatically
 - ✅ `hotpass.ta.check` MCP tool works
 - ✅ `hotpass qa ta` CLI command works
-- ✅ All QG scripts in `scripts/quality/`
+- ✅ All QG scripts in `ops/quality/`
 - ✅ TA summary report generated
 - ✅ QG-4 test passes in CI
 
@@ -538,8 +538,8 @@ All operations accessible via `uv run hotpass ...` or equivalent MCP tools.
 
 **Verification:**
 
-- [x] Every MCP tool has CLI equivalent (`hotpass explain-provenance` mirrors the MCP helper).【F:src/hotpass/cli/commands/explain_provenance.py†L1-L160】【F:src/hotpass/cli/main.py†L20-L80】
-- [x] No operations require secondary repos/tools.【F:src/hotpass/cli/commands/overview.py†L1-L200】【F:src/hotpass/mcp/server.py†L1-L360】
+- [x] Every MCP tool has CLI equivalent (`hotpass explain-provenance` mirrors the MCP helper).【F:apps/data-platform/hotpass/cli/commands/explain_provenance.py†L1-L160】【F:apps/data-platform/hotpass/cli/main.py†L20-L80】
+- [x] No operations require secondary repos/tools.【F:apps/data-platform/hotpass/cli/commands/overview.py†L1-L200】【F:apps/data-platform/hotpass/mcp/server.py†L1-L360】
 
 ### TA-2: Profile Completeness
 
@@ -548,8 +548,8 @@ Every profile declares all 4 blocks (ingest, refine, enrich, compliance).
 **Verification:**
 
 - [x] `tools/profile_lint.py` validates schemas.【F:tools/profile_lint.py†L1-L220】
-- [x] All existing profiles migrated.【F:src/hotpass/profiles/aviation.yaml†L1-L160】【F:src/hotpass/profiles/generic.yaml†L1-L160】
-- [x] Test profile covers edge cases.【F:src/hotpass/profiles/test.yaml†L1-L160】【F:tests/enrichment/test_quality_gates.py†L1-L120】
+- [x] All existing profiles migrated.【F:apps/data-platform/hotpass/profiles/aviation.yaml†L1-L160】【F:apps/data-platform/hotpass/profiles/generic.yaml†L1-L160】
+- [x] Test profile covers edge cases.【F:apps/data-platform/hotpass/profiles/test.yaml†L1-L160】【F:tests/enrichment/test_quality_gates.py†L1-L120】
 
 ### TA-3: Offline-First
 
@@ -557,7 +557,7 @@ Enrichment succeeds with `--allow-network=false` and valid provenance.
 
 **Verification:**
 
-- [x] QG-3 passes.【F:scripts/quality/run_qg3.py†L1-L140】
+- [x] QG-3 passes.【F:ops/quality/run_qg3.py†L1-L140】
 - [x] No network calls when disabled.【F:tests/enrichment/test_quality_gates.py†L97-L160】
 - [x] Provenance tracks "offline" strategy.【F:tests/enrichment/test_quality_gates.py†L126-L160】
 
@@ -576,9 +576,9 @@ Every CLI verb exposed as MCP tool, discoverable via `/mcp list`.
 
 **Verification:**
 
-- [x] QG-4 passes.【F:scripts/quality/run_qg4.py†L1-L220】
+- [x] QG-4 passes.【F:ops/quality/run_qg4.py†L1-L220】
 - [x] All tools respond correctly.【F:tests/mcp/test_research_tools.py†L90-L180】
-- [x] Tool schemas match CLI signatures.【F:src/hotpass/mcp/server.py†L80-L260】
+- [x] Tool schemas match CLI signatures.【F:apps/data-platform/hotpass/mcp/server.py†L80-L260】
 
 ### TA-6: Quality Gates Wired
 
@@ -587,8 +587,8 @@ QG-1 through QG-5 exist as runnable scripts/tests.
 **Verification:**
 
 - [x] All QG tests in CI.【F:.github/workflows/quality-gates.yml†L1-L110】
-- [x] Scripts in `scripts/quality/`.【F:scripts/quality/run_all_gates.py†L1-L200】
-- [x] `hotpass qa ta` runs all gates.【F:src/hotpass/cli/commands/qa.py†L270-L360】
+- [x] Scripts in `ops/quality/`.【F:ops/quality/run_all_gates.py†L1-L200】
+- [x] `hotpass qa ta` runs all gates.【F:apps/data-platform/hotpass/cli/commands/qa.py†L270-L360】
 
 ### TA-7: Docs Present
 
@@ -596,7 +596,7 @@ Agent instructions complete with required terminology.
 
 **Verification:**
 
-- [x] QG-5 passes.【F:scripts/quality/run_qg5.py†L1-L140】
+- [x] QG-5 passes.【F:ops/quality/run_qg5.py†L1-L140】
 - [x] E2E flows documented.【F:docs/agent-instructions.md†L1-L180】
 - [x] Migration guides provided.【F:docs/how-to-guides/configure-pipeline.md†L120-L180】【F:docs/how-to-guides/manage-data-versions.md†L200-L280】
 
@@ -975,14 +975,14 @@ compliance:
 
 ### Appendix D: Fitness Function Updates
 
-Add to `scripts/quality/fitness_functions.py`:
+Add to `ops/quality/fitness_functions.py`:
 
 ```python
 # New checks for UPGRADE.md compliance
 def check_mcp_server_exists() -> None:
     mcp_server = SRC_ROOT / "mcp" / "server.py"
     if not mcp_server.exists():
-        raise FitnessFailure("MCP server missing at src/hotpass/mcp/server.py")
+        raise FitnessFailure("MCP server missing at apps/data-platform/hotpass/mcp/server.py")
 
 def check_profile_completeness(profile_name: str) -> None:
     profile_path = SRC_ROOT / "profiles" / f"{profile_name}.yaml"

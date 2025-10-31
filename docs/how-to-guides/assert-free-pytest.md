@@ -81,7 +81,7 @@ encodings, date formats, missing columns, and idempotent pipeline behaviour goin
 Bandit is wired into the `process-data` workflow. Local verification mirrors CI:
 
 ```bash
-uv run bandit -r src/hotpass/lineage.py tests/test_lineage.py
+uv run bandit -r apps/data-platform/hotpass/lineage.py tests/test_lineage.py
 ```
 
 Expand the target paths to cover your modified files before committing. This keeps the assert-free contract enforceable and

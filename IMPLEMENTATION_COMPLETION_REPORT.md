@@ -86,7 +86,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 
 - **Status:** 0 type errors across 261 checked files
 - **Baseline:** 171 errors (documented in Next_Steps.md)
-- **Change:** -171 errors after typed Hypothesis wrappers, centralised stubs, CLI/MCP annotations, and long-tail clean-up (baseline archived at `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`).【F:tests/helpers/stubs.py†L1-L170】【F:src/hotpass/cli/commands/crawl.py†L1-L120】
+- **Change:** -171 errors after typed Hypothesis wrappers, centralised stubs, CLI/MCP annotations, and long-tail clean-up (baseline archived at `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`).【F:tests/helpers/stubs.py†L1-L170】【F:apps/data-platform/hotpass/cli/commands/crawl.py†L1-L120】
 - **Action:** Monitor new suites for decorator regressions; add typed wrappers as part of ongoing maintenance.【F:Next_Steps.md†L20-L48】
 
 ### Bandit (Security)
@@ -304,7 +304,7 @@ The foundation is solid and the quality assurance infrastructure is robust. Futu
 uv run pytest --cov=src --cov=tests --cov-report=term-missing
 
 # Run quality gates
-uv run python scripts/quality/run_all_gates.py --json
+uv run python ops/quality/run_all_gates.py --json
 
 # Run all linters
 uv run ruff check src tests scripts

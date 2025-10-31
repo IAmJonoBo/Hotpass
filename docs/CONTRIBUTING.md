@@ -30,7 +30,7 @@ Thank you for improving Hotpass docs. Follow this lightweight workflow to keep c
 4. Run the preflight checks:
 
    ```bash
-   uv run python scripts/validation/refresh_data_docs.py
+   uv run python ops/validation/refresh_data_docs.py
    uv run sphinx-build -n -W -b html docs docs/_build/html
    ```
 
@@ -60,7 +60,7 @@ uv run sphinx-build -b linkcheck docs docs/_build/linkcheck
 ```
 
 When updates touch validation guidance, also regenerate Data Docs with
-`uv run python scripts/validation/refresh_data_docs.py` so reviewers can inspect
+`uv run python ops/validation/refresh_data_docs.py` so reviewers can inspect
 the refreshed reports alongside the new copy.
 
 Fix all warnings before opening a pull request. The docs CI workflow enforces the same commands.

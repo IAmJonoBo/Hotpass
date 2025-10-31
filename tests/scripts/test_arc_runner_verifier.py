@@ -15,7 +15,7 @@ from typing import Any, cast
 
 import requests
 
-import scripts.arc.verify_runner_lifecycle as lifecycle
+import ops.arc.verify_runner_lifecycle as lifecycle
 
 
 def expect(condition: bool, message: str) -> None:
@@ -189,7 +189,7 @@ def test_cli_snapshot_mode(tmp_path: Path) -> None:
     result = subprocess.run(
         [
             sys.executable,
-            "scripts/arc/verify_runner_lifecycle.py",
+            "ops/arc/verify_runner_lifecycle.py",
             "--owner",
             "Hotpass",
             "--repository",

@@ -3,8 +3,8 @@
 # Run `semgrep --config=auto` with optional corporate CA bundle support.
 #
 # Usage:
-#   bash scripts/security/semgrep_auto.sh [extra semgrep args...]
-#   HOTPASS_CA_BUNDLE_B64="$(base64 <ca.pem)" bash scripts/security/semgrep_auto.sh
+#   bash ops/security/semgrep_auto.sh [extra semgrep args...]
+#   HOTPASS_CA_BUNDLE_B64="$(base64 <ca.pem)" bash ops/security/semgrep_auto.sh
 
 set -euo pipefail
 

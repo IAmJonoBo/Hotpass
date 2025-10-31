@@ -15,7 +15,7 @@ teams can integrate the schemas into their quality gates.
 
 - Schemas live under `schemas/` with the naming convention `<dataset>.schema.json`.
 - Each file reflects the canonical contract defined in
-  `src/hotpass/contracts/datasets.py`.
+  `apps/data-platform/hotpass/contracts/datasets.py`.
 - The [Dataset schemas reference](schemas.md) renders a human-friendly table for
   each dataset using the same source registry.
 

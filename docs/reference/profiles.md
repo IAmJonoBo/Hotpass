@@ -5,7 +5,7 @@ last_updated: 2025-10-31
 ---
 
 Hotpass industry profiles describe how spreadsheets are ingested, normalised, enriched,
-and governed. Profiles are expressed as YAML (one per file under `src/hotpass/profiles/`) and
+and governed. Profiles are expressed as YAML (one per file under `apps/data-platform/hotpass/profiles/`) and
 drive both the CLI defaults and the adaptive research orchestrator.
 
 ## Required structure
@@ -100,7 +100,7 @@ rate limits ensure these artefacts reflect the throttled schedule, making audits
 
 - Define `research_rate_limit.min_interval_seconds` and `burst` per profile to control cadence; the orchestrator enforces these limits for both deterministic and network passes.
 - Use environment flags `FEATURE_ENABLE_REMOTE_RESEARCH` / `ALLOW_NETWORK_RESEARCH` to gate remote fetchers (documented in `AGENTS.md`).
-- `scripts/quality/ta_history_report.py` and `.hotpass/research_runs/` outputs provide audit trails for rate-limit tuning and provider SLA reviews.
+- `ops/quality/ta_history_report.py` and `.hotpass/research_runs/` outputs provide audit trails for rate-limit tuning and provider SLA reviews.
 
 Profiles omitting these sections remain valid; the orchestrator simply skips the authority/backfill
 passes.
@@ -114,7 +114,7 @@ passes.
 
 ## Authoring checklist
 
-1. Copy an existing profile (for example `src/hotpass/profiles/generic.yaml`).
+1. Copy an existing profile (for example `apps/data-platform/hotpass/profiles/generic.yaml`).
 2. Update the metadata block and ingest/refine/enrich/compliance sections.
 3. Declare any authority sources or backfillable fields required for adaptive research.
 4. Run the linter and quality gates (`uv run hotpass qa profiles`) before committing.

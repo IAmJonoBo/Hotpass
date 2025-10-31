@@ -17,10 +17,10 @@
 - [ ] `uv run detect-secrets scan src tests scripts`
 - [ ] `uv run uv build`
 - [ ] `uv run pytest -m accessibility`
-- [ ] `uv run python scripts/qa/run_mutation_tests.py`
-- [ ] `uv run python scripts/quality/fitness_functions.py`
-- [ ] `uv run python scripts/supply_chain/generate_sbom.py`
-- [ ] `uv run python scripts/supply_chain/generate_provenance.py`
+- [ ] `uv run python ops/qa/run_mutation_tests.py`
+- [ ] `uv run python ops/quality/fitness_functions.py`
+- [ ] `uv run python ops/supply_chain/generate_sbom.py`
+- [ ] `uv run python ops/supply_chain/generate_provenance.py`
 - [ ] `uv run semgrep --config=auto`
 
 ## Risk & mitigation

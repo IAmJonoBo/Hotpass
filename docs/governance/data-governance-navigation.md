@@ -17,7 +17,7 @@ to find validation signals before programme and audit reviews.
 1. **Data Docs** — Generated HTML reports under `dist/data-docs/` capture the
    latest Great Expectations checkpoint runs. Publish them as part of release
    PRs and link to the hosted copy from the roadmap. Use the refresh helper
-   (`uv run python scripts/validation/refresh_data_docs.py`) to update the set
+   (`uv run python ops/validation/refresh_data_docs.py`) to update the set
    before every retro or stakeholder review.
 2. **Schema exports** — Canonical JSON Schemas live under `schemas/` with the
    rendered catalogue in [`docs/reference/schemas.md`](../reference/schemas.md).

@@ -8,7 +8,7 @@ This guide explains how to use the new Prefect tasks and MCP configuration files
 
 ## 1. Configure MCP server and client policies
 
-The prototype policies live in [`scripts/agents/`](../../scripts/agents/README.md):
+The prototype policies live in [`ops/agents/`](../../ops/agents/README.md):
 
 1. Review `mcp_server.yaml` and update the allowlisted tools, repositories, and Prefect deployments to match your environment.
 2. Adjust approval routing. Operator and reviewer roles require manual approval in the example policy; analysts are auto-approved.

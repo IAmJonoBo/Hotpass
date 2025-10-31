@@ -9,20 +9,20 @@ from rich.console import Console
 
 from tests.helpers.assertions import expect
 
-BOOTSTRAP_MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "idp" / "bootstrap.py"
+BOOTSTRAP_MODULE_PATH = Path(__file__).resolve().parents[1] / "ops" / "idp" / "bootstrap.py"
 
 
 def _load_bootstrap_module() -> ModuleType:
-    if "scripts" not in sys.modules:
-        scripts_pkg = ModuleType("scripts")
-        scripts_pkg.__path__ = [str(BOOTSTRAP_MODULE_PATH.parent.parent)]
-        sys.modules["scripts"] = scripts_pkg
-    if "scripts.idp" not in sys.modules:
-        idp_pkg = ModuleType("scripts.idp")
+    if "ops" not in sys.modules:
+        ops_pkg = ModuleType("ops")
+        ops_pkg.__path__ = [str(BOOTSTRAP_MODULE_PATH.parent.parent)]
+        sys.modules["ops"] = ops_pkg
+    if "ops.idp" not in sys.modules:
+        idp_pkg = ModuleType("ops.idp")
         idp_pkg.__path__ = [str(BOOTSTRAP_MODULE_PATH.parent)]
-        sys.modules["scripts.idp"] = idp_pkg
+        sys.modules["ops.idp"] = idp_pkg
 
-    spec = importlib.util.spec_from_file_location("scripts.idp.bootstrap", BOOTSTRAP_MODULE_PATH)
+    spec = importlib.util.spec_from_file_location("ops.idp.bootstrap", BOOTSTRAP_MODULE_PATH)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard
         msg = "Unable to load bootstrap module specification"
         raise RuntimeError(msg)
@@ -42,7 +42,7 @@ def test_build_bootstrap_plan_includes_supply_chain(tmp_path: Path) -> None:
     commands = [step.command for step in plan if step.command]
     expect(["uv", "venv"] in commands, "Bootstrap plan should include uv venv command")
     expect(
-        ["uv", "run", "python", "scripts/supply_chain/generate_sbom.py"] in commands,
+        ["uv", "run", "python", "ops/supply_chain/generate_sbom.py"] in commands,
         "Bootstrap plan should include SBOM generation",
     )
     expect(
@@ -50,7 +50,7 @@ def test_build_bootstrap_plan_includes_supply_chain(tmp_path: Path) -> None:
             "uv",
             "run",
             "python",
-            "scripts/supply_chain/generate_provenance.py",
+            "ops/supply_chain/generate_provenance.py",
         ]
         in commands,
         "Bootstrap plan should include provenance generation",

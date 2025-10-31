@@ -5,9 +5,9 @@ This script runs all quality gates (QG-1 through QG-5) and generates
 a summary report. It can be used locally or in CI.
 
 Usage:
-    python scripts/quality/run_all_gates.py          # Run all gates
-    python scripts/quality/run_all_gates.py --gate 1 # Run specific gate
-    python scripts/quality/run_all_gates.py --json   # JSON output for CI
+    python ops/quality/run_all_gates.py          # Run all gates
+    python ops/quality/run_all_gates.py --gate 1 # Run specific gate
+    python ops/quality/run_all_gates.py --json   # JSON output for CI
 """
 
 from __future__ import annotations
@@ -169,7 +169,7 @@ def _invoke_gate_script(
 def run_qg1_cli_integrity() -> GateResult:
     """QG-1: CLI Integrity Gate."""
     return _invoke_gate_script(
-        "scripts/quality/run_qg1.py",
+        "ops/quality/run_qg1.py",
         "QG-1",
         "CLI Integrity",
     )
@@ -178,7 +178,7 @@ def run_qg1_cli_integrity() -> GateResult:
 def run_qg2_data_quality() -> GateResult:
     """QG-2: Data Quality Gate."""
     return _invoke_gate_script(
-        "scripts/quality/run_qg2.py",
+        "ops/quality/run_qg2.py",
         "QG-2",
         "Data Quality",
     )
@@ -187,7 +187,7 @@ def run_qg2_data_quality() -> GateResult:
 def run_qg3_enrichment_chain() -> GateResult:
     """QG-3: Enrichment Chain Gate."""
     return _invoke_gate_script(
-        "scripts/quality/run_qg3.py",
+        "ops/quality/run_qg3.py",
         "QG-3",
         "Enrichment Chain",
     )
@@ -196,7 +196,7 @@ def run_qg3_enrichment_chain() -> GateResult:
 def run_qg4_mcp_discoverability() -> GateResult:
     """QG-4: MCP Discoverability Gate."""
     return _invoke_gate_script(
-        "scripts/quality/run_qg4.py",
+        "ops/quality/run_qg4.py",
         "QG-4",
         "MCP Discoverability",
     )
@@ -205,7 +205,7 @@ def run_qg4_mcp_discoverability() -> GateResult:
 def run_qg5_docs_instruction() -> GateResult:
     """QG-5: Docs/Instruction Gate."""
     return _invoke_gate_script(
-        "scripts/quality/run_qg5.py",
+        "ops/quality/run_qg5.py",
         "QG-5",
         "Docs/Instructions",
     )

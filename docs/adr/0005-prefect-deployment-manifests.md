@@ -58,7 +58,7 @@ We introduced manifest-driven deployments and a revamped `hotpass deploy` comman
 
 ## References
 
-- `src/hotpass/prefect/deployments.py`
+- `apps/data-platform/hotpass/prefect/deployments.py`
 - `prefect/refinement.yaml`
 - `prefect/backfill.yaml`
 - `docs/how-to-guides/manage-prefect-deployments.md`

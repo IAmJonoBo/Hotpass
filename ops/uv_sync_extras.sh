@@ -3,7 +3,7 @@
 # Synchronise Hotpass dependencies using uv extras selected via HOTPASS_UV_EXTRAS.
 #
 # Usage:
-#   HOTPASS_UV_EXTRAS="dev orchestration" bash scripts/uv_sync_extras.sh
+#   HOTPASS_UV_EXTRAS="dev orchestration" bash ops/uv_sync_extras.sh
 #   # defaults to "dev orchestration" when HOTPASS_UV_EXTRAS is unset
 
 set -euo pipefail

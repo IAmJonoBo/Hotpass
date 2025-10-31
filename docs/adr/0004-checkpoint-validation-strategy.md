@@ -51,7 +51,7 @@ We restructured the Great Expectations validation infrastructure around checkpoi
    - No special handling needed (exception propagation works correctly)
 
 6. **Automation:**
-   - Provide `scripts/validation/refresh_data_docs.py` for CI validation
+   - Provide `ops/validation/refresh_data_docs.py` for CI validation
    - Script runs all checkpoints against sample workbooks
    - Generates Data Docs for inspection
 

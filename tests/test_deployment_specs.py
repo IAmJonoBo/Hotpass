@@ -49,7 +49,12 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
             sys.modules[module_name] = types.ModuleType(module_name)
 
     module_path = (
-        Path(__file__).resolve().parents[1] / "src" / "hotpass" / "prefect" / "deployments.py"
+        Path(__file__).resolve().parents[1]
+        / "apps"
+        / "data-platform"
+        / "hotpass"
+        / "prefect"
+        / "deployments.py"
     )
     spec = spec_from_file_location("hotpass.prefect.deployments", module_path)
     if spec is None or spec.loader is None:  # pragma: no cover - defensive guard

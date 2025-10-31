@@ -7,7 +7,7 @@
 # Security + supply-chain
 SECURITY.md @security-team
 policy/ @security-team
-scripts/supply_chain/ @security-team
+ops/supply_chain/ @security-team
 
 # Workflows
 .github/workflows/ @platform-eng

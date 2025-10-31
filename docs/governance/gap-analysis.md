@@ -30,32 +30,32 @@ Skips: Parquet-related tests remain skipped when `pyarrow` is unavailable, so co
 
 ### 1. CLI/orchestration duplication and exception handling
 
-- `hotpass.cli_enhanced.cmd_orchestrate` rebuilds pipeline configuration, archive handling, and Prefect dispatch logic already implemented inside `hotpass.orchestration.refinement_pipeline_flow`, leading to duplicated behaviours and diverging error handling paths.【F:src/hotpass/cli_enhanced.py†L165-L255】【F:src/hotpass/orchestration.py†L154-L218】
-- The same function and `cmd_resolve` wrap the entire execution in broad `except Exception` blocks that swallow root causes and only emit console messages, making automated recovery and monitoring difficult.【F:src/hotpass/cli_enhanced.py†L196-L325】
+- `hotpass.cli_enhanced.cmd_orchestrate` rebuilds pipeline configuration, archive handling, and Prefect dispatch logic already implemented inside `hotpass.orchestration.refinement_pipeline_flow`, leading to duplicated behaviours and diverging error handling paths.【F:apps/data-platform/hotpass/cli_enhanced.py†L165-L255】【F:apps/data-platform/hotpass/orchestration.py†L154-L218】
+- The same function and `cmd_resolve` wrap the entire execution in broad `except Exception` blocks that swallow root causes and only emit console messages, making automated recovery and monitoring difficult.【F:apps/data-platform/hotpass/cli_enhanced.py†L196-L325】
 
 **Impact**: High risk of logic drift between CLI and Prefect workflows, inconsistent exit codes, and hard-to-diagnose failures during the overhaul.
 
 ### 2. Prefect logging monkey patch
 
-- Importing `hotpass.orchestration` mutates Prefect’s console handler by overriding `emit` on the handler class at module import time to guard against ValueErrors.【F:src/hotpass/orchestration.py†L37-L71】
+- Importing `hotpass.orchestration` mutates Prefect’s console handler by overriding `emit` on the handler class at module import time to guard against ValueErrors.【F:apps/data-platform/hotpass/orchestration.py†L37-L71】
 
 **Impact**: Global monkey patches can break when Prefect internals change, and they apply process-wide (even when Hotpass is imported as a library), creating maintenance and observability risks.
 
 ### 3. Deployment scheduling gap
 
-- `hotpass.orchestration.deploy_pipeline` accepts a `cron_schedule` argument but never applies it to the Prefect deployment, so scheduled runs cannot be configured through the CLI despite the surface API suggesting otherwise.【F:src/hotpass/orchestration.py†L221-L245】
+- `hotpass.orchestration.deploy_pipeline` accepts a `cron_schedule` argument but never applies it to the Prefect deployment, so scheduled runs cannot be configured through the CLI despite the surface API suggesting otherwise.【F:apps/data-platform/hotpass/orchestration.py†L221-L245】
 
 **Impact**: Violates the principle of least astonishment and blocks teams from automating validated schedules without manual Prefect UI changes.
 
 ### 4. Entity history ingestion safeguards
 
-- `_load_entity_history` feeds history file columns through `ast.literal_eval`, trusting raw strings from CSV/JSON input.【F:src/hotpass/entity_resolution.py†L299-L333】
+- `_load_entity_history` feeds history file columns through `ast.literal_eval`, trusting raw strings from CSV/JSON input.【F:apps/data-platform/hotpass/entity_resolution.py†L299-L333】
 
 **Impact**: Although `literal_eval` is safer than `eval`, it will still raise exceptions or consume excessive memory on malicious input, and it expands the threat surface for ingestion of unvetted history dumps. Sanitised schema-aware parsing would be safer.
 
 ### 5. Geospatial scaling and error handling
 
-- `calculate_distance_matrix` builds an `n x n` matrix using nested Python loops and silently returns an empty frame on any exception.【F:src/hotpass/geospatial.py†L315-L357】
+- `calculate_distance_matrix` builds an `n x n` matrix using nested Python loops and silently returns an empty frame on any exception.【F:apps/data-platform/hotpass/geospatial.py†L315-L357】
 
 **Impact**: O(n²) Python loops will time out on moderate datasets, while the blanket error handling hides operational issues and erodes trust in geospatial analytics.
 

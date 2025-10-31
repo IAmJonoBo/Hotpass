@@ -26,8 +26,8 @@ The source-to-target mapping defines how the ingestion layer normalises incoming
 
 ## Adding a new mapping
 
-1. Update the relevant profile under `src/hotpass/profiles/` with the new synonyms.
-2. Add transformation logic in `src/hotpass/column_mapping.py` if the field requires custom handling.
+1. Update the relevant profile under `apps/data-platform/hotpass/profiles/` with the new synonyms.
+2. Add transformation logic in `apps/data-platform/hotpass/column_mapping.py` if the field requires custom handling.
 3. Extend the appropriate tests (`tests/test_column_mapping.py`, `tests/test_contacts.py`) to cover the new scenario.
 
 Consistently updating mappings keeps the SSOT coherent and prevents regressions in the downstream dashboards.

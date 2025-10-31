@@ -22,7 +22,7 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
 ```
 
 **MCP Server Implemented (5/5 tools):**
-- Location: `src/hotpass/mcp/server.py`
+- Location: `apps/data-platform/hotpass/mcp/server.py`
 - Protocol: JSON-RPC 2.0 over stdio
 - Tools: `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl`
 - Features: Async execution, error handling, tool discovery
@@ -207,21 +207,21 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Files Changed
 
 **Created:**
-- `src/hotpass/cli/commands/overview.py` (108 lines)
-- `src/hotpass/cli/commands/refine.py` (42 lines)
-- `src/hotpass/cli/commands/enrich.py` (200 lines)
-- `src/hotpass/cli/commands/qa.py` (244 lines)
-- `src/hotpass/cli/commands/contracts.py` (199 lines)
-- `src/hotpass/mcp/server.py` (427 lines)
-- `src/hotpass/mcp/__init__.py` (14 lines)
-- `src/hotpass/mcp/__main__.py` (9 lines)
+- `apps/data-platform/hotpass/cli/commands/overview.py` (108 lines)
+- `apps/data-platform/hotpass/cli/commands/refine.py` (42 lines)
+- `apps/data-platform/hotpass/cli/commands/enrich.py` (200 lines)
+- `apps/data-platform/hotpass/cli/commands/qa.py` (244 lines)
+- `apps/data-platform/hotpass/cli/commands/contracts.py` (199 lines)
+- `apps/data-platform/hotpass/mcp/server.py` (427 lines)
+- `apps/data-platform/hotpass/mcp/__init__.py` (14 lines)
+- `apps/data-platform/hotpass/mcp/__main__.py` (9 lines)
 - `tests/cli/test_quality_gates.py` (303 lines)
 - `IMPLEMENTATION_PLAN.md` (881 lines)
 - `docs/agent-instructions.md` (397 lines)
 
 **Modified:**
-- `src/hotpass/cli/main.py` (+5 commands)
-- `src/hotpass/cli/commands/__init__.py` (+5 exports)
+- `apps/data-platform/hotpass/cli/main.py` (+5 commands)
+- `apps/data-platform/hotpass/cli/commands/__init__.py` (+5 exports)
 - `.github/copilot-instructions.md` (+200 lines)
 - `AGENTS.md` (+180 lines)
 
@@ -241,7 +241,7 @@ uv run python -m hotpass.mcp.server --help
 uv run pytest tests/cli/test_quality_gates.py -v
 
 # Check fitness functions
-uv run python scripts/quality/fitness_functions.py
+uv run python ops/quality/fitness_functions.py
 
 # Run QA checks
 uv run hotpass qa all
@@ -250,7 +250,7 @@ uv run hotpass qa all
 ## Handover Notes
 
 ### For Sprint 2 Implementation
-1. Enrichment module structure already exists in `src/hotpass/enrichment/`
+1. Enrichment module structure already exists in `apps/data-platform/hotpass/enrichment/`
 2. Network guard logic implemented in CLI, needs backend implementation
 3. Provenance column names defined in documentation
 4. Test stub exists in `test_enrich_command_has_network_flag`

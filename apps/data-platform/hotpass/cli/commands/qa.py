@@ -155,7 +155,7 @@ def run_fitness_functions() -> tuple[bool, str]:
     """Run fitness function checks."""
     try:
         result = subprocess.run(
-            ["python", "scripts/quality/fitness_functions.py"],
+            ["python", "ops/quality/fitness_functions.py"],
             capture_output=True,
             text=True,
             check=False,
@@ -171,7 +171,7 @@ def run_fitness_functions() -> tuple[bool, str]:
 def run_cli_integrity() -> tuple[bool, str]:
     """Run CLI integrity checks (QG-1)."""
     try:
-        return _run_gate_script("scripts/quality/run_qg1.py")
+        return _run_gate_script("ops/quality/run_qg1.py")
     except Exception as e:
         return False, f"Error running CLI integrity checks: {e}"
 
@@ -276,7 +276,7 @@ def run_data_quality(profile_name: str | None = None) -> tuple[bool, str]:
     """Run Great Expectations data quality checks."""
     try:
         return _run_gate_script(
-            "scripts/quality/run_qg2.py",
+            "ops/quality/run_qg2.py",
             profile_name=profile_name,
         )
     except Exception as e:
@@ -337,7 +337,7 @@ def run_contract_checks() -> tuple[bool, str]:
 def run_docs_checks() -> tuple[bool, str]:
     """Run documentation checks (QG-5)."""
     try:
-        return _run_gate_script("scripts/quality/run_qg5.py")
+        return _run_gate_script("ops/quality/run_qg5.py")
     except Exception as e:
         return False, f"Error checking documentation: {e}"
 
@@ -347,7 +347,7 @@ def run_ta_checks() -> tuple[bool, str]:
     try:
         cmd = [
             sys.executable,
-            "scripts/quality/run_all_gates.py",
+            "ops/quality/run_all_gates.py",
             "--json",
         ]
         result = subprocess.run(

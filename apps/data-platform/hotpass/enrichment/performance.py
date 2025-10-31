@@ -215,7 +215,7 @@ def enrich_parallel(
 
     # Apply results to DataFrame
     for row_idx, fetcher_results in results.items():
-        for fetcher_name, result in fetcher_results.items():
+        for result in fetcher_results.values():
             if result is not None:
                 # Apply result to row (implementation depends on result structure)
                 # This is a simplified version - actual implementation would depend
@@ -255,7 +255,7 @@ def benchmark_enrichment(
 
     # Benchmark sequential execution
     start = time.time()
-    for idx, row in df.iterrows():
+    for _, row in df.iterrows():
         for fetcher in fetchers:
             try:
                 fetcher.fetch(row, profile=None, allow_network=False)  # type: ignore[arg-type]

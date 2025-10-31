@@ -19,7 +19,7 @@ class TestProfileSchema:
 
     def test_aviation_profile_has_all_blocks(self):
         """Sprint 3: Aviation profile should have all 4 blocks."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         expect(profile_path.exists(), "Aviation profile should exist")
 
         with open(profile_path) as f:
@@ -31,7 +31,7 @@ class TestProfileSchema:
 
     def test_generic_profile_has_all_blocks(self):
         """Sprint 3: Generic profile should have all 4 blocks."""
-        profile_path = Path("src/hotpass/profiles/generic.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/generic.yaml")
         expect(profile_path.exists(), "Generic profile should exist")
 
         with open(profile_path) as f:
@@ -43,7 +43,7 @@ class TestProfileSchema:
 
     def test_test_profile_exists(self):
         """Sprint 3: Test profile should exist for QA purposes."""
-        profile_path = Path("src/hotpass/profiles/test.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/test.yaml")
         expect(profile_path.exists(), "Test profile should exist")
 
         with open(profile_path) as f:
@@ -53,7 +53,7 @@ class TestProfileSchema:
 
     def test_ingest_block_structure(self):
         """Sprint 3: Ingest block should have required fields."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -64,7 +64,7 @@ class TestProfileSchema:
 
     def test_refine_block_structure(self):
         """Sprint 3: Refine block should have required fields."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -76,7 +76,7 @@ class TestProfileSchema:
 
     def test_enrich_block_structure(self):
         """Sprint 3: Enrich block should have required fields."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -87,7 +87,7 @@ class TestProfileSchema:
 
     def test_compliance_block_structure(self):
         """Sprint 3: Compliance block should have required fields."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -166,7 +166,7 @@ class TestFitnessFunctionsProfiles:
     def test_fitness_functions_check_profiles(self):
         """Sprint 3: Fitness functions should check profile completeness."""
         result = subprocess.run(
-            ["python", "scripts/quality/fitness_functions.py"],
+            ["python", "ops/quality/fitness_functions.py"],
             capture_output=True,
             text=True,
         )
@@ -182,7 +182,7 @@ class TestBackwardsCompatibility:
 
     def test_profiles_still_have_legacy_fields(self):
         """Sprint 3: Profiles should retain legacy fields for backwards compatibility."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -202,7 +202,7 @@ class TestBackwardsCompatibility:
 
     def test_column_synonyms_match_mappings(self):
         """Sprint 3: Legacy column_synonyms should match refine.mappings."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 
@@ -225,7 +225,7 @@ class TestQG2DataQualityGate:
 
     def test_qg2_profile_expectations_defined(self):
         """QG-2a: Profiles should define expectations."""
-        profile_path = Path("src/hotpass/profiles/aviation.yaml")
+        profile_path = Path("apps/data-platform/hotpass/profiles/aviation.yaml")
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
 

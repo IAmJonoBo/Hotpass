@@ -36,7 +36,7 @@ Two entry points regenerate the Data Docs:
 2. Run the bundled refresh helper to validate against the tracked fixtures:
 
    ```bash
-   uv run python scripts/validation/refresh_data_docs.py
+   uv run python ops/validation/refresh_data_docs.py
    ```
 
    The helper reads the sample workbooks in `data/` and regenerates the full

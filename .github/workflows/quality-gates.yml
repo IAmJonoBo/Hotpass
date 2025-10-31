@@ -32,7 +32,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Full test suite (parallel)
         run: |
@@ -49,7 +49,7 @@ jobs:
         run: |
           echo "Running QG-2: Data Quality"
           set -o pipefail
-          uv run python scripts/quality/run_qg2.py --json | tee qg2-output.json
+          uv run python ops/quality/run_qg2.py --json | tee qg2-output.json
           status=${PIPESTATUS[0]}
           echo "status=${status}" >> "$GITHUB_OUTPUT"
           exit 0
@@ -91,4 +91,4 @@ jobs:
           echo "================================"
           echo "Quality Gates Summary"
           echo "================================"
-          uv run python scripts/quality/run_all_gates.py --json
+          uv run python ops/quality/run_all_gates.py --json

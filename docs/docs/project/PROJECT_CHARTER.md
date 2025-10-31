@@ -4,7 +4,7 @@
 **Problem worth solving:** Align data refinement, enrichment, and governance workflows behind a single CLI/MCP surface with automated quality gates, staged evidence, and observable operations.  
 **Success criteria (measurable):**
 1. `uv run mypy src tests scripts` and `uv run pytest -q` stay green with ≤5 residual suppressed errors (current: 0).
-2. All quality gates (QG‑1→QG‑5) and bench harnesses (`scripts/benchmarks/hotpass_config_merge.py`) run in CI preflight.
+2. All quality gates (QG‑1→QG‑5) and bench harnesses (`ops/benchmarks/hotpass_config_merge.py`) run in CI preflight.
 3. Staging rehearsals (Prefect backfill guardrails, ARC lifecycle, full E2E replay) produce artefacts under `dist/staging/` before release sign‑off.
 4. Docs follow the Diátaxis shape with runbooks for backfills, research enrichment, and staging rehearsals.
 5. Telemetry/lineage evidence captured for each release window (Prefect, Marquez, OTLP traces).

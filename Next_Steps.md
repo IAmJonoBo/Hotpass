@@ -36,20 +36,20 @@
 
 ## Quality Gates
 
-- [x] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace. Live rehearsal artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [x] Types — `uv run mypy src tests scripts` now reports 0 errors as of 2025-10-31; remediation plan complete.【F:tests/helpers/stubs.py†L1-L170】【F:src/hotpass/cli/commands/plan.py†L1-L200】
+- [x] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace. Live rehearsal artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:ops/arc/verify_runner_lifecycle.py†L1-L210】
+- [x] Types — `uv run mypy src tests scripts` now reports 0 errors as of 2025-10-31; remediation plan complete.【F:tests/helpers/stubs.py†L1-L170】【F:apps/data-platform/hotpass/cli/commands/plan.py†L1-L200】
 - [x] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` executed 2025-10-31; suite passes locally with existing dependencies.【F:tests/test_lineage.py†L1-L200】【F:tests/scripts/test_arc_runner_verifier.py†L1-L160】
-  - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
+  - [ ] Infrastructure — `uv run python ops/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
 
 ## Links
 
 - `schemas/` — current frictionless contracts to be regenerated.
-- `src/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
+- `apps/data-platform/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
 - `docs/index.md` — landing page now surfacing governance artefacts; monitor follow-up requests.
 - `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
 - `docs/governance/data-governance-navigation.md` — consolidated navigation across governance artefacts.
 - `docs/operations/foundation-retro.md` — Phase 1 retro agenda and scope reconciliation.
-- `scripts/arc/examples/hotpass_arc_idle.json` — reusable snapshot for lifecycle rehearsal.
+- `ops/arc/examples/hotpass_arc_idle.json` — reusable snapshot for lifecycle rehearsal.
 - `docs/adr/index.md` — documentation strategy alignment summary.
 - `prefect/` — manifest library consumed by the revamped deployment loader.
 - `docs/adr/0007-cli-onboarding.md` — decision record for CLI doctor/init onboarding workflow.

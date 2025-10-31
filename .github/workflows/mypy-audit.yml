@@ -30,7 +30,7 @@ jobs:
       - name: Synchronise dependencies
         env:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
-        run: bash scripts/uv_sync_extras.sh
+        run: bash ops/uv_sync_extras.sh
 
       - name: Run pre-commit mypy audit
         run: uv run pre-commit run mypy --all-files

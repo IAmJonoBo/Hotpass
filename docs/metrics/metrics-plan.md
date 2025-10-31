@@ -42,7 +42,7 @@ This plan defines how Hotpass will measure delivery performance and developer ex
 2. **Automation (Week 3–6)**
    - Deploy the [Four Keys](https://github.com/GoogleCloudPlatform/fourkeys) stack via Terraform or Docker Compose; feed GitHub and Prefect event streams.
    - Configure Prefect `result_storage` to emit JSON logs with run metadata (status, runtime, owner) to object storage for ingestion.
-   - Add instrumentation hooks in `src/hotpass/orchestration.py` to push structured logs when flows start/finish.
+   - Add instrumentation hooks in `apps/data-platform/hotpass/orchestration.py` to push structured logs when flows start/finish.
 3. **Feedback loops (Week 7+)**
    - Launch quarterly Developer Experience survey (SPACE satisfaction and flow questions) via Typeform; automate reminders.
    - Review metrics with engineering + product monthly; capture actions in `Next_Steps.md` and update [docs/roadmap.md](../roadmap.md).

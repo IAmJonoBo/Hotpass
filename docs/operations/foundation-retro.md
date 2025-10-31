@@ -48,7 +48,7 @@ ARC smoke test; Platform will complete that once staging access opens in Phase 5
 - `Next_Steps.md` for outstanding actions and quality gates.
 - [`docs/governance/data-governance-navigation.md`](../governance/data-governance-navigation.md)
   for the governance artefact overview.
-- ARC lifecycle snapshot (`scripts/arc/examples/hotpass_arc_idle.json`) and the
+- ARC lifecycle snapshot (`ops/arc/examples/hotpass_arc_idle.json`) and the
   latest verifier run output.
 
 ## Expected outcomes

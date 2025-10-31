@@ -47,7 +47,7 @@ SAMPLE_PREFECT_DEPLOYMENT = dedent(
     name: hotpass-quickstart
     description: Bootstrap deployment that exercises the sample configuration.
     flow_name: hotpass.quickstart
-    entrypoint: scripts/flows/refinement.py:run
+    entrypoint: ops/process_data.py:main
     parameters:
       config_path: "./config/pipeline.quickstart.toml"
       profile: "quickstart"

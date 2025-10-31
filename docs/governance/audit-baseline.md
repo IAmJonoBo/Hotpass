@@ -9,9 +9,9 @@ checklist when verifying a deployment, refreshing evidence, or onboarding a new 
 
 ## Baseline execution contract
 
-- **Configuration entrypoint** — `PipelineConfig` in [`src/hotpass/pipeline/base.py`](../../src/hotpass/pipeline/base.py)
+- **Configuration entrypoint** — `PipelineConfig` in [`apps/data-platform/hotpass/pipeline/base.py`](../../apps/data-platform/hotpass/pipeline/base.py)
   defines the canonical orchestration order (acquisition → ingest → enrichment → validation → publish).
-- **Default feature bundle** — [`default_feature_bundle`](../../src/hotpass/pipeline/base.py) enables entity
+- **Default feature bundle** — [`default_feature_bundle`](../../apps/data-platform/hotpass/pipeline/base.py) enables entity
   resolution, geospatial, enrichment, and compliance features; opt-outs must be tracked in `Next_Steps.md`.
 - **Acquisition plan** — when `[pipeline.acquisition]` is omitted, the orchestrator still executes baseline
   spreadsheet loaders; enabling the plan runs `AcquisitionManager` ahead of ingestion and feeds telemetry spans.
@@ -24,9 +24,9 @@ checklist when verifying a deployment, refreshing evidence, or onboarding a new 
 | ------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------- |
 | `pipeline.acquisition.enabled` | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Enable to run agent-based acquisition before spreadsheet ingestion. |
 | `pipeline.intent.enabled`      | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Controls daily intent digests and SSOT enrichment columns.          |
-| `features` bundle              | [`default_feature_bundle`](../../src/hotpass/pipeline/base.py)                 | `entity_resolution, geospatial, enrichment, compliance` | Adjust with care; document deviations in `Next_Steps.md`.           |
-| CLI progress JSON logging      | `--json-logs` flag (`src/hotpass/cli/commands/run.py`)                         | `false`                                                 | Emits structured `pipeline.*` and `intent.digest` events.           |
-| Observability exporters        | [`observability.initialize_observability`](../../src/hotpass/observability.py) | `console`                                               | Use environment variables or config to swap OTLP/OTLPg exporters.   |
+| `features` bundle              | [`default_feature_bundle`](../../apps/data-platform/hotpass/pipeline/base.py)                 | `entity_resolution, geospatial, enrichment, compliance` | Adjust with care; document deviations in `Next_Steps.md`.           |
+| CLI progress JSON logging      | `--json-logs` flag (`apps/data-platform/hotpass/cli/commands/run.py`)                         | `false`                                                 | Emits structured `pipeline.*` and `intent.digest` events.           |
+| Observability exporters        | [`observability.initialize_observability`](../../apps/data-platform/hotpass/observability.py) | `console`                                               | Use environment variables or config to swap OTLP/OTLPg exporters.   |
 
 ## Expectation suites
 
@@ -45,7 +45,7 @@ to capture expectation coverage in the quality report.
 - **Acquisition provider policy** — [`policy/acquisition/providers.json`](../../policy/acquisition/providers.json)
   enumerates allowlisted providers, collection basis, and PII handling notes. Guard script consumers should
   call `ProviderPolicy.ensure_allowed` before instantiating a provider.
-- **Terms of service snapshots** — store hashes via `TermsOfServicePolicy` (see `scripts/acquisition/guardrails.py`)
+- **Terms of service snapshots** — store hashes via `TermsOfServicePolicy` (see `ops/acquisition/guardrails.py`)
   and append fetch events to the provenance ledger at `dist/provenance/*.jsonl`.
 - **Evidence catalog** — keep [`docs/compliance/evidence-catalog.md`](../compliance/evidence-catalog.md)
   updated after every quarterly verification and when new data sources are introduced.
@@ -57,7 +57,7 @@ to capture expectation coverage in the quality report.
 
 1. Run `uv run hotpass refine --input-dir data --output-path dist/refined.xlsx --profile generic --archive` with the default bundle
    and confirm acquisition spans/metrics appear in the telemetry exporter (console in sandbox environments).
-2. Regenerate provenance ledgers via `scripts/acquisition/collect_dataset.py` when onboarding a new provider and
+2. Regenerate provenance ledgers via `ops/acquisition/collect_dataset.py` when onboarding a new provider and
    store the resulting JSONL artefact under `dist/provenance/` for compliance review.
 3. Audit `Next_Steps.md` to ensure any temporary deviations from the defaults above include an owner, due date,
    and rollback trigger.

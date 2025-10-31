@@ -15,7 +15,7 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    ```bash
    uv venv
    export HOTPASS_UV_EXTRAS="dev docs"
-   bash scripts/uv_sync_extras.sh
+   bash ops/uv_sync_extras.sh
    ```
 
     Need orchestration or enrichment extras? Append them to
@@ -57,7 +57,7 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    dataset contracts:
 
    ```bash
-   uv run python scripts/validation/refresh_data_docs.py
+   uv run python ops/validation/refresh_data_docs.py
    ```
 
 6. Optional: build an adaptive research plan for a specific entity (offline-first):
@@ -78,7 +78,7 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    observability, and supply-chain integrations:
 
    ```bash
-   python scripts/idp/bootstrap.py --execute
+   python ops/idp/bootstrap.py --execute
    ```
 
 ### Keep uv caches on an external SSD
@@ -87,8 +87,8 @@ When running Hotpass from `/Volumes/APFS Space/GitHub/Hotpass` (or another exter
 volume), redirect `uv`'s data and cache directories so they live on the same drive:
 
 ```bash
-chmod +x scripts/use-ssd-env.sh
-./scripts/use-ssd-env.sh uv sync
+chmod +x ops/use-ssd-env.sh
+./ops/use-ssd-env.sh uv sync
 ```
 
 The helper sets `UV_DATA_DIR` and `UV_CACHE_DIR` to the SSD and then executes the
@@ -106,9 +106,9 @@ Run these gates before opening a pull request so local results align with CI:
   detect-secrets, and pre-commit hooks.
 - `uv run hotpass qa all` — executes the CLI-driven quality gates (QG‑1 → QG‑5)
   and mirrors the GitHub Actions workflow.
-- `uv run python scripts/validation/refresh_data_docs.py` — refreshes Data Docs
+- `uv run python ops/validation/refresh_data_docs.py` — refreshes Data Docs
   to confirm expectation suites remain in sync with contracts.
-- `uv run python scripts/quality/fitness_functions.py` — exercises the
+- `uv run python ops/quality/fitness_functions.py` — exercises the
   architectural fitness checks documented in `docs/architecture/fitness-functions.md`.
 - `uv run pytest -n auto` — executes the full test suite in parallel (mirrors CI’s xdist configuration).
 - Optional: set `HOTPASS_ENABLE_PRESIDIO=1` before running if you need Presidio-backed

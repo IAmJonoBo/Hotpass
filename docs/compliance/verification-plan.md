@@ -16,13 +16,13 @@ last_updated: 2025-10-25
 
 ## Automation support
 
-- Run `uv run python scripts/compliance/run_verification.py --reviewer "<name>" --notes "<summary>"` after each cadence.
+- Run `uv run python ops/compliance/run_verification.py --reviewer "<name>" --notes "<summary>"` after each cadence.
 - The helper updates `data/compliance/verification-log.json` and writes optional summaries for evidence packs.
 - Use the generated log when refreshing the [evidence catalog](./evidence-catalog.md) and supplier register entries.
 
 ### POPIA
 
-- Confirm POPIA matrix entries align with latest consent rules in [`src/hotpass/compliance.py`](../../src/hotpass/compliance.py) and profile templates.
+- Confirm POPIA matrix entries align with latest consent rules in [`apps/data-platform/hotpass/compliance.py`](../../apps/data-platform/hotpass/compliance.py) and profile templates.
 - Review DSAR automation reports to ensure SLA adherence and evidence retention matches [`docs/compliance/evidence-catalog.md`](./evidence-catalog.md).
 - Simulate breach notification workflow annually to verify contact chains and regulator templates per POPIA-004.
 

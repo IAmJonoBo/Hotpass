@@ -91,7 +91,10 @@ def _command_handler(namespace: argparse.Namespace, cli_profile: CLIProfile | No
     return 0 if outcome.success else 2
 
 
-def _resolve_profile(namespace: argparse.Namespace, cli_profile: CLIProfile | None) -> IndustryProfile:
+def _resolve_profile(
+    namespace: argparse.Namespace,
+    cli_profile: CLIProfile | None,
+) -> IndustryProfile:
     if namespace.profile_name:
         return load_industry_profile(namespace.profile_name)
     if cli_profile and cli_profile.industry_profile:

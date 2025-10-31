@@ -14,7 +14,7 @@ Hotpass includes lead scoring models to prioritise prospects based on quality si
 4. Enable rollback to previous versions when issues are detected
 5. Maintain an audit trail of all model changes and promotions
 
-The scoring module (`src/hotpass/transform/scoring.py`) contains training logic but lacks any tracking, versioning, or deployment management capabilities.
+The scoring module (`apps/data-platform/hotpass/transform/scoring.py`) contains training logic but lacks any tracking, versioning, or deployment management capabilities.
 
 ## Decision
 
@@ -224,7 +224,7 @@ This preserves existing workflows while enabling progressive adoption.
 ### Module Structure
 
 ```
-src/hotpass/ml/
+apps/data-platform/hotpass/ml/
 ├── __init__.py          # Public API exports
 └── tracking.py          # MLflow integration
 ```

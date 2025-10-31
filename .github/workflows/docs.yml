@@ -49,7 +49,7 @@ jobs:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
         run: |
           uv venv
-          bash scripts/uv_sync_extras.sh
+          bash ops/uv_sync_extras.sh
 
       - name: Build documentation
         run: uv run sphinx-build -n -W -b html docs docs/_build/html

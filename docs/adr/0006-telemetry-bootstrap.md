@@ -59,8 +59,8 @@ We introduced a telemetry bootstrap layer that the CLI, Prefect flows, and tests
 
 ## References
 
-- `src/hotpass/telemetry/bootstrap.py`
-- `src/hotpass/telemetry/registry.py`
-- `src/hotpass/cli/commands/run.py`
-- `src/hotpass/orchestration.py`
+- `apps/data-platform/hotpass/telemetry/bootstrap.py`
+- `apps/data-platform/hotpass/telemetry/registry.py`
+- `apps/data-platform/hotpass/cli/commands/run.py`
+- `apps/data-platform/hotpass/orchestration.py`
 - `docs/observability/index.md`

@@ -16,7 +16,7 @@ export HOTPASS_CA_BUNDLE_B64="$(base64 < corp-root.pem)"
 make semgrep-auto
 ```
 
-The `semgrep-auto` make target wraps `scripts/security/semgrep_auto.sh`, which decodes the CA bundle (if provided), sets `REQUESTS_CA_BUNDLE`, and invokes `uv run semgrep --config=auto --metrics=off`.
+The `semgrep-auto` make target wraps `ops/security/semgrep_auto.sh`, which decodes the CA bundle (if provided), sets `REQUESTS_CA_BUNDLE`, and invokes `uv run semgrep --config=auto --metrics=off`.
 
 ### GitHub Actions / Codex
 

@@ -25,12 +25,12 @@ jobs:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
         run: |
           set -euo pipefail
-          bash scripts/uv_sync_extras.sh
+          bash ops/uv_sync_extras.sh
 
       - name: Launch Streamlit (if local)
         if: env.TARGET_URL == 'http://127.0.0.1:8501'
         run: |
-          nohup uv run streamlit run src/hotpass/dashboard.py --server.headless true --server.port 8501 &
+          nohup uv run streamlit run apps/data-platform/hotpass/dashboard.py --server.headless true --server.port 8501 &
           sleep 15
 
       - name: OWASP ZAP baseline scan

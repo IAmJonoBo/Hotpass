@@ -74,7 +74,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::123456789012:role/hotpass-arc-runner
           aws-region: eu-west-1
-      - run: uv run python scripts/arc/verify_runner_lifecycle.py --owner IAmJonoBo --repository Hotpass --scale-set hotpass-arc --verify-oidc --aws-region eu-west-1
+      - run: uv run python ops/arc/verify_runner_lifecycle.py --owner IAmJonoBo --repository Hotpass --scale-set hotpass-arc --verify-oidc --aws-region eu-west-1
 ```
 
 Install dependencies for the smoke workflow with `uv sync --extra orchestration --extra platform` to pull in `boto3`, which the
@@ -85,13 +85,13 @@ OIDC verification step prefers before falling back to the AWS CLI.
 
 ## 4. Validate runner lifecycle
 
-Run the integration script [`scripts/arc/verify_runner_lifecycle.py`](../../scripts/arc/verify_runner_lifecycle.py) to ensure the
+Run the integration script [`ops/arc/verify_runner_lifecycle.py`](../../ops/arc/verify_runner_lifecycle.py) to ensure the
 scale set drains after a workflow completes. The script polls the GitHub API and the Kubernetes cluster until the runner pods are
 removed. Pass `--verify-oidc` to confirm that the workflow assumed the correct AWS role; the script will emit the resolved ARN in
 text mode and include the identity payload in JSON output.
 
 ```bash
-uv run python scripts/arc/verify_runner_lifecycle.py \
+uv run python ops/arc/verify_runner_lifecycle.py \
   --owner IAmJonoBo \
   --repository Hotpass \
   --scale-set hotpass-arc \
@@ -108,11 +108,11 @@ When clusters are unavailable, supply a snapshot file that mimics pod and runner
 states:
 
 ```bash
-uv run python scripts/arc/verify_runner_lifecycle.py \
+uv run python ops/arc/verify_runner_lifecycle.py \
   --owner IAmJonoBo \
   --repository Hotpass \
   --scale-set hotpass-arc \
-  --snapshot scripts/arc/examples/hotpass_arc_idle.json
+  --snapshot ops/arc/examples/hotpass_arc_idle.json
 ```
 
 Snapshots let QA and Platform teams verify workflow wiring during dry runs

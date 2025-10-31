@@ -38,7 +38,7 @@ def test_ta_history_report_json(tmp_path):
     _write_history(history_path)
 
     result = subprocess.run(
-        [sys.executable, "scripts/quality/ta_history_report.py", "--path", str(history_path), "--json"],
+        [sys.executable, "ops/quality/ta_history_report.py", "--path", str(history_path), "--json"],
         capture_output=True,
         text=True,
         check=False,
@@ -56,7 +56,7 @@ def test_ta_history_report_text(tmp_path):
     _write_history(history_path)
 
     result = subprocess.run(
-        [sys.executable, "scripts/quality/ta_history_report.py", "--path", str(history_path), "--limit", "1"],
+        [sys.executable, "ops/quality/ta_history_report.py", "--path", str(history_path), "--limit", "1"],
         capture_output=True,
         text=True,
         check=False,

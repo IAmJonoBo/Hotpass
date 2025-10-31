@@ -50,7 +50,7 @@ jobs:
           OWNER=${GITHUB_OWNER}
           REPO=${GITHUB_REPOSITORY_NAME#*/}
           REGION=${AWS_REGION_VALUE}
-          uv run python scripts/arc/verify_runner_lifecycle.py \
+          uv run python ops/arc/verify_runner_lifecycle.py \
             --owner "${OWNER}" \
             --repository "${OWNER}/${REPO}" \
             --scale-set hotpass-arc \

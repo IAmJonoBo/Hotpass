@@ -293,7 +293,7 @@ export HOTPASS_ENRICH_API_KEY=<your-key>
 
 If you need a custom profile:
 
-1. Create YAML file in `src/hotpass/profiles/<your-profile>.yaml`
+1. Create YAML file in `apps/data-platform/hotpass/profiles/<your-profile>.yaml`
 2. Include all 4 required blocks (see Profile Schema below)
 3. Use via `--profile <your-profile>`
 
@@ -368,7 +368,7 @@ compliance:
 ### Issue: "Quality gate failed"
 **Solution**:
 1. Run `uv run hotpass qa all` to see specific failures
-2. Check fitness functions: `uv run python scripts/quality/fitness_functions.py`
+2. Check fitness functions: `uv run python ops/quality/fitness_functions.py`
 3. Verify documentation exists (`.github/copilot-instructions.md`, `AGENTS.md`)
 
 ## Quality Gates Reference
@@ -491,7 +491,7 @@ For issues or questions:
 1. Run `uv run hotpass doctor` for diagnostics
 2. Check `docs/` directory for detailed guides
 3. Review quality gate tests in `tests/cli/test_quality_gates.py`
-4. Consult fitness functions in `scripts/quality/fitness_functions.py`
+4. Consult fitness functions in `ops/quality/fitness_functions.py`
 
 ---
 

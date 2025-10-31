@@ -53,7 +53,7 @@ emails reconstructed during canonicalisation, are also sanitised prior to export
 
 ## Ledger integration
 
-Data acquisition scripts use the new `scripts.acquisition` package to enforce
+Data acquisition scripts use the new `ops.acquisition` package to enforce
 robots.txt/ToS guardrails and append provenance entries containing:
 
 - source URL
@@ -64,7 +64,7 @@ robots.txt/ToS guardrails and append provenance entries containing:
 CLI example:
 
 ```bash
-uv run python scripts/acquisition/collect_dataset.py \
+uv run python ops/acquisition/collect_dataset.py \
   --records data/raw/source.jsonl \
   --source-url https://example.com/dataset \
   --license CC-BY-4.0 \

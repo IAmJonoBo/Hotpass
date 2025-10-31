@@ -29,7 +29,7 @@ Or add it to your `HOTPASS_UV_EXTRAS`:
 
 ```bash
 export HOTPASS_UV_EXTRAS="dev versioning"
-bash scripts/uv_sync_extras.sh
+bash ops/uv_sync_extras.sh
 ```
 
 ## Initializing DVC

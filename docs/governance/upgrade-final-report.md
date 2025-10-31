@@ -72,7 +72,7 @@ Each finding lists **Title • Severity • Confidence • Evidence • Affected
 
 ## 4. Supply-chain posture
 
-Hotpass generates CycloneDX SBOMs and provenance statements via scripts in `scripts/supply_chain/`, but execution depends on manual invocation. GitHub Actions lacks enforced signing, and dependencies rely on Renovate without commit verification. Advancing to SLSA Level 2 requires CI-integrated SBOM/provenance publication, signing keys managed via KMS, artifact retention policies, and Scorecard-aligned workflows (dependency update freshness, branch protection, CodeQL/Semgrep once trust store resolved).
+Hotpass generates CycloneDX SBOMs and provenance statements via scripts in `ops/supply_chain/`, but execution depends on manual invocation. GitHub Actions lacks enforced signing, and dependencies rely on Renovate without commit verification. Advancing to SLSA Level 2 requires CI-integrated SBOM/provenance publication, signing keys managed via KMS, artifact retention policies, and Scorecard-aligned workflows (dependency update freshness, branch protection, CodeQL/Semgrep once trust store resolved).
 
 ## 5. Delivery, DX, and UX narrative
 
@@ -133,7 +133,7 @@ hotpass/
 | -------------------------- | -------------------------- | -------------------------------------- | ------------------- | ------------------- | --------------------------------- | ------------------------------------------ | ------------------------------------------ |
 | Secrets platform rollout   | Prefect, Streamlit, CI     | HashiCorp Vault or AWS Secrets Manager | n/a                 | DevOps/Security     | Deployment templates, env loaders | Active release cadence, enterprise support | Vendor docs (to be captured post decision) |
 | Dashboard auth             | Streamlit, Reverse proxy   | Traefik/NGINX + OIDC                   | Latest LTS          | Platform            | Deployment helm/docker configs    | Wide community support                     | Streamlit auth guides                      |
-| Supply-chain automation    | GitHub Actions, uv         | `scripts/supply_chain/*`               | Python 3.13         | DevOps              | CI workflows                      | Maintained (weekly commits)                | CycloneDX, Sigstore docs                   |
+| Supply-chain automation    | GitHub Actions, uv         | `ops/supply_chain/*`               | Python 3.13         | DevOps              | CI workflows                      | Maintained (weekly commits)                | CycloneDX, Sigstore docs                   |
 | Prefect policy enforcement | Prefect CLI, Config doctor | Custom validation scripts              | n/a                 | Engineering         | Prefect deployment definitions    | Prefect 3 active                           | Prefect deployment policy API              |
 | Quality report automation  | Prefect flows, CLI         | Great Expectations, Pandas             | Latest per lockfile | Product/Engineering | Release checklist                 | Active                                     | Great Expectations docs                    |
 
@@ -150,7 +150,7 @@ No new external research was required in this pass; prior references from archit
 | SLSA L2                      | SBOM + provenance automation                       | CI job logs, attestation storage            | Per build            |
 | OWASP ASVS 2.1               | Authenticated dashboard                            | Access tests, PR checklist                  | Each deploy          |
 | ISO/IEC 25010 Reliability    | Prefect policies, observability instrumentation    | QA runs, metrics plan                       | Sprint               |
-| ISO/IEC 5055 Maintainability | Fitness functions, module length checks            | scripts/quality/fitness_functions.py        | Per PR               |
+| ISO/IEC 5055 Maintainability | Fitness functions, module length checks            | ops/quality/fitness_functions.py        | Per PR               |
 
 ## 13. Agent runbook & handover
 

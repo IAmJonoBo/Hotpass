@@ -52,8 +52,8 @@ pipeline so the workflow becomes part of the canonical onboarding path.
 
 ## References
 
-- `src/hotpass/cli/commands/init.py`
-- `src/hotpass/cli/commands/doctor.py`
+- `apps/data-platform/hotpass/cli/commands/init.py`
+- `apps/data-platform/hotpass/cli/commands/doctor.py`
 - `docs/tutorials/quickstart.md`
 - `docs/reference/cli.md`
 - `docs/how-to-guides/configure-pipeline.md`

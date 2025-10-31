@@ -564,7 +564,7 @@ class HotpassMCPServer:
     async def _run_ta_check(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run Technical Acceptance checks (all quality gates)."""
         gate = args.get("gate")
-        cmd = ["python", "scripts/quality/run_all_gates.py", "--json"]
+        cmd = ["python", "ops/quality/run_all_gates.py", "--json"]
 
         if gate:
             cmd.extend(["--gate", str(gate)])

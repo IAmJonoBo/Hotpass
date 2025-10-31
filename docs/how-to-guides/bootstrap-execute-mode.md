@@ -4,7 +4,7 @@ summary: Guardrails and rollback guidance for applying Hotpass bootstrap changes
 last_updated: 2025-10-26
 ---
 
-The Hotpass bootstrap utility (`scripts/idp/bootstrap.py`) provisions local dependencies,
+The Hotpass bootstrap utility (`ops/idp/bootstrap.py`) provisions local dependencies,
 Prefect profiles, supply-chain tooling, and developer experience defaults. By default the
 command performs a dry run so you can review the plan before any files change. Executing
 with `--execute` applies the plan to disk—use the guardrails below to avoid surprises and
@@ -14,7 +14,7 @@ roll back quickly if something misbehaves.
 
 1. Run the bootstrap in dry-run mode and review the generated plan:
    ```bash
-   uv run python scripts/idp/bootstrap.py
+   uv run python ops/idp/bootstrap.py
    ```
 2. Capture the diff of any repositories or configuration folders that will be touched.
    For Git repositories, commit or stash outstanding work first so the bootstrap output is
@@ -27,7 +27,7 @@ roll back quickly if something misbehaves.
 When you are ready to commit the changes, re-run the bootstrap with execute mode enabled:
 
 ```bash
-uv run python scripts/idp/bootstrap.py --execute
+uv run python ops/idp/bootstrap.py --execute
 ```
 
 The guardrails baked into execute mode include:

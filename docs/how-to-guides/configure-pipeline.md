@@ -17,7 +17,7 @@ profile = get_default_profile("aviation")
 print(profile.display_name)
 ```
 
-To create your own profile, add a YAML file under `src/hotpass/profiles/`:
+To create your own profile, add a YAML file under `apps/data-platform/hotpass/profiles/`:
 
 ```yaml
 name: healthcare
