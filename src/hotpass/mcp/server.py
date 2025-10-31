@@ -72,7 +72,9 @@ class HotpassMCPServer:
                     "properties": {
                         "input_path": {
                             "type": "string",
-                            "description": "Path to input directory or file containing data to refine",
+                            "description": (
+                                "Path to input directory or file containing data to refine"
+                            ),
                         },
                         "output_path": {
                             "type": "string",
@@ -94,7 +96,10 @@ class HotpassMCPServer:
             ),
             MCPTool(
                 name="hotpass.enrich",
-                description="Enrich refined data with additional information from deterministic and optional network sources",
+                description=(
+                    "Enrich refined data with additional information from "
+                    "deterministic and optional network sources"
+                ),
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -113,7 +118,9 @@ class HotpassMCPServer:
                         },
                         "allow_network": {
                             "type": "boolean",
-                            "description": "Whether to allow network-based enrichment (defaults to env vars)",
+                            "description": (
+                                "Whether to allow network-based enrichment (defaults to env vars)"
+                            ),
                             "default": False,
                         },
                     },
@@ -465,7 +472,7 @@ class HotpassMCPServer:
             row = self._load_dataset_row(Path(dataset_path), args.get("row_id"), args.get("entity"))
 
         if row is None and isinstance(args.get("row"), dict):
-            row = pd.Series(args["row"])  # type: ignore[assignment]
+            row = pd.Series(args["row"])
 
         context = ResearchContext(
             profile=profile,

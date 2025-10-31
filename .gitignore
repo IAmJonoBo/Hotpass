@@ -33,3 +33,6 @@ mutants/
 # MLflow tracking artifacts
 mlflow.db
 mlruns/
+
+# Research run artifacts
+.hotpass/research_runs/

@@ -12,7 +12,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -137,9 +136,7 @@ def _check_schema_shapes() -> StepResult:
                 "fitness",
                 "data-quality",
             }
-            if not isinstance(target_enum, list) or not expected_targets.issubset(
-                set(target_enum)
-            ):
+            if not isinstance(target_enum, list) or not expected_targets.issubset(set(target_enum)):
                 issues.append(
                     "hotpass.qa target enum must include "
                     "'all, contracts, docs, profiles, ta, fitness, data-quality'",
@@ -166,14 +163,17 @@ def _check_schema_shapes() -> StepResult:
         duration_seconds=time.time() - start,
     )
 
+
 def _exercise_research_tools() -> StepResult:
     start = time.time()
     try:
-        from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
-        import pandas as pd  # pylint: disable=import-outside-toplevel
-        from tempfile import TemporaryDirectory
-        from pathlib import Path
         import asyncio
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+
+        import pandas as pd  # pylint: disable=import-outside-toplevel
+
+        from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
     except Exception as exc:  # pragma: no cover - defensive guard
         return StepResult(
             step_id="research-tools-import",

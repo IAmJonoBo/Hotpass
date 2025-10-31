@@ -108,7 +108,10 @@ def main(argv: list[str] | None = None) -> int:
         ts = _format_timestamp(entry.get("timestamp"))
         gate_summary = entry.get("summary", {})
         passed = gate_summary.get("all_passed")
-        print(f"- {ts}: {'PASS' if passed else 'FAIL'} ({gate_summary.get('passed')} passed / {gate_summary.get('total')} total)")
+        status = "PASS" if passed else "FAIL"
+        passed_count = gate_summary.get("passed")
+        total_count = gate_summary.get("total")
+        print(f"- {ts}: {status} ({passed_count} passed / {total_count} total)")
 
     return 0
 

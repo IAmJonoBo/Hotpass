@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pandas as pd
 from rich.console import Console
@@ -17,7 +17,6 @@ from hotpass.research import ResearchContext, ResearchOrchestrator
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
 
-
 PlanHandler = Callable[[argparse.Namespace, CLIProfile | None], int]
 
 
@@ -28,7 +27,9 @@ def build(
     parser = subparsers.add_parser(
         "plan",
         help="Plan adaptive research tasks and supporting workflows",
-        description="Coordinate adaptive research plans before executing enrichment and crawl passes.",
+        description=(
+            "Coordinate adaptive research plans before executing enrichment and crawl passes."
+        ),
         parents=[shared.base],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )

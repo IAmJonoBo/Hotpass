@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 import pandas as pd
 import pytest
 
@@ -52,10 +50,12 @@ def test_crawl_cli_offline(monkeypatch):
     monkeypatch.delenv("FEATURE_ENABLE_REMOTE_RESEARCH", raising=False)
     monkeypatch.delenv("ALLOW_NETWORK_RESEARCH", raising=False)
 
-    exit_code = cli_main([
-        "crawl",
-        "https://example.test",
-        "--allow-network",
-    ])
+    exit_code = cli_main(
+        [
+            "crawl",
+            "https://example.test",
+            "--allow-network",
+        ]
+    )
 
     expect(exit_code == 0, "Crawl command should exit successfully")

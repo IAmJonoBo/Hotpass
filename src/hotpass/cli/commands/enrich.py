@@ -127,9 +127,8 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     # Display enrichment configuration
     console.print(f"[cyan]Input:[/cyan] {input_path}")
     console.print(f"[cyan]Output:[/cyan] {output_path}")
-    console.print(
-        f"[cyan]Network enrichment:[/cyan] {'enabled' if allow_network else 'disabled (deterministic only)'}"
-    )
+    network_status = "enabled" if allow_network else "disabled (deterministic only)"
+    console.print(f"[cyan]Network enrichment:[/cyan] {network_status}")
     console.print(f"[cyan]Confidence threshold:[/cyan] {namespace.confidence_threshold}")
 
     # Import enrichment pipeline (lazy import to avoid circular dependencies)

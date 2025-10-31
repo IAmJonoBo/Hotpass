@@ -8,9 +8,10 @@ import json
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass
@@ -204,7 +205,10 @@ def main(argv: list[str] | None = None) -> int:
     checks = [
         _check_overview(),
         _check_cli_help(),
-        *(_check_command_help(command) for command in ("overview", "refine", "enrich", "qa", "contracts")),
+        *(
+            _check_command_help(command)
+            for command in ("overview", "refine", "enrich", "qa", "contracts")
+        ),
         _check_profile_lint(),
     ]
 

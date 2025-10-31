@@ -11,8 +11,8 @@ from typing import Protocol, cast
 from .builder import CLIBuilder
 from .commands import (
     backfill,
-    crawl,
     contracts,
+    crawl,
     dashboard,
     deploy,
     doctor,
