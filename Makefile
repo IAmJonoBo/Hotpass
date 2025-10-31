@@ -60,3 +60,28 @@ web-ui-storybook:
 .PHONY: web-ui-lint
 web-ui-lint:
 	@cd apps/web-ui && npm run lint
+
+# Docker Compose commands for full Hotpass stack
+.PHONY: docker-up
+docker-up:
+	@echo "Starting Hotpass ecosystem in Docker..."
+	@docker compose -f deploy/docker/docker-compose.yml up --build
+
+.PHONY: docker-up-detached
+docker-up-detached:
+	@echo "Starting Hotpass ecosystem in Docker (detached)..."
+	@docker compose -f deploy/docker/docker-compose.yml up --build -d
+
+.PHONY: docker-down
+docker-down:
+	@echo "Stopping Hotpass ecosystem..."
+	@docker compose -f deploy/docker/docker-compose.yml down
+
+.PHONY: docker-logs
+docker-logs:
+	@docker compose -f deploy/docker/docker-compose.yml logs -f
+
+.PHONY: docker-clean
+docker-clean:
+	@echo "Cleaning up Docker containers and volumes..."
+	@docker compose -f deploy/docker/docker-compose.yml down -v

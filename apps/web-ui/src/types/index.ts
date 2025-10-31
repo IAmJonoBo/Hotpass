@@ -107,6 +107,33 @@ export interface PrefectFlowRun {
   updated: string
   tags?: string[]
   parameters?: Record<string, unknown>
+  hil_status?: 'none' | 'waiting' | 'approved' | 'rejected'
+  hil_operator?: string
+  hil_timestamp?: string
+  hil_comment?: string
+}
+
+// Human-in-the-Loop types
+
+export interface HILApproval {
+  id: string
+  runId: string
+  status: 'waiting' | 'approved' | 'rejected'
+  operator: string
+  timestamp: string
+  comment?: string
+  reason?: string
+}
+
+export interface HILAuditEntry {
+  id: string
+  runId: string
+  action: 'approve' | 'reject' | 'request_review'
+  operator: string
+  timestamp: string
+  comment?: string
+  previousStatus?: string
+  newStatus: string
 }
 
 export interface PrefectDeployment {

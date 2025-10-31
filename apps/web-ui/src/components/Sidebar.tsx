@@ -5,7 +5,9 @@ import {
   Settings,
   Activity,
   Moon,
-  Sun
+  Sun,
+  MessageSquare,
+  History
 } from 'lucide-react'
 import { cn, getEnvironmentColor } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -13,9 +15,11 @@ import { useState, useEffect } from 'react'
 
 interface SidebarProps {
   environment?: string
+  onOpenAssistant?: (message?: string) => void
+  onOpenActivity?: () => void
 }
 
-export function Sidebar({ environment = 'local' }: SidebarProps) {
+export function Sidebar({ environment = 'local', onOpenAssistant, onOpenActivity }: SidebarProps) {
   const [darkMode, setDarkMode] = useState(() => {
     // Check localStorage or default to dark mode
     if (typeof window !== 'undefined') {
@@ -39,6 +43,7 @@ export function Sidebar({ environment = 'local' }: SidebarProps) {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Lineage', href: '/lineage', icon: GitBranch },
+    { name: 'Assistant', href: '/assistant', icon: MessageSquare },
     { name: 'Admin', href: '/admin', icon: Settings },
   ]
 
@@ -81,8 +86,30 @@ export function Sidebar({ environment = 'local' }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Dark mode toggle */}
-      <div className="border-t p-4">
+      {/* Dark mode toggle and Assistant button */}
+      <div className="border-t p-4 space-y-2">
+        {onOpenActivity && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenActivity()}
+            className="w-full justify-start"
+          >
+            <History className="mr-2 h-4 w-4" />
+            Agent Activity
+          </Button>
+        )}
+        {onOpenAssistant && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenAssistant()}
+            className="w-full justify-start"
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />
+            Open Assistant
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"

@@ -6,16 +6,25 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
-import { Activity, Clock, GitBranch } from 'lucide-react'
+import { Activity, Clock, GitBranch, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatDuration, getStatusColor } from '@/lib/utils'
 import { mockPrefectData } from '@/api/prefect'
+import { useHILApprovals } from '@/store/hilStore'
+import { LiveRefinementPanel } from '@/components/refinement/LiveRefinementPanel'
+import { PowerTools } from '@/components/powertools/PowerTools'
+
+interface OutletContext {
+  openAssistant: (message?: string) => void
+}
 
 export function Dashboard() {
+  const { openAssistant } = useOutletContext<OutletContext>()
+
   // Fetch Prefect flow runs from last 24h
   const { data: flowRuns = [], isLoading: isLoadingPrefect } = useQuery({
     queryKey: ['flowRuns'],
@@ -29,6 +38,48 @@ export function Dashboard() {
     },
     placeholderData: mockPrefectData.flowRuns,
   })
+
+  // Fetch HIL approvals
+  const { data: hilApprovals = {} } = useHILApprovals()
+
+  // Helper to get HIL status badge
+  const getHILStatusBadge = (runId: string) => {
+    const approval = hilApprovals[runId]
+    if (!approval) {
+      return (
+        <Badge variant="outline" className="text-gray-600 dark:text-gray-400">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          None
+        </Badge>
+      )
+    }
+
+    switch (approval.status) {
+      case 'approved':
+        return (
+          <Badge variant="outline" className="text-green-600 dark:text-green-400">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Approved
+          </Badge>
+        )
+      case 'rejected':
+        return (
+          <Badge variant="outline" className="text-red-600 dark:text-red-400">
+            <XCircle className="h-3 w-3 mr-1" />
+            Rejected
+          </Badge>
+        )
+      case 'waiting':
+        return (
+          <Badge variant="outline" className="text-yellow-600 dark:text-yellow-400">
+            <Clock className="h-3 w-3 mr-1" />
+            Waiting
+          </Badge>
+        )
+      default:
+        return null
+    }
+  }
 
   // Note: Marquez jobs could be fetched here for lineage links if needed
   // const { data: marquezJobs = [] } = useQuery({ ... })
@@ -113,18 +164,36 @@ export function Dashboard() {
         </Card>
       </div>
 
+      {/* Live Refinement Panel */}
+      <LiveRefinementPanel />
+
+      {/* Power Tools */}
+      <PowerTools onOpenAssistant={() => openAssistant()} />
+
       {/* Recent Runs Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Pipeline Runs</CardTitle>
-          <CardDescription>
-            Latest executions with status and performance metrics
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recent Pipeline Runs</CardTitle>
+              <CardDescription>
+                Latest executions with status and performance metrics
+              </CardDescription>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Last updated: {formatDistanceToNow(new Date(), { addSuffix: true })}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingPrefect ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">Loading runs...</div>
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Loading runs from Prefect...</div>
+                <p className="text-xs text-muted-foreground">
+                  (Over VPN/bastion this may be slow)
+                </p>
+              </div>
             </div>
           ) : recentRuns.length === 0 ? (
             <div className="flex items-center justify-center py-8">
@@ -136,6 +205,7 @@ export function Dashboard() {
                 <TableRow>
                   <TableHead>Run Name</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>HIL Status</TableHead>
                   <TableHead>Started</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Profile</TableHead>
@@ -160,6 +230,9 @@ export function Dashboard() {
                       >
                         {run.state_name}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {getHILStatusBadge(run.id)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {run.start_time ? (

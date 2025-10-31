@@ -8,8 +8,11 @@ Modern React-based web interface for Hotpass data pipeline monitoring and manage
 - **Lineage View**: Interactive data lineage visualization from OpenLineage/Marquez
 - **Run Details**: Detailed view of individual runs with QA results
 - **Admin Panel**: Configure API endpoints and environment settings
+- **Assistant**: AI-powered chat interface for exploring flows and lineage
+- **Human-in-the-Loop**: Approval workflows for quality gates
 - **Dark Mode**: System-aware dark/light theme with manual toggle
 - **Responsive Design**: Optimized for desktop (1024px+) with mobile support
+- **Docker Support**: Complete ecosystem in containers
 
 ## Tech Stack
 
@@ -26,9 +29,31 @@ Modern React-based web interface for Hotpass data pipeline monitoring and manage
 
 ### Prerequisites
 
-- Node.js 20+ and npm 10+
+- Node.js 20+ and npm 10+ (for local development)
+- Docker and Docker Compose (for containerized deployment)
 - Marquez backend (optional, mock data available)
 - Prefect API (optional, mock data available)
+
+### Quick Start with Docker
+
+The easiest way to get the full Hotpass ecosystem running is with Docker Compose:
+
+```bash
+# From the repository root
+docker compose -f deploy/docker/docker-compose.yml up --build
+
+# Or use the Makefile shortcut (if available)
+make docker-up
+```
+
+This starts:
+- **Hotpass Web UI** at [http://localhost:3001](http://localhost:3001)
+- **Marquez** at [http://localhost:5000](http://localhost:5000)
+- **Prefect Server** at [http://localhost:4200](http://localhost:4200)
+
+All services are networked together and the UI is pre-configured to connect to them.
+
+### Local Development (without Docker)
 
 ### Installation
 
@@ -74,8 +99,14 @@ Create a `.env.local` file:
 ```env
 VITE_PREFECT_API_URL=http://localhost:4200
 VITE_MARQUEZ_API_URL=http://localhost:5000
-VITE_ENVIRONMENT=local
+VITE_ENVIRONMENT=local  # or 'docker', 'staging', 'prod'
 ```
+
+**Environment Options:**
+- `local` - Local development (no banner shown)
+- `docker` - Running in Docker containers (shows banner)
+- `staging` - Staging environment (shows yellow banner)
+- `prod` - Production environment (shows red banner)
 
 ### Admin Page
 
@@ -182,10 +213,11 @@ npm run build
 - [ ] Real-time updates via WebSocket
 - [ ] Search and filter across all runs
 - [ ] Export functionality for reports
-- [ ] Human-in-the-loop approval workflows
 - [ ] Integration with Label Studio for data review
 - [ ] Notification system for failed runs
 - [ ] Custom dashboard widgets
+- [ ] Telemetry strip showing live system status
+- [ ] Power tools launcher for common operations
 
 ## Integration with Hotpass CLI
 
