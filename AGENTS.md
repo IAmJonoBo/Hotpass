@@ -268,6 +268,7 @@ uv run hotpass crawl "https://example.test" --allow-network=true
 - Artefacts: each run writes a JSON summary under `.hotpass/research_runs/` capturing the plan, step outcomes, and provenance metadata for future audits.
 - Throttling: profiles may set `research_rate_limit.min_interval_seconds` (plus optional `burst`) to enforce per-entity crawl spacing; the orchestrator enforces the burst window before applying the delay and records crawl metadata under `.hotpass/research_runs/<slug>/crawl/`.
 - Guardrails: enable `FEATURE_ENABLE_REMOTE_RESEARCH=1` and `ALLOW_NETWORK_RESEARCH=1` only when network fetchers are approved; combine with profile rate limits to respect provider SLAs and audit via the crawl artefacts above.
+- Prefect workers: attach multiple workers to a shared work pool (for example `hotpass-shared-workers`) so agent-triggered pipeline, enrichment, and QA flows can run in parallel. Monitor worker heartbeats and keep worker environments aligned with the production `uv` extras set.
 
 ### Key Principles
 

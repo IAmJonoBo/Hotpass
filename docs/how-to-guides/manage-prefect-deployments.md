@@ -71,3 +71,24 @@ uv run prefect deployment run hotpass-refinement --params '{"since": "2024-11-01
 
 Prefect records the new parameter defaults, and subsequent scheduled runs continue from the supplied date unless the
 manifest is re-applied.
+
+## Scale workers and monitor health
+
+- **Shared work pool** — Provision a single Prefect work pool (for example `hotpass-shared-workers`) and register multiple
+  workers against it. Allocate at least one Linux worker for production flows and one macOS/Linux worker for parallel test
+  execution. Co-locating workers in the same pool lets Prefect schedule refinement, enrichment, and QA flows concurrently.
+- **Autoscaling** — Configure workers with Prefect's `prefect worker start --limit` flag or container orchestrator autoscaling
+  so the pool can expand when you queue parallel backfill or test runs. Keep worker limits aligned with downstream rate-limit
+  policies defined in Hotpass profiles.
+- **Health checks** — Enable Prefect worker heartbeats (`PREFECT_WORKER_HEARTBEAT_SECONDS`) and monitor them via Prefect Cloud
+  or the self-hosted UI. Treat worker offline events as a gating alert because orchestrated pipelines rely on parallel
+  capacity to meet SLAs.
+- **Environment parity** — Build workers from the same base image/environment as CI (`uv` + Hotpass extras) so test, staging,
+  and production executions behave consistently. Run `make sync` within the worker bootstrap to align dependency extras.
+
+## CI and local test cadence
+
+- Run `make qa`, `uv run hotpass qa all`, and `uv run pytest -n auto` locally before pushing changes. These commands mirror
+  production CI and exercise the Prefect manifests, orchestration flows, and assert migrations.
+- In CI, ensure the quality-gates workflow executes the same trio to maintain parity. When Prefect workers are available in
+  the shared pool, you can trigger orchestration QA (`uv run hotpass qa ta`) concurrently with the unit test matrix.

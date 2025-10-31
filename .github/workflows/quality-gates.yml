@@ -34,6 +34,11 @@ jobs:
           HOTPASS_UV_EXTRAS: ${{ env.UV_EXTRAS }}
         run: bash scripts/uv_sync_extras.sh
 
+      - name: Full test suite (parallel)
+        run: |
+          echo "Running full pytest suite in parallel"
+          uv run pytest -n auto
+
       - name: QG-1 - CLI Integrity
         run: |
           echo "Running QG-1: CLI Integrity"

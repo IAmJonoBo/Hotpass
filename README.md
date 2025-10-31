@@ -110,9 +110,14 @@ Run these gates before opening a pull request so local results align with CI:
   to confirm expectation suites remain in sync with contracts.
 - `uv run python scripts/quality/fitness_functions.py` — exercises the
   architectural fitness checks documented in `docs/architecture/fitness-functions.md`.
+- `uv run pytest -n auto` — executes the full test suite in parallel (mirrors CI’s xdist configuration).
 - Optional: set `HOTPASS_ENABLE_PRESIDIO=1` before running if you need Presidio-backed
   PII redaction. By default Hotpass skips the heavy Presidio models to keep offline
   runs self-contained.
+
+On orchestrated environments, register multiple Prefect workers against a shared pool so
+`uv run hotpass qa all` and pipeline runs can execute in parallel. Monitor worker heartbeats
+in Prefect and align worker images with the same `uv` environment you use locally.
 
 ## Documentation
 
