@@ -60,7 +60,7 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    uv run python scripts/validation/refresh_data_docs.py
    ```
 
-6. Optional: build an adaptive research plan for a specific entity:
+6. Optional: build an adaptive research plan for a specific entity (offline-first):
 
    ```bash
    uv run hotpass plan research \\
@@ -70,7 +70,9 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    ```
 
    The planner surfaces cached authority snapshots, deterministic enrichment updates, and
-   crawl/backfill recommendations before you enable network access.
+   crawl/backfill recommendations before you enable network access. To execute the
+   crawl step with rate-limit enforcement, pass `--allow-network=true` only after
+   setting the appropriate profile guardrails.
 
 7. Launch the interactive bootstrap when you are ready to provision Prefect,
    observability, and supply-chain integrations:
@@ -125,6 +127,7 @@ The full documentation lives under [`docs/`](docs/index.md) and follows the Diá
 - [Explanations](docs/explanations/architecture.md) — architectural decisions and platform scope.
 - [Roadmap](docs/roadmap.md) — delivery status, quality gates, and tracked follow-ups. See also the
   repository-level [ROADMAP.md](ROADMAP.md) for a per-phase PR checklist.
+- [Research-first orchestration](docs/reference/profiles.md#provider-guardrails) — profile-driven rate limits, audit artefacts, and MCP/CLI workflows for plan/crawl operations.
 
 ## Contributing
 

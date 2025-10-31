@@ -114,6 +114,7 @@
 - Profile linter (`tools/profile_lint.py`) validates ingest/refine/enrich/compliance blocks.
 - JSON/Schema outputs (`tools/profile_lint.py --json/--schema-json`) power QG summaries and contributor tooling, guarded by `tests/profiles/test_profile_lint_cli.py`.
 - Contract tests and Great Expectations suites validate active profiles.
+- Advanced resolve coverage added via `tests/cli/test_resolve_profile.py`, ensuring profile-driven Splink defaults and sensitive-field redaction are exercised end-to-end.
 
 ### Sprint 4 – Docs & agent UX (**Status: ✅ Complete with follow-ons**)
 

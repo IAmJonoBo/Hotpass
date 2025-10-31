@@ -7,6 +7,7 @@
 - [ ] **2026-01-05 · Platform** — Validate Prefect backfill deployment guardrails in staging.
 - [ ] **2026-01-15 · Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **2026-01-15 · QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (draft scope by 2025-12-19; reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
+  - **Progress (2025-10-31):** Added `tests/cli/test_resolve_profile.py` covering profile-driven Splink defaults, sensitive-field redaction, and output writes. Remaining: expand orchestrator stress fixtures once staging data is available.
 - [x] **2025-11-26 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【d9a97b†L18-L24】【7786e5†L55-L63】
 - [x] **2025-11-29 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA). Staging rehearsal completed 2025-11-12; artefacts under `dist/staging/marquez/20251112T140000Z/` (CLI log + UI capture).【d9a97b†L24-L29】【7786e5†L63-L72】
 - [ ] **2025-12-03 · Platform (Phase 5)** — Harden uv-based CI quality gates in PR `ci/uv-quality-gates` to unblock coverage enforcement (owner: Platform).【d9a97b†L40-L44】【7786e5†L93-L101】

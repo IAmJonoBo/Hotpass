@@ -467,6 +467,7 @@ def test_qg5_docs_instruction_gate():
    - Persist JSON summary to `dist/quality-gates/latest-ta.json`
    - Append NDJSON history entries for longitudinal tracking
    - Expose artefact paths via CLI/MCP output for downstream analytics (markdown export remains optional)
+   - Provide `scripts/quality/ta_history_report.py` to surface pass-rate analytics (covered by `tests/cli/test_ta_history_report.py`)
 
 #### Quality Gate: QG-4 (MCP Discoverability)
 
