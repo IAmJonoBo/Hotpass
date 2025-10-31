@@ -44,6 +44,147 @@ The unified CLI exposes five primary verbs that map to the workflows described i
 The sections below retain backward-compatible documentation for legacy verbs until the
 Sprint 5 docs refresh is published.
 
+## Infrastructure automation
+
+The CLI also includes commands to streamline operator workflows such as tunnel setup,
+AWS/EKS verification, Prefect/kubecontext bootstrap, and environment file generation.
+
+### `setup`
+
+Run a guided wizard that stitches together dependency synchronisation, tunnel creation, AWS
+verification, context bootstrap, and environment file generation. Designed for staging operators
+who want a single “don’t make me think” entry point.
+
+```bash
+uv run hotpass setup --preset staging --host bastion.example.com --dry-run
+uv run hotpass setup --preset staging --host bastion.example.com --execute --skip-arc
+```
+
+| Option                  | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `--preset {staging\|local}` | Controls default extras, namespaces, and environment targets.              |
+| `--extras EXTRA`        | Override preset extras for `ops/uv_sync_extras.sh` (repeatable).            |
+| `--skip-*`              | Skip individual stages (`deps`, `tunnels`, `aws`, `ctx`, `env`, `arc`).     |
+| `--host HOST`           | Bastion host or SSM target for the tunnel stage.                            |
+| `--aws-profile NAME`    | AWS profile used when invoking `hotpass aws`.                               |
+| `--eks-cluster NAME`    | Cluster name forwarded to `hotpass aws`/`hotpass ctx init`.                |
+| `--prefect-profile NAME`| Prefect profile configured during context bootstrap.                       |
+| `--env-target NAME`     | Target passed to `hotpass env --target`.                                    |
+| `--allow-network`       | Enable network enrichment flags in generated environment files.             |
+| `--arc-owner/--arc-repository/--arc-scale-set` | Include ARC lifecycle verification when details are provided. |
+| `--dry-run`             | Render the plan without executing commands.                                 |
+| `--execute`             | Run the generated plan immediately (skip confirmation prompts).             |
+
+Successful executions record the plan under `.hotpass/setup.json`.
+
+### `net`
+
+Manage SSH or AWS SSM tunnels to staging infrastructure.
+
+```bash
+uv run hotpass net up --host bastion.example.com --detach
+uv run hotpass net status
+uv run hotpass net down --label bastion-session
+```
+
+| Option                            | Description                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `--via {ssh-bastion\|ssm}`        | Select port-forwarding mechanism (default: `ssh-bastion`).                                     |
+| `--host HOST`                     | Bastion hostname or SSM target instance ID.                                                   |
+| `--prefect-port INTEGER`          | Local port for Prefect (auto-resolves conflicts with `--auto-port`).                           |
+| `--marquez-port INTEGER`          | Local port for Marquez (skip with `--no-marquez`).                                            |
+| `--detach`                        | Launch the tunnel in the background and record the PID under `.hotpass/net.json`.            |
+| `--dry-run`                       | Print the tunnel command without executing it.                                               |
+
+State is persisted to `.hotpass/net.json`; `net status` prints active sessions and their
+local ports.
+
+### `aws`
+
+Resolve the active AWS identity and optionally describe/verify EKS access.
+
+```bash
+uv run hotpass aws --profile staging --region eu-west-1
+uv run hotpass aws --eks-cluster hotpass-staging --verify-kubeconfig
+```
+
+| Option                    | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `--profile NAME`          | AWS CLI profile override.                                                   |
+| `--region NAME`           | AWS region override.                                                        |
+| `--eks-cluster NAME`      | Describe the cluster and (optionally) update kubeconfig.                    |
+| `--verify-kubeconfig`     | Run `aws eks update-kubeconfig` after describing the cluster.               |
+| `--output {text\|json}`   | Render output as Rich table or JSON (default: text).                        |
+| `--dry-run`               | Display AWS commands without executing them.                                |
+
+On success, the summary is saved to `.hotpass/aws.json`.
+
+### `ctx`
+
+Bootstrap Prefect profiles and Kubernetes contexts.
+
+```bash
+uv run hotpass ctx init --prefect-profile hotpass-staging --eks-cluster hotpass-staging
+uv run hotpass ctx list
+```
+
+| Option                    | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `--prefect-profile NAME`  | Prefect profile to create or update.                                       |
+| `--prefect-url URL`       | Prefect API URL (defaults to tunnel-derived URL or `http://127.0.0.1:4200/api`). |
+| `--eks-cluster NAME`      | EKS cluster to configure via `aws eks update-kubeconfig`.                   |
+| `--kube-context NAME`     | Context alias for kubeconfig (defaults to cluster name).                    |
+| `--dry-run`               | Print commands without executing them.                                      |
+
+Context history is recorded under `.hotpass/contexts.json`.
+
+### `env`
+
+Generate `.env.<environment>` files aligned with the current tunnels and contexts.
+
+```bash
+uv run hotpass env --target staging
+uv run hotpass env --target staging --allow-network --force
+```
+
+| Option                    | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `--target NAME`           | Environment name (determines output filename).                              |
+| `--prefect-url URL`       | Override Prefect API URL.                                                   |
+| `--openlineage-url URL`   | Override OpenLineage API URL.                                               |
+| `--allow-network`         | Set `FEATURE_ENABLE_REMOTE_RESEARCH`/`ALLOW_NETWORK_RESEARCH` to `true`.    |
+| `--dry-run`               | Print the generated file without writing it.                                |
+
+When tunnels exist, ports recorded in `.hotpass/net.json` are reused automatically.
+
+### `arc`
+
+Wrapper around ARC lifecycle verification with optional artifact storage.
+
+```bash
+uv run hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-arc
+uv run hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-arc --store-summary
+```
+
+| Option                    | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `--owner`, `--repository`, `--scale-set` | Identify the ARC deployment to verify.                                  |
+| `--verify-oidc`           | Additionally verify AWS identity using OIDC.                                |
+| `--snapshot PATH`         | Replay a recorded lifecycle snapshot for offline verification.              |
+| `--store-summary`         | Persist results under `.hotpass/arc/<timestamp>/`.                          |
+| `--dry-run`               | Print the underlying command without executing it.                          |
+
+### `distro`
+
+Collect documentation into a single directory for distribution bundles.
+
+```bash
+uv run hotpass distro docs --output dist/docs
+```
+
+Copies `README.md`, `AGENTS.md`, and `docs/reference/cli.md` into the specified directory
+(defaults to `dist/docs`). Use `--dry-run` to preview or `--force` to overwrite.
+
 ## Canonical configuration schema
 
 The CLI now materialises every run from the canonical `HotpassConfig` schema defined in

@@ -28,7 +28,7 @@ def test_build_parser_registers_expected_commands() -> None:
     parser = cli.build_parser()
     subcommands = _get_subcommands(parser)
 
-    assert {
+    expected = {
         "run",
         "orchestrate",
         "resolve",
@@ -36,7 +36,16 @@ def test_build_parser_registers_expected_commands() -> None:
         "deploy",
         "doctor",
         "init",
-    }.issubset(set(subcommands))
+        "net",
+        "aws",
+        "ctx",
+        "env",
+        "arc",
+        "distro",
+        "setup",
+    }
+
+    assert expected.issubset(set(subcommands))
 
 
 def test_build_parser_sets_run_as_default_command() -> None:

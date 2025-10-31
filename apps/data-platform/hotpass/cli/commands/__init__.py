@@ -1,6 +1,9 @@
 """Command modules powering the Hotpass CLI."""
 
 __all__ = [
+    "arc",
+    "aws",
+    "ctx",
     "crawl",
     "backfill",
     "contracts",
@@ -17,5 +20,9 @@ __all__ = [
     "refine",
     "resolve",
     "run",
+    "env",
+    "setup",
+    "net",
     "version",
+    "distro",
 ]

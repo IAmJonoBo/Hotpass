@@ -60,7 +60,13 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
      --allow-network=false
    ```
    Review step outcomes before enabling network enrichment or crawling.
-7. **Expose MCP tools (when needed)**
+7. **Run the guided operator wizard (optional, great for staging)**
+   ```bash
+   hotpass setup --preset staging --host bastion.example.com --dry-run   # review
+   hotpass setup --preset staging --host bastion.example.com --execute   # run
+   ```
+   The wizard orchestrates dependency sync, tunnels, AWS verification, context bootstrap, and `.env` generation.
+8. **Expose MCP tools (when needed)**
    ```bash
    uv run python -m hotpass.mcp.server
    ```

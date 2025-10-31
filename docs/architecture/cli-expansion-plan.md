@@ -1,6 +1,6 @@
 # Hotpass CLI Expansion Plan
 
-> Draft — design blueprint for the “tunnels & contexts” CLI expansion.  
+> Implemented CLI expansion covering tunnels, AWS checks, contexts, and env generation.  
 > Last updated: 2025-10-31
 
 ## 1. Objectives
@@ -72,4 +72,3 @@
 ---
 
 Use this plan to drive implementation. Update the document as design choices are confirmed or when new requirements emerge.
-

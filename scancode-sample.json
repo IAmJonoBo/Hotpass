@@ -4,7 +4,7 @@
       "tool_name": "scancode-toolkit",
       "tool_version": "32.1.0",
       "options": {
-        "input": ["src/hotpass/compliance.py"],
+        "input": ["apps/data-platform/hotpass/compliance.py"],
         "--info": true,
         "--json-pp": "scancode-sample.json",
         "--license": true

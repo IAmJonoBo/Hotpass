@@ -10,16 +10,23 @@ from typing import Protocol, cast
 
 from .builder import CLIBuilder
 from .commands import (
+    arc,
+    aws,
     backfill,
     contracts,
     crawl,
+    ctx,
     dashboard,
     deploy,
+    distro,
     doctor,
     enrich,
+    env,
     explain_provenance,
     init,
+    net,
     orchestrate,
+    setup,
     overview,
     plan,
     qa,
@@ -63,6 +70,13 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(contracts.register())
     builder.register(plan.register())
     builder.register(crawl.register())
+    builder.register(setup.register())
+    builder.register(net.register())
+    builder.register(aws.register())
+    builder.register(ctx.register())
+    builder.register(env.register())
+    builder.register(arc.register())
+    builder.register(distro.register())
 
     # Register existing commands
     builder.register(run.register())

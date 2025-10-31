@@ -85,13 +85,10 @@ OIDC verification step prefers before falling back to the AWS CLI.
 
 ## 4. Validate runner lifecycle
 
-Run the integration script [`ops/arc/verify_runner_lifecycle.py`](../../ops/arc/verify_runner_lifecycle.py) to ensure the
-scale set drains after a workflow completes. The script polls the GitHub API and the Kubernetes cluster until the runner pods are
-removed. Pass `--verify-oidc` to confirm that the workflow assumed the correct AWS role; the script will emit the resolved ARN in
-text mode and include the identity payload in JSON output.
+Run the CLI wrapper (`hotpass arc`) – built on top of [`ops/arc/verify_runner_lifecycle.py`](../../ops/arc/verify_runner_lifecycle.py) – to ensure the scale set drains after a workflow completes. The command mirrors the script options, polls GitHub/Kubernetes until runners terminate, and can optionally verify the AWS identity via OIDC.
 
 ```bash
-uv run python ops/arc/verify_runner_lifecycle.py \
+uv run hotpass arc \
   --owner IAmJonoBo \
   --repository Hotpass \
   --scale-set hotpass-arc \
@@ -108,7 +105,7 @@ When clusters are unavailable, supply a snapshot file that mimics pod and runner
 states:
 
 ```bash
-uv run python ops/arc/verify_runner_lifecycle.py \
+uv run hotpass arc \
   --owner IAmJonoBo \
   --repository Hotpass \
   --scale-set hotpass-arc \
@@ -123,8 +120,8 @@ expected lifecycle for more advanced rehearsal scenarios.
 
 When rehearsing against `hotpass-staging`, capture artefacts for programme sign-off:
 
-1. Run the lifecycle script with `--output json` and save the payload to `dist/staging/arc/<timestamp>/lifecycle.json`.
-2. Export AWS STS identity details (or copy the script output) to `dist/staging/arc/<timestamp>/sts.txt` to confirm OIDC assumptions.
+1. Run `hotpass arc --output json --store-summary` and gather the artefacts stored under `.hotpass/arc/<timestamp>/`.
+2. Export AWS STS identity details (or copy the CLI output) to `dist/staging/arc/<timestamp>/sts.txt` to confirm OIDC assumptions.
 3. Link both artefacts in `docs/operations/staging-rehearsal-plan.md` and reference them from `Next_Steps.md` before marking the task complete.
 4. If access is blocked, note the reason and planned follow-up in `Next_Steps_Log.md`.
 

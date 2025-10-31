@@ -81,6 +81,41 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    python ops/idp/bootstrap.py --execute
    ```
 
+### Automate tunnels and contexts
+
+The CLI now provides one-command automation for tunnels, AWS identity checks, context bootstrap, and staging-ready environment files:
+
+- Run the guided setup wizard (sync extras, open tunnels, configure contexts, emit `.env` files) in one go:
+
+  ```bash
+  hotpass setup --preset staging --host bastion.example.com --dry-run   # review plan
+  hotpass setup --preset staging --host bastion.example.com --execute   # run plan
+  ```
+
+- Establish local forwards for Prefect and Marquez:
+
+  ```bash
+  hotpass net up --host bastion.example.com --detach
+  ```
+
+- Validate AWS credentials and store the summary:
+
+  ```bash
+  hotpass aws --profile staging --output text
+  ```
+
+- Create a Prefect profile and kubeconfig context (derives ports from active tunnels):
+
+  ```bash
+  hotpass ctx init --prefect-profile hotpass-staging --eks-cluster hotpass-staging
+  ```
+
+- Generate an `.env` file aligned with the current session:
+
+  ```bash
+  hotpass env --target staging
+  ```
+
 ### Keep uv caches on an external SSD
 
 When running Hotpass from `/Volumes/APFS Space/GitHub/Hotpass` (or another external

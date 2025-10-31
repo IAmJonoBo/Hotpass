@@ -282,6 +282,37 @@ uv run hotpass crawl "https://example.test" --allow-network=true
 - Guardrails: enable `FEATURE_ENABLE_REMOTE_RESEARCH=1` and `ALLOW_NETWORK_RESEARCH=1` only when network fetchers are approved; combine with profile rate limits to respect provider SLAs and audit via the crawl artefacts above.
 - Prefect workers: attach multiple workers to a shared work pool (for example `hotpass-shared-workers`) so agent-triggered pipeline, enrichment, and QA flows can run in parallel. Monitor worker heartbeats and keep worker environments aligned with the production `uv` extras set.
 
+### Infrastructure & Context Automation
+
+Use these helpers to prepare operator environments quickly:
+
+```bash
+# Guided wizard (sync extras, tunnels, AWS, contexts, env files)
+hotpass setup --preset staging --host bastion.example.com --dry-run   # review the plan
+hotpass setup --preset staging --host bastion.example.com --execute   # run the plan
+
+# Establish SSH tunnel forwards (background)
+hotpass net up --host bastion.example.com --detach
+
+# Confirm AWS identity and optional EKS connectivity
+hotpass aws --profile staging --eks-cluster hotpass-staging --dry-run
+
+# Bootstrap Prefect and kube contexts (reuses tunnel ports)
+hotpass ctx init --prefect-profile hotpass-staging --eks-cluster hotpass-staging
+
+# Emit .env file aligned with the active session
+hotpass env --target staging
+
+# Verify ARC lifecycle health and store the summary
+hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-arc --store-summary
+```
+
+Documentation bundles can be collected with:
+
+```bash
+hotpass distro docs --output dist/docs
+```
+
 ### Key Principles
 
 1. **Profile-First**: Always specify `--profile <name>`. Profiles contain critical business logic (column mappings, validation rules, compliance settings).
