@@ -40,3 +40,23 @@ marquez-down:
 	@command -v docker >/dev/null 2>&1 || (echo "Docker CLI is required to stop Marquez" >&2 && exit 1)
 	@docker info >/dev/null 2>&1 || (echo "Docker daemon must be running to stop Marquez" >&2 && exit 1)
 	@MARQUEZ_API_PORT=$(MARQUEZ_API_PORT) MARQUEZ_UI_PORT=$(MARQUEZ_UI_PORT) docker compose -f infra/marquez/docker-compose.yaml down
+
+.PHONY: web-ui-install
+web-ui-install:
+	@cd apps/web-ui && npm install
+
+.PHONY: web-ui-dev
+web-ui-dev:
+	@cd apps/web-ui && npm run dev
+
+.PHONY: web-ui-build
+web-ui-build:
+	@cd apps/web-ui && npm run build
+
+.PHONY: web-ui-storybook
+web-ui-storybook:
+	@cd apps/web-ui && npm run storybook
+
+.PHONY: web-ui-lint
+web-ui-lint:
+	@cd apps/web-ui && npm run lint
