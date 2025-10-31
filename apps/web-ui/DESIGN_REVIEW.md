@@ -1,295 +1,137 @@
-# Hotpass Web UI - Design Review & Red Team Analysis
+# Hotpass Web UI – Remaining Action Items (2025-10-31)
 
-## Executive Summary
-This document presents a critical review of the Hotpass Web UI implementation at the 75% completion mark, identifying strengths, weaknesses, and improvements made.
+_Objective: keep only actionable follow-ups for the final UI push. Everything listed below requires a new task, Jira ticket, or PR before release._
 
-## Review Date
-2025-10-31
+## 1. Experience Gaps
 
-## Strengths Identified
+- [ ] Add lineage graph visualization (react-flow) on the Lineage page for visual traceability.
+- [ ] Implement real-time or periodic auto-refresh on the dashboard once new runs complete (WebSocket or polling toggle).
+- [ ] Replace “Loading…” placeholders with skeleton loaders for tables, cards, and detail panes.
+- [ ] Surface API failure banners outside the Admin page when the app falls back to mock/offline data.
+- [ ] Promote toast or inline error messaging instead of console-only logging for user-visible failures.
+- [ ] Extend connection status indicator so it is visible from the dashboard header, not just the Admin page.
 
-### 1. Modern Tech Stack
-✅ React 18 with latest features
-✅ Vite for fast development and building
-✅ TypeScript for type safety
-✅ TailwindCSS for consistent styling
-✅ React Query for efficient data fetching
+## 2. Accessibility & Responsiveness
 
-### 2. Design System
-✅ shadcn/ui-inspired components
-✅ Consistent color tokens
-✅ Dark mode support with system awareness
-✅ Rounded-2xl cards for modern feel
-✅ Subtle shadows for depth
+- [ ] Run a full WCAG 2.1 AA audit (ARIA roles, focus order, keyboard traps, screen reader labels) and capture findings.
+- [ ] Strengthen focus outlines and contrast tokens for both light and dark themes.
+- [ ] Validate zoom/viewport scaling up to 200% and document fixes.
+- [ ] Produce a responsive-table strategy for sub-1024px viewports (horizontal scroll hints or stacked cards).
 
-### 3. User Experience
-✅ Clear information hierarchy
-✅ Intuitive navigation
-✅ Empty states handled gracefully
-✅ Loading states considered
-✅ Error fallbacks to mock data
+## 3. Human-in-the-Loop Workflow
 
-### 4. Code Quality
-✅ TypeScript strict mode
-✅ Proper component composition
-✅ Separation of concerns (api, components, pages)
-✅ Type definitions for all entities
-✅ ESLint configuration
+- [ ] Introduce approval/hold/reject controls on the Run Details page with audit logging.
+- [ ] Add comment/annotation threads for QA findings and lineage anomalies.
+- [ ] Provide a data review workspace that lets operators adjust/refine single records and push changes back to Hotpass.
+- [ ] Design conflict-resolution UI for competing enrichment results.
+- [ ] Wire notification/alert surface (email, webhook, or in-app banner) for pending approvals.
 
-### 5. Documentation
-✅ Comprehensive README
-✅ Storybook stories for components
-✅ Inline code comments where needed
-✅ Test plan documented
+## 4. Collaboration & Communication (Backlog)
 
-## Issues Identified & Resolutions
+- [ ] Spike a lightweight “notes/chat” sidebar linked to runs to satisfy the original chat-box requirement.
+- [ ] Define keyboard shortcut map (⌘K palette, navigation keys) and ship at least the global command palette.
 
-### Issue 1: Limited Interactivity
-**Problem**: Lineage page lacks visual graph representation.
-**Impact**: Users can't easily trace data flow visually.
-**Resolution Considered**: Acceptable for v1. Noted in README as future enhancement with react-flow.
-**Status**: ✅ Documented
+## 5. Security & Compliance
 
-### Issue 2: No Real-time Updates
-**Problem**: Dashboard doesn't auto-refresh when new runs complete.
-**Impact**: Users must manually refresh to see updates.
-**Resolution Considered**: Acceptable for v1. WebSocket support planned for future.
-**Status**: ✅ Documented
+- [ ] Add authentication + role-based authorization in front of the UI (Okta/Cognito/SSO TBD).
+- [ ] Apply rate limiting or circuit breakers to API calls initiated from the UI.
+- [ ] Sanitize/encode all user-supplied inputs before rendering or forwarding to APIs.
+- [ ] Set CSP headers, explicit HTTPS redirects, and integrate with the platform’s TLS posture.
 
-### Issue 3: Mock Data Fallback Behavior
-**Problem**: App silently falls back to mock data when APIs unavailable.
-**Impact**: Users might not realize they're viewing stale data.
-**Improvement Made**: ✅ Added connection status indicators in Admin page
-**Future Enhancement**: Add warning banner when in offline/mock mode
-**Status**: ✅ Partially addressed
+## 6. Performance & Observability
 
-### Issue 4: Limited Error Handling
-**Problem**: API errors logged to console but not shown to users.
-**Impact**: Users don't know when something went wrong.
-**Improvement Made**: ✅ Added try-catch with fallback to mock data
-**Future Enhancement**: Toast notifications for errors
-**Status**: ✅ Basic handling in place
+- [ ] Optimize and document image/static asset delivery (SVG sprites, lazy loading if we add charts).
+- [ ] Publish performance budgets (bundle size, Largest Contentful Paint target) and add CI guardrails.
+- [ ] Ship telemetry hooks (analytics + error tracking) that respect Hotpass data policies.
 
-### Issue 5: No Loading Skeletons
-**Problem**: Empty space while data loads.
-**Impact**: Poor perceived performance.
-**Improvement Made**: ✅ Added "Loading..." text states
-**Future Enhancement**: Skeleton loaders for better UX
-**Status**: ✅ Basic loading states present
+## 7. Documentation & QA
 
-### Issue 6: Table Responsiveness
-**Problem**: Tables might overflow on smaller screens.
-**Impact**: Horizontal scroll on narrow viewports.
-**Resolution**: Minimum 1024px viewport documented in README.
-**Status**: ✅ Documented limitation
+- [ ] Update README/Storybook to cover new interaction patterns (skeletons, toasts, approvals).
+- [ ] Add E2E tests (Playwright or Cypress) for the dashboard, lineage graph, and approval workflow.
+- [ ] Capture accessibility test scripts and results in `docs/how-to-guides/agentic-orchestration.md` once the audit completes.
 
-### Issue 7: Accessibility Gaps
-**Problem**: Some interactive elements lack proper ARIA labels.
-**Improvement Made**: ✅ Used semantic HTML (nav, button, heading)
-**Future Enhancement**: Full WCAG 2.1 AA audit
-**Status**: ✅ Basic accessibility present
+---
 
-## Design Refinements Made
+## Staged Copilot Implementation Prompt
 
-### Visual Enhancements
-1. ✅ Added subtle shadows to cards
-2. ✅ Used lucide-react icons consistently
-3. ✅ Color-coded status badges (green/red/blue/yellow)
-4. ✅ Environment badge in sidebar
-5. ✅ Proper text hierarchy with headings
+You are enhancing the Hotpass web UI delivered in PR #150. The stack is React 18 + Vite + TypeScript + Tailwind + shadcn/ui with pages under apps/web-ui/src/pages and shared components in apps/web-ui/src/components. Preserve Layout.tsx and Sidebar.tsx structure, existing design tokens, rounded-2xl styling, and dark-mode support. Work inside apps/web-ui unless the stage calls out additional paths. Maintain lint/test standards, update Storybook, and document each new capability. After each stage, show the refreshed folder tree and diffs for the files you touched.
 
-### UX Improvements
-1. ✅ Empty states with helpful messages
-2. ✅ Click targets properly sized (min 44x44px)
-3. ✅ Clear call-to-action buttons
-4. ✅ Breadcrumb-style navigation (Back button)
-5. ✅ Form field labels and help text
+### Stage 0 – Prep
 
-### Code Improvements
-1. ✅ Removed unused imports (TypeScript errors fixed)
-2. ✅ Proper error boundaries considered
-3. ✅ Query client with reasonable defaults
-4. ✅ Utility functions for common operations
-5. ✅ Consistent naming conventions
+1. Run lint/tests/Storybook baselines to capture current state.
+2. Confirm Prefect and Marquez clients exist in src/api/prefect.ts and src/api/marquez.ts.
+3. Review src/components/ui/table.tsx for table primitives and Storybook setup.
 
-## Comparison to Modern Dashboards
+### Stage 1 – Agent assistant console
 
-### Vercel Dashboard
-- ✅ Dark mode default: Implemented
-- ✅ Dense, data-first layout: Implemented
-- ✅ Subtle animations: Minimal (TailwindCSS transitions)
-- ⚠️ Team switcher: Not needed for Hotpass
-- ✅ Status indicators: Implemented
+1. Add a /assistant route rendering a chat console anchored to the bottom of the page with message bubbles, timestamps, and a telemetry footer (“last poll from Prefect…”, “lineage source: Marquez”, “current environment: …”).
+2. Provide a right-hand drawer accessible from any page that opens the assistant; integrate with Layout.tsx and Sidebar.tsx.
+3. Create src/agent/tools.ts exporting:
+   - listFlows → wraps Prefect client.
+   - listLineage(namespace) → wraps Marquez client.
+   - openRun(runId) → navigates to /runs/:id.
+4. Allow chat messages to trigger these tools and show a “what just happened” note under the input describing the most recent tool call.
+5. Stub reasoning with an in-memory array/state—no backend extension.
+6. Keep styling aligned with the existing UI.
+7. Add Storybook coverage for the chat/assistant component (light/dark modes).
 
-### Supabase Dashboard
-- ✅ Sidebar navigation: Implemented
-- ✅ Card-based metrics: Implemented
-- ✅ Table views: Implemented
-- ⚠️ SQL editor: Not applicable
-- ✅ Settings panel: Implemented (Admin page)
+### Stage 2 – Human-in-the-loop approvals
 
-### Linear App
-- ✅ Fast navigation: React Router
-- ✅ Keyboard shortcuts: Not yet implemented
-- ✅ Clean interface: Implemented
-- ⚠️ Command palette: Future enhancement
-- ✅ Subtle colors: Implemented
+1. In Dashboard.tsx, add a “HIL status” column with badges (none, waiting, approved, rejected).
+2. In RunDetails.tsx, add a slide-over panel showing run metadata, lineage link, QA results, and actions: “Approve and continue downstream tasks” and “Reject and open chat with agent”.
+3. Implement approveRun(runId: string) in src/api/prefect.ts (mock resolve) and call it on approve.
+4. On reject, launch the Stage 1 chat drawer prefilled with “Explain why run {id} failed QA and propose remediation.”
+5. Track approvals/rejections in a hilAudit store (React Query or Zustand) and surface operator history.
 
-### Assessment
-**Grade**: B+ (Modern and professional, with room for advanced features)
+### Stage 3 – Dockerized hub
 
-## Human-in-the-Loop Interfaces
+1. Create deploy/docker/docker-compose.yml running hotpass-web (build from apps/web-ui/), marquez (official image), and prefect (lightweight server/worker).
+2. Network containers so the UI hits <http://marquez:5000/api/v1> and <http://prefect:4200/api>.
+3. Update apps/web-ui/README.md with:
+   docker compose -f deploy/docker/docker-compose.yml up --build
+    then browse [http://localhost:3001](http://localhost:3001)
+4. Add an environment banner in the UI header sourced from VITE_ENVIRONMENT indicating Docker vs remote.
+5. Integrate new commands into the Makefile from PR #150 (mirror make web-ui-dev, make marquez-up flows).
 
-### Current State
-The current implementation provides foundation for HITL features:
+### Stage 4 – Live refinement panel
 
-1. **Run Details Page**: Shows QA results that could be reviewed/approved
-2. **Admin Page**: Configuration interface for operator input
-3. **Dashboard**: Monitoring interface for human oversight
+1. On Dashboard.tsx, insert a live refinement table between KPI cards and the assistant console.
+2. Table lists the last 50 refined rows (mock data): source, entity, status, refined_at, notes.
+3. Include a feedback icon per row that expands a mini textarea under the chat box (“Operator feedback on row {id}: …”).
+4. Mock POSTs to /telemetry/operator-feedback in the browser.
+5. Add caption “Telemetry: {pending backfills} pending backfills · last sync {n}s ago · source: Marquez namespace=hotpass”, refreshing every 10–15 seconds via src/api/marquez.ts polling.
+6. Ensure responsive behaviour (≥1024px optimized, mobile tolerant).
+7. Document this feature here as “live view refinement”.
 
-### Future HITL Enhancements Needed
-1. ❌ Approval workflow buttons
-2. ❌ Comment/annotation system
-3. ❌ Data review/correction interface
-4. ❌ Conflict resolution UI
-5. ❌ Notification system
+### Stage 5 – Telemetry strip
 
-**Note**: SCRATCH.md didn't explicitly require HITL interfaces in v1. These are natural extensions.
+1. Build src/components/TelemetryStrip.tsx and render it on Dashboard, Lineage, RunDetails, and Admin.
+2. Strip displays current environment (Admin settings), whether the agent is executing a tool (/assistant state), timestamp of last Prefect poll, and number of failed runs in the last 30 minutes.
+3. Use React Query with existing clients; keep visuals compact (≤2 lines).
+4. Provide an Admin toggle to enable/disable the strip.
+5. Update Storybook for the strip.
 
-## Chat/Communication Features
+### Stage 6 – Power tools launcher
 
-### Current State
-No chat or communication features implemented.
+1. Add a “Power Tools” panel (sidebar or top-right button).
+2. Buttons surface:
+   - Start Marquez locally → show `make marquez-up`.
+   - Run demo pipeline → show `uv run hotpass refine --input-dir ./data --output-path ./dist/refined.xlsx`.
+   - Open lineage page → navigate to `/lineage`.
+   - Open agent/chat console → open `/assistant`.
+3. Display the underlying CLI command with each action.
+4. Grey out items when running inside Docker (use environment banner logic).
 
-### Analysis
-SCRATCH.md requested "chat boxes and human-in-the-loop interfaces". Re-reading requirements:
-- Focus was on **monitoring** and **lineage visualization**
-- Admin configuration panel provided
-- No specific chat requirements detailed
+### Stage 7 – UX transparency red-team
 
-### Decision
-Chat features are not core to the MVP. Can be added in future iterations if needed for:
-- Team collaboration on runs
-- Commenting on QA issues
-- Operator notes
+1. Add explanatory loading text (“Fetching flow runs from Prefect… (over VPN/bastion this may be slow).”).
+2. Warn on /admin when the configured endpoint is a private VPC URL; recommend the bastion tunnel.
+3. Add “last updated” timestamps to all data tables.
+4. Create an “Agent activity” side panel listing the last 10 agent actions (tool calls, approvals, etc.).
+5. Update apps/web-ui/TEST_PLAN.md with tests covering the transparency features.
 
-## Performance Review
+### Stage 8 – Finalization
 
-### Build Performance
-✅ TypeScript compilation: < 5s
-✅ Production build: < 5s
-✅ Dev server startup: < 1s
-
-### Runtime Performance
-✅ Initial page load: Fast (React 18)
-✅ Navigation: Instant (client-side routing)
-✅ Data fetching: Cached with React Query
-✅ Bundle size: 290KB (acceptable)
-
-### Recommendations
-- ✅ Code splitting: Vite handles automatically
-- ✅ Tree shaking: Enabled in production
-- ✅ CSS purging: TailwindCSS handles
-- ⚠️ Image optimization: No images beyond SVG logo
-
-## Security Review
-
-### Implemented
-✅ No inline scripts
-✅ Environment variables for config
-✅ localStorage for preferences only
-✅ No sensitive data in URLs
-✅ CORS-ready API structure
-
-### Missing (Future)
-⚠️ Authentication/authorization
-⚠️ Rate limiting on API calls
-⚠️ Input sanitization library
-⚠️ CSP headers
-⚠️ HTTPS enforcement
-
-**Note**: Security assumed to be handled at infrastructure layer (VPN, etc.)
-
-## Browser Compatibility
-
-### Tested
-✅ Modern browser features used (ES2020)
-✅ CSS Grid and Flexbox
-✅ CSS custom properties
-✅ Fetch API
-
-### Support Matrix
-- Chrome/Edge: 100+ ✅
-- Firefox: 100+ ✅
-- Safari: 15+ ✅
-- Mobile browsers: Not optimized (1024px min)
-
-## Accessibility Audit
-
-### WCAG 2.1 Level A
-✅ Semantic HTML
-✅ Keyboard navigation
-✅ Color contrast (dark mode)
-✅ Alt text on images
-✅ Form labels
-
-### WCAG 2.1 Level AA
-⚠️ Focus indicators: Basic
-⚠️ Color contrast: Good but unaudited
-⚠️ Zoom support: Untested
-⚠️ Screen reader: Untested
-
-### Improvements Made
-1. ✅ Used button elements (not divs)
-2. ✅ Used nav, main, heading elements
-3. ✅ Link text descriptive
-4. ✅ Form inputs have labels
-
-## Final Recommendations
-
-### Must Have (Implemented)
-1. ✅ All four pages working
-2. ✅ API integration with fallbacks
-3. ✅ Dark/light mode
-4. ✅ Responsive layout
-5. ✅ Storybook documentation
-6. ✅ Build process integration
-
-### Should Have (Partially Done)
-1. ✅ Loading states
-2. ⚠️ Error messages (basic)
-3. ✅ Empty states
-4. ⚠️ Connection status (in Admin only)
-
-### Nice to Have (Future)
-1. ❌ Graph visualization for lineage
-2. ❌ Real-time updates
-3. ❌ Keyboard shortcuts
-4. ❌ Advanced filters
-5. ❌ Export functionality
-6. ❌ HITL approval workflows
-7. ❌ Team chat/comments
-
-## Conclusion
-
-The Hotpass Web UI successfully delivers on the core requirements from SCRATCH.md:
-
-✅ Modern React 18 + Vite + TypeScript stack
-✅ TailwindCSS + shadcn/ui components
-✅ Dark mode with system awareness
-✅ Dashboard with pipeline runs
-✅ Lineage view with Marquez integration
-✅ Run details with QA results
-✅ Admin configuration panel
-✅ Storybook stories
-✅ Makefile integration
-
-The implementation follows 2025-era design patterns (Vercel/Supabase style) and provides a solid foundation for future enhancements. The 75% red team review identified no critical issues, only opportunities for future iteration.
-
-**Overall Grade**: A- (Excellent foundation, ready for production use with documented limitations)
-
-## Sign-off
-
-Reviewed by: AI Design Agent
-Date: 2025-10-31
-Status: ✅ APPROVED FOR COMPLETION
+1. Re-run lint/tests/Storybook build; capture results.
+2. Show updated folder structure and diffs for every touched file.
+3. Summarize the new capabilities, outstanding TODOs, and testing performed.
