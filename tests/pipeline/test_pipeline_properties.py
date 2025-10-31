@@ -6,7 +6,7 @@ import json
 import string
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 import pandas as pd
 import pytest
@@ -17,8 +17,8 @@ from hotpass.pipeline.base import execute_pipeline
 
 SSOT_COLUMNS = aggregation.SSOT_COLUMNS
 YEAR_FIRST_PATTERN = aggregation.YEAR_FIRST_PATTERN
-_aggregate_group = aggregation._aggregate_group
-_latest_iso_date = aggregation._latest_iso_date
+_aggregate_group = cast(Callable[[Any, Any], Any], getattr(aggregation, "_aggregate_group"))
+_latest_iso_date = cast(Callable[[list[Any]], str | None], getattr(aggregation, "_latest_iso_date"))
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
 
 
@@ -202,6 +202,7 @@ def test_aggregate_group_handles_missing_optional_columns(
         isinstance(provenance_raw, str),
         "selection provenance must serialise to JSON text",
     )
+    assert isinstance(provenance_raw, str)
     parsed = json.loads(provenance_raw)
     expect(isinstance(parsed, dict), "selection provenance payload must be a JSON object")
 

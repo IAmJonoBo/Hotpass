@@ -8,9 +8,8 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from hypothesis import HealthCheck, given, settings
-from hypothesis import strategies as st
-from hypothesis.strategies import SearchStrategy
+from tests.helpers.hypothesis import HealthCheck, given, settings, st
+from tests.helpers.hypothesis import SearchStrategy
 
 from hotpass.normalization import normalize_province, slugify
 from hotpass.pipeline import ingestion as ingestion_module

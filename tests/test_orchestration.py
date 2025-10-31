@@ -19,22 +19,24 @@ import anyio
 import pandas as pd
 import pytest
 from tests.helpers.fixtures import fixture
-
-_pandera_stub = cast(Any, types.ModuleType("pandera"))
-_pandera_pandas = cast(Any, types.ModuleType("pandera.pandas"))
-_pandera_errors = cast(Any, types.ModuleType("pandera.errors"))
+from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions
 
 
 class _StubColumn:
-    def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - stub
-        return
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
+        self.args = args
+        self.kwargs = kwargs
 
 
 class _StubDataFrameSchema:
-    def __init__(self, *args, **kwargs) -> None:  # pragma: no cover - stub
-        return
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
+        self.args = args
+        self.kwargs = kwargs
 
 
+_pandera_stub = types.ModuleType("pandera")
+_pandera_pandas = types.ModuleType("pandera.pandas")
+_pandera_errors = types.ModuleType("pandera.errors")
 setattr(_pandera_pandas, "Column", _StubColumn)
 setattr(_pandera_pandas, "DataFrameSchema", _StubDataFrameSchema)
 setattr(_pandera_stub, "pandas", _pandera_pandas)
@@ -44,32 +46,44 @@ sys.modules.setdefault("pandera", _pandera_stub)
 sys.modules.setdefault("pandera.pandas", _pandera_pandas)
 sys.modules.setdefault("pandera.errors", _pandera_errors)
 
-_rapidfuzz_stub = cast(Any, types.ModuleType("rapidfuzz"))
-_rapidfuzz_fuzz = cast(Any, types.ModuleType("rapidfuzz.fuzz"))
-setattr(_rapidfuzz_fuzz, "token_sort_ratio", lambda *args, **kwargs: 100.0)
-setattr(_rapidfuzz_fuzz, "partial_ratio", lambda *args, **kwargs: 100.0)
-setattr(_rapidfuzz_fuzz, "token_set_ratio", lambda *args, **kwargs: 100.0)
+class _StubRapidFuzzModule(types.ModuleType):
+    def __init__(self) -> None:
+        super().__init__("rapidfuzz.fuzz")
+        self.token_sort_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
+        self.partial_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
+        self.token_set_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
+
+
+_rapidfuzz_stub = types.ModuleType("rapidfuzz")
+_rapidfuzz_fuzz = _StubRapidFuzzModule()
 setattr(_rapidfuzz_stub, "fuzz", _rapidfuzz_fuzz)
 sys.modules.setdefault("rapidfuzz", _rapidfuzz_stub)
 sys.modules.setdefault("rapidfuzz.fuzz", _rapidfuzz_fuzz)
 
-_duckdb_stub = cast(Any, types.ModuleType("duckdb"))
-setattr(_duckdb_stub, "DuckDBPyConnection", type("DuckDBPyConnection", (), {}))
+class _StubDuckDBConnection:
+    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+        self.args = _args
+        self.kwargs = _kwargs
+
+
+_duckdb_stub = types.ModuleType("duckdb")
+setattr(_duckdb_stub, "DuckDBPyConnection", _StubDuckDBConnection)
 sys.modules.setdefault("duckdb", _duckdb_stub)
 
 if util.find_spec("polars") is None:
-    _polars_stub = cast(Any, types.ModuleType("polars"))
+    _polars_stub = types.ModuleType("polars")
 
     class _StubPolarsFrame:
-        def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover - stub
-            return
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:  # pragma: no cover
+            self.args = _args
+            self.kwargs = _kwargs
 
     setattr(_polars_stub, "DataFrame", _StubPolarsFrame)
     setattr(_polars_stub, "LazyFrame", _StubPolarsFrame)
     setattr(_polars_stub, "Series", _StubPolarsFrame)
     setattr(_polars_stub, "Expr", _StubPolarsFrame)
-    setattr(_polars_stub, "col", lambda *_args, **_kwargs: _StubPolarsFrame())
-    setattr(_polars_stub, "concat", lambda *_args, **_kwargs: _StubPolarsFrame())
+    setattr(_polars_stub, "col", lambda *_args, **_kwargs: _StubPolarsFrame(*_args, **_kwargs))
+    setattr(_polars_stub, "concat", lambda *_args, **_kwargs: _StubPolarsFrame(*_args, **_kwargs))
     sys.modules.setdefault("polars", _polars_stub)
 
 sys.modules.setdefault("frictionless", types.ModuleType("frictionless"))
@@ -345,7 +359,7 @@ def test_run_pipeline_once_injects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_
     expect(captured["metrics"] is metrics_token, "Metrics token should be injected into runner")
     expect(captured.get("extra") == "value", "Additional runner kwargs should propagate")
 
-    attributes = captured["attributes"]
+    attributes = cast(dict[str, object], captured["attributes"])
     expect(
         attributes["hotpass.command"] == "prefect.run_pipeline_once",
         "Default telemetry command should be recorded.",
@@ -363,7 +377,7 @@ def test_run_pipeline_once_injects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_
         "Custom telemetry context entries should propagate.",
     )
 
-    session_options = captured["session_options"]
+    session_options = cast(TelemetryBootstrapOptions, captured["session_options"])
     expect(
         getattr(session_options, "service_name", None) == "hotpass-tests",
         "Telemetry session should receive the configured service name.",
