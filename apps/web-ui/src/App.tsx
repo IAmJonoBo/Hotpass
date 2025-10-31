@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Lineage } from './pages/Lineage'
 import { RunDetails } from './pages/RunDetails'
 import { Admin } from './pages/Admin'
+import { Assistant } from './pages/Assistant'
 import './index.css'
 
 // Create a client
@@ -26,6 +27,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/lineage" element={<Lineage />} />
+            <Route path="/assistant" element={<Assistant />} />
             <Route path="/runs/:runId" element={<RunDetails />} />
             <Route path="/admin" element={<Admin />} />
           </Route>
