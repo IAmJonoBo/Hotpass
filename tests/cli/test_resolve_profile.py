@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from argparse import Namespace
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import pandas as pd
 import pytest
 from tests.helpers.pytest_marks import usefixtures
 
 from hotpass.cli.main import main as cli_main
+from hotpass.cli.commands.resolve import _resolve_options
+from hotpass.cli.configuration import CLIProfile, FeatureFlags
 
 
 def expect(condition: bool, message: str) -> None:
@@ -112,3 +115,96 @@ sensitive_fields = ["contact_email"]
     )
     expect(captured.get("use_splink") is True, "Entity resolution feature flag should enable Splink")
     expect(output_path.read_text().strip() != "", "Output CSV should contain data")
+
+
+def _namespace(tmp_path: Path, **overrides: Any) -> Namespace:
+    defaults: dict[str, Any] = {
+        "input_file": tmp_path / "in.csv",
+        "output_file": tmp_path / "out.csv",
+        "threshold": 0.8,
+        "use_splink": None,
+        "match_threshold": None,
+        "review_threshold": None,
+        "label_studio_url": None,
+        "label_studio_token": None,
+        "label_studio_project": None,
+        "log_format": None,
+        "sensitive_fields": None,
+    }
+    defaults.update(overrides)
+    return Namespace(**defaults)
+
+
+def _profile(**flags: bool) -> CLIProfile:
+    feature_flags = FeatureFlags(**flags)
+    return CLIProfile(name="advanced", features=feature_flags)
+
+
+def test_resolve_options_profile_enables_splink_by_default(tmp_path: Path) -> None:
+    namespace = _namespace(tmp_path)
+    options = _resolve_options(namespace, profile=_profile(entity_resolution=True))
+
+    expect(options.use_splink is True, "Profile flag should default to Splink usage")
+    expect(
+        options.match_threshold == options.threshold,
+        "match threshold should inherit base threshold when unspecified",
+    )
+    expect(
+        options.review_threshold == options.threshold,
+        "review threshold should inherit base threshold when unspecified",
+    )
+
+
+def test_resolve_options_honours_cli_disable_flag(tmp_path: Path) -> None:
+    namespace = _namespace(tmp_path, use_splink=False)
+    options = _resolve_options(namespace, profile=_profile(entity_resolution=True))
+
+    expect(options.use_splink is False, "Explicit CLI flag should override profile defaults")
+
+
+def test_resolve_profile_supports_label_studio_configuration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    input_path = tmp_path / "input.csv"
+    output_path = tmp_path / "deduped.csv"
+    pd.DataFrame({"organization_name": ["Example"], "contact_email": ["one@example.com"]}).to_csv(
+        input_path, index=False
+    )
+
+    captured: dict[str, Any] = {}
+
+    class DummyResult:
+        def __init__(self) -> None:
+            frame = pd.DataFrame({"organization_name": ["Example"], "classification": ["match"]})
+            self.deduplicated = frame[["organization_name"]]
+            self.matches = frame
+            self.review_queue = pd.DataFrame()
+
+    def fake_link_entities(df: pd.DataFrame, config: Any) -> DummyResult:
+        captured["label_studio"] = config.label_studio
+        return DummyResult()
+
+    monkeypatch.delenv("FEATURE_ENABLE_REMOTE_RESEARCH", raising=False)
+    monkeypatch.delenv("ALLOW_NETWORK_RESEARCH", raising=False)
+    monkeypatch.setattr("hotpass.cli.commands.resolve.link_entities", fake_link_entities)
+
+    exit_code = cli_main(
+        [
+            "resolve",
+            "--input-file",
+            str(input_path),
+            "--output-file",
+            str(output_path),
+            "--label-studio-url",
+            "https://label.example",
+            "--label-studio-token",
+            "token-123",
+            "--label-studio-project",
+            "42",
+        ]
+    )
+
+    expect(exit_code == 0, "Resolve command should succeed with Label Studio options")
+    label_config = captured.get("label_studio")
+    expect(label_config is not None, "Label Studio config should be constructed")
+    expect(label_config.api_url == "https://label.example", "Label Studio URL should propagate")
+    expect(label_config.api_token == "token-123", "Label Studio token should propagate")
+    expect(label_config.project_id == 42, "Label Studio project id should propagate")

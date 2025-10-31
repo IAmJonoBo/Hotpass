@@ -7,7 +7,7 @@
 - [ ] **Platform** — Validate Prefect backfill deployment guardrails in staging.
 - [ ] **Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
-  - **Progress:** Added `tests/cli/test_resolve_profile.py` covering profile-driven Splink defaults, sensitive-field redaction, and output writes. Remaining: expand orchestrator stress fixtures once staging data is available.
+  - **Progress:** Added `tests/cli/test_resolve_profile.py` coverage for profile-driven Splink defaults, explicit disable flags, and Label Studio wiring; orchestrator stress fixtures still pending once staging data is available.
 - [x] **Engineering & QA** — Execute the staged mypy remediation plan (typed Hypothesis wrappers ➜ optional-dependency stubs ➜ CLI/MCP typing ➜ long-tail cleanup) to drive the error count toward zero.
 - [x] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).【F:.github/workflows/docker-cache.yml†L1-L60】
 - [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns.
