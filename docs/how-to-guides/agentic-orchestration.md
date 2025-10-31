@@ -15,6 +15,8 @@ The prototype policies live in [`ops/agents/`](../../ops/agents/README.md):
 3. Point the Prefect worker to the policy by exporting `HOTPASS_AGENT_POLICY_PATH=/path/to/mcp_server.yaml` before starting the agent-aware work pool.
 4. Distribute `mcp_client.yaml` to agent operators so the correct role and broker endpoint are presented with each request.
 
+> ℹ️ Agents may call infrastructure helpers (`hotpass.setup`, `hotpass.net`, `hotpass.ctx`, `hotpass.env`, `hotpass.aws`, `hotpass.arc`) directly via MCP. Update your policy files to grant access to these tools when staging automation should run unattended.
+
 ## 2. Enable Prefect runtime for agent gating
 
 Set `HOTPASS_ENABLE_PREFECT_RUNTIME=1` in the environment and ensure the orchestration extras are installed (`uv sync --extra orchestration`). The `hotpass.orchestration` module now exposes:

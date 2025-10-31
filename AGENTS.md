@@ -456,7 +456,7 @@ const result = await callTool("hotpass.refine", {
   uv run python -m hotpass.mcp.server
   ```
   Start it from the repo root so `./data` and `./dist` resolve correctly.
-6. **Discover tools** — run `dolphin-mcp list --server hotpass` or `/mcp list` from Copilot; you should see `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl`, and `hotpass.ta.check`.
+6. **Discover tools** — run `dolphin-mcp list --server hotpass` or `/mcp list` from Copilot; you should see `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.setup`, `hotpass.net`, `hotpass.ctx`, `hotpass.env`, `hotpass.aws`, `hotpass.arc`, `hotpass.explain_provenance`, `hotpass.plan.research`, `hotpass.crawl`, and `hotpass.ta.check`.
 7. **Test a call** — from Copilot chat ask, “Run hotpass.refine on ./data and write to ./dist/refined.xlsx with profile generic and archive=true.” From the CLI:
   ```bash
   dolphin-mcp chat --server hotpass --model ollama/llama3.1
@@ -471,6 +471,25 @@ const result = await callTool("hotpass.refine", {
   export ALLOW_NETWORK_RESEARCH=1
   ```
   Set these before launching the server if you plan to call `hotpass.crawl` or network-backed enrichment.
+
+### Automate setup with MCP
+
+- Preview the staging wizard plan:
+  ```
+  /call hotpass.setup preset=staging host=bastion.example.com skip_steps=["prereqs","aws","ctx","env","arc"] dry_run=true
+  ```
+- Execute the full bootstrap (opens tunnels, verifies AWS, writes `.env`):
+  ```
+  /call hotpass.setup preset=staging host=bastion.example.com execute=true assume_yes=true arc_owner=ExampleOrg arc_repository=Hotpass arc_scale_set=hotpass-arc
+  ```
+- Manage tunnels directly:
+  ```
+  /call hotpass.net action=up host=bastion.example.com label=staging detach=true
+  /call hotpass.net action=status
+  /call hotpass.net action=down label=staging
+  ```
+
+Combine these with `hotpass.ctx`, `hotpass.env`, `hotpass.aws`, and `hotpass.arc` calls to keep staging environments aligned without leaving chat.
 
 ---
 

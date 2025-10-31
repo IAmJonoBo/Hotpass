@@ -9,6 +9,8 @@ pipeline as well as orchestrator, entity resolution, dashboard, and deployment w
 Legacy `hotpass-enhanced` invocations continue to work but simply delegate to the unified
 CLI after printing a deprecation warning.
 
+> ℹ️ Need the MCP equivalents? See [Reference — MCP tools](mcp-tools.md) for the tool names that mirror each CLI verb.
+
 ## Quick start
 
 ```bash

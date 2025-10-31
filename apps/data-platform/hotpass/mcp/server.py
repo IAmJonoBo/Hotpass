@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -170,6 +171,375 @@ class HotpassMCPServer:
                 },
             ),
             MCPTool(
+                name="hotpass.setup",
+                description="Run the Hotpass guided setup wizard (dry-run or execute)",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "preset": {
+                            "type": "string",
+                            "enum": ["staging", "local"],
+                            "default": "staging",
+                        },
+                        "extras": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Additional uv extras passed via --extras",
+                        },
+                        "host": {
+                            "type": "string",
+                            "description": "Bastion host or SSM instance for tunnels",
+                        },
+                        "via": {
+                            "type": "string",
+                            "enum": ["ssh-bastion", "ssm"],
+                            "description": "Tunnel mechanism (ssh-bastion or ssm)",
+                        },
+                        "label": {
+                            "type": "string",
+                            "description": "Label recorded for the tunnel session",
+                        },
+                        "skip_steps": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "deps",
+                                    "prereqs",
+                                    "tunnels",
+                                    "aws",
+                                    "ctx",
+                                    "env",
+                                    "arc",
+                                ],
+                            },
+                            "description": "Skip the listed stages in the wizard",
+                        },
+                        "aws_profile": {
+                            "type": "string",
+                            "description": "AWS CLI profile to use",
+                        },
+                        "aws_region": {
+                            "type": "string",
+                            "description": "AWS region override",
+                        },
+                        "eks_cluster": {
+                            "type": "string",
+                            "description": "Cluster name forwarded to hotpass ctx/aws",
+                        },
+                        "kube_context": {
+                            "type": "string",
+                            "description": "Alias assigned to kubeconfig context",
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "Namespace recorded with context metadata",
+                        },
+                        "prefect_profile": {
+                            "type": "string",
+                            "description": "Prefect profile configured by the wizard",
+                        },
+                        "prefect_url": {
+                            "type": "string",
+                            "description": "Override Prefect API URL",
+                        },
+                        "env_target": {
+                            "type": "string",
+                            "description": "Target environment passed to hotpass env",
+                        },
+                        "allow_network": {
+                            "type": "boolean",
+                            "description": "Generate env flags for network enrichment",
+                            "default": False,
+                        },
+                        "force_env": {
+                            "type": "boolean",
+                            "description": "Overwrite existing env files",
+                            "default": False,
+                        },
+                        "arc_owner": {
+                            "type": "string",
+                            "description": "GitHub owner used in ARC verification",
+                        },
+                        "arc_repository": {
+                            "type": "string",
+                            "description": "Repository name used in ARC verification",
+                        },
+                        "arc_scale_set": {
+                            "type": "string",
+                            "description": "RunnerScaleSet name used in ARC verification",
+                        },
+                        "arc_namespace": {
+                            "type": "string",
+                            "description": "Namespace passed to hotpass arc",
+                        },
+                        "arc_snapshot": {
+                            "type": "string",
+                            "description": "Optional snapshot path for ARC verification",
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Render the wizard plan without executing",
+                            "default": True,
+                        },
+                        "execute": {
+                            "type": "boolean",
+                            "description": "Execute the plan with --execute --assume-yes",
+                            "default": False,
+                        },
+                        "assume_yes": {
+                            "type": "boolean",
+                            "description": "Pass --assume-yes to suppress prompts",
+                            "default": True,
+                        },
+                    },
+                },
+            ),
+            MCPTool(
+                name="hotpass.net",
+                description="Manage SSH/SSM tunnels via the hotpass net command",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["up", "down", "status"],
+                            "description": "net subcommand to execute",
+                        },
+                        "via": {
+                            "type": "string",
+                            "enum": ["ssh-bastion", "ssm"],
+                            "description": "Tunnel mechanism for 'up'",
+                        },
+                        "host": {
+                            "type": "string",
+                            "description": "Bastion host or SSM target for 'up'",
+                        },
+                        "label": {
+                            "type": "string",
+                            "description": "Label identifying the tunnel session",
+                        },
+                        "all": {
+                            "type": "boolean",
+                            "description": "Terminate all sessions when action=down",
+                        },
+                        "detach": {
+                            "type": "boolean",
+                            "description": "Run tunnels in the background (action=up)",
+                            "default": True,
+                        },
+                        "auto_port": {
+                            "type": "boolean",
+                            "description": "Allow auto port selection when action=up",
+                        },
+                        "prefect_port": {
+                            "type": "integer",
+                            "description": "Local Prefect port override",
+                        },
+                        "marquez_port": {
+                            "type": "integer",
+                            "description": "Local Marquez port override",
+                        },
+                        "no_marquez": {
+                            "type": "boolean",
+                            "description": "Skip Marquez forwarding",
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Print command without executing",
+                            "default": False,
+                        },
+                    },
+                    "required": ["action"],
+                },
+            ),
+            MCPTool(
+                name="hotpass.ctx",
+                description="Bootstrap or list Prefect/Kubernetes contexts",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": ["init", "list"],
+                            "description": "ctx subcommand to run",
+                            "default": "init",
+                        },
+                        "prefect_profile": {
+                            "type": "string",
+                            "description": "Prefect profile name (action=init)",
+                        },
+                        "prefect_url": {
+                            "type": "string",
+                            "description": "Prefect API URL override",
+                        },
+                        "eks_cluster": {
+                            "type": "string",
+                            "description": "Cluster name for kubeconfig updates",
+                        },
+                        "kube_context": {
+                            "type": "string",
+                            "description": "Alias assigned to kubeconfig context",
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "Namespace recorded alongside the context",
+                        },
+                        "no_prefect": {
+                            "type": "boolean",
+                            "description": "Skip Prefect profile creation",
+                        },
+                        "no_kube": {
+                            "type": "boolean",
+                            "description": "Skip kubeconfig updates",
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Print commands without executing them",
+                            "default": False,
+                        },
+                    },
+                },
+            ),
+            MCPTool(
+                name="hotpass.env",
+                description="Generate .env files aligned with current tunnels/contexts",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "target": {
+                            "type": "string",
+                            "description": "Environment name (produces .env.<target>)",
+                            "default": "staging",
+                        },
+                        "prefect_url": {
+                            "type": "string",
+                            "description": "Override Prefect API URL",
+                        },
+                        "openlineage_url": {
+                            "type": "string",
+                            "description": "Override OpenLineage API URL",
+                        },
+                        "allow_network": {
+                            "type": "boolean",
+                            "description": "Enable network enrichment flags",
+                            "default": False,
+                        },
+                        "force": {
+                            "type": "boolean",
+                            "description": "Overwrite existing files",
+                            "default": False,
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Preview the file without writing it",
+                            "default": False,
+                        },
+                    },
+                },
+            ),
+            MCPTool(
+                name="hotpass.aws",
+                description="Verify AWS identity and optional EKS connectivity",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "profile": {
+                            "type": "string",
+                            "description": "AWS CLI profile to use",
+                        },
+                        "region": {
+                            "type": "string",
+                            "description": "AWS region override",
+                        },
+                        "eks_cluster": {
+                            "type": "string",
+                            "description": "Cluster passed to --eks-cluster",
+                        },
+                        "verify_kubeconfig": {
+                            "type": "boolean",
+                            "description": "Run aws eks update-kubeconfig",
+                            "default": False,
+                        },
+                        "kube_context": {
+                            "type": "string",
+                            "description": "Alias for kubeconfig context",
+                        },
+                        "kubeconfig": {
+                            "type": "string",
+                            "description": "Path to kubeconfig file to update",
+                        },
+                        "output": {
+                            "type": "string",
+                            "enum": ["text", "json"],
+                            "description": "Render mode",
+                            "default": "text",
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Print commands without executing",
+                            "default": False,
+                        },
+                    },
+                },
+            ),
+            MCPTool(
+                name="hotpass.arc",
+                description="Verify ARC runner lifecycle via CLI wrapper",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "owner": {"type": "string", "description": "Repository owner"},
+                        "repository": {
+                            "type": "string",
+                            "description": "Repository name",
+                        },
+                        "scale_set": {
+                            "type": "string",
+                            "description": "RunnerScaleSet to verify",
+                        },
+                        "namespace": {
+                            "type": "string",
+                            "description": "Kubernetes namespace",
+                            "default": "arc-runners",
+                        },
+                        "aws_region": {
+                            "type": "string",
+                            "description": "AWS region override",
+                        },
+                        "aws_profile": {
+                            "type": "string",
+                            "description": "AWS profile override",
+                        },
+                        "snapshot": {
+                            "type": "string",
+                            "description": "Snapshot JSON for offline rehearsal",
+                        },
+                        "verify_oidc": {
+                            "type": "boolean",
+                            "description": "Enable AWS identity verification",
+                            "default": False,
+                        },
+                        "output": {
+                            "type": "string",
+                            "enum": ["text", "json"],
+                            "default": "text",
+                        },
+                        "store_summary": {
+                            "type": "boolean",
+                            "description": "Persist results under .hotpass/arc/",
+                            "default": False,
+                        },
+                        "dry_run": {
+                            "type": "boolean",
+                            "description": "Print command without executing",
+                            "default": False,
+                        },
+                    },
+                    "required": ["owner", "repository", "scale_set"],
+                },
+            ),
+            MCPTool(
                 name="hotpass.plan.research",
                 description="Plan deterministic and network research for an entity",
                 input_schema={
@@ -317,6 +687,18 @@ class HotpassMCPServer:
             return await self._run_enrich(args)
         elif tool_name == "hotpass.qa":
             return await self._run_qa(args)
+        elif tool_name == "hotpass.setup":
+            return await self._run_setup(args)
+        elif tool_name == "hotpass.net":
+            return await self._run_net(args)
+        elif tool_name == "hotpass.ctx":
+            return await self._run_ctx(args)
+        elif tool_name == "hotpass.env":
+            return await self._run_env(args)
+        elif tool_name == "hotpass.aws":
+            return await self._run_aws(args)
+        elif tool_name == "hotpass.arc":
+            return await self._run_arc(args)
         elif tool_name == "hotpass.explain_provenance":
             return await self._explain_provenance(args)
         elif tool_name == "hotpass.plan.research":
@@ -331,9 +713,6 @@ class HotpassMCPServer:
     async def _run_refine(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run the refine command."""
         cmd = [
-            "uv",
-            "run",
-            "hotpass",
             "refine",
             "--input-dir",
             args["input_path"],
@@ -347,7 +726,7 @@ class HotpassMCPServer:
         if args.get("archive", False):
             cmd.append("--archive")
 
-        result = await self._run_command(cmd)
+        result = await self._run_hotpass(cmd)
         return {
             "success": result["returncode"] == 0,
             "output": result["stdout"],
@@ -358,9 +737,6 @@ class HotpassMCPServer:
     async def _run_enrich(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run the enrich command."""
         cmd = [
-            "uv",
-            "run",
-            "hotpass",
             "enrich",
             "--input",
             args["input_path"],
@@ -374,7 +750,7 @@ class HotpassMCPServer:
         if "allow_network" in args:
             cmd.append(f"--allow-network={str(args['allow_network']).lower()}")
 
-        result = await self._run_command(cmd)
+        result = await self._run_hotpass(cmd)
         return {
             "success": result["returncode"] == 0,
             "output": result["stdout"],
@@ -385,9 +761,9 @@ class HotpassMCPServer:
     async def _run_qa(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run the qa command."""
         target = args.get("target", "all")
-        cmd = ["uv", "run", "hotpass", "qa", target]
+        cmd = ["qa", target]
 
-        result = await self._run_command(cmd)
+        result = await self._run_hotpass(cmd)
         return {
             "success": result["returncode"] == 0,
             "output": result["stdout"],
@@ -527,6 +903,262 @@ class HotpassMCPServer:
             "outcome": outcome.to_dict(),
         }
 
+    async def _run_setup(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Execute the hotpass setup wizard."""
+
+        cmd = ["setup"]
+        preset = args.get("preset")
+        if preset:
+            cmd.extend(["--preset", preset])
+
+        extras = args.get("extras") or []
+        for extra in extras:
+            cmd.extend(["--extras", extra])
+
+        skip_steps = args.get("skip_steps") or []
+        skip_mapping = {
+            "deps": "--skip-deps",
+            "prereqs": "--skip-prereqs",
+            "tunnels": "--skip-tunnels",
+            "aws": "--skip-aws",
+            "ctx": "--skip-ctx",
+            "env": "--skip-env",
+            "arc": "--skip-arc",
+        }
+        for step in skip_steps:
+            flag = skip_mapping.get(step.lower())
+            if flag:
+                cmd.append(flag)
+
+        host = args.get("host")
+        if host:
+            cmd.extend(["--host", host])
+        via = args.get("via")
+        if via:
+            cmd.extend(["--via", via])
+        label = args.get("label")
+        if label:
+            cmd.extend(["--label", label])
+
+        if args.get("aws_profile"):
+            cmd.extend(["--aws-profile", args["aws_profile"]])
+        if args.get("aws_region"):
+            cmd.extend(["--aws-region", args["aws_region"]])
+        if args.get("eks_cluster"):
+            cmd.extend(["--eks-cluster", args["eks_cluster"]])
+        if args.get("kube_context"):
+            cmd.extend(["--kube-context", args["kube_context"]])
+        if args.get("namespace"):
+            cmd.extend(["--namespace", args["namespace"]])
+        if args.get("prefect_profile"):
+            cmd.extend(["--prefect-profile", args["prefect_profile"]])
+        if args.get("prefect_url"):
+            cmd.extend(["--prefect-url", args["prefect_url"]])
+        if args.get("env_target"):
+            cmd.extend(["--env-target", args["env_target"]])
+        if args.get("allow_network"):
+            cmd.append("--allow-network")
+        if args.get("force_env"):
+            cmd.append("--force-env")
+        if args.get("arc_owner"):
+            cmd.extend(["--arc-owner", args["arc_owner"]])
+        if args.get("arc_repository"):
+            cmd.extend(["--arc-repository", args["arc_repository"]])
+        if args.get("arc_scale_set"):
+            cmd.extend(["--arc-scale-set", args["arc_scale_set"]])
+        if args.get("arc_namespace"):
+            cmd.extend(["--arc-namespace", args["arc_namespace"]])
+        if args.get("arc_snapshot"):
+            cmd.extend(["--arc-snapshot", args["arc_snapshot"]])
+
+        execute = bool(args.get("execute"))
+        dry_run = args.get("dry_run", not execute)
+        if dry_run:
+            cmd.append("--dry-run")
+        if execute:
+            cmd.append("--execute")
+        if args.get("assume_yes", True):
+            cmd.append("--assume-yes")
+
+        result = await self._run_hotpass(cmd)
+        return {
+            "success": result["returncode"] == 0,
+            "output": result["stdout"],
+            "error": result["stderr"] if result["returncode"] != 0 else None,
+        }
+
+    async def _run_net(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run net commands."""
+
+        action = args.get("action")
+        if action not in {"up", "down", "status"}:
+            return {"success": False, "error": "Unsupported net action"}
+
+        cmd = ["net", action]
+
+        if action == "up":
+            via = args.get("via")
+            if via:
+                cmd.extend(["--via", via])
+            host = args.get("host")
+            if host:
+                cmd.extend(["--host", host])
+            label = args.get("label")
+            if label:
+                cmd.extend(["--label", label])
+            if args.get("detach", True):
+                cmd.append("--detach")
+            if args.get("auto_port") is not None:
+                flag = "--auto-port"
+                if not args["auto_port"]:
+                    flag = "--no-auto-port"
+                cmd.append(flag)
+            if args.get("prefect_port") is not None:
+                cmd.extend(["--prefect-port", str(args["prefect_port"])])
+            if args.get("marquez_port") is not None:
+                cmd.extend(["--marquez-port", str(args["marquez_port"])])
+            if args.get("no_marquez"):
+                cmd.append("--no-marquez")
+        elif action == "down":
+            label = args.get("label")
+            if label:
+                cmd.extend(["--label", label])
+            if args.get("all"):
+                cmd.append("--all")
+
+        if args.get("dry_run"):
+            cmd.append("--dry-run")
+
+        result = await self._run_hotpass(cmd)
+        return {
+            "success": result["returncode"] == 0,
+            "output": result["stdout"],
+            "error": result["stderr"] if result["returncode"] != 0 else None,
+        }
+
+    async def _run_ctx(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run ctx commands."""
+
+        action = args.get("action", "init")
+        cmd = ["ctx", action]
+
+        if action == "init":
+            if args.get("prefect_profile"):
+                cmd.extend(["--prefect-profile", args["prefect_profile"]])
+            if args.get("prefect_url"):
+                cmd.extend(["--prefect-url", args["prefect_url"]])
+            if args.get("eks_cluster"):
+                cmd.extend(["--eks-cluster", args["eks_cluster"]])
+            if args.get("kube_context"):
+                cmd.extend(["--kube-context", args["kube_context"]])
+            if args.get("namespace"):
+                cmd.extend(["--namespace", args["namespace"]])
+            if args.get("no_prefect"):
+                cmd.append("--no-prefect")
+            if args.get("no_kube"):
+                cmd.append("--no-kube")
+        if args.get("dry_run"):
+            cmd.append("--dry-run")
+
+        result = await self._run_hotpass(cmd)
+        return {
+            "success": result["returncode"] == 0,
+            "output": result["stdout"],
+            "error": result["stderr"] if result["returncode"] != 0 else None,
+        }
+
+    async def _run_env(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run env command."""
+
+        cmd = ["env"]
+        target = args.get("target")
+        if target:
+            cmd.extend(["--target", target])
+        if args.get("prefect_url"):
+            cmd.extend(["--prefect-url", args["prefect_url"]])
+        if args.get("openlineage_url"):
+            cmd.extend(["--openlineage-url", args["openlineage_url"]])
+        if args.get("allow_network"):
+            cmd.append("--allow-network")
+        if args.get("force"):
+            cmd.append("--force")
+        if args.get("dry_run"):
+            cmd.append("--dry-run")
+
+        result = await self._run_hotpass(cmd)
+        return {
+            "success": result["returncode"] == 0,
+            "output": result["stdout"],
+            "error": result["stderr"] if result["returncode"] != 0 else None,
+        }
+
+    async def _run_aws(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run aws verification command."""
+
+        cmd = ["aws"]
+        if args.get("profile"):
+            cmd.extend(["--profile", args["profile"]])
+        if args.get("region"):
+            cmd.extend(["--region", args["region"]])
+        if args.get("eks_cluster"):
+            cmd.extend(["--eks-cluster", args["eks_cluster"]])
+        if args.get("verify_kubeconfig"):
+            cmd.append("--verify-kubeconfig")
+        if args.get("kube_context"):
+            cmd.extend(["--kube-context", args["kube_context"]])
+        if args.get("kubeconfig"):
+            cmd.extend(["--kubeconfig", args["kubeconfig"]])
+        if args.get("output"):
+            cmd.extend(["--output", args["output"]])
+        if args.get("dry_run"):
+            cmd.append("--dry-run")
+
+        result = await self._run_hotpass(cmd)
+        success = result["returncode"] == 0
+        payload = {
+            "success": success,
+            "output": result["stdout"],
+        }
+        if not success:
+            payload["error"] = result["stderr"]
+        return payload
+
+    async def _run_arc(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run arc verification command."""
+
+        cmd = [
+            "arc",
+            "--owner",
+            args["owner"],
+            "--repository",
+            args["repository"],
+            "--scale-set",
+            args["scale_set"],
+        ]
+        if args.get("namespace"):
+            cmd.extend(["--namespace", args["namespace"]])
+        if args.get("aws_region"):
+            cmd.extend(["--aws-region", args["aws_region"]])
+        if args.get("aws_profile"):
+            cmd.extend(["--aws-profile", args["aws_profile"]])
+        if args.get("snapshot"):
+            cmd.extend(["--snapshot", args["snapshot"]])
+        if args.get("verify_oidc"):
+            cmd.append("--verify-oidc")
+        if args.get("output"):
+            cmd.extend(["--output", args["output"]])
+        if args.get("store_summary"):
+            cmd.append("--store-summary")
+        if args.get("dry_run"):
+            cmd.append("--dry-run")
+
+        result = await self._run_hotpass(cmd)
+        return {
+            "success": result["returncode"] == 0,
+            "output": result["stdout"],
+            "error": result["stderr"] if result["returncode"] != 0 else None,
+        }
+
     def _load_industry_profile(self, profile_name: str) -> IndustryProfile:
         if profile_name == "generic":
             return get_default_profile("generic")
@@ -609,10 +1241,27 @@ class HotpassMCPServer:
                 "output": result["stdout"],
             }
 
-    async def _run_command(self, cmd: list[str]) -> dict[str, Any]:
+    async def _run_hotpass(
+        self, args: list[str], *, env: dict[str, str] | None = None
+    ) -> dict[str, Any]:
+        """Execute a hotpass CLI command via uv run."""
+
+        return await self._run_command(["uv", "run", "hotpass", *args], env=env)
+
+    async def _run_command(
+        self, cmd: list[str], env: dict[str, str] | None = None
+    ) -> dict[str, Any]:
         """Run a command asynchronously."""
+        spawn_env = None
+        if env:
+            spawn_env = os.environ.copy()
+            spawn_env.update({key: str(value) for key, value in env.items()})
+
         process = await asyncio.create_subprocess_exec(
-            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=spawn_env,
         )
 
         stdout, stderr = await process.communicate()

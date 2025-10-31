@@ -60,6 +60,13 @@ when you are certain required binaries are already installed.
   to task snippets so agents can provision workspaces for operators automatically.
 - **MCP tooling**: run the wizard once to seed `.hotpass/net.json`, `.hotpass/contexts.json`,
   and `.env.staging`; MCP tools reuse those state files when resolving profiles.
+- **Chat agents**: call the MCP tool directly:
+  ```
+  /call hotpass.setup preset=staging host=bastion.example.com dry_run=true skip_steps=["aws","ctx","env","arc"]
+  /call hotpass.setup preset=staging host=bastion.example.com execute=true arc_owner=ExampleOrg arc_repository=Hotpass arc_scale_set=hotpass-arc
+  ```
+  Combine with `/call hotpass.net action=status` or `/call hotpass.env target=staging dry_run=true`
+  to manage tunnels and environment files without leaving chat.
 
 ## 5. Troubleshooting
 
