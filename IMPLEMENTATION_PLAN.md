@@ -464,10 +464,9 @@ def test_qg5_docs_instruction_gate():
    ```
 
 5. **TA Summary Report**
-   - Generate markdown report
-   - List all TA criteria with status
-   - Link to failing tests
-   - Auto-update on CI runs
+   - Persist JSON summary to `dist/quality-gates/latest-ta.json`
+   - Append NDJSON history entries for longitudinal tracking
+   - Expose artefact paths via CLI/MCP output for downstream analytics (markdown export remains optional)
 
 #### Quality Gate: QG-4 (MCP Discoverability)
 

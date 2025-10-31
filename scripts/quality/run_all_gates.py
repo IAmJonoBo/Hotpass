@@ -238,8 +238,14 @@ def _persist_summary(payload: dict[str, Any]) -> None:
     try:
         TA_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         TA_SUMMARY_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        history_record = {
+            "timestamp": payload.get("timestamp"),
+            "summary": payload.get("summary"),
+            "gates": payload.get("gates"),
+            "artifact_path": payload.get("artifact_path"),
+        }
         with TA_HISTORY_PATH.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload))
+            handle.write(json.dumps(history_record))
             handle.write("\n")
     except Exception:  # pragma: no cover - best effort persistence
         pass

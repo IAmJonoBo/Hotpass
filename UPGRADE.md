@@ -125,15 +125,15 @@
 - Gate scripts and `hotpass qa ta` delegate to `scripts/quality/run_all_gates.py`.
 - MCP `hotpass.ta.check` calls the consolidated runner.
 - TA runs now persist `dist/quality-gates/latest-ta.json` and append to `dist/quality-gates/history.ndjson` (written by `hotpass qa ta` / `scripts/quality/run_all_gates.py`) so the latest gate summary and history are easy to reference post-run.
-- MCP regression tests now cover research planning, crawl, and TA summaries (`tests/mcp/test_research_tools.py`).
-- Outstanding: extend MCP integration tests (including adaptive research flows) and publish TA summary analytics (the JSON artefact now persists under `dist/quality-gates/` but lacks aggregation reporting).
+- MCP regression tests now cover research planning, crawl, rate-limit propagation, and TA summaries (`tests/mcp/test_research_tools.py`).
+- Outstanding: publish TA summary analytics (the JSON artefact and history now persist under `dist/quality-gates/` but still lack aggregation/reporting).
 
 ### Sprint 6 – Adaptive research orchestrator (**Status: ⚠️ In progress**)
 
 - `src/hotpass/research/orchestrator.py` now implements the adaptive loop (local snapshot → authority check → deterministic enrichment → optional network enrichment → native crawl/backfill planning). CLI (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wrap the planner, emitting audit entries to `./.hotpass/mcp-audit.log`.
 - Profile schema adds `authority_sources` and `research_backfill` so planners understand trusted registries and backfillable fields; agent docs cover the new flags.
 - Profile-driven throttling (`research_rate_limit` min interval + optional burst) keeps network fetchers within provider limits, and each native crawl stores metadata snapshots under `.hotpass/research_runs/<entity>/crawl/` alongside the run summary.
-- Next: add integration tests (CLI + MCP) and surface provider-specific rate-limit/guardrail configuration alongside the new crawl artefact catalogue.
+- MCP + CLI integration tests cover research planning, crawl, rate limits, and artefact persistence; next up is surfacing provider-specific guardrail configuration alongside the crawl artefact catalogue.
 
 ### Sprint 7 – Agent-first UI & exports (**Status: 🚧 Planned**)
 

@@ -8,6 +8,8 @@ import pandas as pd
 import pytest
 
 from hotpass.mcp.server import HotpassMCPServer
+from hotpass.config import get_default_profile
+from hotpass.research import ResearchOrchestrator, ResearchContext
 
 
 def expect(condition: bool, message: str) -> None:
@@ -103,3 +105,79 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
     expect(result["summary"]["all_passed"] is True, "Summary should indicate all gates passed")
     expect(Path(result["artifact_path"]).exists(), "Artifact path returned by TA tool must exist")
     expect(Path(result.get("history_path", history)).exists(), "History path should be present and exist")
+
+
+@pytest.mark.asyncio
+async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
+    dataset = _write_dataset(tmp_path)
+    profile = get_default_profile("generic").model_copy(
+        update={
+            "name": "rate-limit",
+            "research_rate_limit": {
+                "min_interval_seconds": 1.5,
+                "burst": 3,
+            },
+        }
+    )
+
+    monkeypatch.setattr(
+        HotpassMCPServer,
+        "_load_industry_profile",
+        lambda self, name: profile,
+    )
+
+    class DummyOutcome:
+        def __init__(self, plan_payload: dict[str, object]):
+            self._payload = {
+                "plan": plan_payload,
+                "steps": [],
+                "enriched_row": None,
+                "provenance": None,
+                "elapsed_seconds": 0.0,
+                "success": True,
+                "artifact_path": None,
+            }
+
+        @property
+        def success(self) -> bool:
+            return True
+
+        def to_dict(self) -> dict[str, object]:
+            return self._payload
+
+    def fake_plan(self, context: ResearchContext):  # type: ignore[override]
+        expect(context.profile is profile, "Server should pass custom profile to orchestrator")
+        plan_payload = {
+            "entity_name": "Example Flight School",
+            "entity_slug": "example-flight-school",
+            "query": None,
+            "target_urls": [],
+            "allow_network": context.allow_network,
+            "authority_sources": [],
+            "backfill_fields": [],
+            "rate_limit": {
+                "min_interval_seconds": 1.5,
+                "burst": 3,
+            },
+        }
+        return DummyOutcome(plan_payload)
+
+    monkeypatch.setattr(ResearchOrchestrator, "plan", fake_plan, raising=False)
+
+    server = HotpassMCPServer()
+    result = await server._execute_tool(  # pylint: disable=protected-access
+        "hotpass.plan.research",
+        {
+            "dataset_path": str(dataset),
+            "row_id": "0",
+            "allow_network": False,
+            "profile": "rate-limit",
+        },
+    )
+
+    expect(result["success"] is True, "Plan research should succeed with custom profile")
+    plan = result["outcome"]["plan"]
+    rate_limit = plan.get("rate_limit")
+    expect(rate_limit is not None, "Plan should include rate limit details")
+    expect(rate_limit["min_interval_seconds"] == 1.5, "Rate limit interval should propagate")
+    expect(rate_limit["burst"] == 3, "Rate limit burst should propagate")
