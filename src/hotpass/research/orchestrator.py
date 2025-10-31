@@ -45,6 +45,20 @@ class AuthoritySnapshot:
 
 
 @dataclass(slots=True)
+class RateLimitPolicy:
+    """Rate limit policy derived from the active profile."""
+
+    min_interval_seconds: float
+    burst: int | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "min_interval_seconds": self.min_interval_seconds,
+            "burst": self.burst,
+        }
+
+
+@dataclass(slots=True)
 class ResearchPlan:
     """Execution plan derived from the entity context and profile configuration."""
 
@@ -57,7 +71,7 @@ class ResearchPlan:
     allow_network: bool
     authority_sources: tuple[AuthoritySnapshot, ...]
     backfill_fields: tuple[str, ...]
-    rate_limit_seconds: float | None
+    rate_limit: RateLimitPolicy | None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -76,7 +90,7 @@ class ResearchPlan:
             for snapshot in self.authority_sources
         ],
         "backfill_fields": list(self.backfill_fields),
-        "rate_limit_seconds": self.rate_limit_seconds,
+        "rate_limit": self.rate_limit.to_dict() if self.rate_limit else None,
     }
 
 
@@ -154,6 +168,8 @@ class ResearchOrchestrator:
         self.artefact_root = artefact_root or (self.cache_root / "research_runs")
         self.artefact_root.mkdir(parents=True, exist_ok=True)
         self._last_network_call: float | None = None
+        self._rate_limit_policy: RateLimitPolicy | None = None
+        self._burst_tokens: int | None = None
 
     def plan(self, context: ResearchContext) -> ResearchOutcome:
         """Build and execute a research plan."""
@@ -233,12 +249,19 @@ class ResearchOrchestrator:
             _filter_blank(context.backfill_fields or profile_backfill_fields)
         )
 
-        rate_limit_seconds: float | None = None
+        rate_limit_policy: RateLimitPolicy | None = None
         profile_rate_limit = getattr(context.profile, "research_rate_limit", None)
         if profile_rate_limit is not None:
             candidate = getattr(profile_rate_limit, "min_interval_seconds", None)
-            if isinstance(candidate, (int, float)) and candidate >= 0:
-                rate_limit_seconds = float(candidate)
+            burst_candidate = getattr(profile_rate_limit, "burst", None)
+            if isinstance(candidate, (int, float)) and candidate > 0:
+                burst_value: int | None = None
+                if isinstance(burst_candidate, int) and burst_candidate > 0:
+                    burst_value = burst_candidate
+                rate_limit_policy = RateLimitPolicy(
+                    min_interval_seconds=float(candidate),
+                    burst=burst_value,
+                )
 
         return ResearchPlan(
             entity_name=entity_name,
@@ -252,7 +275,7 @@ class ResearchOrchestrator:
             allow_network=context.allow_network,
             authority_sources=authority_sources,
             backfill_fields=backfill_fields,
-            rate_limit_seconds=rate_limit_seconds,
+            rate_limit=rate_limit_policy,
         )
 
     # --------------------------------------------------------------------- #
@@ -266,6 +289,13 @@ class ResearchOrchestrator:
         steps: list[ResearchStepResult] = []
         enriched_row: dict[str, Any] | None = None
         provenance: dict[str, Any] | None = None
+
+        self._rate_limit_policy = plan.rate_limit
+        if plan.rate_limit and plan.rate_limit.burst is not None:
+            self._burst_tokens = plan.rate_limit.burst
+        else:
+            self._burst_tokens = None
+        self._last_network_call = None
 
         if not crawl_only:
             steps.append(self._run_local_snapshot(plan))
@@ -434,7 +464,7 @@ class ResearchOrchestrator:
                 message="No dataset row supplied – skipping network enrichment",
             )
 
-        self._maybe_throttle(plan.rate_limit_seconds)
+        self._maybe_throttle(plan.rate_limit)
         try:
             enriched_series, provenance = enrich_row(
                 plan.row,
@@ -498,14 +528,12 @@ class ResearchOrchestrator:
                     },
                 )
             try:
-                self._maybe_throttle(plan.rate_limit_seconds)
+                self._maybe_throttle(plan.rate_limit)
                 response = requests.get(plan.target_urls[0], timeout=10)
                 self._last_network_call = time.monotonic()
-                return ResearchStepResult(
-                    name="native_crawl",
-                    status="success",
-                    message="Fetched metadata via requests fallback",
-                    artifacts={
+                crawl_artifact = self._persist_crawl_results(
+                    plan,
+                    {
                         "results": [
                             {
                                 "url": response.url,
@@ -515,6 +543,24 @@ class ResearchOrchestrator:
                         ],
                         "query": plan.query,
                     },
+                )
+                artifacts = {
+                    "results": [
+                        {
+                            "url": response.url,
+                            "status": response.status_code,
+                            "content_length": len(response.content),
+                        }
+                    ],
+                    "query": plan.query,
+                }
+                if crawl_artifact:
+                    artifacts["results_path"] = crawl_artifact
+                return ResearchStepResult(
+                    name="native_crawl",
+                    status="success",
+                    message="Fetched metadata via requests fallback",
+                    artifacts=artifacts,
                 )
             except Exception as exc:  # pragma: no cover - network failure
                 LOGGER.warning("Requests crawl failed: %s", exc)
@@ -548,7 +594,7 @@ class ResearchOrchestrator:
 
         process = CrawlerProcess(settings={"LOG_ENABLED": False})
         try:
-            self._maybe_throttle(plan.rate_limit_seconds)
+            self._maybe_throttle(plan.rate_limit)
             process.crawl(MetadataSpider)
             process.start()
             self._last_network_call = time.monotonic()
@@ -566,14 +612,26 @@ class ResearchOrchestrator:
         if not results:
             message = "Scrapy crawl executed but yielded no metadata"
 
+        crawl_artifact = self._persist_crawl_results(
+            plan,
+            {
+                "results": results,
+                "query": plan.query,
+            },
+        )
+
+        artifacts = {
+            "results": results,
+            "query": plan.query,
+        }
+        if crawl_artifact:
+            artifacts["results_path"] = crawl_artifact
+
         return ResearchStepResult(
             name="native_crawl",
             status="success",
             message=message,
-            artifacts={
-                "results": results,
-                "query": plan.query,
-            },
+            artifacts=artifacts,
         )
 
     def _run_backfill_plan(
@@ -637,6 +695,26 @@ class ResearchOrchestrator:
         except Exception:  # pragma: no cover - audit logging is best effort
             LOGGER.debug("Failed to persist research audit entry", exc_info=True)
 
+    def _persist_crawl_results(self, plan: ResearchPlan, payload: dict[str, Any]) -> str | None:
+        try:
+            timestamp = datetime.now(UTC)
+            directory = self.artefact_root / plan.entity_slug / "crawl"
+            directory.mkdir(parents=True, exist_ok=True)
+            path = directory / f"{timestamp.strftime('%Y%m%dT%H%M%SZ')}.json"
+            enriched_payload = {
+                "entity": plan.entity_slug,
+                "profile": getattr(plan.profile, "name", "unknown"),
+                "query": plan.query,
+                "target_urls": list(plan.target_urls),
+                "recorded_at": timestamp.isoformat(),
+            }
+            enriched_payload.update(payload)
+            path.write_text(json.dumps(enriched_payload, indent=2), encoding="utf-8")
+            return str(path)
+        except Exception:  # pragma: no cover - best effort persistence
+            LOGGER.debug("Failed to persist crawl artefact", exc_info=True)
+            return None
+
     def _persist_outcome(self, outcome: ResearchOutcome) -> None:
         try:
             timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -647,14 +725,53 @@ class ResearchOrchestrator:
         except Exception:  # pragma: no cover - best effort persistence
             LOGGER.debug("Failed to persist research artefact", exc_info=True)
 
-    def _maybe_throttle(self, min_interval: float | None) -> None:
-        if not min_interval:
+    def _maybe_throttle(self, rate_limit: RateLimitPolicy | None) -> None:
+        if rate_limit is None:
             return
-        if self._last_network_call is None:
+
+        min_interval = rate_limit.min_interval_seconds
+        if min_interval <= 0:
             return
-        elapsed = time.monotonic() - self._last_network_call
-        if elapsed < min_interval:
-            time.sleep(min_interval - elapsed)
+
+        now = time.monotonic()
+
+        if rate_limit.burst is not None:
+            if self._rate_limit_policy is not rate_limit:
+                self._rate_limit_policy = rate_limit
+                self._burst_tokens = rate_limit.burst
+                self._last_network_call = None
+
+            if self._burst_tokens is None:
+                self._burst_tokens = rate_limit.burst
+
+            if self._last_network_call is not None:
+                elapsed = now - self._last_network_call
+                if elapsed >= min_interval:
+                    self._burst_tokens = rate_limit.burst
+
+            if self._burst_tokens > 0:
+                self._burst_tokens -= 1
+                self._last_network_call = time.monotonic()
+                return
+
+            wait_for = min_interval
+            if self._last_network_call is not None:
+                elapsed = now - self._last_network_call
+                if elapsed < min_interval:
+                    wait_for = min_interval - elapsed
+            if wait_for > 0:
+                time.sleep(wait_for)
+                now = time.monotonic()
+            self._burst_tokens = rate_limit.burst - 1 if rate_limit.burst > 0 else 0
+            self._last_network_call = now
+            return
+
+        if self._last_network_call is not None:
+            elapsed = now - self._last_network_call
+            if elapsed < min_interval:
+                time.sleep(min_interval - elapsed)
+                now = time.monotonic()
+        self._last_network_call = now
 
     @staticmethod
     def _ensure_protocol(url: str) -> str:

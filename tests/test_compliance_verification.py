@@ -17,6 +17,7 @@ from hotpass.compliance_verification import (  # noqa: E402
     load_verification_log,
     record_verification_run,
 )
+from tests.helpers.assertions import expect
 
 
 @pytest.fixture()
@@ -27,8 +28,11 @@ def log_path(tmp_path: Path) -> Path:
 def test_framework_due_when_no_history(log_path: Path) -> None:
     """Without history the framework should be due immediately."""
 
-    assert load_verification_log(log_path) == []
-    assert is_framework_due("POPIA", log_path=log_path) is True
+    expect(load_verification_log(log_path) == [], "No history should return empty log")
+    expect(
+        is_framework_due("POPIA", log_path=log_path) is True,
+        "Framework should be due when no run history exists",
+    )
 
 
 def test_record_run_marks_framework_not_due_until_next_quarter(log_path: Path) -> None:
@@ -46,10 +50,22 @@ def test_record_run_marks_framework_not_due_until_next_quarter(log_path: Path) -
 
     ninety_days_later = timestamp + timedelta(days=90)
     soon_after = timestamp + timedelta(days=1)
-    assert is_framework_due("POPIA", log_path=log_path, now=soon_after) is False
-    assert is_framework_due("SOC 2", log_path=log_path, now=soon_after) is False
-    assert is_framework_due("ISO 27001", log_path=log_path, now=soon_after) is True
-    assert is_framework_due("POPIA", log_path=log_path, now=ninety_days_later) is True
+    expect(
+        is_framework_due("POPIA", log_path=log_path, now=soon_after) is False,
+        "Recorded run should mark POPIA as not due immediately afterwards",
+    )
+    expect(
+        is_framework_due("SOC 2", log_path=log_path, now=soon_after) is False,
+        "Recorded run should mark SOC 2 as not due immediately afterwards",
+    )
+    expect(
+        is_framework_due("ISO 27001", log_path=log_path, now=soon_after) is True,
+        "Frameworks not included in run should remain due",
+    )
+    expect(
+        is_framework_due("POPIA", log_path=log_path, now=ninety_days_later) is True,
+        "POPIA should become due again after cadence interval elapses",
+    )
 
 
 def test_generate_summary_reflects_latest_run(log_path: Path) -> None:
@@ -67,14 +83,26 @@ def test_generate_summary_reflects_latest_run(log_path: Path) -> None:
 
     summary = generate_summary(log_path=log_path, now=ts + timedelta(days=10))
     framework_summary = summary["frameworks"]["POPIA"]
-    assert framework_summary["due"] is False
-    assert framework_summary["reviewers"] == ["Alice"]
-    assert "Updated evidence catalog" in framework_summary["findings"]
-    assert framework_summary["notes"] == "Cadence executed"
+    expect(framework_summary["due"] is False, "Framework should not be due within cadence window")
+    expect(
+        framework_summary["reviewers"] == ["Alice"],
+        "Summary should capture latest reviewers",
+    )
+    expect(
+        "Updated evidence catalog" in framework_summary["findings"],
+        "Findings should include recorded evidence string",
+    )
+    expect(
+        framework_summary["notes"] == "Cadence executed",
+        "Summary notes should echo recorded notes",
+    )
 
     # Move past the cadence window and ensure due flips to True
     overdue_summary = generate_summary(log_path=log_path, now=ts + timedelta(days=200))
-    assert overdue_summary["frameworks"]["POPIA"]["due"] is True
+    expect(
+        overdue_summary["frameworks"]["POPIA"]["due"] is True,
+        "Framework should be due once cadence window has elapsed",
+    )
 
 
 def test_frameworks_due_handles_case_insensitivity(log_path: Path) -> None:
@@ -86,8 +114,8 @@ def test_frameworks_due_handles_case_insensitivity(log_path: Path) -> None:
     due_frameworks = frameworks_due(
         ("POPIA",), log_path=log_path, now=timestamp + timedelta(days=30)
     )
-    assert due_frameworks == []
+    expect(due_frameworks == [], "Framework should not be due within cadence window")
     due_frameworks = frameworks_due(
         ("POPIA",), log_path=log_path, now=timestamp + timedelta(days=120)
     )
-    assert due_frameworks == ["POPIA"]
+    expect(due_frameworks == ["POPIA"], "Framework should become due after cadence interval")

@@ -69,7 +69,12 @@ def test_plan_offline_path(tmp_path):
     expect(statuses.get("network_enrichment") == "skipped", "Network step disabled offline")
     expect(statuses.get("native_crawl") == "skipped", "Crawl skipped without network")
     expect(statuses.get("backfill") == "success", "Backfill step should flag missing fields")
-    expect(outcome.plan.rate_limit_seconds == 1.0, "Rate limit should propagate into the plan")
+    rate_limit = outcome.plan.rate_limit
+    expect(rate_limit is not None, "Plan should carry rate limit details from profile")
+    expect(
+        rate_limit.min_interval_seconds == 1.0,
+        "Rate limit min interval should propagate into the plan",
+    )
     expect(outcome.artifact_path is not None, "Outcome should persist an artefact path")
     expect(Path(outcome.artifact_path).exists(), "Artefact file should be written to disk")
 
@@ -96,3 +101,59 @@ def test_crawl_summary_without_network(tmp_path):
     expect(statuses.get("native_crawl") == "skipped", "Crawl should skip without network access")
     if outcome.artifact_path:
         expect(Path(outcome.artifact_path).exists(), "Crawl artefact should be written")
+
+
+def test_crawl_persists_artifact_and_rate_limit(tmp_path, monkeypatch):
+    cache_root = tmp_path / ".hotpass"
+    cache_root.mkdir()
+
+    profile = IndustryProfile.from_dict(
+        {
+            "name": "burst-profile",
+            "display_name": "Burst Profile",
+            "research_rate_limit": {
+                "min_interval_seconds": 0.1,
+                "burst": 2,
+            },
+        }
+    )
+
+    orchestrator = ResearchOrchestrator(cache_root=cache_root, audit_log=cache_root / "audit.log")
+
+    class _StubResponse:
+        def __init__(self, url: str) -> None:
+            self.url = url
+            self.status_code = 200
+            self.content = b"stub-content"
+
+    class _StubRequests:
+        def get(self, url: str, timeout: float):
+            return _StubResponse(url)
+
+    monkeypatch.setattr("hotpass.research.orchestrator.CrawlerProcess", None, raising=False)
+    monkeypatch.setattr("hotpass.research.orchestrator.requests", _StubRequests(), raising=False)
+
+    outcome = orchestrator.crawl(
+        profile=profile,
+        query_or_url="https://example.test",
+        allow_network=True,
+    )
+
+    statuses = {step.name: step.status for step in outcome.steps}
+    expect(statuses.get("native_crawl") == "success", "Native crawl should succeed under stubbed requests")
+
+    native_crawl_step = next(step for step in outcome.steps if step.name == "native_crawl")
+    artifacts = native_crawl_step.artifacts
+    results_path = artifacts.get("results_path")
+    expect(isinstance(results_path, str), "Native crawl should record results path")
+    stored_path = Path(results_path)
+    expect(stored_path.exists(), "Stored crawl artefact should exist on disk")
+
+    payload = json.loads(stored_path.read_text(encoding="utf-8"))
+    expect(payload.get("entity") == outcome.plan.entity_slug, "Crawl artefact should capture entity slug")
+    expect(payload.get("results"), "Crawl artefact should include crawl results")
+    expect(outcome.plan.rate_limit is not None, "Plan should capture rate limit when configured")
+    expect(
+        outcome.plan.rate_limit.burst == 2,
+        "Burst value from profile should be preserved in the plan",
+    )

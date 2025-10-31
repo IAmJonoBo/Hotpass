@@ -266,7 +266,7 @@ uv run hotpass crawl "https://example.test" --allow-network=true
 ```
 
 - Artefacts: each run writes a JSON summary under `.hotpass/research_runs/` capturing the plan, step outcomes, and provenance metadata for future audits.
-- Throttling: profiles may set `research_rate_limit.min_interval_seconds` to enforce per-entity crawl spacing; the orchestrator applies the delay before network fetchers run.
+- Throttling: profiles may set `research_rate_limit.min_interval_seconds` (plus optional `burst`) to enforce per-entity crawl spacing; the orchestrator enforces the burst window before applying the delay and records crawl metadata under `.hotpass/research_runs/<slug>/crawl/`.
 
 ### Key Principles
 

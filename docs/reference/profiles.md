@@ -76,7 +76,7 @@ existing profiles:
 
 - `authority_sources`: list of trusted registries/directories queried before general web search. Each entry supports `name`, optional `url`, `cache_key`, and a `category` (`registry`, `directory`, or `dataset`).
 - `research_backfill`: controls which fields the orchestrator may backfill. Define `fields` (list of column names) and `confidence_threshold` (0–1).
-- `research_rate_limit`: throttling hints for network enrichment/crawl steps. Set `min_interval_seconds` (>= 0) to enforce a minimum delay between remote calls; optional `burst` limits consecutive calls before throttling resumes.
+- `research_rate_limit`: throttling hints for network enrichment/crawl steps. Set `min_interval_seconds` (>= 0) to enforce a minimum delay between remote calls; optional `burst` allows that many back-to-back calls before the delay is enforced again (the burst resets once the interval elapses).
 
 ```yaml
 authority_sources:
@@ -90,6 +90,10 @@ research_backfill:
     - website
   confidence_threshold: 0.7
 ```
+
+Every native crawl stores a JSON snapshot under `.hotpass/research_runs/<entity-slug>/crawl/<timestamp>.json`
+containing the query (if supplied), resolved URLs, and metadata returned by the fetchers. Profiles declaring
+rate limits ensure these artefacts reflect the throttled schedule, making audits and retries deterministic.
 
 Profiles omitting these sections remain valid; the orchestrator simply skips the authority/backfill
 passes.

@@ -18,6 +18,7 @@ from hotpass.enrichment import (
     enrich_dataframe_with_websites_async,
     enrich_dataframe_with_websites_concurrent,
 )
+from tests.helpers.assertions import expect
 
 
 @pytest.fixture(autouse=True)
@@ -72,9 +73,9 @@ async def test_enrich_dataframe_with_websites_async_processes_in_parallel(monkey
 
     # With 5 tasks at 0.05s each, sequential would take 0.25s
     # Parallel should take ~0.05s (plus overhead)
-    assert elapsed < 0.15, f"Expected parallel execution, took {elapsed:.2f}s"
-    assert result["website_enriched"].sum() == 5
-    assert len(call_order) == 5
+    expect(elapsed < 0.15, f"Expected parallel execution, took {elapsed:.2f}s")
+    expect(result["website_enriched"].sum() == 5, "Parallel enrichment should mark all rows")
+    expect(len(call_order) == 5, "Extractor should run once per input row")
 
 
 @pytest.mark.asyncio
@@ -114,9 +115,9 @@ async def test_enrich_dataframe_with_websites_async_respects_concurrency(monkeyp
 
     result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
 
-    assert result["website_enriched"].sum() == 10
+    expect(result["website_enriched"].sum() == 10, "All rows should be enriched under concurrency limit")
     # Due to the async nature and timing, we should see some concurrency
-    assert max_concurrent <= 3, f"Exceeded concurrency limit: {max_concurrent}"
+    expect(max_concurrent <= 3, f"Exceeded concurrency limit: {max_concurrent}")
 
 
 @pytest.mark.asyncio
@@ -148,7 +149,7 @@ async def test_enrich_dataframe_with_websites_async_handles_exceptions(monkeypat
     result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
 
     # Good URLs should still be enriched
-    assert result["website_enriched"].sum() == 2
+    expect(result["website_enriched"].sum() == 2, "Valid URLs should be enriched despite failures")
 
 
 @pytest.mark.asyncio
@@ -158,8 +159,8 @@ async def test_enrich_dataframe_with_websites_async_empty_dataframe():
 
     result = await enrich_dataframe_with_websites_async(df, website_column="website")
 
-    assert len(result) == 0
-    assert "website_enriched" in result.columns
+    expect(len(result) == 0, "Empty input should yield empty dataframe")
+    expect("website_enriched" in result.columns, "Result should include enrichment column")
 
 
 @pytest.mark.asyncio
@@ -169,7 +170,7 @@ async def test_enrich_dataframe_with_websites_async_missing_column():
 
     result = await enrich_dataframe_with_websites_async(df, website_column="nonexistent")
 
-    assert result.equals(df)
+    expect(result.equals(df), "Missing website column should leave dataframe unchanged")
 
 
 @pytest.mark.asyncio
@@ -206,8 +207,14 @@ async def test_enrich_dataframe_with_websites_async_with_cache(temp_cache, monke
         df, website_column="website", cache=temp_cache
     )
 
-    assert result1["website_enriched"].sum() == 1
-    assert result2["website_enriched"].sum() == 1
+    expect(
+        result1["website_enriched"].sum() == 1,
+        "Initial async enrichment should process the single website",
+    )
+    expect(
+        result2["website_enriched"].sum() == 1,
+        "Cached async enrichment should still report enrichment success",
+    )
 
 
 @pytest.mark.asyncio
@@ -236,8 +243,8 @@ async def test_enrich_dataframe_with_websites_async_with_null_values():
         result = await enrich_dataframe_with_websites_async(df, website_column="website")
 
     # Only 2 valid URLs should be processed
-    assert call_count == 2
-    assert result["website_enriched"].sum() == 2
+    expect(call_count == 2, "Only non-null URLs should trigger extraction")
+    expect(result["website_enriched"].sum() == 2, "Only valid URLs should be enriched")
 
 
 @pytest.mark.asyncio
@@ -258,12 +265,18 @@ async def test_enrich_dataframe_with_websites_async_minimum_concurrency():
         result = await enrich_dataframe_with_websites_async(
             df, website_column="website", concurrency=0
         )
-        assert result["website_enriched"].sum() == 1
+        expect(
+            result["website_enriched"].sum() == 1,
+            "Concurrency lower bound should default to single worker",
+        )
 
         result = await enrich_dataframe_with_websites_async(
             df, website_column="website", concurrency=-5
         )
-        assert result["website_enriched"].sum() == 1
+        expect(
+            result["website_enriched"].sum() == 1,
+            "Negative concurrency should also coerce to single worker",
+        )
 
 
 @pytest.mark.asyncio

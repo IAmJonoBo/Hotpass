@@ -353,3 +353,22 @@ class TestTechnicalAcceptance:
         expect(Path(".github/copilot-instructions.md").exists(), "Copilot instructions must exist")
         expect(Path("AGENTS.md").exists(), "AGENTS.md must exist")
         expect(Path("IMPLEMENTATION_PLAN.md").exists(), "Implementation plan must exist")
+
+    def test_ta_summary_artifact_written(self):
+        """TA-8a: Consolidated TA summary should persist to dist/quality-gates."""
+        summary_path = Path("dist/quality-gates/latest-ta.json")
+        if summary_path.exists():
+            summary_path.unlink()
+
+        result = subprocess.run(
+            [sys.executable, "scripts/quality/run_all_gates.py", "--json"],
+            capture_output=True,
+            text=True,
+        )
+        expect(result.returncode == 0, "run_all_gates.py should exit successfully")
+        expect(summary_path.exists(), "TA summary artifact should be written to dist/quality-gates")
+        try:
+            payload = json.loads(summary_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"TA summary artifact must be JSON: {exc}") from exc
+        expect(isinstance(payload, dict), "TA summary artifact must be a JSON object")

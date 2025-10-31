@@ -16,6 +16,8 @@ from rich.table import Table
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
 
+TA_ARTIFACT_PATH = Path("dist/quality-gates/latest-ta.json")
+
 
 def build(
     subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
@@ -361,6 +363,10 @@ def run_ta_checks() -> tuple[bool, str]:
             except json.JSONDecodeError:
                 payload = None
 
+        persisted_path: Path | None = None
+        if isinstance(payload, dict):
+            persisted_path = _persist_ta_summary(payload)
+
         if result.returncode == 0 and isinstance(payload, dict):
             summary = payload.get("summary", {})
             gates = payload.get("gates", [])
@@ -371,8 +377,14 @@ def run_ta_checks() -> tuple[bool, str]:
             else:
                 message = "Technical Acceptance gates passed"
 
-            artifact_path = payload.get("artifact_path")
-            if isinstance(artifact_path, str) and artifact_path:
+            artifact_path: str | None = None
+            if persisted_path is not None:
+                artifact_path = str(persisted_path)
+            else:
+                raw_path = payload.get("artifact_path")
+                if isinstance(raw_path, str) and raw_path:
+                    artifact_path = raw_path
+            if artifact_path:
                 message = f"{message}; summary saved to {artifact_path}"
 
             failed_gates: list[str] = []
@@ -395,3 +407,22 @@ def run_ta_checks() -> tuple[bool, str]:
         return False, failure_message
     except Exception as e:
         return False, f"Error running TA checks: {e}"
+
+
+def _persist_ta_summary(payload: dict[str, Any]) -> Path | None:
+    """Persist the TA summary payload to the shared artifact path."""
+
+    artifact_path = payload.get("artifact_path")
+    destination: Path
+    if isinstance(artifact_path, str) and artifact_path:
+        destination = Path(artifact_path)
+    else:
+        destination = TA_ARTIFACT_PATH
+
+    try:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        payload["artifact_path"] = str(destination)
+        return destination
+    except Exception:
+        return None

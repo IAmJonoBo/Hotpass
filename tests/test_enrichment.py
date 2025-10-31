@@ -29,6 +29,7 @@ from hotpass.enrichment.intent import (
     IntentTargetDefinition,
     run_intent_plan,
 )
+from tests.helpers.assertions import expect
 
 
 @pytest.fixture(autouse=True)
@@ -49,23 +50,23 @@ def temp_cache():
 
 def test_cache_manager_init(temp_cache):
     """Test cache manager initialization."""
-    assert temp_cache.db_path.exists()
+    expect(temp_cache.db_path.exists(), "Cache database path should exist after init")
     stats = temp_cache.stats()
-    assert stats["total_entries"] == 0
-    assert stats["total_hits"] == 0
+    expect(stats["total_entries"] == 0, "Cache should start with zero entries")
+    expect(stats["total_hits"] == 0, "Cache should start without any hits")
 
 
 def test_cache_set_and_get(temp_cache):
     """Test setting and getting cache values."""
     temp_cache.set("test_key", "test_value")
     value = temp_cache.get("test_key")
-    assert value == "test_value"
+    expect(value == "test_value", "Cache should return stored value for key")
 
 
 def test_cache_get_nonexistent(temp_cache):
     """Test getting nonexistent key returns None."""
     value = temp_cache.get("nonexistent")
-    assert value is None
+    expect(value is None, "Unknown cache key should return None")
 
 
 def test_cache_delete(temp_cache):
@@ -73,7 +74,7 @@ def test_cache_delete(temp_cache):
     temp_cache.set("test_key", "test_value")
     temp_cache.delete("test_key")
     value = temp_cache.get("test_key")
-    assert value is None
+    expect(value is None, "Deleted cache key should return None")
 
 
 def test_cache_hit_count(temp_cache):
@@ -85,7 +86,7 @@ def test_cache_hit_count(temp_cache):
         temp_cache.get("test_key")
 
     stats = temp_cache.stats()
-    assert stats["total_hits"] == 5
+    expect(stats["total_hits"] == 5, "Cache should count five hits after repeated access")
 
 
 def test_cache_stats(temp_cache):
@@ -96,9 +97,12 @@ def test_cache_stats(temp_cache):
     temp_cache.get("key1")
 
     stats = temp_cache.stats()
-    assert stats["total_entries"] == 2
-    assert stats["total_hits"] == 2
-    assert stats["avg_hits_per_entry"] == 1.0
+    expect(stats["total_entries"] == 2, "Cache should track two stored entries")
+    expect(stats["total_hits"] == 2, "Cache should count two total hits across entries")
+    expect(
+        stats["avg_hits_per_entry"] == 1.0,
+        "Average hits per entry should equal 1.0 after two hits on two entries",
+    )
 
 
 def test_cache_clear_expired(temp_cache):
@@ -109,11 +113,11 @@ def test_cache_clear_expired(temp_cache):
 
     # Clear expired entries
     count = temp_cache.clear_expired()
-    assert count == 1
+    expect(count == 1, "Clear expired should remove a single entry with zero TTL")
 
     # Verify key is gone
     value = temp_cache.get("test_key")
-    assert value is None
+    expect(value is None, "Expired cache entry should be removed")
 
 
 @patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", True)
@@ -139,10 +143,10 @@ def test_extract_website_content_success(mock_trafilatura, mock_requests, temp_c
 
     result = extract_website_content("https://example.com", cache=temp_cache)
 
-    assert result["success"] is True
-    assert result["title"] == "Test Title"
-    assert result["text"] == "Extracted text content"
-    assert result["url"] == "https://example.com"
+    expect(result["success"] is True, "Successful extraction should flag success")
+    expect(result["title"] == "Test Title", "Metadata title should match extractor output")
+    expect(result["text"] == "Extracted text content", "Extracted text should match payload")
+    expect(result["url"] == "https://example.com", "Result URL should echo the request URL")
 
 
 @patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", True)
@@ -154,9 +158,12 @@ def test_extract_website_content_error(mock_requests, temp_cache):
 
     result = extract_website_content("https://example.com", cache=temp_cache)
 
-    assert result["success"] is False
-    assert "error" in result
-    assert "Connection timeout" in result["error"]
+    expect(result["success"] is False, "Failure should flag success=False")
+    expect("error" in result, "Failure payload should include an error field")
+    expect(
+        "Connection timeout" in result["error"],
+        "Error message should include original exception text",
+    )
 
 
 @patch("hotpass.enrichment.TRAFILATURA_AVAILABLE", False)
@@ -164,8 +171,11 @@ def test_extract_website_content_no_trafilatura():
     """Test website extraction when trafilatura is not available."""
     result = extract_website_content("https://example.com")
 
-    assert "error" in result
-    assert "Trafilatura not installed" in result["error"]
+    expect("error" in result, "Unavailable trafilatura should return error payload")
+    expect(
+        "Trafilatura not installed" in result["error"],
+        "Error should indicate missing trafilatura dependency",
+    )
 
 
 def test_extract_website_content_caching(temp_cache):
@@ -186,14 +196,17 @@ def test_extract_website_content_caching(temp_cache):
 
         # First call should hit the API
         result1 = extract_website_content("https://example.com", cache=temp_cache)
-        assert result1["success"] is True
+        expect(result1["success"] is True, "First extraction should succeed via HTTP request")
 
         # Second call should use cache
         result2 = extract_website_content("https://example.com", cache=temp_cache)
-        assert result2["success"] is True
+        expect(result2["success"] is True, "Second extraction should succeed via cache reuse")
 
         # Verify only one API call was made
-        assert mock_requests.get.call_count == 1
+        expect(
+            mock_requests.get.call_count == 1,
+            "HTTP request should only be executed once when cache is provided",
+        )
 
 
 @patch("hotpass.enrichment.extract_website_content")
@@ -225,11 +238,20 @@ def test_enrich_dataframe_with_websites(mock_extract, temp_cache):
 
     result_df = enrich_dataframe_with_websites(df, cache=temp_cache)
 
-    assert "website_title" in result_df.columns
-    assert "website_description" in result_df.columns
-    assert "website_enriched" in result_df.columns
-    assert result_df["website_enriched"].sum() == 2
-    assert result_df.loc[0, "website_title"] == "Company A Website"
+    expect("website_title" in result_df.columns, "Website enrichment should add title column")
+    expect(
+        "website_description" in result_df.columns,
+        "Website enrichment should add description column",
+    )
+    expect("website_enriched" in result_df.columns, "Website enrichment flag column should exist")
+    expect(
+        result_df["website_enriched"].sum() == 2,
+        "Both rows should be marked enriched when extraction succeeds",
+    )
+    expect(
+        result_df.loc[0, "website_title"] == "Company A Website",
+        "Enriched title should match mock return value",
+    )
 
 
 @patch("hotpass.enrichment.extract_website_content")
@@ -244,7 +266,10 @@ def test_enrich_dataframe_with_websites_missing_column(mock_extract):
     result_df = enrich_dataframe_with_websites(df, website_column="nonexistent")
 
     # Should return original dataframe
-    assert "website_title" not in result_df.columns
+    expect(
+        "website_title" not in result_df.columns,
+        "Missing website column should leave dataframe unchanged",
+    )
 
 
 @patch("hotpass.enrichment.extract_website_content")
@@ -267,8 +292,11 @@ def test_enrich_dataframe_with_websites_null_urls(mock_extract, temp_cache):
     result_df = enrich_dataframe_with_websites(df, cache=temp_cache)
 
     # Only one should be enriched
-    assert result_df["website_enriched"].sum() == 1
-    assert mock_extract.call_count == 1
+    expect(
+        result_df["website_enriched"].sum() == 1,
+        "Only rows with valid URLs should be enriched",
+    )
+    expect(mock_extract.call_count == 1, "Extractor should run once for non-null URLs")
 
 
 def test_enrich_dataframe_with_websites_concurrent_runs_tasks_in_parallel(monkeypatch):
@@ -309,17 +337,20 @@ def test_enrich_dataframe_with_websites_concurrent_runs_tasks_in_parallel(monkey
 
     result = enrich_dataframe_with_websites_concurrent(df, website_column="website", concurrency=4)
 
-    assert peak_active >= 2, "Expected concurrent execution for website enrichment"
-    assert result["website_enriched"].sum() == 4
-    assert (
-        result["website_title"]
-        == [
-            "Title for https://a.example",
-            "Title for https://b.example",
-            "Title for https://c.example",
-            "Title for https://d.example",
-        ]
-    ).all()
+    expect(peak_active >= 2, "Concurrency helper should perform at least two requests in parallel")
+    expect(result["website_enriched"].sum() == 4, "All rows should be marked enriched")
+    expect(
+        (
+            result["website_title"]
+            == [
+                "Title for https://a.example",
+                "Title for https://b.example",
+                "Title for https://c.example",
+                "Title for https://d.example",
+            ]
+        ).all(),
+        "Concurrent enrichment should retain titles from the extractor results",
+    )
 
 
 @patch("hotpass.enrichment.enrich_from_registry")
@@ -348,10 +379,13 @@ def test_enrich_dataframe_with_registries(mock_enrich_registry, temp_cache):
 
     result_df = enrich_dataframe_with_registries(df, registry_type="cipc", cache=temp_cache)
 
-    assert "registry_type" in result_df.columns
-    assert "registry_status" in result_df.columns
-    assert "registry_number" in result_df.columns
-    assert result_df.loc[0, "registry_number"] == "REG123"
+    expect("registry_type" in result_df.columns, "Registry enrichment should add type column")
+    expect("registry_status" in result_df.columns, "Registry enrichment should add status column")
+    expect("registry_number" in result_df.columns, "Registry enrichment should add number column")
+    expect(
+        result_df.loc[0, "registry_number"] == "REG123",
+        "Registry number should reflect successful lookup payload",
+    )
 
 
 @patch("hotpass.enrichment.enrich_from_registry")
@@ -366,7 +400,10 @@ def test_enrich_dataframe_with_registries_missing_column(mock_enrich_registry):
     result_df = enrich_dataframe_with_registries(df, org_name_column="nonexistent")
 
     # Should return original dataframe
-    assert "registry_type" not in result_df.columns
+    expect(
+        "registry_type" not in result_df.columns,
+        "Registry enrichment should skip when organization column is missing",
+    )
 
 
 @patch("hotpass.enrichment.enrich_from_registry")
@@ -388,7 +425,10 @@ def test_enrich_dataframe_with_registries_null_names(mock_enrich_registry, temp_
 
     # Only one organisation should result in a lookup
     mock_enrich_registry.assert_called_once_with("Company A", "cipc", cache=temp_cache)
-    assert result_df["registry_enriched"].sum() == 1
+    expect(
+        result_df["registry_enriched"].sum() == 1,
+        "Only rows with organization names should be flagged enriched",
+    )
 
 
 @pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
@@ -428,10 +468,13 @@ def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
         issued_at=issued,
     )
 
-    assert not result.signals.empty
+    expect(not result.signals.empty, "Intent plan should emit at least one signal")
     summary = result.summary["aero-school"]
-    assert summary.score > 0
-    assert collector_name in summary.signal_types
+    expect(summary.score > 0, "Summary score should be positive when signals exist")
+    expect(
+        collector_name in summary.signal_types,
+        "Summary should record originating collector name",
+    )
 
 
 def test_run_intent_plan_generates_digest() -> None:
@@ -491,28 +534,38 @@ def test_run_intent_plan_generates_digest() -> None:
         issued_at=issued,
     )
 
-    assert set(result.signals.columns) >= {
-        "target_slug",
-        "signal_type",
-        "score",
-        "observed_at",
-        "retrieved_at",
-        "provenance",
-    }
+    expect(
+        set(result.signals.columns)
+        >= {
+            "target_slug",
+            "signal_type",
+            "score",
+            "observed_at",
+            "retrieved_at",
+            "provenance",
+        },
+        "Signals dataframe should expose provenance columns",
+    )
 
     summary = result.summary["aero-school"]
-    assert summary.signal_count == 2
-    assert summary.last_observed_at is not None
-    assert summary.last_observed_at.date().isoformat() == issued.date().isoformat()
-    assert "hiring" in summary.signal_types
+    expect(summary.signal_count == 2, "Aero School should emit two signals in summary")
+    expect(
+        summary.last_observed_at is not None,
+        "Summary should include last observed timestamp",
+    )
+    expect(
+        summary.last_observed_at.date().isoformat() == issued.date().isoformat(),
+        "Last observed date should align with issued date for most recent event",
+    )
+    expect("hiring" in summary.signal_types, "Summary should include hiring signal type")
 
     digest = result.digest
-    assert isinstance(digest, pd.DataFrame)
-    assert not digest.empty
-    assert "intent_signal_score" in digest.columns
+    expect(isinstance(digest, pd.DataFrame), "Digest should materialise as a DataFrame")
+    expect(not digest.empty, "Digest should contain aggregated signal rows")
+    expect("intent_signal_score" in digest.columns, "Digest should include intent score column")
     aero_score = digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
     heli_score = digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0]
-    assert aero_score > heli_score
+    expect(aero_score > heli_score, "Aero School score should exceed Heli Ops score")
 
 
 def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
@@ -550,13 +603,16 @@ def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
         issued_at=issued,
     )
 
-    assert storage_path.exists()
+    expect(storage_path.exists(), "Intent plan should persist signals to storage path")
     stored_records = json.loads(storage_path.read_text(encoding="utf-8"))
-    assert len(stored_records) == 1
+    expect(len(stored_records) == 1, "Initial run should persist a single record")
     record = stored_records[0]
-    assert record["target_slug"] == "aero-school"
-    assert "retrieved_at" in record
-    assert record["provenance"]["collector"] == "news"
+    expect(record["target_slug"] == "aero-school", "Stored record should target Aero School")
+    expect("retrieved_at" in record, "Stored record should include retrieval timestamp")
+    expect(
+        record["provenance"]["collector"] == "news",
+        "Stored record should capture provenance collector name",
+    )
 
     refreshed_plan = IntentPlan(
         enabled=True,
@@ -589,6 +645,12 @@ def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
         issued_at=issued + timedelta(minutes=10),
     )
 
-    assert second_result.summary["aero-school"].signal_count == 1
+    expect(
+        second_result.summary["aero-school"].signal_count == 1,
+        "Cache should prevent duplicate signal accumulation",
+    )
     cached_headline = second_result.signals.iloc[0]["metadata"].get("headline")
-    assert cached_headline == "Aero School expands fleet"
+    expect(
+        cached_headline == "Aero School expands fleet",
+        "Cached headline should match original persisted signal",
+    )
