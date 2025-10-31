@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn, formatDuration, getStatusColor } from '@/lib/utils'
 import { mockPrefectData } from '@/api/prefect'
 import { useHILApprovals } from '@/store/hilStore'
+import { LiveRefinementPanel } from '@/components/refinement/LiveRefinementPanel'
 
 export function Dashboard() {
   // Fetch Prefect flow runs from last 24h
@@ -155,6 +156,9 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Live Refinement Panel */}
+      <LiveRefinementPanel />
 
       {/* Recent Runs Table */}
       <Card>
