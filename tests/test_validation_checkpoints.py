@@ -50,7 +50,7 @@ def test_checkpoint_validation_provides_detailed_failure_info():
     """DataContractError includes detailed failure information."""
     df = pd.DataFrame(
         {
-            "Organisation Name": [None, None],
+            "Organisation Name": [None, "Valid Org"],
             "ID": [1, 2],
             "Type": ["Flight School", "Flight School"],
         }

@@ -70,14 +70,14 @@
 
 ### 1.3 Gap closure tracker (from 30 Oct audit)
 
-| Gap                                     | Status                   | Evidence                                                                                                                                                                                   | Next action                                                                                    |
-| --------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| QG‑2 only performed schema checks       | Resolved                 | `scripts/quality/run_qg2.py` runs full GE checkpoints; uploads in `.github/workflows/quality-gates.yml`.                                                                                   | Monitor GE dependency availability; ensure sample workbooks stay in `data/`.                   |
-| Sprint 5 automation stubs               | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`).     | Implement real crawler handler for `hotpass.crawl` and add MCP integration tests.              |
-| Documentation misalignment              | Resolved                 | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`.                                                     | Extend reference set with MCP/quality gate pages.                                              |
+| Gap                                     | Status                   | Evidence                                                                                                                                                                                   | Next action                                                                                               |
+| --------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| QG‑2 only performed schema checks       | Resolved                 | `scripts/quality/run_qg2.py` runs full GE checkpoints; uploads in `.github/workflows/quality-gates.yml`.                                                                                   | Monitor GE dependency availability; ensure sample workbooks stay in `data/`.                              |
+| Sprint 5 automation stubs               | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`).     | Implement real crawler handler for `hotpass.crawl` and add MCP integration tests.                         |
+| Documentation misalignment              | Resolved                 | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`.                                                     | Extend reference set with MCP/quality gate pages.                                                         |
 | Research APIs promised but not exposed  | Resolved                 | Adaptive research orchestrator + CLI (`hotpass plan research`, `hotpass crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) ship from `src/hotpass/research/orchestrator.py`. | Integration regression tests cover CLI + MCP tooling; monitor staging rehearsals for additional evidence. |
-| Assert-free pytest migration incomplete | Outstanding              | Bare asserts present (e.g. `tests/test_evidence.py`).                                                                                                                                      | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`. |
-| Next Steps backlog alignment            | Ongoing                  | This dashboard now mirrors outstanding work; maintain weekly review cadence (starting 2025-11-07).                                                                                         | Update `Next_Steps.md` & this section after each closure.                                      |
+| Assert-free pytest migration incomplete | Outstanding              | Bare asserts present (e.g. `tests/test_evidence.py`).                                                                                                                                      | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`.            |
+| Next Steps backlog alignment            | Ongoing                  | This dashboard now mirrors outstanding work; maintain weekly review cadence (starting 2025-11-07).                                                                                         | Update `Next_Steps.md` & this section after each closure.                                                 |
 
 ### 1.4 Strategic enhancements (from `UPGRADE_B.md`)
 
@@ -146,7 +146,7 @@ Hotpass must keep the CLI surface predictable and short-form to suit Copilot/Cod
 
 ### 3.1 Canonical CLI verbs
 
-```
+```markdown
 uv run hotpass overview
 uv run hotpass refine --input-dir ./data --output-path ./dist/refined.xlsx --profile <profile> --archive
 uv run hotpass enrich --input ./dist/refined.xlsx --output ./dist/enriched.xlsx --profile <profile> --allow-network=<true|false>
