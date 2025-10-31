@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Literal, Sequence
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -16,11 +17,11 @@ from hotpass.enrichment.pipeline import enrich_row
 from hotpass.normalization import slugify
 
 try:  # pragma: no cover - optional dependency
-    from scrapy.crawler import CrawlerProcess  # type: ignore
+    from scrapy.crawler import CrawlerProcess
     from scrapy.spiders import Spider  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency
-    CrawlerProcess = None  # type: ignore[assignment]
-    Spider = object  # type: ignore[assignment]
+    CrawlerProcess = None
+    Spider = object
 
 try:
     import requests
@@ -135,7 +136,9 @@ class ResearchOutcome:
 class ResearchOrchestrator:
     """Coordinate adaptive research loops across local, deterministic, and network passes."""
 
-    def __init__(self, *, cache_root: Path | None = None, audit_log: Path | None = None) -> None:
+    def __init__(
+        self, *, cache_root: Path | None = None, audit_log: Path | None = None
+    ) -> None:
         self.cache_root = cache_root or Path(".hotpass")
         self.cache_root.mkdir(parents=True, exist_ok=True)
         self.audit_log = audit_log or (self.cache_root / "mcp-audit.log")
@@ -182,7 +185,11 @@ class ResearchOrchestrator:
         row = context.row
         entity_name = (
             context.entity_name
-            or (str(row["organization_name"]) if row is not None and "organization_name" in row else None)
+            or (
+                str(row["organization_name"])
+                if row is not None and "organization_name" in row
+                else None
+            )
             or context.query
             or "unknown-entity"
         )
@@ -194,7 +201,11 @@ class ResearchOrchestrator:
             if isinstance(website_value, str) and website_value.strip():
                 urls.append(self._ensure_protocol(website_value.strip()))
 
-        profile_backfill_fields = getattr(context.profile, "backfill_fields", tuple(context.profile.optional_fields))
+        profile_backfill_fields = getattr(
+            context.profile,
+            "backfill_fields",
+            tuple(context.profile.optional_fields),
+        )
 
         authority_sources = tuple(
             AuthoritySnapshot(
@@ -206,13 +217,17 @@ class ResearchOrchestrator:
             for source in getattr(context.profile, "authority_sources", tuple())
         )
 
-        backfill_fields = tuple(_filter_blank(context.backfill_fields or profile_backfill_fields))
+        backfill_fields = tuple(
+            _filter_blank(context.backfill_fields or profile_backfill_fields)
+        )
 
         return ResearchPlan(
             entity_name=entity_name,
             entity_slug=entity_slug,
             query=context.query,
-            target_urls=tuple(dict.fromkeys(urls)),  # preserve order while removing duplicates
+            target_urls=tuple(
+                dict.fromkeys(urls)
+            ),  # preserve order while removing duplicates
             row=row,
             profile=context.profile,
             allow_network=context.allow_network,
@@ -224,7 +239,9 @@ class ResearchOrchestrator:
     # Execution
     # --------------------------------------------------------------------- #
 
-    def _execute(self, plan: ResearchPlan, *, crawl_only: bool = False) -> ResearchOutcome:
+    def _execute(
+        self, plan: ResearchPlan, *, crawl_only: bool = False
+    ) -> ResearchOutcome:
         start = time.perf_counter()
         steps: list[ResearchStepResult] = []
         enriched_row: dict[str, Any] | None = None
@@ -241,7 +258,9 @@ class ResearchOrchestrator:
 
         network_step = self._run_network_enrichment(plan, enriched_row=enriched_row)
         steps.append(network_step)
-        if network_step.status == "success" and network_step.artifacts.get("enriched_row"):
+        if network_step.status == "success" and network_step.artifacts.get(
+            "enriched_row"
+        ):
             enriched_row = network_step.artifacts["enriched_row"]
             provenance = network_step.artifacts.get("provenance", provenance)
 
@@ -319,7 +338,9 @@ class ResearchOrchestrator:
                 status="skipped",
                 message="No authority snapshots found for entity",
                 artifacts={
-                    "authority_sources": [snapshot.name for snapshot in plan.authority_sources],
+                    "authority_sources": [
+                        snapshot.name for snapshot in plan.authority_sources
+                    ],
                 },
             )
 
@@ -504,8 +525,8 @@ class ResearchOrchestrator:
             LOGGER.warning("Scrapy crawl failed: %s", exc)
             return ResearchStepResult(
                 name="native_crawl",
-                status="error",
-                message=f"Scrapy crawl failed: {exc}",
+                status="skipped",
+                message=f"Scrapy crawl failed (non-fatal): {exc}",
                 artifacts={"urls": list(plan.target_urls)},
             )
 
@@ -616,6 +637,10 @@ def _fields_requiring_backfill(row: pd.Series, fields: Sequence[str]) -> set[str
         if field not in row:
             continue
         value = row[field]
-        if value is None or (isinstance(value, float) and pd.isna(value)) or (isinstance(value, str) and not value.strip()):
+        if (
+            value is None
+            or (isinstance(value, float) and pd.isna(value))
+            or (isinstance(value, str) and not value.strip())
+        ):
             missing.add(field)
     return missing

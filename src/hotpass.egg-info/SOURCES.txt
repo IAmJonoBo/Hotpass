@@ -78,15 +78,15 @@ src/hotpass/cli/shared.py
 src/hotpass/cli/commands/__init__.py
 src/hotpass/cli/commands/backfill.py
 src/hotpass/cli/commands/contracts.py
+src/hotpass/cli/commands/crawl.py
 src/hotpass/cli/commands/dashboard.py
 src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/doctor.py
 src/hotpass/cli/commands/enrich.py
 src/hotpass/cli/commands/init.py
-src/hotpass/cli/commands/crawl.py
-src/hotpass/cli/commands/plan.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/overview.py
+src/hotpass/cli/commands/plan.py
 src/hotpass/cli/commands/qa.py
 src/hotpass/cli/commands/refine.py
 src/hotpass/cli/commands/resolve.py
@@ -108,8 +108,6 @@ src/hotpass/domain/party/dictionary.py
 src/hotpass/domain/party/loader.py
 src/hotpass/domain/party/models.py
 src/hotpass/domain/party/schemas.py
-src/hotpass/research/__init__.py
-src/hotpass/research/orchestrator.py
 src/hotpass/enrichment/__init__.py
 src/hotpass/enrichment/performance.py
 src/hotpass/enrichment/pipeline.py
@@ -159,6 +157,8 @@ src/hotpass/pipeline/features/entity_resolution.py
 src/hotpass/pipeline/features/geospatial.py
 src/hotpass/prefect/__init__.py
 src/hotpass/prefect/deployments.py
+src/hotpass/research/__init__.py
+src/hotpass/research/orchestrator.py
 src/hotpass/storage/__init__.py
 src/hotpass/storage/adapters.py
 src/hotpass/storage/dataset.py

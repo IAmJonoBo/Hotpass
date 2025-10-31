@@ -18,8 +18,8 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    bash scripts/uv_sync_extras.sh
    ```
 
-   Need orchestration or enrichment extras? Append them to
-   `HOTPASS_UV_EXTRAS` before rerunning the helper script.
+    Need orchestration or enrichment extras? Append them to
+    `HOTPASS_UV_EXTRAS` before rerunning the helper script.
 
 2. Confirm the CLI surface and available profiles:
 
@@ -79,6 +79,20 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    python scripts/idp/bootstrap.py --execute
    ```
 
+### Keep uv caches on an external SSD
+
+When running Hotpass from `/Volumes/APFS Space/GitHub/Hotpass` (or another external
+volume), redirect `uv`'s data and cache directories so they live on the same drive:
+
+```bash
+chmod +x scripts/use-ssd-env.sh
+./scripts/use-ssd-env.sh uv sync
+```
+
+The helper sets `UV_DATA_DIR` and `UV_CACHE_DIR` to the SSD and then executes the
+given command, so virtual environments, wheels, and build artefacts no longer grow
+under `~/.cache` on the internal disk.
+
 Working on a hosted runner? Use `make sync EXTRAS="dev orchestration enrichment geospatial compliance dashboards"`
 to replicate the environment bootstrap above with a single command.
 
@@ -94,6 +108,9 @@ Run these gates before opening a pull request so local results align with CI:
   to confirm expectation suites remain in sync with contracts.
 - `uv run python scripts/quality/fitness_functions.py` — exercises the
   architectural fitness checks documented in `docs/architecture/fitness-functions.md`.
+- Optional: set `HOTPASS_ENABLE_PRESIDIO=1` before running if you need Presidio-backed
+  PII redaction. By default Hotpass skips the heavy Presidio models to keep offline
+  runs self-contained.
 
 ## Documentation
 

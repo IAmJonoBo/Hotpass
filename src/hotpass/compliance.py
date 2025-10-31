@@ -9,12 +9,16 @@ This module provides functionality for:
 """
 
 import logging
+import os
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Protocol, cast
+
+
+logger = logging.getLogger(__name__)
 
 import pandas as pd
 
@@ -87,7 +91,8 @@ except ImportError:
     OperatorConfig = cast(OperatorFactory, _OperatorConfigStub)
     PRESIDIO_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+if os.getenv("HOTPASS_ENABLE_PRESIDIO", "0") not in {"1", "true", "TRUE"}:
+    PRESIDIO_AVAILABLE = False
 
 
 DEFAULT_REDACTION_COLUMNS: tuple[str, ...] = (
@@ -163,7 +168,7 @@ class PIIDetector:
         anonymizer_factory = AnonymizerEngine
 
         if not PRESIDIO_AVAILABLE or analyzer_factory is None or anonymizer_factory is None:
-            logger.warning("Presidio not available, PII detection will not work")
+            logger.info("PII detection disabled (enable via HOTPASS_ENABLE_PRESIDIO=1)")
             return
 
         try:

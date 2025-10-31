@@ -28,7 +28,7 @@ class IndustryProfile(ProfileConfig):
             raise ValueError(str(exc)) from exc
 
     def to_dict(self) -> dict[str, Any]:
-        return self.model_dump(mode="python")
+        return self.model_dump(mode="json")
 
 
 def load_industry_profile(profile_name: str, config_dir: Path | None = None) -> IndustryProfile:
