@@ -13,6 +13,7 @@ Modern React-based web interface for Hotpass data pipeline monitoring and manage
 - **Dark Mode**: System-aware dark/light theme with manual toggle
 - **Responsive Design**: Optimized for desktop (1024px+) with mobile support
 - **Docker Support**: Complete ecosystem in containers
+- **Model Profiles**: Runtime switcher for GitHub Copilot (recommended) and alternate LLM providers
 
 ## Tech Stack
 
@@ -111,6 +112,10 @@ VITE_ENVIRONMENT=local  # or 'docker', 'staging', 'prod'
 ### Admin Page
 
 Navigate to `/admin` to configure API endpoints through the UI. Settings are stored in localStorage.
+
+### Assistant Model Providers
+
+LLM preferences live in `public/config/llm-providers.yaml`. By default the UI recommends GitHub Copilot in VS Code, but you can toggle Groq, OpenRouter, Hugging Face, or a local Ollama runtime from the **Admin → Assistant Model** panel. The same YAML drives MCP integrations and the Dockerised GUI.
 
 ## Project Structure
 

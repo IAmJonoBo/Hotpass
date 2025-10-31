@@ -491,6 +491,8 @@ const result = await callTool("hotpass.refine", {
 
 Combine these with `hotpass.ctx`, `hotpass.env`, `hotpass.aws`, and `hotpass.arc` calls to keep staging environments aligned without leaving chat.
 
+Model routing is configured in `apps/web-ui/public/config/llm-providers.yaml`. Keep GitHub Copilot as the default (`copilot`) and update the YAML when you add new providers so the Admin UI and MCP tooling stay in sync.
+
 ---
 
 ## 10) Quality Gates (Automated Testing)

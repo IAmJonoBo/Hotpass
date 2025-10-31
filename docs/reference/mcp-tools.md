@@ -41,3 +41,4 @@ dolphin-mcp chat --server hotpass --model ollama/llama3.1
 - `hotpass.setup`, `hotpass.net`, `hotpass.ctx`, `hotpass.env`, `hotpass.aws`, and `hotpass.arc` were introduced in October 2025 to streamline staging bootstrap for agents.
 - Tools inherit the same safeguards as the CLI: network enrichment still requires `FEATURE_ENABLE_REMOTE_RESEARCH=1` and `ALLOW_NETWORK_RESEARCH=1`, while ARC verification honours the `.hotpass/` evidence directory.
 - When invoking from IDEs (VS Code, Cursor, Zed, etc.), ensure `chat.mcp.access` is set to `"all"` so the editor can reach the local server. For quick experiments, use `dolphin-mcp` as described in [AGENTS.md](../AGENTS.md).
+- Model routing and provider metadata live in `apps/web-ui/public/config/llm-providers.yaml`. Update the YAML to surface additional providers in both the Admin UI and MCP clients.

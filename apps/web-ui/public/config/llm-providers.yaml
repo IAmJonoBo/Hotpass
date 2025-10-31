@@ -1,0 +1,59 @@
+# Hotpass LLM provider configuration
+#
+# This file defines the language models available to the Hotpass assistant UI and
+# CLI/MCP integrations. The strategy is `cheapest-first`: the runtime will prefer
+# the lowest-cost provider that is currently available, while honouring explicit
+# user selections stored in local preferences.
+#
+# GitHub Copilot in VS Code remains the recommended experience. Operators can
+# select alternate providers when running outside the IDE (for example inside the
+# web UI Docker container or via dolphin-mcp).
+
+llm:
+  strategy: cheapest-first
+  default: copilot
+
+  providers:
+    - name: copilot
+      label: GitHub Copilot (VS Code)
+      kind: ide
+      documentation: https://docs.github.com/en/copilot
+      notes: >
+        Use the GitHub Copilot chat pane in VS Code for the full-featured experience.
+        This entry acts as the preferred option and does not require API routing.
+      max_calls_per_hour: 999
+
+    - name: groq
+      label: Groq — Llama-3 70B
+      kind: api
+      url: https://api.groq.com/openai/v1/chat/completions
+      model: llama-3-70b
+      max_calls_per_hour: 80
+      cost_per_call_usd: 0.00
+      api_key_env: GROQ_API_KEY
+
+    - name: openrouter
+      label: OpenRouter — Gemma 3 27B (free tier)
+      kind: api
+      url: https://openrouter.ai/api/v1/chat/completions
+      model: google/gemma-3-27b-it:free
+      max_calls_per_hour: 20
+      cost_per_call_usd: 0.00
+      api_key_env: OPENROUTER_API_KEY
+
+    - name: hf
+      label: Hugging Face — Mistral-7B Instruct v0.3
+      kind: api
+      url: https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3
+      max_calls_per_hour: 10
+      cost_per_call_usd: 0.00
+      api_key_env: HUGGINGFACEHUB_API_TOKEN
+
+    - name: local
+      label: Local Ollama — Mistral
+      kind: local
+      url: http://localhost:11434/v1
+      model: mistral
+      max_calls_per_hour: 999
+      notes: >
+        Requires Ollama or compatible local runtime exposing an OpenAI-compatible endpoint.

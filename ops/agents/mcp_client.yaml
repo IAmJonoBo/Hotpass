@@ -24,3 +24,8 @@ tools:
     usage: trigger the `hotpass-refinement` deployment once approvals are granted
   - name: google_drive
     usage: retrieve the latest compliance evidence bundle prior to a run
+
+llm_preferences:
+  config: ../../apps/web-ui/public/config/llm-providers.yaml
+  default: copilot
+  strategy: cheapest-first

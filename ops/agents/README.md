@@ -14,4 +14,6 @@ The files in this directory define prototype [Model Context Protocol](https://mo
 3. Distribute the client profile to the agent runtime. Agents surface the declared role when initiating requests so approvals can be enforced.
 4. Point `HOTPASS_AGENT_POLICY_PATH` to `mcp_server.yaml` before launching the Prefect worker so the orchestration layer can load the allowlist at runtime.
 
+The LLM routing profile used by both MCP clients and the Dockerised UI lives at `../apps/web-ui/public/config/llm-providers.yaml`. Keep GitHub Copilot (`copilot`) as the default entry and list API-based fallbacks in priority order.
+
 The policies complement the Prefect tasks added in `hotpass.orchestration` that validate and log agent-triggered runs. Update both the policy files and Prefect deployment metadata when onboarding new agent roles.

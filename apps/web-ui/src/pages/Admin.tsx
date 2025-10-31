@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { LLMProviderSelector } from '@/components/settings/LLMProviderSelector'
 
 interface ConfigSettings {
   prefectApiUrl: string
@@ -123,6 +124,9 @@ export function Admin() {
           </div>
         </CardContent>
       </Card>
+
+      {/* LLM Provider Selector */}
+      <LLMProviderSelector />
 
       {/* Environment Settings */}
       <Card>
