@@ -74,6 +74,71 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
 
 ---
 
+## Using dolphin-mcp with Hotpass
+
+Follow these steps to connect GitHub Copilot and the `dolphin-mcp` client to the Hotpass MCP stdio server.
+
+1. **Prepare the environment**
+   ```bash
+   uv venv
+   export HOTPASS_UV_EXTRAS="dev orchestration enrichment"
+   bash ops/uv_sync_extras.sh
+   ```
+   The helper script installs the extras that keep CLI and MCP commands in sync.
+2. **Install the MCP client**
+   ```bash
+   uv pip install dolphin-mcp lmstudio
+   ```
+   `dolphin-mcp` requires the optional `lmstudio` dependency to load cleanly.
+3. **Register the server** — add `.vscode/mcp.json` (or `.mcp.json` at the repo root) with:
+   ```json
+   {
+     "version": "0.1",
+     "servers": [
+       {
+         "name": "hotpass",
+         "command": ["uv", "run", "python", "-m", "hotpass.mcp.server"],
+         "transport": "stdio",
+         "env": {
+           "HOTPASS_UV_EXTRAS": "dev orchestration enrichment"
+         }
+       }
+     ]
+   }
+   ```
+   Keep the command aligned with `AGENTS.md` so Copilot launches the server exactly as documented.
+4. **Allow Copilot access** — set `"chat.mcp.access": "all"` in `.vscode/settings.json` so Copilot can call local servers.
+5. **Start the server**
+   ```bash
+   uv run python -m hotpass.mcp.server
+   ```
+   Run it from the repository root so relative paths such as `./data` resolve correctly.
+6. **Discover tools** — once the server is up, Copilot (or `/mcp list` in the CLI) should list:
+   - `hotpass.refine`
+   - `hotpass.enrich`
+   - `hotpass.qa`
+   - `hotpass.explain_provenance`
+   - `hotpass.crawl`
+   - `hotpass.ta.check`
+7. **Test a call from Copilot** — ask: “Run hotpass.refine on ./data and write to ./dist/refined.xlsx with profile generic and archive=true.” Copilot will invoke `hotpass.refine` with the parameters above.
+8. **Test via dolphin-mcp**
+   ```bash
+   dolphin-mcp chat --server hotpass --model ollama/llama3.1
+   ```
+   Then issue:
+   ```
+   /call hotpass.refine input_dir=./data output_path=./dist/refined.xlsx profile=generic archive=true
+   ```
+   The CLI prints the tool response for quick debugging.
+9. **Enable network research when needed**
+   ```bash
+   export FEATURE_ENABLE_REMOTE_RESEARCH=1
+   export ALLOW_NETWORK_RESEARCH=1
+   ```
+   Set both variables before starting the server when network-backed enrichment or crawl support is required.
+
+---
+
 ## 3. Repository Map
 
 - `apps/data-platform/hotpass/cli/commands/` — CLI entry points (`overview`, `refine`, `enrich`, `qa`, `contracts`, `resolve`, etc.). Extend parsers here and keep help text concise.

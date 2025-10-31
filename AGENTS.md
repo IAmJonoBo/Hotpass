@@ -417,6 +417,61 @@ const result = await callTool("hotpass.refine", {
 });
 ```
 
+### Using dolphin-mcp locally
+
+`dolphin-mcp` is a lightweight MCP client CLI that mirrors Copilot’s behaviour. Use it to debug tool responses or to exercise the Hotpass server without a Copilot session.
+
+1. **Prepare the environment**
+  ```bash
+  uv venv
+  export HOTPASS_UV_EXTRAS="dev orchestration enrichment"
+  bash ops/uv_sync_extras.sh
+  ```
+  The helper script installs the extras that keep CLI and MCP commands aligned.
+2. **Install the client**
+  ```bash
+  uv pip install dolphin-mcp lmstudio
+  ```
+  The optional `lmstudio` dependency is required because the client eagerly imports all providers.
+3. **Register the server** — create `.vscode/mcp.json` (or `.mcp.json` at the repo root) with:
+  ```json
+  {
+    "version": "0.1",
+    "servers": [
+     {
+      "name": "hotpass",
+      "command": ["uv", "run", "python", "-m", "hotpass.mcp.server"],
+      "transport": "stdio",
+      "env": {
+        "HOTPASS_UV_EXTRAS": "dev orchestration enrichment"
+      }
+     }
+    ]
+  }
+  ```
+  Keep the command in sync with this document so relative paths resolve.
+4. **Allow Copilot access** — ensure `.vscode/settings.json` contains `"chat.mcp.access": "all"` so the editor can talk to local servers.
+5. **Start the server**
+  ```bash
+  uv run python -m hotpass.mcp.server
+  ```
+  Start it from the repo root so `./data` and `./dist` resolve correctly.
+6. **Discover tools** — run `dolphin-mcp list --server hotpass` or `/mcp list` from Copilot; you should see `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl`, and `hotpass.ta.check`.
+7. **Test a call** — from Copilot chat ask, “Run hotpass.refine on ./data and write to ./dist/refined.xlsx with profile generic and archive=true.” From the CLI:
+  ```bash
+  dolphin-mcp chat --server hotpass --model ollama/llama3.1
+  ```
+  then enter:
+  ```
+  /call hotpass.refine input_dir=./data output_path=./dist/refined.xlsx profile=generic archive=true
+  ```
+8. **Enable network research when required**
+  ```bash
+  export FEATURE_ENABLE_REMOTE_RESEARCH=1
+  export ALLOW_NETWORK_RESEARCH=1
+  ```
+  Set these before launching the server if you plan to call `hotpass.crawl` or network-backed enrichment.
+
 ---
 
 ## 10) Quality Gates (Automated Testing)

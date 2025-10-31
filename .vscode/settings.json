@@ -9,6 +9,7 @@
   "ruff.interpreter": ["${workspaceFolder}/.venv/bin/python"],
   "ruff.fixAll": true,
   "ruff.organizeImports": true,
+  "chat.mcp.access": "all",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,

@@ -1,0 +1,13 @@
+{
+  "version": "0.1",
+  "servers": [
+    {
+      "name": "hotpass",
+      "command": ["uv", "run", "python", "-m", "hotpass.mcp.server"],
+      "transport": "stdio",
+      "env": {
+        "HOTPASS_UV_EXTRAS": "dev orchestration enrichment"
+      }
+    }
+  ]
+}

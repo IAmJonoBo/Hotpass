@@ -47,6 +47,7 @@ actions:
     - trunk-upgrade-available
 tools:
   disabled:
+    - black
     - markdownlint
   enabled:
     - markdownlint-cli2@0.18.1
