@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { MessageSquare, RefreshCw, CheckCircle, XCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -153,7 +154,7 @@ export function LiveRefinementPanel() {
             </TableHeader>
             <TableBody>
               {rows.slice(0, 10).map((row) => (
-                <>
+                <React.Fragment key={row.id}>
                   <TableRow key={row.id}>
                     <TableCell className="font-medium text-sm">{row.source}</TableCell>
                     <TableCell className="text-sm">{row.entity}</TableCell>
@@ -234,7 +235,7 @@ export function LiveRefinementPanel() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>

@@ -30,7 +30,8 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
     queryFn: async () => {
       try {
         return await prefectApi.getFlowRuns({ limit: 100 })
-      } catch {
+      } catch (error) {
+        console.warn('Telemetry: Failed to fetch flow runs:', error)
         return []
       }
     },
@@ -45,7 +46,8 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
       try {
         await prefectApi.getFlows(1)
         return { status: 'healthy', timestamp: new Date() }
-      } catch {
+      } catch (error) {
+        console.warn('Telemetry: Prefect health check failed:', error)
         return { status: 'error', timestamp: new Date() }
       }
     },
@@ -60,7 +62,8 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
       try {
         await marquezApi.getNamespaces()
         return { status: 'healthy', timestamp: new Date() }
-      } catch {
+      } catch (error) {
+        console.warn('Telemetry: Marquez health check failed:', error)
         return { status: 'error', timestamp: new Date() }
       }
     },
