@@ -17,6 +17,7 @@ from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
 
 TA_ARTIFACT_PATH = Path("dist/quality-gates/latest-ta.json")
+TA_HISTORY_PATH = Path("dist/quality-gates/history.ndjson")
 
 
 def build(
@@ -386,6 +387,9 @@ def run_ta_checks() -> tuple[bool, str]:
                     artifact_path = raw_path
             if artifact_path:
                 message = f"{message}; summary saved to {artifact_path}"
+            history_path = payload.get("history_path")
+            if isinstance(history_path, str) and history_path:
+                message = f"{message}; history appended to {history_path}"
 
             failed_gates: list[str] = []
             for gate in gates if isinstance(gates, list) else []:
@@ -414,15 +418,19 @@ def _persist_ta_summary(payload: dict[str, Any]) -> Path | None:
 
     artifact_path = payload.get("artifact_path")
     destination: Path
-    if isinstance(artifact_path, str) and artifact_path:
+    artifact_from_payload = isinstance(artifact_path, str) and artifact_path
+    if artifact_from_payload:
         destination = Path(artifact_path)
     else:
         destination = TA_ARTIFACT_PATH
 
     try:
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        if not artifact_from_payload:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         payload["artifact_path"] = str(destination)
+        if TA_HISTORY_PATH.exists():
+            payload.setdefault("history_path", str(TA_HISTORY_PATH))
         return destination
     except Exception:
         return None

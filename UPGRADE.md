@@ -124,7 +124,7 @@
 
 - Gate scripts and `hotpass qa ta` delegate to `scripts/quality/run_all_gates.py`.
 - MCP `hotpass.ta.check` calls the consolidated runner.
-- TA runs now persist `dist/quality-gates/latest-ta.json` (written by `hotpass qa ta` / `scripts/quality/run_all_gates.py`) so the latest gate summary is easy to reference post-run.
+- TA runs now persist `dist/quality-gates/latest-ta.json` and append to `dist/quality-gates/history.ndjson` (written by `hotpass qa ta` / `scripts/quality/run_all_gates.py`) so the latest gate summary and history are easy to reference post-run.
 - MCP regression tests now cover research planning, crawl, and TA summaries (`tests/mcp/test_research_tools.py`).
 - Outstanding: extend MCP integration tests (including adaptive research flows) and publish TA summary analytics (the JSON artefact now persists under `dist/quality-gates/` but lacks aggregation reporting).
 

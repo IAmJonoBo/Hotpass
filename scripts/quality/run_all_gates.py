@@ -23,6 +23,7 @@ from pathlib import Path
 
 TA_ARTIFACT_DIR = Path("dist/quality-gates")
 TA_SUMMARY_PATH = TA_ARTIFACT_DIR / "latest-ta.json"
+TA_HISTORY_PATH = TA_ARTIFACT_DIR / "history.ndjson"
 
 
 @dataclass
@@ -237,6 +238,9 @@ def _persist_summary(payload: dict[str, Any]) -> None:
     try:
         TA_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         TA_SUMMARY_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        with TA_HISTORY_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload))
+            handle.write("\n")
     except Exception:  # pragma: no cover - best effort persistence
         pass
 

@@ -76,6 +76,8 @@ async def test_crawl_tool(monkeypatch):
 async def test_ta_check_tool(monkeypatch, tmp_path):
     artifact = tmp_path / "latest-ta.json"
     artifact.write_text("{}", encoding="utf-8")
+    history = tmp_path / "history.ndjson"
+    history.write_text("", encoding="utf-8")
 
     async def fake_run_command(self, cmd):  # type: ignore[override]
         payload = {
@@ -85,6 +87,7 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
                 {"id": "QG-2", "name": "Data Quality", "passed": True, "message": "ok"},
             ],
             "artifact_path": str(artifact),
+            "history_path": str(history),
         }
         return {"returncode": 0, "stdout": json.dumps(payload), "stderr": ""}
 
@@ -99,3 +102,4 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
     expect(result["success"] is True, "TA check tool should report success")
     expect(result["summary"]["all_passed"] is True, "Summary should indicate all gates passed")
     expect(Path(result["artifact_path"]).exists(), "Artifact path returned by TA tool must exist")
+    expect(Path(result.get("history_path", history)).exists(), "History path should be present and exist")

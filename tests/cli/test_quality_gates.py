@@ -372,3 +372,6 @@ class TestTechnicalAcceptance:
         except json.JSONDecodeError as exc:
             raise AssertionError(f"TA summary artifact must be JSON: {exc}") from exc
         expect(isinstance(payload, dict), "TA summary artifact must be a JSON object")
+        history_path = Path("dist/quality-gates/history.ndjson")
+        expect(history_path.exists(), "TA history log should exist after running all gates")
+        expect(history_path.read_text(encoding="utf-8").strip(), "TA history log should contain entries")
