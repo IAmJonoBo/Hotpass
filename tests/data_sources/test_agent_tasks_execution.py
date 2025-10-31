@@ -163,10 +163,10 @@ def test_execute_agent_tasks_combines_search_crawl_and_api(
         any(target.domain == "acme.example.com" for target in result.targets),
         "Search should add targets",
     )
-    expect(result.records, "Crawl/API tasks should produce records")
-    expect(result.provenance, "Provenance entries should be recorded")
+    expect(bool(result.records), "Crawl/API tasks should produce records")
+    expect(bool(result.provenance), "Provenance entries should be recorded")
     expect(not result.warnings, "No warnings expected for successful flow")
-    expect(credential_store.fetches, "Credential store should be queried")
+    expect(bool(credential_store.fetches), "Credential store should be queried")
 
 
 def test_execute_agent_tasks_handles_policy_warnings(
@@ -224,5 +224,5 @@ def test_execute_agent_tasks_falls_back_to_providers_when_no_tasks(
     result = execute_agent_tasks(agent, context, provider_registry, credential_store)
 
     expect(result.records == [], "Missing credentials should block fallback task records")
-    expect(result.warnings, "Fallback execution should emit missing credential warning")
-    expect(credential_store.fetches, "Fallback should still attempt to resolve credentials")
+    expect(bool(result.warnings), "Fallback execution should emit missing credential warning")
+    expect(bool(credential_store.fetches), "Fallback should still attempt to resolve credentials")

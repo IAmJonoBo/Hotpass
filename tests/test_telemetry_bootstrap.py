@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 from unittest.mock import Mock
 
 import pytest
@@ -80,8 +81,9 @@ def test_telemetry_session_initializes_and_shuts_down(monkeypatch: pytest.Monkey
         isinstance(stored, TelemetryBootstrapOptions),
         "Bootstrap should receive options.",
     )
+    attributes = cast(dict[str, object], captured["attributes"])
     expect(
-        captured["attributes"].get("hotpass.command") == "test",
+        attributes.get("hotpass.command") == "test",
         "Additional telemetry attributes should pass through.",
     )
 

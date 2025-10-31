@@ -5,34 +5,15 @@ from __future__ import annotations
 import io
 import string
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import Any
 
 import openpyxl
 import pandas as pd
 import pytest
 
 from hypothesis import strategies as st
-from hypothesis import composite as _composite
-from hypothesis import given as _given
-from hypothesis import settings as _settings
-
-F = TypeVar("F", bound=Callable[..., object])
-
-if TYPE_CHECKING:
-
-    def given(*args: object, **kwargs: object) -> Callable[[F], F]:
-        ...
-
-    def settings(*args: object, **kwargs: object) -> Callable[[F], F]:
-        ...
-
-    def composite(*args: object, **kwargs: object) -> Callable[[F], F]:
-        ...
-
-else:
-    given = _given
-    settings = _settings
-    composite = _composite
+from hypothesis import given, settings
+from hypothesis.strategies import composite
 
 from hotpass.formatting import apply_excel_formatting
 

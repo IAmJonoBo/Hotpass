@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -20,7 +20,7 @@ def _load_compose() -> dict[str, Any]:
     compose_path = Path(__file__).resolve().parents[2] / "infra" / "marquez" / "docker-compose.yaml"
     payload = yaml.safe_load(compose_path.read_text(encoding="utf-8"))
     expect(isinstance(payload, dict), "Compose file should parse into a mapping.")
-    return payload
+    return cast(dict[str, Any], payload)
 
 
 def test_marquez_compose_exposes_expected_services() -> None:

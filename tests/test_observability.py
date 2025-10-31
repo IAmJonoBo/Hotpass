@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from tests.helpers.fixtures import fixture
 
 from hotpass import observability
+from hotpass.telemetry.registry import TelemetryRegistry
 from tests.helpers.assertions import expect
 
 
@@ -102,7 +103,7 @@ class StubRegistry:
 def stub_registry(monkeypatch: pytest.MonkeyPatch) -> Generator[StubRegistry]:
     original = observability._REGISTRY
     registry = StubRegistry()
-    observability.use_registry(registry)
+    observability.use_registry(cast(TelemetryRegistry, registry))
     try:
         yield registry
     finally:
@@ -138,7 +139,10 @@ def test_trace_operation_records_attributes_and_errors(stub_registry: StubRegist
         with observability.trace_operation("demo"):
             raise RuntimeError("boom")
     except RuntimeError:
-        expect(stub_registry.tracer.started[-1].exceptions, "Exception should be recorded on span")
+        expect(
+            bool(stub_registry.tracer.started[-1].exceptions),
+            "Exception should be recorded on span",
+        )
         status = stub_registry.tracer.started[-1].status
         assert status is not None, "Status should be set on error"
         expect(status.code == StubStatusCode.ERROR, "Span status should mark error")
@@ -148,6 +152,7 @@ def test_trace_operation_records_attributes_and_errors(stub_registry: StubRegist
 
 def test_shutdown_and_metric_helpers_use_registry(stub_registry: StubRegistry) -> None:
     metrics = observability.get_pipeline_metrics()
+    assert isinstance(metrics, DummyMetrics), "Metric helper should proxy registry output"
     expect(metrics is stub_registry.metrics, "Metric helper should proxy registry output")
     observability.shutdown_observability()
     expect(stub_registry.shutdown_called, "Registry shutdown should be triggered")

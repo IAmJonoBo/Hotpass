@@ -21,7 +21,7 @@ class DummySession:
 
     def __init__(
         self,
-        responses: dict[tuple[str, tuple[tuple[str, str], ...] | None], dict],
+        responses: dict[tuple[str, tuple[tuple[str, str], ...] | None], dict[str, Any]],
         error: Exception | None = None,
     ) -> None:
         self._responses = responses
@@ -54,10 +54,10 @@ class DummySession:
         return response
 
 
-def _load_fixture(name: str) -> dict:
+def _load_fixture(name: str) -> dict[str, Any]:
     path = FIXTURE_DIR / name
     with path.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
+        return cast(dict[str, Any], json.load(fh))
 
 
 def test_cipc_lookup_success(tmp_path: Path) -> None:

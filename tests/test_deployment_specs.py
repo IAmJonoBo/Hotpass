@@ -73,11 +73,15 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
 
             orchestration_module = types.ModuleType("hotpass.orchestration")
 
-            @prefect_flow(name="hotpass-refinement-pipeline", validate_parameters=False)
+            @prefect_flow(  # type: ignore[misc]
+                name="hotpass-refinement-pipeline", validate_parameters=False
+            )
             def refinement_pipeline_flow(**kwargs: object) -> dict[str, object]:
                 return dict(kwargs)
 
-            @prefect_flow(name="hotpass-backfill", validate_parameters=False)
+            @prefect_flow(  # type: ignore[misc]
+                name="hotpass-backfill", validate_parameters=False
+            )
             def backfill_pipeline_flow(**kwargs: object) -> dict[str, object]:
                 return dict(kwargs)
 
@@ -165,7 +169,7 @@ def test_refinement_manifest_encodes_incremental_resume_options(
         )
 
 
-@pytest.mark.parametrize("identifier", ["refinement", "backfill"])
+@pytest.mark.parametrize("identifier", ["refinement", "backfill"])  # type: ignore[misc]
 def test_build_runner_deployment_renders_prefect_model(
     identifier: str,
     deployments_module: types.ModuleType,

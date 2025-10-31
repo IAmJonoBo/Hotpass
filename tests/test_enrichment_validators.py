@@ -17,9 +17,9 @@ from tests.helpers.assertions import expect
 def test_email_validator_handles_trusted_domains() -> None:
     validator = EmailValidator()
     result = validator.validate("user@example.com")
-    expect(result is not None, "Validator should return a result for valid email")
+    assert result is not None, "Validator should return a result for valid email"
     expect(result.status is ValidationStatus.DELIVERABLE, "Trusted domain should be deliverable")
-    expect(result.mx_hosts, "Trusted domains should populate MX hosts")
+    expect(bool(result.mx_hosts), "Trusted domains should populate MX hosts")
 
 
 def test_email_validator_caches_dns_responses() -> None:
@@ -32,14 +32,14 @@ def test_email_validator_caches_dns_responses() -> None:
     validator = EmailValidator(dns_lookup=fake_lookup, cache_ttl=timedelta(hours=1))
     first = validator.validate("user@cached.test")
     second = validator.validate("user@cached.test")
-    expect(first is not None and second is not None, "Validation should produce results")
+    assert first is not None and second is not None, "Validation should produce results"
     expect(len(calls) == 1, "Subsequent validations should reuse cached MX lookup")
 
 
 def test_phone_validator_normalises_and_scores_numbers() -> None:
     validator = PhoneValidator()
     result = validator.validate("021 123 4567", country_code="ZA")
-    expect(result is not None, "Phone validator should return a result")
+    assert result is not None, "Phone validator should return a result"
     expect(
         result.status in {ValidationStatus.DELIVERABLE, ValidationStatus.RISKY},
         "Number should be classified",

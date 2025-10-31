@@ -165,7 +165,6 @@ class _RunContext:
 
     def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
         self._state.end_run()
-        return False
 
 
 class _FakeMlflowClient:

@@ -9,7 +9,6 @@ from hotpass.data_sources import ExcelReadOptions, load_reachout_database  # noq
 from tests.helpers.assertions import expect
 
 
-@pytest.mark.usefixtures("sample_data_dir")
 def test_load_reachout_database_chunk_size_applies(
     sample_data_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -47,4 +46,4 @@ def test_excel_stage_to_parquet_invoked(
         ExcelReadOptions(chunk_size=1, stage_dir=tmp_path, stage_to_parquet=True),
     )
 
-    expect(calls, "Expected staging to parquet when enabled")
+    expect(bool(calls), "Expected staging to parquet when enabled")

@@ -49,7 +49,7 @@ def test_normalize_address_abbreviations():
 def test_normalize_address_empty():
     """Test normalizing empty address."""
     assert normalize_address("") == ""
-    assert normalize_address(None) == ""
+    assert normalize_address("   ") == ""
 
 
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)
@@ -112,7 +112,7 @@ def test_geocode_address_empty():
     with patch("hotpass.geospatial.Nominatim", create=True):
         geocoder = Geocoder()
         assert geocoder.geocode_address("") is None
-        assert geocoder.geocode_address(None) is None
+        assert geocoder.geocode_address(None) is None  # type: ignore[arg-type]
 
 
 @patch("hotpass.geospatial.GEOPY_AVAILABLE", True)

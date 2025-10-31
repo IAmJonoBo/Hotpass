@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pandas as pd
 import pytest
 from tests.helpers.fixtures import fixture
+from typing import cast
 
 pytest.importorskip("frictionless")
 
@@ -149,8 +150,9 @@ def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
         options.resource_attributes["hotpass.profile"] == "aviation",
         "Profile attribute should propagate to resource attributes.",
     )
+    attributes = cast(dict[str, object], captured["attributes"])
     expect(
-        captured["attributes"]["hotpass.command"] == "prefect",
+        attributes.get("hotpass.command") == "prefect",
         "Additional telemetry attributes should be forwarded.",
     )
 

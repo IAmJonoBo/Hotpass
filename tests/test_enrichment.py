@@ -551,10 +551,7 @@ def test_run_intent_plan_generates_digest() -> None:
 
     summary = result.summary["aero-school"]
     expect(summary.signal_count == 2, "Aero School should emit two signals in summary")
-    expect(
-        summary.last_observed_at is not None,
-        "Summary should include last observed timestamp",
-    )
+    assert summary.last_observed_at is not None, "Summary should include last observed timestamp"
     expect(
         summary.last_observed_at.date().isoformat() == issued.date().isoformat(),
         "Last observed date should align with issued date for most recent event",
