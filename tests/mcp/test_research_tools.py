@@ -80,7 +80,7 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
     history = tmp_path / "history.ndjson"
     history.write_text("", encoding="utf-8")
 
-    async def fake_run_command(self, cmd):  # type: ignore[override]
+    async def fake_run_command(self, cmd):
         payload = {
             "summary": {"total": 5, "passed": 5, "failed": 0, "all_passed": True},
             "gates": [
@@ -147,7 +147,7 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
         def to_dict(self) -> dict[str, object]:
             return self._payload
 
-    def fake_plan(self, context: ResearchContext):  # type: ignore[override]
+    def fake_plan(self, context: ResearchContext):
         expect(context.profile is profile, "Server should pass custom profile to orchestrator")
         plan_payload = {
             "entity_name": "Example Flight School",
