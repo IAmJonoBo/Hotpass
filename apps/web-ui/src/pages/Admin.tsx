@@ -84,7 +84,7 @@ export function Admin() {
       } else {
         setConnectionStatus(prev => ({ ...prev, [type]: 'error' }))
       }
-    } catch (error) {
+    } catch {
       setConnectionStatus(prev => ({ ...prev, [type]: 'error' }))
     } finally {
       setTestingConnection(prev => ({ ...prev, [type]: false }))
