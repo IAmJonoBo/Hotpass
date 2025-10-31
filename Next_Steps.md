@@ -38,7 +38,7 @@
 
 - [x] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace. Live rehearsal artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
 - [x] Types — `uv run mypy src tests scripts` now reports 0 errors as of 2025-10-31; remediation plan complete.【F:tests/helpers/stubs.py†L1-L170】【F:src/hotpass/cli/commands/plan.py†L1-L200】
-- [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
+- [x] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` executed 2025-10-31; suite passes locally with existing dependencies.【F:tests/test_lineage.py†L1-L200】【F:tests/scripts/test_arc_runner_verifier.py†L1-L160】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
 
 ## Links

@@ -147,5 +147,5 @@ def test_broker_agent_run_executes_pipeline_with_approval() -> None:
     result_payload = log_sink[1].result
     if result_payload is None:  # pragma: no cover - defensive guard for mypy
         pytest.fail("Execution entry should include a result payload")
-    assert result_payload is not None
-    expect(result_payload.get("success") is True, "Execution result should indicate success")
+    payload = result_payload
+    expect(payload.get("success") is True, "Execution result should indicate success")
