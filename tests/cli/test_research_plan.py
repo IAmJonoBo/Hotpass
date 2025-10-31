@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-from tests.helpers.pytest_marks import usefixtures
 
 from hotpass.cli.main import main as cli_main
+from tests.helpers.pytest_marks import usefixtures
 
 
 def expect(condition: bool, message: str) -> None:

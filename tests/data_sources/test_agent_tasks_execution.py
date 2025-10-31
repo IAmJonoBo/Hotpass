@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-import pytest
 from tests.helpers.fixtures import fixture
 
 from hotpass.data_sources import RawRecord

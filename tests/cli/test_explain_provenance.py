@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 import subprocess
-import sys
 from pathlib import Path
 
 import pandas as pd
+
 from tests.helpers.assertions import expect
 
 
@@ -53,7 +53,10 @@ def test_explain_provenance_json_success(tmp_path: Path) -> None:
 
     provenance = payload.get("provenance", {})
     expect(payload.get("success") is True, "Payload should indicate success")
-    expect(provenance.get("provenance_source") == "deterministic", "Provenance source should match row")
+    expect(
+        provenance.get("provenance_source") == "deterministic",
+        "Provenance source should match row",
+    )
     expect(payload.get("organization_name") == "Test Org", "Should echo organization name")
 
 

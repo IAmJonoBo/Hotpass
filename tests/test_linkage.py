@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+
 from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")

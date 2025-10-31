@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping
 from types import ModuleType
-from typing import Any, Callable, Mapping, Protocol, TypeVar, cast
+from typing import Any, Protocol, TypeVar
 
 
 def fake_module(name: str, attrs: Mapping[str, Any] | None = None) -> ModuleType:

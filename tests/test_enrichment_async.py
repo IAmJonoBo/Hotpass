@@ -5,11 +5,12 @@ from __future__ import annotations
 import asyncio
 import tempfile
 import time
+from collections.abc import Iterator
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from collections.abc import Iterator
+
 from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
@@ -117,7 +118,10 @@ async def test_enrich_dataframe_with_websites_async_respects_concurrency(monkeyp
 
     result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
 
-    expect(result["website_enriched"].sum() == 10, "All rows should be enriched under concurrency limit")
+    expect(
+        result["website_enriched"].sum() == 10,
+        "All rows should be enriched under concurrency limit",
+    )
     # Due to the async nature and timing, we should see some concurrency
     expect(max_concurrent <= 3, f"Exceeded concurrency limit: {max_concurrent}")
 

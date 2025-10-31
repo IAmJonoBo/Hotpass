@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+
 from tests.helpers.fixtures import fixture
 
 # Helper to check if MLflow is available

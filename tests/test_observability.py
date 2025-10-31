@@ -8,11 +8,11 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from tests.helpers.fixtures import fixture
 
 from hotpass import observability
 from hotpass.telemetry.registry import TelemetryRegistry
 from tests.helpers.assertions import expect
+from tests.helpers.fixtures import fixture
 
 
 class DummySpan:

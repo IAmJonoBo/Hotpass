@@ -203,8 +203,8 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
         column_count = len(getattr(features, "columns", []))
         return {"fields": column_count, "predictions": list(predictions)}
 
-    setattr(models_module, "infer_signature", infer_signature)
-    setattr(module, "models", models_module)
+    models_module.infer_signature = infer_signature
+    module.models = models_module
 
     sklearn_module = ModuleType("mlflow.sklearn")
 
@@ -215,14 +215,14 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
         state.loaded_models.append(uri)
         return {"loaded": uri}
 
-    setattr(sklearn_module, "log_model", log_model)
-    setattr(sklearn_module, "load_model", load_model)
-    setattr(module, "sklearn", sklearn_module)
+    sklearn_module.log_model = log_model
+    sklearn_module.load_model = load_model
+    module.sklearn = sklearn_module
 
     def start_run(run_name: str | None = None) -> _RunContext:
         return _RunContext(state, run_name)
 
-    setattr(module, "start_run", start_run)
+    module.start_run = start_run
 
     def set_tracking_uri(uri: str) -> None:
         state.tracking_uri = uri
@@ -230,20 +230,20 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     def set_registry_uri(uri: str) -> None:
         state.registry_uri = uri
 
-    setattr(module, "set_tracking_uri", set_tracking_uri)
+    module.set_tracking_uri = set_tracking_uri
 
-    setattr(module, "set_registry_uri", set_registry_uri)
-    setattr(module, "get_experiment_by_name", state.get_experiment)
+    module.set_registry_uri = set_registry_uri
+    module.get_experiment_by_name = state.get_experiment
 
     def create_experiment(name: str, *, artifact_location: str | None = None) -> SimpleNamespace:
         return state.create_experiment(name, artifact_location=artifact_location)
 
-    setattr(module, "create_experiment", create_experiment)
-    setattr(module, "set_experiment", state.set_active_experiment)
+    module.create_experiment = create_experiment
+    module.set_experiment = state.set_active_experiment
 
-    setattr(module, "log_params", state.update_params)
-    setattr(module, "log_metrics", state.update_metrics)
-    setattr(module, "set_tag", state.set_tag)
+    module.log_params = state.update_params
+    module.log_metrics = state.update_metrics
+    module.set_tag = state.set_tag
 
     def log_artifact(path: str, artifact_path: str | None = None) -> None:
         run_id = state.active_run_id
@@ -255,8 +255,8 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     def log_artifacts(path: str, artifact_path: str | None = None) -> None:
         log_artifact(path, artifact_path)
 
-    setattr(module, "log_artifact", log_artifact)
-    setattr(module, "log_artifacts", log_artifacts)
+    module.log_artifact = log_artifact
+    module.log_artifacts = log_artifacts
 
     def get_run(run_id: str) -> SimpleNamespace:
         record = state.runs[run_id]
@@ -268,16 +268,16 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
             )
         )
 
-    setattr(module, "get_run", get_run)
+    module.get_run = get_run
 
     exceptions_module = ModuleType("mlflow.exceptions")
-    setattr(exceptions_module, "MlflowException", _FakeMlflowException)
-    setattr(module, "exceptions", exceptions_module)
+    exceptions_module.MlflowException = _FakeMlflowException
+    module.exceptions = exceptions_module
 
     def mlflow_client_factory() -> _FakeMlflowClient:
         return _FakeMlflowClient(state)
 
-    setattr(module, "MlflowClient", mlflow_client_factory)
+    module.MlflowClient = mlflow_client_factory
 
     return module, state
 

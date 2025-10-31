@@ -100,8 +100,14 @@ def test_crawl_summary_without_network(tmp_path):
     )
 
     statuses = {step.name: step.status for step in outcome.steps}
-    expect(statuses.get("network_enrichment") == "skipped", "Network enrichment should skip when disabled")
-    expect(statuses.get("native_crawl") == "skipped", "Crawl should skip without network access")
+    expect(
+        statuses.get("network_enrichment") == "skipped",
+        "Network enrichment should skip when disabled",
+    )
+    expect(
+        statuses.get("native_crawl") == "skipped",
+        "Crawl should skip without network access",
+    )
     if outcome.artifact_path:
         expect(Path(outcome.artifact_path).exists(), "Crawl artefact should be written")
 
@@ -143,7 +149,10 @@ def test_crawl_persists_artifact_and_rate_limit(tmp_path, monkeypatch):
     )
 
     statuses = {step.name: step.status for step in outcome.steps}
-    expect(statuses.get("native_crawl") == "success", "Native crawl should succeed under stubbed requests")
+    expect(
+        statuses.get("native_crawl") == "success",
+        "Native crawl should succeed under stubbed requests",
+    )
 
     native_crawl_step = next(step for step in outcome.steps if step.name == "native_crawl")
     artifacts = native_crawl_step.artifacts
@@ -156,7 +165,10 @@ def test_crawl_persists_artifact_and_rate_limit(tmp_path, monkeypatch):
     expect(stored_path.exists(), "Stored crawl artefact should exist on disk")
 
     payload = json.loads(stored_path.read_text(encoding="utf-8"))
-    expect(payload.get("entity") == outcome.plan.entity_slug, "Crawl artefact should capture entity slug")
+    expect(
+        payload.get("entity") == outcome.plan.entity_slug,
+        "Crawl artefact should capture entity slug",
+    )
     expect(payload.get("results"), "Crawl artefact should include crawl results")
     rate_limit = outcome.plan.rate_limit
     if rate_limit is None:

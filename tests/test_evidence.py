@@ -33,10 +33,16 @@ def test_record_consent_audit_log_deterministic(tmp_path):
         clock=_clock,
     )
 
-    expect(path.name == "consent_audit_run-42_20250101T120000Z.json", "Audit file name should include run and timestamp")
+    expect(
+        path.name == "consent_audit_run-42_20250101T120000Z.json",
+        "Audit file name should include run and timestamp",
+    )
 
     payload = json.loads(path.read_text(encoding="utf-8"))
-    expect(payload["recorded_at"] == fixed_time.isoformat(), "Recorded timestamp should match injected clock")
+    expect(
+        payload["recorded_at"] == fixed_time.isoformat(),
+        "Recorded timestamp should match injected clock",
+    )
     expect(payload["run_id"] == "run-42", "Run id should persist")
     expect(payload["report"] == {"status": "ok"}, "Report payload should round-trip")
 
@@ -60,11 +66,20 @@ def test_record_export_access_event_deterministic(tmp_path):
         clock=_clock,
     )
 
-    expect(log_path.parent == tmp_path / "logs", "Export log should land in provided directory")
-    expect(log_path.name == "export_access_20250102T063000Z.json", "Log name should embed timestamp")
+    expect(
+        log_path.parent == tmp_path / "logs",
+        "Export log should land in provided directory",
+    )
+    expect(
+        log_path.name == "export_access_20250102T063000Z.json",
+        "Log name should embed timestamp",
+    )
 
     payload = json.loads(log_path.read_text(encoding="utf-8"))
-    expect(payload["recorded_at"] == fixed_time.isoformat(), "Recorded timestamp should match injected clock")
+    expect(
+        payload["recorded_at"] == fixed_time.isoformat(),
+        "Recorded timestamp should match injected clock",
+    )
     expect(payload["total_records"] == 3, "Total records should be persisted")
     # pragma: allowlist nextline secret
     expected_sha = "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"

@@ -131,7 +131,10 @@ class TestQG2DataQuality:
             ["uv", "run", "hotpass", "qa", "--help"], capture_output=True, text=True
         )
         expect(result.returncode == 0, "qa --help should work")
-        expect("data-quality" in result.stdout.lower(), "qa --help must mention data-quality target")
+        expect(
+            "data-quality" in result.stdout.lower(),
+            "qa --help must mention data-quality target",
+        )
         expect("cli" in result.stdout.lower(), "qa --help must mention cli target")
 
     def test_qg2_script_generates_summary(self):
@@ -147,7 +150,10 @@ class TestQG2DataQuality:
         except json.JSONDecodeError as exc:
             raise AssertionError(f"run_qg2.py output must be JSON: {exc}") from exc
         expect(isinstance(payload, dict), "run_qg2.py payload should be a dict")
-        expect(payload.get("passed") is True, "QG-2 gate should pass on sample data")
+        expect(
+            payload.get("passed") is True,
+            "QG-2 gate should pass on sample data",
+        )
 
         stats = payload.get("stats")
         expect(isinstance(stats, dict), "QG-2 payload must include stats")
@@ -217,7 +223,10 @@ class TestQG4MCPDiscoverability:
     def test_mcp_server_module_exists(self):
         """QG-4a: MCP server module should exist."""
         mcp_server = Path("apps/data-platform/hotpass/mcp/server.py")
-        expect(mcp_server.exists(), "MCP server should exist at apps/data-platform/hotpass/mcp/server.py")
+        expect(
+            mcp_server.exists(),
+            "MCP server should exist at apps/data-platform/hotpass/mcp/server.py",
+        )
 
     def test_mcp_server_is_importable(self):
         """QG-4b: MCP server should be importable."""
@@ -226,8 +235,8 @@ class TestQG4MCPDiscoverability:
 
             server = HotpassMCPServer()
             expect(len(server.tools) > 0, "MCP server should have tools registered")
-        except ImportError as e:
-            raise AssertionError(f"MCP server should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"MCP server should be importable: {exc}") from exc
 
     def test_qg4_script_validates_tools(self):
         """QG-4c: Gate script should report required tools."""

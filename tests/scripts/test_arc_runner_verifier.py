@@ -13,9 +13,8 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 
-import requests
-
 import ops.arc.verify_runner_lifecycle as lifecycle
+import requests
 
 
 def expect(condition: bool, message: str) -> None:

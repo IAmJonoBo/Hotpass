@@ -6,7 +6,6 @@ import json
 from datetime import date
 from pathlib import Path
 
-import pytest
 from tests.helpers.pytest_marks import parametrize
 
 from hotpass import contracts

@@ -325,7 +325,10 @@ def test_popia_policy_retention_period():
 
     policy = POPIAPolicy(config)
 
-    expect(policy.get_retention_period("email") == 730, "Retention should resolve to configured value")
+    expect(
+        policy.get_retention_period("email") == 730,
+        "Retention should resolve to configured value",
+    )
     expect(policy.get_retention_period("unknown") is None, "Unknown retention should be None")
 
 
@@ -340,7 +343,10 @@ def test_popia_policy_consent_requirements():
     policy = POPIAPolicy(config)
 
     expect(policy.requires_consent("email") is True, "Consent requirement should match config")
-    expect(policy.requires_consent("unknown") is False, "Non-configured fields should not require consent")
+    expect(
+        policy.requires_consent("unknown") is False,
+        "Non-configured fields should not require consent",
+    )
 
 
 def test_popia_policy_generate_report():

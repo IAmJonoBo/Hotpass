@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 import pytest
-from tests.helpers.fixtures import fixture
 
 from hotpass.prefect.deployments import DeploymentSpec
+from tests.helpers.fixtures import fixture
 
 
 @contextmanager
@@ -90,16 +90,8 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
             def backfill_pipeline_flow(**kwargs: object) -> dict[str, object]:
                 return dict(kwargs)
 
-            setattr(
-                orchestration_module,
-                "refinement_pipeline_flow",
-                refinement_pipeline_flow,
-            )
-            setattr(
-                orchestration_module,
-                "backfill_pipeline_flow",
-                backfill_pipeline_flow,
-            )
+            orchestration_module.refinement_pipeline_flow = refinement_pipeline_flow
+            orchestration_module.backfill_pipeline_flow = backfill_pipeline_flow
 
             with _temporary_module("hotpass.orchestration", orchestration_module):
                 yield deployments
@@ -113,7 +105,7 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
 
 
 @fixture(scope="module")
-def deployments_module() -> Generator[types.ModuleType, None, None]:
+def deployments_module() -> Generator[types.ModuleType]:
     """Provide the Prefect deployments module with isolated imports."""
 
     with _load_deployments_module() as module:

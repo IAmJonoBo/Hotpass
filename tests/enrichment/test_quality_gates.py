@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 import pandas as pd
-import pytest
+
 from tests.helpers.fixtures import fixture
 
 
@@ -41,8 +41,8 @@ class TestEnrichmentPipeline:
             from hotpass.enrichment.pipeline import enrich_data
 
             expect(callable(enrich_data), "enrich_data should be callable")
-        except ImportError as e:
-            raise AssertionError(f"enrich_data should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"enrich_data should be importable: {exc}") from exc
 
     def test_provenance_tracker_exists(self):
         """Sprint 2: ProvenanceTracker should be importable."""
@@ -55,8 +55,8 @@ class TestEnrichmentPipeline:
                 hasattr(tracker, "add_provenance_columns"),
                 "ProvenanceTracker should have add_provenance_columns",
             )
-        except ImportError as e:
-            raise AssertionError(f"ProvenanceTracker should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"ProvenanceTracker should be importable: {exc}") from exc
 
     def test_fetcher_registry_exists(self):
         """Sprint 2: Fetcher registry should be available."""
@@ -72,8 +72,8 @@ class TestEnrichmentPipeline:
                 hasattr(registry, "get_research_fetchers"),
                 "Registry should have get_research_fetchers",
             )
-        except ImportError as e:
-            raise AssertionError(f"Fetcher registry should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"Fetcher registry should be importable: {exc}") from exc
 
     def test_deterministic_fetchers_exist(self):
         """Sprint 2: Deterministic fetchers should be available."""
@@ -92,8 +92,8 @@ class TestEnrichmentPipeline:
             )
             expect(DerivedFieldFetcher is not None, "DerivedFieldFetcher should be importable")
             expect(LocalRegistryFetcher is not None, "LocalRegistryFetcher should be importable")
-        except ImportError as e:
-            raise AssertionError(f"Deterministic fetchers should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"Deterministic fetchers should be importable: {exc}") from exc
 
     def test_research_fetchers_exist(self):
         """Sprint 2: Research fetchers should be available."""
@@ -110,8 +110,8 @@ class TestEnrichmentPipeline:
                 "HotpassResearchFetcher should be importable",
             )
             expect(callable(requires_network), "requires_network should be callable")
-        except ImportError as e:
-            raise AssertionError(f"Research fetchers should be importable: {e}")
+        except ImportError as exc:
+            raise AssertionError(f"Research fetchers should be importable: {exc}") from exc
 
     def test_network_guard_decorator(self):
         """Sprint 2: Network guard decorator should respect flags."""

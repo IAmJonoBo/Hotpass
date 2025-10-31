@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+
 from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")

@@ -11,6 +11,7 @@ from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 
 import pytest
+
 from tests.helpers.fixtures import fixture
 
 _STREAMLIT_MODULE = cast(Any, ModuleType("streamlit"))
@@ -44,7 +45,7 @@ from tests.helpers.assertions import expect  # noqa: E402
 def _dashboard_streamlit() -> Any:
     """Return the Streamlit module exposed by the dashboard with ``Any`` typing."""
 
-    return cast(Any, getattr(dashboard, "st"))
+    return cast(Any, dashboard.st)
 
 
 class _SidebarStub:

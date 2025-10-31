@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar, overload, cast
+from collections.abc import Callable
+from typing import Any, ParamSpec, TypeVar, cast, overload
 
 import pytest
 
-F = TypeVar("F", bound=Callable[..., object])
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @overload
-def fixture(function: F) -> F:
+def fixture(function: Callable[P, R]) -> Callable[P, R]:  # noqa: UP047
     ...
 
 
@@ -22,11 +24,11 @@ def fixture(
     autouse: bool = ...,
     ids: list[str] | tuple[str, ...] | Callable[[object], object | None] | None = ...,
     name: str | None = ...,
-) -> Callable[[F], F]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:  # noqa: UP047
     ...
 
 
-def fixture(*args: Any, **kwargs: Any) -> Any:
+def fixture(*args: Any, **kwargs: Any) -> Any:  # noqa: UP047
     """Typed wrapper around ``pytest.fixture`` to keep mypy satisfied."""
 
     return cast(Any, pytest.fixture(*args, **kwargs))

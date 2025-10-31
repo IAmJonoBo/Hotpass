@@ -79,7 +79,10 @@ def test_cipc_lookup_success(tmp_path: Path) -> None:
 
     expect(result["success"] is True, "Lookup should succeed")
     expect(result["status_code"] == 200, "Status code should reflect success")
-    expect(result["payload"]["registered_name"] == "Aero Tech (Pty) Ltd", "Registered name mismatch")
+    expect(
+        result["payload"]["registered_name"] == "Aero Tech (Pty) Ltd",
+        "Registered name mismatch",
+    )
     expect(len(result["payload"]["addresses"]) == 2, "Two addresses expected")
     expect(result["payload"]["officers"][0]["name"] == "Jane Doe", "Officer name mismatch")
 
@@ -129,7 +132,10 @@ def test_sacaa_lookup_success(tmp_path: Path) -> None:
 
     expect(result["success"] is True, "Lookup should succeed")
     expect(result["payload"]["trading_name"] == "Sky Charter", "Trading name mismatch")
-    expect(result["payload"]["contacts"]["email"] == "ops@skycharter.test", "Contact email mismatch")
+    expect(
+        result["payload"]["contacts"]["email"] == "ops@skycharter.test",
+        "Contact email mismatch",
+    )
     expect(result["payload"]["officers"][0]["name"] == "Lerato Mokoena", "Officer name mismatch")
     expect(result["meta"]["provider_meta"]["source"] == "SACAA API", "Meta source mismatch")
 

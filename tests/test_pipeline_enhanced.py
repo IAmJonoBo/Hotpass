@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from pathlib import Path
+from typing import cast
 from unittest.mock import Mock
 
 import pandas as pd
 import pytest
+
 from tests.helpers.fixtures import fixture
-from typing import cast
 
 pytest.importorskip("frictionless")
 

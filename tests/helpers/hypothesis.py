@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, ParamSpec, TypeVar, cast, overload
+from collections.abc import Callable
+from typing import Any, ParamSpec, TypeVar, cast, overload
 
 from hypothesis import HealthCheck as HealthCheck  # re-export
 from hypothesis import given as _given
@@ -38,12 +39,14 @@ def settings(*args: Any, **kwargs: Any) -> Callable[[Callable[P, R]], Callable[P
 
 
 @overload
-def composite(func: Callable[..., T]) -> Callable[..., SearchStrategy[T]]:
+def composite(func: Callable[P, T]) -> Callable[P, SearchStrategy[T]]:  # noqa: UP047
     ...
 
 
 @overload
-def composite(*args: Any, **kwargs: Any) -> Callable[[Callable[..., T]], Callable[..., SearchStrategy[T]]]:
+def composite(
+    *args: Any, **kwargs: Any
+) -> Callable[[Callable[P, T]], Callable[P, SearchStrategy[T]]]:  # noqa: UP047
     ...
 
 
@@ -51,11 +54,11 @@ def composite(*args: Any, **kwargs: Any) -> Any:
     """Typed wrapper around ``hypothesis.strategies.composite`` with bare and factory usage."""
 
     if args and callable(args[0]) and len(args) == 1 and not kwargs:
-        func = cast(Callable[..., T], args[0])
-        return cast(Callable[..., SearchStrategy[T]], _composite(func))
+        func = cast(Callable[P, T], args[0])
+        return cast(Callable[P, SearchStrategy[T]], _composite(func))
 
-    def decorator(func: Callable[..., T]) -> Callable[..., SearchStrategy[T]]:
-        return cast(Callable[..., SearchStrategy[T]], _composite(*args, **kwargs)(func))
+    def decorator(func: Callable[P, T]) -> Callable[P, SearchStrategy[T]]:
+        return cast(Callable[P, SearchStrategy[T]], _composite(*args, **kwargs)(func))
 
     return decorator
 

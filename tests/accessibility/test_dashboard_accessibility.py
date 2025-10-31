@@ -3,29 +3,31 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, TypeVar, cast
+from typing import Any, Literal, ParamSpec, TypeVar, cast
 
 import pandas as pd
 import pytest
+from tests.helpers.assertions import expect
+from tests.helpers.pytest_marks import parametrize
+
+import hotpass.dashboard as dashboard
 
 pytest.importorskip("streamlit")
 pytest.importorskip("nameparser")
 
-from tests.helpers.assertions import expect
-from tests.helpers.pytest_marks import parametrize
-
-F = TypeVar("F", bound=Callable[..., object])
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
-def accessibility_mark(func: F) -> F:
+def accessibility_mark(func: Callable[P, R]) -> Callable[P, R]:  # noqa: UP047
     """Typed wrapper around the ``pytest.mark.accessibility`` decorator."""
 
-    return cast(F, pytest.mark.accessibility(func))
-
-import hotpass.dashboard as dashboard
+    wrapped = pytest.mark.accessibility(func)
+    return cast(Callable[P, R], wrapped)
 
 
 @dataclass

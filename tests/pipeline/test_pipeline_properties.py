@@ -10,9 +10,9 @@ from typing import Any, cast
 
 import pandas as pd
 import pytest
-import hotpass.pipeline.aggregation as aggregation_module
 from tests.helpers.hypothesis import HealthCheck, given, settings, st
 
+import hotpass.pipeline.aggregation as aggregation_module
 from hotpass.pipeline.aggregation import YEAR_FIRST_PATTERN, _aggregate_group, _latest_iso_date
 from hotpass.pipeline.base import execute_pipeline
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
@@ -24,7 +24,7 @@ def expect(condition: bool, message: str) -> None:
 
 
 SSOT_COLUMNS: tuple[str, ...] = cast(
-    tuple[str, ...], getattr(aggregation_module, "SSOT_COLUMNS")
+    tuple[str, ...], aggregation_module.SSOT_COLUMNS
 )
 
 _NON_DETERMINISTIC_METRICS = {

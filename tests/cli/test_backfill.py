@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from tests.helpers.fixtures import fixture
 
 from hotpass import cli
+from tests.helpers.fixtures import fixture
 
 
 @fixture

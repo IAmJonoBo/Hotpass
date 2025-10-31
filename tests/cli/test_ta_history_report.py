@@ -38,17 +38,29 @@ def test_ta_history_report_json(tmp_path):
     _write_history(history_path)
 
     result = subprocess.run(
-        [sys.executable, "ops/quality/ta_history_report.py", "--path", str(history_path), "--json"],
+        [
+            sys.executable,
+            "ops/quality/ta_history_report.py",
+            "--path",
+            str(history_path),
+            "--json",
+        ],
         capture_output=True,
         text=True,
         check=False,
     )
-    expect(result.returncode == 0, f"ta_history_report --json should succeed (stderr={result.stderr})")
+    expect(
+        result.returncode == 0,
+        f"ta_history_report --json should succeed (stderr={result.stderr})",
+    )
     payload = json.loads(result.stdout)
     expect(payload["total_runs"] == 2, "Summary should count total runs")
     expect(payload["passed"] == 1, "Summary should count passes")
     expect(payload["failed"] == 1, "Summary should count failures")
-    expect(payload["latest"]["timestamp"] == "2025-10-31T10:00:00Z", "Latest entry should be returned")
+    expect(
+        payload["latest"]["timestamp"] == "2025-10-31T10:00:00Z",
+        "Latest entry should be returned",
+    )
 
 
 def test_ta_history_report_text(tmp_path):
@@ -56,12 +68,22 @@ def test_ta_history_report_text(tmp_path):
     _write_history(history_path)
 
     result = subprocess.run(
-        [sys.executable, "ops/quality/ta_history_report.py", "--path", str(history_path), "--limit", "1"],
+        [
+            sys.executable,
+            "ops/quality/ta_history_report.py",
+            "--path",
+            str(history_path),
+            "--limit",
+            "1",
+        ],
         capture_output=True,
         text=True,
         check=False,
     )
-    expect(result.returncode == 0, f"ta_history_report text mode should succeed (stderr={result.stderr})")
+    expect(
+        result.returncode == 0,
+        f"ta_history_report text mode should succeed (stderr={result.stderr})",
+    )
     output = result.stdout
     expect("Total runs: 2" in output, "Text output should include totals")
     expect("Most recent 1 entries" in output, "Text output should honour limit")

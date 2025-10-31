@@ -1,10 +1,8 @@
 from argparse import Namespace
 from pathlib import Path
 
-import pytest
-from tests.helpers.fixtures import fixture
-
 from hotpass.cli.commands.run import _resolve_options
+from tests.helpers.fixtures import fixture
 
 
 def expect(condition: bool, message: str) -> None:

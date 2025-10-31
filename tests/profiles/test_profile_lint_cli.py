@@ -28,12 +28,18 @@ def test_profile_lint_json_summary(tmp_path: Path) -> None:
     profiles = payload.get("profiles", [])
     expect(isinstance(profiles, list) and bool(profiles), "Profiles list should be populated")
     first = profiles[0]
-    expect("name" in first and "passed" in first, "Profile entry should include name and passed fields")
+    expect(
+        "name" in first and "passed" in first,
+        "Profile entry should include name and passed fields",
+    )
 
 
 def test_profile_lint_schema_json() -> None:
     result = _run_linter("--schema-json")
-    expect(result.returncode == 0, f"profile_lint --schema-json should succeed (stderr={result.stderr})")
+    expect(
+        result.returncode == 0,
+        f"profile_lint --schema-json should succeed (stderr={result.stderr})",
+    )
     payload = json.loads(result.stdout)
     expect("required" in payload, "Schema should expose required keys")
     expect("ingest" in payload and "enrich" in payload, "Schema should document core blocks")

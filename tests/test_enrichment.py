@@ -6,13 +6,14 @@ import json
 import tempfile
 import threading
 import time
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
-from collections.abc import Iterator
+
 from tests.helpers.fixtures import fixture
 from tests.helpers.pytest_marks import parametrize
 

@@ -5,9 +5,10 @@ import warnings
 from pathlib import Path
 
 import pandas as pd
-from marshmallow.warnings import ChangedInMarshmallow4Warning
-from tests.helpers.fixtures import fixture
 import pytest
+from marshmallow.warnings import ChangedInMarshmallow4Warning
+
+from tests.helpers.fixtures import fixture
 
 pytest_plugins = ["tests.fixtures.lineage"]
 

@@ -17,6 +17,7 @@ from unittest.mock import Mock, patch
 import anyio
 import pandas as pd
 import pytest
+
 from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions
 from tests.helpers.fixtures import fixture
 from tests.helpers.pytest_marks import anyio_mark

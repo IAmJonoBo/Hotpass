@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 
-import pytest
-from tests.helpers.fixtures import fixture
 from tests._telemetry_stubs import (
     DummyConsoleMetricExporter,
     DummyConsoleSpanExporter,
@@ -16,6 +14,7 @@ from tests._telemetry_stubs import (
     DummyTracerProvider,
     build_modules,
 )
+from tests.helpers.fixtures import fixture
 
 import hotpass.observability as observability
 from hotpass.data_sources.agents import (
