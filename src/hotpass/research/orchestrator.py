@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Type, cast
 
 import pandas as pd
 
@@ -18,11 +18,21 @@ from hotpass.enrichment.pipeline import enrich_row
 from hotpass.normalization import slugify
 
 try:  # pragma: no cover - optional dependency
-    from scrapy.crawler import CrawlerProcess
-    from scrapy.spiders import Spider  # type: ignore
+    from scrapy.crawler import CrawlerProcess as _CrawlerProcess
 except ImportError:  # pragma: no cover - optional dependency
-    CrawlerProcess = None
-    Spider = object
+    _CrawlerProcess = None
+
+CrawlerProcess: Any | None = _CrawlerProcess
+
+if TYPE_CHECKING:  # pragma: no cover - types only
+    from scrapy.spiders import Spider as _SpiderProto
+else:
+    _SpiderProto = type("Spider", (), {})
+
+try:  # pragma: no cover - optional dependency
+    from scrapy.spiders import Spider as _SpiderRuntime
+except ImportError:  # pragma: no cover - optional dependency
+    _SpiderRuntime = _SpiderProto
 
 try:
     import requests
@@ -576,14 +586,21 @@ class ResearchOrchestrator:
         # (status code, content length) so downstream steps can reason about completeness.
         results: list[dict[str, Any]] = []
 
-        class MetadataSpider(Spider):  # type: ignore[misc]
+        if TYPE_CHECKING:  # pragma: no cover - typing helper
+            class _MetadataSpiderBase:  # pylint: disable=too-few-public-methods
+                def make_requests_from_url(self, url: str) -> Any: ...
+
+        else:
+            _MetadataSpiderBase = cast(Type[Any], _SpiderRuntime)
+
+        class MetadataSpider(_MetadataSpiderBase):
             name = "hotpass_metadata_spider"
 
-            def start_requests(self_inner):  # type: ignore[override]
+            def start_requests(self_inner) -> Iterable[Any]:
                 for url in plan.target_urls:
                     yield self_inner.make_requests_from_url(url)
 
-            def parse(self_inner, response):  # type: ignore[override]
+            def parse(self_inner, response: Any) -> None:
                 results.append(
                     {
                         "url": response.url,

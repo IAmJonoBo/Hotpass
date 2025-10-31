@@ -51,20 +51,20 @@ Codex runners start with a lean `dev orchestration` profile. To add or remove ex
 
 1. Choose the extras your task needs (space-separated):
 
-   | Profile          | Extras string                                                   | Notes                                         |
-   | ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
-   | `core` (default) | `dev orchestration`                                             | Installs CLI + Prefect orchestration support. |
-   | `docs`           | `dev docs`                                                      | Adds Sphinx + Diátaxis toolchain.             |
-   | `geospatial`     | `dev orchestration geospatial`                                  | Adds GeoPandas/Geopy extras.                  |
-   | `compliance`     | `dev orchestration compliance`                                  | Adds Presidio-based compliance stack.         |
-   | `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.                |
+  | Profile          | Extras string                                                   | Notes                                         |
+  | ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
+  | `core` (default) | `dev orchestration`                                             | Installs CLI + Prefect orchestration support. |
+  | `docs`           | `dev docs`                                                      | Adds Sphinx + Diátaxis toolchain.             |
+  | `geospatial`     | `dev orchestration geospatial`                                  | Adds GeoPandas/Geopy extras.                  |
+  | `compliance`     | `dev orchestration compliance`                                  | Adds Presidio-based compliance stack.         |
+  | `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.                |
 
 2. Export the selection before running `uv sync` (Codex setup script):
 
-   ```bash
-   export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
-   bash scripts/uv_sync_extras.sh
-   ```
+  ```bash
+  export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
+  bash scripts/uv_sync_extras.sh
+  ```
 
 3. After the extras install step, the firewall should be locked down. Declare every required extra up front—additional installs will fail once the firewall is active.
 

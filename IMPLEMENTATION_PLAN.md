@@ -20,6 +20,7 @@ This document details the implementation plan for upgrading Hotpass to support f
 ## Architecture Alignment
 
 ### Current State
+
 - ✅ CLI surface now aligned with UPGRADE.md (`overview`, `refine`, `enrich`, `qa`, `contracts`) with legacy commands maintained where needed.
 - ✅ MCP stdio server (`src/hotpass/mcp/server.py`) exposes the required toolset, including `hotpass.crawl` backed by the adaptive orchestrator.
 - ✅ Enrichment + research orchestration deliver deterministic-first enrichment, provenance, and throttled crawl artefacts.
@@ -28,6 +29,7 @@ This document details the implementation plan for upgrading Hotpass to support f
 - ⚠️ Docs/navigation uplift and research-first positioning still pending sign-off.
 
 ### Target State
+
 - ✅ CLI commands: `overview`, `refine`, `enrich`, `qa`, `contracts` (aliased to existing)
 - ✅ MCP server at `src/hotpass/mcp/server.py` with 5 core tools
 - ✅ Enrichment with deterministic/research split and network guards
@@ -46,6 +48,7 @@ This document details the implementation plan for upgrading Hotpass to support f
 #### Implementation Tasks
 
 1. **Create new CLI commands** (`src/hotpass/cli/commands/`)
+
    - `overview.py` - Display available commands and system status
    - `refine.py` - Wrapper/alias for existing `run.py`
    - `enrich.py` - New enrichment command
@@ -53,11 +56,13 @@ This document details the implementation plan for upgrading Hotpass to support f
    - `contracts.py` - Contract emission command
 
 2. **Create MCP server** (`src/hotpass/mcp/`)
+
    - `server.py` - MCP stdio server implementation
    - `tools.py` - Tool definitions and handlers
    - `__init__.py` - Module exports
 
 3. **MCP Tools Implementation**
+
    - `hotpass.refine` - Runs refinement pipeline
    - `hotpass.enrich` - Runs enrichment with network control
    - `hotpass.qa` - Executes quality checks
@@ -73,11 +78,13 @@ This document details the implementation plan for upgrading Hotpass to support f
 
 **Test:** `uv run hotpass overview`
 **Pass Criteria:**
+
 - Exit code 0
 - Output lists: `refine`, `enrich`, `qa`, `contracts`, `overview`
 - Each command has `--help` that works
 
 **Implementation:**
+
 ```python
 # tests/cli/test_quality_gates.py
 def test_qg1_cli_integrity(tmp_path):
@@ -115,6 +122,7 @@ def test_qg1_cli_integrity(tmp_path):
 #### Implementation Tasks
 
 1. **Create enrichment structure** (`src/hotpass/enrichment/`)
+
    - `fetchers/__init__.py` - Fetcher registry
    - `fetchers/deterministic.py` - Local/offline enrichment
    - `fetchers/research.py` - Network-based enrichment
@@ -122,23 +130,27 @@ def test_qg1_cli_integrity(tmp_path):
    - `provenance.py` - Provenance tracking and reporting
 
 2. **Deterministic Fetchers** (`fetchers/deterministic.py`)
+
    - Lookup table enrichment
    - Historical data backfill
    - Derived field calculation
    - Local registry queries
 
 3. **Research Fetchers** (`fetchers/research.py`)
+
    - Network guard decorator (`@requires_network`)
    - Hotpass research service integration
    - Domain-specific crawlers
    - Rate limiting and retry logic
 
 4. **Environment Controls**
+
    - `FEATURE_ENABLE_REMOTE_RESEARCH` - Master toggle
    - `ALLOW_NETWORK_RESEARCH` - Runtime toggle
    - Default: network disabled (safe by default)
 
 5. **Provenance Tracking**
+
    - Source attribution
    - Timestamp and confidence
    - Strategy metadata (deterministic/research/backfill)
@@ -153,6 +165,7 @@ def test_qg1_cli_integrity(tmp_path):
 #### Quality Gate: QG-3 (Enrichment Chain)
 
 **Test:**
+
 ```bash
 uv run hotpass enrich \
   --input ./tests/data/minimal.xlsx \
@@ -162,12 +175,14 @@ uv run hotpass enrich \
 ```
 
 **Pass Criteria:**
+
 1. Output file exists at `/tmp/enriched.xlsx`
 2. Provenance columns present in output
 3. No network calls made (verify via network mock)
 4. Exit code 0
 
 **Implementation:**
+
 ```python
 # tests/enrichment/test_quality_gates.py
 def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
@@ -214,6 +229,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
 #### Implementation Tasks
 
 1. **Update Profile Schema**
+
    - Define complete YAML structure with 4 blocks
    - Add validation for required sections
    - Create migration guide for existing profiles
@@ -221,6 +237,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
 2. **Profile Blocks**
 
    **a) `ingest` block:**
+
    ```yaml
    ingest:
      sources:
@@ -232,6 +249,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    ```
 
    **b) `refine` block:**
+
    ```yaml
    refine:
      mappings:
@@ -244,19 +262,21 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    ```
 
    **c) `enrich` block:**
+
    ```yaml
    enrich:
      allow_network: false
      fetcher_chain:
        - deterministic
        - lookup_tables
-       - research  # only if network enabled
+       - research # only if network enabled
      backfillable_fields:
        - contact_email
        - website
    ```
 
    **d) `compliance` block:**
+
    ```yaml
    compliance:
      policy: POPIA
@@ -268,6 +288,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    ```
 
 3. **Profile Linter** (`tools/profile_lint.py`)
+
    - Validate YAML syntax
    - Check all 4 blocks present
    - Verify field references
@@ -275,6 +296,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    - CLI integration: `hotpass qa profiles`
 
 4. **Update Existing Profiles**
+
    - Migrate `aviation.yaml` to new schema
    - Migrate `generic.yaml` to new schema
    - Add `test.yaml` profile for QA
@@ -289,11 +311,13 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
 **Test:** Run Great Expectations suite against sample data
 
 **Pass Criteria:**
+
 - All expectations defined in profile pass
 - GE data docs generated on failure
 - Pipeline stops on validation failure
 
 **Implementation:**
+
 ```python
 # tests/profiles/test_quality_gates.py
 def test_qg2_data_quality_gate(tmp_path, sample_data):
@@ -338,6 +362,7 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
 #### Implementation Tasks
 
 1. **Create Agent Instructions** (`docs/agent-instructions.md`)
+
    - Flow 1: "Refine the spreadsheet"
    - Flow 2: "Double-check this entry"
    - Flow 3: "Run quality gates"
@@ -345,17 +370,20 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
    - Common patterns and examples
 
 2. **Update Copilot Instructions** (`.github/copilot-instructions.md`)
+
    - Add "Profile-first" guidance
    - Add "Deterministic-first" preference
    - Add "Provenance tracking" requirements
    - Link to agent-instructions.md
 
 3. **Update AGENTS.md**
+
    - Add MCP tool descriptions
    - Add example invocations
    - Add troubleshooting section
 
 4. **Create Reference Docs**
+
    - `docs/reference/cli-commands.md` - All CLI verbs
    - `docs/reference/mcp-tools.md` - All MCP tools
    - `docs/reference/quality-gates.md` - QG-1 through QG-5
@@ -371,12 +399,14 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
 **Test:** Verify required docs exist with required content
 
 **Pass Criteria:**
+
 - `.github/copilot-instructions.md` exists
 - `AGENTS.md` exists
 - Both mention: "profile-first", "deterministic-first", "provenance"
 - Both are non-empty (>100 bytes)
 
 **Implementation:**
+
 ```python
 # tests/docs/test_quality_gates.py
 def test_qg5_docs_instruction_gate():
@@ -422,6 +452,7 @@ def test_qg5_docs_instruction_gate():
 #### Implementation Tasks
 
 1. **CI Automation** (`.github/workflows/quality-gates.yml`)
+
    - Job 1: QG-1 (CLI integrity)
    - Job 2: QG-2 (Data quality)
    - Job 3: QG-3 (Enrichment chain)
@@ -430,11 +461,13 @@ def test_qg5_docs_instruction_gate():
    - Matrix testing across profiles
 
 2. **Meta-MCP Tool** (`src/hotpass/mcp/tools/ta_check.py`)
+
    - `hotpass.ta.check` - Runs all QG checks
    - Returns structured results
    - CLI integration: `hotpass qa ta`
 
 3. **Quality Gate Scripts** (`scripts/quality/`)
+
    - `run_qg1.py` - CLI integrity check
    - `run_qg2.py` - GE validation
    - `run_qg3.py` - Enrichment test
@@ -443,6 +476,7 @@ def test_qg5_docs_instruction_gate():
    - `run_all_gates.py` - Master runner
 
 4. **MCP Discoverability Test**
+
    ```python
    # tests/mcp/test_quality_gates.py
    def test_qg4_mcp_discoverability():
@@ -474,6 +508,7 @@ def test_qg5_docs_instruction_gate():
 **Test:** MCP tools are discoverable via protocol
 
 **Pass Criteria:**
+
 - MCP server starts successfully
 - Tool list includes: `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`
 - Tools respond to invocation
@@ -498,55 +533,69 @@ def test_qg5_docs_instruction_gate():
 ## Technical Acceptance Summary
 
 ### TA-1: Single-Tool Rule
+
 All operations accessible via `uv run hotpass ...` or equivalent MCP tools.
 
 **Verification:**
+
 - [ ] Every MCP tool has CLI equivalent
 - [ ] No operations require secondary repos/tools
 
 ### TA-2: Profile Completeness
+
 Every profile declares all 4 blocks (ingest, refine, enrich, compliance).
 
 **Verification:**
+
 - [ ] `tools/profile_lint.py` validates schemas
 - [ ] All existing profiles migrated
 - [ ] Test profile covers edge cases
 
 ### TA-3: Offline-First
+
 Enrichment succeeds with `--allow-network=false` and valid provenance.
 
 **Verification:**
+
 - [ ] QG-3 passes
 - [ ] No network calls when disabled
 - [ ] Provenance tracks "offline" strategy
 
 ### TA-4: Network-Safe
+
 Network disabled by env vars prevents remote calls with provenance note.
 
 **Verification:**
+
 - [ ] Tests mock network and verify no calls
 - [ ] Provenance shows "skipped: network disabled"
 
 ### TA-5: MCP Parity
+
 Every CLI verb exposed as MCP tool, discoverable via `/mcp list`.
 
 **Verification:**
+
 - [ ] QG-4 passes
 - [ ] All tools respond correctly
 - [ ] Tool schemas match CLI signatures
 
 ### TA-6: Quality Gates Wired
+
 QG-1 through QG-5 exist as runnable scripts/tests.
 
 **Verification:**
+
 - [ ] All QG tests in CI
 - [ ] Scripts in `scripts/quality/`
 - [ ] `hotpass qa ta` runs all gates
 
 ### TA-7: Docs Present
+
 Agent instructions complete with required terminology.
 
 **Verification:**
+
 - [ ] QG-5 passes
 - [ ] E2E flows documented
 - [ ] Migration guides provided
@@ -556,31 +605,37 @@ Agent instructions complete with required terminology.
 ## Risk Assessment
 
 ### High Risk
+
 - **MCP Protocol Stability**: MCP spec may evolve; isolate protocol handling
 - **Network Guard Bypass**: Critical for security; extensive testing required
 - **Profile Migration**: Breaking changes for users; provide migration tool
 
 **Mitigation:**
+
 - Version-pin MCP dependencies
 - Use network mocking in all enrichment tests
 - Create automated profile migration script
 - Document breaking changes prominently
 
 ### Medium Risk
+
 - **GE Integration**: Complex validation logic may have edge cases
 - **CLI Backwards Compat**: Existing scripts may break
 - **CI Pipeline Load**: More gates = longer CI times
 
 **Mitigation:**
+
 - Extensive GE test coverage
 - Maintain aliases for old CLI commands
 - Parallelize CI jobs, cache dependencies
 
 ### Low Risk
+
 - **Documentation Drift**: Docs may fall out of sync
 - **TA Check Performance**: Running all gates may be slow
 
 **Mitigation:**
+
 - Make docs updates part of PR checklist
 - Optimize TA check, allow selective runs
 
@@ -589,18 +644,21 @@ Agent instructions complete with required terminology.
 ## Success Metrics
 
 ### Functional Metrics
+
 - [ ] 100% of CLI verbs have MCP equivalents
 - [ ] 100% of profiles pass linter
 - [ ] 100% of quality gates pass in CI
 - [ ] 0 network calls when network disabled
 
 ### Quality Metrics
+
 - [ ] Test coverage ≥ 90% for new code
 - [ ] All fitness functions pass
 - [ ] 0 Bandit/Ruff/mypy violations
 - [ ] Documentation completeness score ≥ 95%
 
 ### Operational Metrics
+
 - [ ] CI pipeline time < 15 minutes
 - [ ] TA check runtime < 5 minutes
 - [ ] Profile linter runtime < 10 seconds
@@ -610,22 +668,27 @@ Agent instructions complete with required terminology.
 ## Implementation Phases
 
 ### Phase 1: Foundation (Sprints 1-2)
+
 **Duration:** 1 week
 **Deliverables:** CLI verbs, MCP server, enrichment pipeline, QG-1, QG-3
 
 ### Phase 2: Standardization (Sprint 3)
+
 **Duration:** 4 days
 **Deliverables:** Complete profiles, linter, QG-2
 
 ### Phase 3: Documentation (Sprint 4)
+
 **Duration:** 3 days
 **Deliverables:** Agent instructions, updated docs, QG-5
 
 ### Phase 4: Integration (Sprint 5)
+
 **Duration:** 3 days
 **Deliverables:** CI automation, TA tooling, QG-4
 
 ### Phase 5: Validation & Handoff
+
 **Duration:** 2 days
 **Deliverables:** Full TA verification, migration guides, team training
 
@@ -636,11 +699,13 @@ Agent instructions complete with required terminology.
 ## Dependencies
 
 ### External Dependencies
+
 - MCP protocol library (Python SDK)
 - Great Expectations ≥ 1.8.0
 - Existing test infrastructure
 
 ### Internal Dependencies
+
 - Existing enrichment providers
 - Profile system
 - CLI framework
@@ -651,21 +716,25 @@ Agent instructions complete with required terminology.
 ## Testing Strategy
 
 ### Unit Tests
+
 - All new modules have ≥90% coverage
 - Mock network calls in enrichment tests
 - Parametrize tests across profiles
 
 ### Integration Tests
+
 - E2E CLI flows (refine → enrich → qa)
 - MCP server lifecycle tests
 - Profile migration tests
 
 ### Quality Gate Tests
+
 - Dedicated test module per gate
 - Runnable standalone (CI + local)
 - Clear pass/fail criteria
 
 ### Regression Tests
+
 - Existing tests must continue passing
 - Backwards compatibility for CLI
 - Profile schema backwards compatibility
@@ -675,16 +744,19 @@ Agent instructions complete with required terminology.
 ## Rollback Plan
 
 ### If MCP Integration Fails
+
 - MCP is additive; CLI remains functional
 - Feature flag: `FEATURE_ENABLE_MCP`
 - Disable in CI, continue with CLI-only
 
 ### If Profile Migration Fails
+
 - Keep old schema support as fallback
 - Warn on deprecated schema usage
 - Provide 2-version migration window
 
 ### If Quality Gates Block CI
+
 - Make gates advisory initially (warnings)
 - Promote to blocking after 1 week
 - Allow override with approval
@@ -694,24 +766,28 @@ Agent instructions complete with required terminology.
 ## Handoff Checklist
 
 ### For Development Team
+
 - [ ] All code merged to main branch
 - [ ] CI passing with all quality gates
 - [ ] Migration scripts tested
 - [ ] Rollback procedures documented
 
 ### For Documentation Team
+
 - [ ] All docs reviewed for accuracy
 - [ ] Agent instructions validated with Copilot
 - [ ] Migration guides published
 - [ ] Changelog updated
 
 ### For Operations Team
+
 - [ ] CI workflows documented
 - [ ] Quality gate runbooks created
 - [ ] Incident response procedures updated
 - [ ] Monitoring alerts configured
 
 ### For Product Team
+
 - [ ] TA criteria verified
 - [ ] User-facing changes documented
 - [ ] Breaking changes communicated
@@ -723,13 +799,13 @@ Agent instructions complete with required terminology.
 
 ### Appendix A: CLI Command Mapping
 
-| Old Command | New Command | Alias | Notes |
-|-------------|-------------|-------|-------|
-| `run` | `refine` | Yes | Primary refinement |
-| N/A | `enrich` | No | New functionality |
-| N/A | `qa` | No | New, wraps existing checks |
-| N/A | `contracts` | No | New, schema emission |
-| N/A | `overview` | No | New, discovery |
+| Old Command | New Command | Alias | Notes                      |
+| ----------- | ----------- | ----- | -------------------------- |
+| `run`       | `refine`    | Yes   | Primary refinement         |
+| N/A         | `enrich`    | No    | New functionality          |
+| N/A         | `qa`        | No    | New, wraps existing checks |
+| N/A         | `contracts` | No    | New, schema emission       |
+| N/A         | `overview`  | No    | New, discovery             |
 
 ### Appendix B: MCP Tool Signatures
 
@@ -870,11 +946,11 @@ refine:
 
 # Block 3: Enrich
 enrich:
-  allow_network: false  # Default, can be overridden by env/CLI
+  allow_network: false # Default, can be overridden by env/CLI
   fetcher_chain:
-    - deterministic  # Always run
-    - lookup_tables  # Always run
-    - research       # Only if network enabled
+    - deterministic # Always run
+    - lookup_tables # Always run
+    - research # Only if network enabled
   backfillable_fields:
     - contact_email
     - contact_phone
@@ -932,20 +1008,20 @@ checks.extend([
 
 ## Revision History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-10-30 | Dev Team | Initial implementation plan |
+| Version | Date       | Author   | Changes                     |
+| ------- | ---------- | -------- | --------------------------- |
+| 1.0     | 2025-10-30 | Dev Team | Initial implementation plan |
 
 ---
 
 ## Sign-off
 
-**Technical Lead:** _______________ Date: ___________
+**Technical Lead:** ******\_\_\_****** Date: ****\_\_\_****
 
-**Product Owner:** _______________ Date: ___________
+**Product Owner:** ******\_\_\_****** Date: ****\_\_\_****
 
-**QA Lead:** _______________ Date: ___________
+**QA Lead:** ******\_\_\_****** Date: ****\_\_\_****
 
 ---
 
-*This document is version-controlled and maintained in the Hotpass repository.*
+_This document is version-controlled and maintained in the Hotpass repository._

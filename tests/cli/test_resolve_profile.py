@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -57,7 +58,7 @@ sensitive_fields = ["contact_email"]
 
     captured: dict[str, object] = {}
 
-    def fake_structured_logger(log_format: str, sensitive_fields: tuple[str, ...]):  # type: ignore[override]
+    def fake_structured_logger(log_format: str, sensitive_fields: tuple[str, ...]) -> DummyLogger:
         captured["log_format"] = log_format
         captured["sensitive_fields"] = tuple(sensitive_fields)
         return DummyLogger()
@@ -71,7 +72,7 @@ sensitive_fields = ["contact_email"]
 
             self.thresholds = LinkageThresholds(high=0.9, review=0.7)
 
-    def fake_link_entities(df: pd.DataFrame, config):  # type: ignore[override]
+    def fake_link_entities(df: pd.DataFrame, config: Any) -> DummyResult:
         captured["use_splink"] = config.use_splink
         captured["threshold_high"] = config.thresholds.high
         captured["threshold_review"] = config.thresholds.review

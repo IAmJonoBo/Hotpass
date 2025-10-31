@@ -19,6 +19,11 @@ AgentApprovalError = orchestration.AgentApprovalError
 PipelineRunSummary = orchestration.PipelineRunSummary
 
 
+def expect(condition: bool, message: str) -> None:
+    if not condition:
+        raise AssertionError(message)
+
+
 def _make_request(
     *,
     tool: str = "prefect",
@@ -65,11 +70,11 @@ def test_broker_agent_run_denies_unlisted_tool() -> None:
             log_sink=log_sink,
         )
 
-    assert log_sink, "a denial should be logged"
+    expect(log_sink, "a denial should be logged")
     denial_entry = log_sink[0]
-    assert denial_entry.status == "denied"
-    assert denial_entry.approved is False
-    assert "not permitted" in (denial_entry.notes or "")
+    expect(denial_entry.status == "denied", "Denial status should be recorded")
+    expect(denial_entry.approved is False, "Approval flag should be False on denial")
+    expect("not permitted" in (denial_entry.notes or ""), "Denial notes should mention policy")
 
 
 def test_broker_agent_run_requires_manual_approval() -> None:
@@ -89,10 +94,10 @@ def test_broker_agent_run_requires_manual_approval() -> None:
             log_sink=log_sink,
         )
 
-    assert log_sink, "a manual approval denial should be logged"
+    expect(log_sink, "a manual approval denial should be logged")
     denial_entry = log_sink[0]
-    assert denial_entry.status == "denied"
-    assert denial_entry.approver == "manual"
+    expect(denial_entry.status == "denied", "Manual denial should be recorded")
+    expect(denial_entry.approver == "manual", "Manual approver should be captured")
 
 
 def test_broker_agent_run_executes_pipeline_with_approval() -> None:
@@ -126,15 +131,18 @@ def test_broker_agent_run_executes_pipeline_with_approval() -> None:
             log_sink=log_sink,
         )
 
-    assert result is summary
+    expect(result is summary, "Broker should return pipeline summary")
     mock_runner.assert_called_once()
     options_arg = mock_runner.call_args[0][0]
-    assert options_arg.profile_name == "aviation"
-    assert options_arg.config.pipeline.input_dir == Path("./data/inbox")
+    expect(options_arg.profile_name == "aviation", "Profile name should propagate")
+    expect(
+        options_arg.config.pipeline.input_dir == Path("./data/inbox"),
+        "Pipeline input dir should reflect request payload",
+    )
 
-    assert len(log_sink) >= 2
-    assert log_sink[0].status == "approved"
-    assert log_sink[0].approved is True
-    assert log_sink[1].status == "executed"
-    assert log_sink[1].result is not None
-    assert log_sink[1].result.get("success") is True
+    expect(len(log_sink) >= 2, "Log sink should include approval and execution entries")
+    expect(log_sink[0].status == "approved", "First log entry should show approval")
+    expect(log_sink[0].approved is True, "Approval entry should mark approved")
+    expect(log_sink[1].status == "executed", "Execution entry should be recorded")
+    expect(log_sink[1].result is not None, "Execution entry should include a result payload")
+    expect(log_sink[1].result.get("success") is True, "Execution result should indicate success")

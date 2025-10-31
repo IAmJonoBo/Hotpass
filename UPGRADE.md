@@ -1,14 +1,14 @@
 # Hotpass Agent Runbook (E2E)
 
 **Version:** 1.1  
-**Date:** 2025-10-30  
+**Date:**
 **Audience:** GitHub Copilot CLI / Copilot Agent HQ / Codex (with MCP)  
 **Goal:** upgrade Hotpass so agents can, from natural language, refine a spreadsheet, enrich or double-check a row, and enforce data-quality gates — all through one CLI and one MCP surface.  
 **Supersedes:** `UPGRADE_B.md` and `GAP_ANALYSIS_30_10_25.md`; this runbook is now the canonical plan.
 
 ---
 
-## 0. Executive Summary (Updated 2025-10-30)
+## 0. Executive Summary
 
 - **Completed**
   - CLI & MCP parity is live: the new command set ships under `src/hotpass/cli/commands/` and the stdio server in `src/hotpass/mcp/server.py` exposes `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl` (guarded), and `hotpass.ta.check`.
@@ -32,29 +32,29 @@
 
 | Item                                                                 | Due        | Owner            | Status             | Evidence / Notes                                                                                                                                                                                           |
 | -------------------------------------------------------------------- | ---------- | ---------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Confirm Phase 5 T5.5 completion against programme expectations       | 2025-12-30 | Programme        | Pending sign-off   | Roadmap milestone is marked complete, but stakeholder confirmation is outstanding (`ROADMAP.md`).                                                                                                          |
-| Execute full E2E runs with canonical configuration toggles           | 2025-12-31 | QA               | Open               | Requires running `uv run hotpass overview/refine/enrich/qa` with `hotpass-e2e-staging`; no artefact recorded yet.                                                                                          |
-| Validate Prefect backfill deployment guardrails in staging           | 2026-01-05 | Platform         | In progress        | Prefect manifests exist (`prefect/backfill.yaml`, `prefect/refinement.yaml`); staging validation still pending.                                                                                            |
-| Benchmark `HotpassConfig.merge` on large payloads                    | 2026-01-15 | Engineering      | Not started        | No benchmark harness or artefact committed.                                                                                                                                                                |
-| Extend orchestrate/resolve CLI coverage for advanced profiles        | 2026-01-15 | Engineering & QA | In progress        | Resolve command exists (`src/hotpass/cli/commands/resolve.py`), but advanced profile fixtures/tests remain to be authored.                                                                                 |
-| Merge Prefect deployment manifests and validate idempotent schedules | 2025-11-26 | Platform         | Complete           | Manifests landed (`prefect/backfill.yaml`, `prefect/refinement.yaml`) and CLI deployment tests cover overrides (`tests/cli/test_deploy_command.py`).                                                       |
-| Exercise OpenLineage + Marquez hardening follow-up                   | 2025-11-29 | Engineering & QA | Blocked on staging | Compose stack and tests ready (`tests/infrastructure/test_marquez_stack.py`, `tests/test_lineage.py`); waiting for staging lineage smoke.                                                                  |
-| Harden uv-based CI quality gates                                     | 2025-12-03 | Platform         | Complete           | Gate scripts orchestrated in `scripts/quality/run_qg*.py`; workflow `.github/workflows/quality-gates.yml` enforces them.                                                                                   |
-| Ship CodeQL + secrets scanning                                       | 2025-12-06 | Security         | Complete           | Workflows `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` active; SARIF uploads configured.                                                                                     |
-| Enable Docker buildx cache reuse                                     | 2025-12-09 | Platform         | Not started        | No `ci/docker-cache` workflow yet; caching remains manual.                                                                                                                                                 |
-| Publish SBOM + SLSA attestations                                     | 2025-12-13 | Platform         | Complete           | `.github/workflows/process-data.yml` `supply-chain` job runs `scripts/supply_chain/generate_sbom.py` / `generate_provenance.py` and uploads artefacts.                                                     |
-| Complete ARC runner rollout and OIDC wiring                          | 2025-12-18 | Platform         | In progress        | ARC manifests and smoke workflow exist (`infra/arc/runner-scale-set.yaml`, `.github/workflows/arc-ephemeral-runner.yml`, `scripts/arc/verify_runner_lifecycle.py`); live staging rehearsal pending access. |
-| Finalise OpenTelemetry exporter propagation                          | 2025-12-20 | Engineering      | Complete           | Telemetry bootstrap integrated in CLI (`src/hotpass/cli/shared.py`, `src/hotpass/cli/commands/run.py`, `src/hotpass/telemetry/bootstrap.py`).                                                              |
-| Finish Diátaxis navigation uplift follow-on                          | 2026-01-07 | Docs & UX        | In progress        | Navigation doc merged (`docs/governance/data-governance-navigation.md`) and surfaced via `docs/index.md`; follow-on UX review scheduled.                                                                   |
-| Release `cli/doctor` + `cli/init` onboarding refinements             | 2026-01-10 | Engineering & UX | Complete           | Commands and docs shipped (`src/hotpass/cli/commands/doctor.py`, `docs/reference/cli.md`).                                                                                                                 |
+| Confirm Phase 5 T5.5 completion against programme expectations       |            | Programme        | Pending sign-off   | Roadmap milestone is marked complete, but stakeholder confirmation is outstanding (`ROADMAP.md`).                                                                                                          |
+| Execute full E2E runs with canonical configuration toggles           |            | QA               | Open               | Requires running `uv run hotpass overview/refine/enrich/qa` with `hotpass-e2e-staging`; no artefact recorded yet.                                                                                          |
+| Validate Prefect backfill deployment guardrails in staging           |            | Platform         | In progress        | Prefect manifests exist (`prefect/backfill.yaml`, `prefect/refinement.yaml`); staging validation still pending.                                                                                            |
+| Benchmark `HotpassConfig.merge` on large payloads                    |            | Engineering      | Not started        | No benchmark harness or artefact committed.                                                                                                                                                                |
+| Extend orchestrate/resolve CLI coverage for advanced profiles        |            | Engineering & QA | In progress        | Resolve command exists (`src/hotpass/cli/commands/resolve.py`), but advanced profile fixtures/tests remain to be authored.                                                                                 |
+| Merge Prefect deployment manifests and validate idempotent schedules |            | Platform         | Complete           | Manifests landed (`prefect/backfill.yaml`, `prefect/refinement.yaml`) and CLI deployment tests cover overrides (`tests/cli/test_deploy_command.py`).                                                       |
+| Exercise OpenLineage + Marquez hardening follow-up                   |            | Engineering & QA | Blocked on staging | Compose stack and tests ready (`tests/infrastructure/test_marquez_stack.py`, `tests/test_lineage.py`); waiting for staging lineage smoke.                                                                  |
+| Harden uv-based CI quality gates                                     |            | Platform         | Complete           | Gate scripts orchestrated in `scripts/quality/run_qg*.py`; workflow `.github/workflows/quality-gates.yml` enforces them.                                                                                   |
+| Ship CodeQL + secrets scanning                                       |            | Security         | Complete           | Workflows `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` active; SARIF uploads configured.                                                                                     |
+| Enable Docker buildx cache reuse                                     |            | Platform         | Not started        | No `ci/docker-cache` workflow yet; caching remains manual.                                                                                                                                                 |
+| Publish SBOM + SLSA attestations                                     |            | Platform         | Complete           | `.github/workflows/process-data.yml` `supply-chain` job runs `scripts/supply_chain/generate_sbom.py` / `generate_provenance.py` and uploads artefacts.                                                     |
+| Complete ARC runner rollout and OIDC wiring                          |            | Platform         | In progress        | ARC manifests and smoke workflow exist (`infra/arc/runner-scale-set.yaml`, `.github/workflows/arc-ephemeral-runner.yml`, `scripts/arc/verify_runner_lifecycle.py`); live staging rehearsal pending access. |
+| Finalise OpenTelemetry exporter propagation                          |            | Engineering      | Complete           | Telemetry bootstrap integrated in CLI (`src/hotpass/cli/shared.py`, `src/hotpass/cli/commands/run.py`, `src/hotpass/telemetry/bootstrap.py`).                                                              |
+| Finish Diátaxis navigation uplift follow-on                          |            | Docs & UX        | In progress        | Navigation doc merged (`docs/governance/data-governance-navigation.md`) and surfaced via `docs/index.md`; follow-on UX review scheduled.                                                                   |
+| Release `cli/doctor` + `cli/init` onboarding refinements             |            | Engineering & UX | Complete           | Commands and docs shipped (`src/hotpass/cli/commands/doctor.py`, `docs/reference/cli.md`).                                                                                                                 |
 
 ### 1.2 Next Steps — hygiene, steps, and deliverables
 
 - **PR hygiene reminder** — ongoing rolling reminder. Continue updating `Next_Steps.md` after each PR hand-off.
 - **Manifest-driven Prefect deployments** — manifests are committed; remaining work is staging validation plus doc update in `docs/how-to-guides/prefect-manifests.md` (todo).
 - **Marquez lineage smoke scheduling** — blocked until optional dependencies land on staging; track via `tests/infrastructure/test_marquez_stack.py` and staging access ticket.
-- **Assertion migration (due 2025-11-05)** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
-- **Telemetry/mypy audit (due 2025-11-07)** — first pass removed six mypy issues; remaining errors ~171 (run `uv run mypy src tests scripts`).
+- **Assertion migration** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
+- **Telemetry/mypy audit** — first pass removed six mypy issues; remaining errors ~171 (run `uv run mypy src tests scripts`).
 
 ### Deliverable status\*\*
 
@@ -77,7 +77,7 @@
 | Documentation misalignment              | Resolved                 | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`.                                                     | Extend reference set with MCP/quality gate pages.                                                         |
 | Research APIs promised but not exposed  | Resolved                 | Adaptive research orchestrator + CLI (`hotpass plan research`, `hotpass crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) ship from `src/hotpass/research/orchestrator.py`. | Integration regression tests cover CLI + MCP tooling; monitor staging rehearsals for additional evidence. |
 | Assert-free pytest migration incomplete | Outstanding              | Bare asserts present (e.g. `tests/test_evidence.py`).                                                                                                                                      | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`.            |
-| Next Steps backlog alignment            | Ongoing                  | This dashboard now mirrors outstanding work; maintain weekly review cadence (starting 2025-11-07).                                                                                         | Update `Next_Steps.md` & this section after each closure.                                                 |
+| Next Steps backlog alignment            | Ongoing                  | This dashboard now mirrors outstanding work; maintain weekly review cadence.                                                                                         | Update `Next_Steps.md` & this section after each closure.                                                 |
 
 ### 1.4 Strategic enhancements (from `UPGRADE_B.md`)
 
@@ -119,7 +119,7 @@
 ### Sprint 4 – Docs & agent UX (**Status: ✅ Complete with follow-ons**)
 
 - Docs refreshed (`docs/reference/cli.md`, `.github/copilot-instructions.md`, `AGENTS.md`) and MCP instructions included.
-- Additional work planned: navigation uplift QA (due 2026-01-07) and agent walkthrough updates tied to adaptive research features.
+- Additional work planned: navigation uplift QA and agent walkthrough updates tied to adaptive research features.
 
 ### Sprint 5 – Technical Acceptance automation (**Status: ✅ Complete with follow-ons**)
 
