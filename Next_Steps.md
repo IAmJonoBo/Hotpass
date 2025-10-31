@@ -49,6 +49,7 @@
 - `schemas/` — current frictionless contracts to be regenerated.
 - `apps/data-platform/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
 - `docs/architecture/repo-restructure-plan.md` — canonical mapping for the apps/ops separation and follow-up actions.
+- `docs/architecture/cli-expansion-plan.md` — design blueprint for the upcoming CLI automation verbs.
 - `docs/index.md` — landing page now surfacing governance artefacts; monitor follow-up requests.
 - `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
 - `docs/governance/data-governance-navigation.md` — consolidated navigation across governance artefacts.
