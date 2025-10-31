@@ -1,13 +1,13 @@
 # Hotpass UPGRADE.md Implementation Plan
 
-**Version:** 1.0
-**Date:** 2025-10-30
-**Status:** In Progress
+**Version:** 1.1
+**Date:** 2025-10-31
+**Status:** Mostly complete (Sprints 1–5 delivered; follow-ups tracked via `Next_Steps.md`)
 **Owner:** Development Team
 
 ## Executive Summary
 
-This document details the implementation plan for upgrading Hotpass to support full CLI/MCP parity, enrichment pipelines, unified profiles, and comprehensive quality gates as specified in `UPGRADE.md`. The plan follows frontier-spec quality standards with explicit Technical Acceptance (TA) criteria and quality gates (QG) for each sprint.
+This document details the implementation plan for upgrading Hotpass to support full CLI/MCP parity, enrichment pipelines, unified profiles, and comprehensive quality gates as specified in `UPGRADE.md`. The plan follows frontier-spec quality standards with explicit Technical Acceptance (TA) criteria and quality gates (QG) for each sprint. The core deliverables in Sprints 1–5 are now complete; outstanding actions focus on Docker cache optimisation, staging evidence capture, and trimming the residual mypy debt tracked in `Next_Steps.md` and `ROADMAP.md`.【F:Next_Steps.md†L5-L42】【F:ROADMAP.md†L56-L72】
 
 ## Goals
 
@@ -41,7 +41,7 @@ This document details the implementation plan for upgrading Hotpass to support f
 
 ## Sprint Breakdown
 
-### Sprint 1: CLI & MCP Parity
+### Sprint 1: CLI & MCP Parity — ✅ Complete
 
 **Objective:** Enable full Hotpass operation through CLI and MCP tools
 
@@ -115,7 +115,7 @@ def test_qg1_cli_integrity(tmp_path):
 
 ---
 
-### Sprint 2: Enrichment Translation
+### Sprint 2: Enrichment Translation — ✅ Complete
 
 **Objective:** Implement offline-first, network-optional enrichment with provenance
 
@@ -222,7 +222,7 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
 
 ---
 
-### Sprint 3: Profiles & Compliance Unification
+### Sprint 3: Profiles & Compliance Unification — ✅ Complete
 
 **Objective:** Complete profile schema with all required blocks
 
@@ -355,7 +355,7 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
 
 ---
 
-### Sprint 4: Docs & Agent UX
+### Sprint 4: Docs & Agent UX — ✅ Complete
 
 **Objective:** First-class agent instructions and E2E flow documentation
 
@@ -445,7 +445,7 @@ def test_qg5_docs_instruction_gate():
 
 ---
 
-### Sprint 5: TA Closure
+### Sprint 5: TA Closure — ✅ Complete
 
 **Objective:** Wire all quality gates into CI and create TA checking tool
 
@@ -538,8 +538,8 @@ All operations accessible via `uv run hotpass ...` or equivalent MCP tools.
 
 **Verification:**
 
-- [ ] Every MCP tool has CLI equivalent
-- [ ] No operations require secondary repos/tools
+- [ ] Every MCP tool has CLI equivalent (gap: `hotpass.explain_provenance` remains MCP-only; consider adding a lightweight CLI alias in a follow-up).
+- [x] No operations require secondary repos/tools.【F:src/hotpass/cli/commands/overview.py†L1-L200】【F:src/hotpass/mcp/server.py†L1-L360】
 
 ### TA-2: Profile Completeness
 
@@ -547,9 +547,9 @@ Every profile declares all 4 blocks (ingest, refine, enrich, compliance).
 
 **Verification:**
 
-- [ ] `tools/profile_lint.py` validates schemas
-- [ ] All existing profiles migrated
-- [ ] Test profile covers edge cases
+- [x] `tools/profile_lint.py` validates schemas.【F:tools/profile_lint.py†L1-L220】
+- [x] All existing profiles migrated.【F:src/hotpass/profiles/aviation.yaml†L1-L160】【F:src/hotpass/profiles/generic.yaml†L1-L160】
+- [x] Test profile covers edge cases.【F:src/hotpass/profiles/test.yaml†L1-L160】【F:tests/enrichment/test_quality_gates.py†L1-L120】
 
 ### TA-3: Offline-First
 
@@ -557,9 +557,9 @@ Enrichment succeeds with `--allow-network=false` and valid provenance.
 
 **Verification:**
 
-- [ ] QG-3 passes
-- [ ] No network calls when disabled
-- [ ] Provenance tracks "offline" strategy
+- [x] QG-3 passes.【F:scripts/quality/run_qg3.py†L1-L140】
+- [x] No network calls when disabled.【F:tests/enrichment/test_quality_gates.py†L97-L160】
+- [x] Provenance tracks "offline" strategy.【F:tests/enrichment/test_quality_gates.py†L126-L160】
 
 ### TA-4: Network-Safe
 
@@ -567,8 +567,8 @@ Network disabled by env vars prevents remote calls with provenance note.
 
 **Verification:**
 
-- [ ] Tests mock network and verify no calls
-- [ ] Provenance shows "skipped: network disabled"
+- [x] Tests mock network and verify no calls.【F:tests/enrichment/test_quality_gates.py†L97-L160】
+- [x] Provenance shows "skipped: network disabled".【F:tests/enrichment/test_quality_gates.py†L134-L160】
 
 ### TA-5: MCP Parity
 
@@ -576,9 +576,9 @@ Every CLI verb exposed as MCP tool, discoverable via `/mcp list`.
 
 **Verification:**
 
-- [ ] QG-4 passes
-- [ ] All tools respond correctly
-- [ ] Tool schemas match CLI signatures
+- [x] QG-4 passes.【F:scripts/quality/run_qg4.py†L1-L220】
+- [x] All tools respond correctly.【F:tests/mcp/test_research_tools.py†L90-L180】
+- [x] Tool schemas match CLI signatures.【F:src/hotpass/mcp/server.py†L80-L260】
 
 ### TA-6: Quality Gates Wired
 
@@ -586,9 +586,9 @@ QG-1 through QG-5 exist as runnable scripts/tests.
 
 **Verification:**
 
-- [ ] All QG tests in CI
-- [ ] Scripts in `scripts/quality/`
-- [ ] `hotpass qa ta` runs all gates
+- [x] All QG tests in CI.【F:.github/workflows/quality-gates.yml†L1-L110】
+- [x] Scripts in `scripts/quality/`.【F:scripts/quality/run_all_gates.py†L1-L200】
+- [x] `hotpass qa ta` runs all gates.【F:src/hotpass/cli/commands/qa.py†L270-L360】
 
 ### TA-7: Docs Present
 
@@ -596,9 +596,9 @@ Agent instructions complete with required terminology.
 
 **Verification:**
 
-- [ ] QG-5 passes
-- [ ] E2E flows documented
-- [ ] Migration guides provided
+- [x] QG-5 passes.【F:scripts/quality/run_qg5.py†L1-L140】
+- [x] E2E flows documented.【F:docs/agent-instructions.md†L1-L180】
+- [x] Migration guides provided.【F:docs/how-to-guides/configure-pipeline.md†L120-L180】【F:docs/how-to-guides/manage-data-versions.md†L200-L280】
 
 ---
 
@@ -1008,9 +1008,10 @@ checks.extend([
 
 ## Revision History
 
-| Version | Date       | Author   | Changes                     |
-| ------- | ---------- | -------- | --------------------------- |
-| 1.0     | 2025-10-30 | Dev Team | Initial implementation plan |
+| Version | Date       | Author   | Changes                                      |
+| ------- | ---------- | -------- | -------------------------------------------- |
+| 1.1     | 2025-10-31 | Dev Team | Status audit, TA checklist updates, roadmap parity |
+| 1.0     | 2025-10-30 | Dev Team | Initial implementation plan                  |
 
 ---
 

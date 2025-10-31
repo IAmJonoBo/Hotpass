@@ -53,22 +53,21 @@ phases and governance gates.
 
 ## Phase 5 — CI/CD & ephemeral runners
 
-- [ ] **T5.1 Quality gates** — Migrate the GitHub Actions QA workflow to uv and
+- [x] **T5.1 Quality gates** — Migrate the GitHub Actions QA workflow to uv and
       enforce coverage thresholds.
-  - Upcoming PR: `ci/uv-quality-gates` aligned with the platform team schedule.
-- [ ] **T5.2 Security scanning** — Codify CodeQL, detect-secrets diff mode, and
+  - Delivered via `.github/workflows/quality-gates.yml` orchestrating QG-1→QG-5 and coverage instrumentation with the `scripts/quality/run_qg*.py` helpers.【F:.github/workflows/quality-gates.yml†L1-L110】【F:scripts/quality/run_all_gates.py†L1-L200】
+- [x] **T5.2 Security scanning** — Codify CodeQL, detect-secrets diff mode, and
       Bandit SARIF uploads.
-  - Upcoming PR: `security/codeql-and-secrets` blocked on runner availability.
+  - `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` now run on every push/PR, while the `Process and Refine Data` workflow executes detect-secrets and Bandit checks in-line.【F:.github/workflows/codeql.yml†L1-L40】【F:.github/workflows/secret-scanning.yml†L1-L40】【F:.github/workflows/process-data.yml†L25-L140】
 - [ ] **T5.3 Docker buildx cache** — Enable cache reuse across PR builds.
   - Upcoming PR: `ci/docker-cache` queued after quality gate hardening.
-- [ ] **T5.4 Provenance** — Generate SBOMs and SLSA attestations.
-  - Upcoming PR: `supply-chain/provenance` depends on SBOM generator refactor.
+- [x] **T5.4 Provenance** — Generate SBOMs and SLSA attestations.
+  - The `supply-chain` job in `.github/workflows/process-data.yml` invokes `scripts/supply_chain/generate_sbom.py` and `generate_provenance.py`, publishing artefacts and checksums for audits.【F:.github/workflows/process-data.yml†L180-L260】【F:scripts/supply_chain/generate_sbom.py†L1-L120】【F:scripts/supply_chain/generate_provenance.py†L1-L160】
 - [x] **T5.5 Ephemeral runners** — Roll out ARC manifests and AWS OIDC wiring (pending stakeholder confirmation that programme expectations are met).
   - Completed via updated ARC smoke workflow and lifecycle verifier that now confirm AWS role assumptions alongside runner drain; staging rollout follows the refreshed runbook and workflow configuration.【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L110】
-- [ ] **T5.6 Telemetry instrumentation** — Propagate OpenTelemetry exporters
+- [x] **T5.6 Telemetry instrumentation** — Propagate OpenTelemetry exporters
       through CLI and Prefect.
-  - Completed PR: `telemetry/bootstrap` (2025-12-02) delivered shared bootstrap
-    logic; follow-up docs tracked separately.
+  - Completed via `telemetry/bootstrap` integrating `TelemetryBootstrapOptions` into CLI entry points and Prefect flows; follow-up docs remain tracked separately.【F:src/hotpass/cli/commands/run.py†L156-L531】【F:src/hotpass/telemetry/bootstrap.py†L1-L200】
 
 ## Phase 6 — Documentation & UX
 

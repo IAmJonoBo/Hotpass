@@ -54,7 +54,7 @@
 - **Manifest-driven Prefect deployments** — manifests are committed; remaining work is staging validation plus doc update in `docs/how-to-guides/prefect-manifests.md` (todo).
 - **Marquez lineage smoke scheduling** — blocked until optional dependencies land on staging; track via `tests/infrastructure/test_marquez_stack.py` and staging access ticket.
 - **Assertion migration** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
-- **Telemetry/mypy audit** — first pass removed six mypy issues; remaining errors ~171 (run `uv run mypy src tests scripts`).
+- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 197 errors concentrated in shared fixtures (for example `tests/test_deployment_specs.py`) and the MCP gate guard (`scripts/quality/run_qg4.py`).【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
 
 ### Deliverable status\*\*
 

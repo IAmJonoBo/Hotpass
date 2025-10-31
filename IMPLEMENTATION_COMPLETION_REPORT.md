@@ -73,10 +73,10 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 - **Action:** Non-blocking; mostly formatting preferences
 
 ### Mypy (Type Checking)
-- **Status:** 199 type errors across 47 files
+- **Status:** 197 type errors across 46 files
 - **Baseline:** 171 errors (documented in Next_Steps.md)
-- **Change:** +28 errors (likely from test modifications)
-- **Action:** Ongoing improvement per Next_Steps.md
+- **Change:** +26 errors (largely from untyped pytest fixtures and new MCP tooling checks).【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
+- **Action:** Ongoing improvement per Next_Steps.md with focus on typed fixtures and `scripts/quality/run_qg4.py` cleanup.【F:scripts/quality/run_qg4.py†L100-L220】
 
 ### Bandit (Security)
 - **Status:** ✅ CLEAN
@@ -112,7 +112,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
   - **Target:** All test files should use expect() per Next_Steps.md L26-28
 
 - [ ] Audit remaining telemetry/CLI modules for strict mypy readiness
-  - **Current:** 199 errors (baseline was 171)
+  - **Current:** 197 errors (baseline was 171).【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
   - **Target:** Focus on removing unused type:ignore comments per Next_Steps.md L29-30
 
 ### Pending (Blocked or Future Work)
