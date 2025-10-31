@@ -20,14 +20,12 @@ This document details the implementation plan for upgrading Hotpass to support f
 ## Architecture Alignment
 
 ### Current State
-- ✅ CLI exists with commands: `run`, `backfill`, `doctor`, `orchestrate`, `resolve`, `dashboard`, `deploy`, `init`, `version`
-- ✅ Profiles exist: `aviation.yaml`, `generic.yaml` (partial schema)
-- ✅ Enrichment module exists with providers and validators
-- ✅ Fitness functions guard module complexity
-- ⚠️ No MCP server implementation
-- ⚠️ CLI verbs don't match UPGRADE.md requirements
-- ⚠️ Profile schema incomplete (missing blocks)
-- ⚠️ Quality gates not systematically wired
+- ✅ CLI surface now aligned with UPGRADE.md (`overview`, `refine`, `enrich`, `qa`, `contracts`) with legacy commands maintained where needed.
+- ✅ MCP stdio server (`src/hotpass/mcp/server.py`) exposes the required toolset, including `hotpass.crawl` backed by the adaptive orchestrator.
+- ✅ Enrichment + research orchestration deliver deterministic-first enrichment, provenance, and throttled crawl artefacts.
+- ✅ Quality gates QG‑1 → QG‑5 run locally and in CI via `scripts/quality/run_qg*.py` and the `quality-gates` workflow.
+- ⚠️ Advanced profile/linkage coverage and TA integration analytics remain in progress (integration tests + QG surfacing still required).
+- ⚠️ Docs/navigation uplift and research-first positioning still pending sign-off.
 
 ### Target State
 - ✅ CLI commands: `overview`, `refine`, `enrich`, `qa`, `contracts` (aliased to existing)

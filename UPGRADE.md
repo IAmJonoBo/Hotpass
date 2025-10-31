@@ -17,12 +17,12 @@
   - Adaptive research orchestrator shipped under `src/hotpass/research/`, with CLI verbs (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wiring deterministic-first planning into agent workflows.
 - **In progress**
   - Extend coverage/integration tests for the research orchestrator and expand profile documentation/examples around authority sources/backfill behaviour.
-  - Profile-first linkage and assertion migration require additional coverage; the `expect()` helper is present but bare `assert` calls remain in several tests.
+- Profile-first linkage improvements still need additional coverage; the `expect()` helper is now adopted across compliance/enrichment suites with 32 legacy `assert` usages remaining elsewhere.
   - Docs navigation uplift and long-tail telemetry/performance benchmarking are partially complete and need follow-on sign-offs.
 - **Blockers / dependencies**
   - Staging access is still required to capture live Marquez lineage evidence and ARC runner smoke logs.
   - Docker buildx cache reuse work has not begun; pipeline cost reductions remain blocked pending that PR.
-  - Adaptive research enhancements depend on defining provider rate limits and human-in-the-loop guardrails before enabling network defaults at scale.
+- Adaptive research enhancements depend on tightening provider-specific guardrails before enabling network defaults at scale; rate-limit scaffolding now exists per profile, and human-in-the-loop controls remain outstanding.
 
 ---
 
@@ -73,7 +73,7 @@
 | Gap                                     | Status                   | Evidence                                                                                                                                                                                   | Next action                                                                                               |
 | --------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | QG‑2 only performed schema checks       | Resolved                 | `scripts/quality/run_qg2.py` runs full GE checkpoints; uploads in `.github/workflows/quality-gates.yml`.                                                                                   | Monitor GE dependency availability; ensure sample workbooks stay in `data/`.                              |
-| Sprint 5 automation stubs               | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`).     | Implement real crawler handler for `hotpass.crawl` and add MCP integration tests.                         |
+| Sprint 5 automation stubs               | Resolved with follow-ups | Gate scripts and MCP `hotpass.ta.check` implemented (`scripts/quality/run_qg*.py`, `src/hotpass/mcp/server.py`); `hotpass.qa` delegates to scripts (`src/hotpass/cli/commands/qa.py`).     | Add MCP/CLI integration tests and TA analytics now that crawler handler ships.                            |
 | Documentation misalignment              | Resolved                 | CLI reference refreshed (`docs/reference/cli.md`), instructions mention core verbs in `.github/copilot-instructions.md` & `AGENTS.md`.                                                     | Extend reference set with MCP/quality gate pages.                                                         |
 | Research APIs promised but not exposed  | Resolved                 | Adaptive research orchestrator + CLI (`hotpass plan research`, `hotpass crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) ship from `src/hotpass/research/orchestrator.py`. | Integration regression tests cover CLI + MCP tooling; monitor staging rehearsals for additional evidence. |
 | Assert-free pytest migration incomplete | Outstanding              | Bare asserts present (e.g. `tests/test_evidence.py`).                                                                                                                                      | Continue migrating to shared `expect()` helper per `docs/how-to-guides/assert-free-pytest.md`.            |
@@ -113,7 +113,7 @@
 
 - Profile linter (`tools/profile_lint.py`) validates ingest/refine/enrich/compliance blocks.
 - Contract tests and Great Expectations suites validate active profiles.
-- Remaining work: finish assertion migration, extend `docs/reference/profiles.md`, and wire profile validation output into QG summary.
+- Remaining work: surface profile validation output in the QG summary and extend coverage for advanced profile/linkage scenarios.
 
 ### Sprint 4 – Docs & agent UX (**Status: ✅ Complete with follow-ons**)
 
@@ -125,14 +125,14 @@
 - Gate scripts and `hotpass qa ta` delegate to `scripts/quality/run_all_gates.py`.
 - MCP `hotpass.ta.check` calls the consolidated runner.
 - TA runs now persist `dist/quality-gates/latest-ta.json` (written by `hotpass qa ta` / `scripts/quality/run_all_gates.py`) so the latest gate summary is easy to reference post-run.
-- Outstanding: extend MCP integration tests (including adaptive research flows) and tighten TA reporting to emit structured JSON artefacts.
+- Outstanding: extend MCP integration tests (including adaptive research flows) and publish TA summary analytics (the JSON artefact now persists under `dist/quality-gates/` but lacks aggregation reporting).
 
 ### Sprint 6 – Adaptive research orchestrator (**Status: ⚠️ In progress**)
 
 - `src/hotpass/research/orchestrator.py` now implements the adaptive loop (local snapshot → authority check → deterministic enrichment → optional network enrichment → native crawl/backfill planning). CLI (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wrap the planner, emitting audit entries to `./.hotpass/mcp-audit.log`.
 - Profile schema adds `authority_sources` and `research_backfill` so planners understand trusted registries and backfillable fields; agent docs cover the new flags.
 - Profile-driven throttling (`research_rate_limit` min interval + optional burst) keeps network fetchers within provider limits, and each native crawl stores metadata snapshots under `.hotpass/research_runs/<entity>/crawl/` alongside the run summary.
-- Next: add integration tests (CLI + MCP), wire rate-limit configuration for provider-specific crawlers, and store crawl artefacts alongside provenance outputs.
+- Next: add integration tests (CLI + MCP) and surface provider-specific rate-limit/guardrail configuration alongside the new crawl artefact catalogue.
 
 ### Sprint 7 – Agent-first UI & exports (**Status: 🚧 Planned**)
 
@@ -171,7 +171,7 @@ Expose the same capabilities via MCP stdio:
 | `hotpass.refine`             | Shells to CLI refine               | Accepts `input_path`, `output_path`, `profile`, `archive`.         |
 | `hotpass.enrich`             | Shells to CLI enrich               | Honors `allow_network` and env guardrails.                         |
 | `hotpass.qa`                 | Runs `hotpass qa <target>`         | Default `target="all"`.                                            |
-| `hotpass.crawl`              | Reserved for research orchestrator | Currently returns placeholder response; implement during Sprint 6. |
+| `hotpass.crawl`              | Executes research orchestrator     | Runs adaptive crawl with profile-driven throttling; still guarded behind feature flags. |
 | `hotpass.explain_provenance` | Reads provenance columns for a row | Works on XLSX outputs with provenance fields.                      |
 | `hotpass.ta.check`           | Runs consolidated quality gates    | Optional `gate` argument filters to a specific gate.               |
 
@@ -179,23 +179,21 @@ Ensure `tools/list` returns the full tool set and that the server logs tool invo
 
 ---
 
-## 4. Adaptive Research Orchestrator (planned work)
+## 4. Adaptive Research Orchestrator (status & follow-ups)
 
-To make Hotpass research-first, implement a planner under `src/hotpass/research/orchestrator.py` with the following loop:
+The adaptive planner in `src/hotpass/research/orchestrator.py` now runs end-to-end:
 
-1. **Local & authority pass** — reuse existing refined outputs, archives, and authority sources declared per profile (extend profile schema with `authority_sources` and historical lookup hints).
-2. **OSS-first extraction** — try Playwright + `trafilatura` / `readability-lxml`, `unstructured`, `pdfplumber` before invoking vendor APIs.
-3. **Hotpass native crawl** — embed Scrapy + Playwright-based crawlers with per-domain concurrency caps, robots.txt compliance, and provenance events.
-4. **Backfill retry** — only for profile-approved fields; mark provenance entries with `strategy=backfill` and capture warnings when falling back to general web.
-5. **Stop condition** — emit low-confidence result when the loop exhausts options.
+1. **Local & authority pass** — reuses refined artefacts plus cached authority snapshots per profile (`authority_sources`), recording outcomes in the audit log.
+2. **OSS-first extraction** — executes deterministic enrichment before any network escalation, capturing provenance metadata.
+3. **Native crawl** — performs guarded network requests (or Scrapy crawls when available) with profile-driven throttling, persisting crawl artefacts under `.hotpass/research_runs/<entity>/crawl/`.
+4. **Backfill planning** — enumerates approved backfill fields and surfaces them in step artefacts.
+5. **Stop condition** — returns a structured outcome payload for CLI, MCP, and MCP tooling consumers.
 
-Deliverables:
+Follow-ups:
 
-- Orchestrator module and tests.
-- Profile schema updates documenting authority/backfill behaviour.
-- Rate limiting via Prefect or internal semaphores.
-- CLI/MCP wrappers (`hotpass plan.research`, `hotpass.crawl` real implementation).
-- Provenance annotations (source, timestamp, confidence, strategy, network usage).
+- Add CLI + MCP integration tests that assert artefact locations, rate-limit behaviour, and audit logging.
+- Expand provider-specific guardrails (per-domain throttles, human-in-the-loop approvals) before enabling network defaults at scale.
+- Surface crawl artefact catalogues and provenance rollups in agent-facing docs/dashboards.
 
 ---
 
