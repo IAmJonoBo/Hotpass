@@ -42,6 +42,25 @@ tools:
     constraints:
       shared_drives:
         - compliance-evidence
+  - name: hotpass
+    permissions:
+      - tools.call
+      - tools.list
+    constraints:
+      allow:
+        - hotpass.refine
+        - hotpass.enrich
+        - hotpass.qa
+        - hotpass.explain_provenance
+        - hotpass.crawl
+        - hotpass.ta.check
+        - hotpass.plan.research
+        - hotpass.setup
+        - hotpass.net
+        - hotpass.ctx
+        - hotpass.env
+        - hotpass.aws
+        - hotpass.arc
 
 audit:
   log_path: ./dist/agent_actions.log
