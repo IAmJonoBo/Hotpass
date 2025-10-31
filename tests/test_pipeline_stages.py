@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("frictionless")
-
 from hotpass.compliance import PIIRedactionConfig
 from hotpass.pipeline.aggregation import aggregate_records
 from hotpass.pipeline.config import PipelineConfig
 from hotpass.pipeline.ingestion import ingest_sources
+
+pytest.importorskip("frictionless")
 
 
 def _make_config(sample_data_dir: Path, tmp_path: Path) -> PipelineConfig:
