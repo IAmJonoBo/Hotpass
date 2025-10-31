@@ -70,7 +70,7 @@ def test_broker_agent_run_denies_unlisted_tool() -> None:
             log_sink=log_sink,
         )
 
-    expect(log_sink, "a denial should be logged")
+    expect(bool(log_sink), "a denial should be logged")
     denial_entry = log_sink[0]
     expect(denial_entry.status == "denied", "Denial status should be recorded")
     expect(denial_entry.approved is False, "Approval flag should be False on denial")
@@ -94,7 +94,7 @@ def test_broker_agent_run_requires_manual_approval() -> None:
             log_sink=log_sink,
         )
 
-    expect(log_sink, "a manual approval denial should be logged")
+    expect(bool(log_sink), "a manual approval denial should be logged")
     denial_entry = log_sink[0]
     expect(denial_entry.status == "denied", "Manual denial should be recorded")
     expect(denial_entry.approver == "manual", "Manual approver should be captured")

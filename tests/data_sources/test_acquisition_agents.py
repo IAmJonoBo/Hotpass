@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from tests.helpers.fixtures import fixture
 from tests._telemetry_stubs import (
     DummyConsoleMetricExporter,
     DummyConsoleSpanExporter,
@@ -33,7 +34,7 @@ from hotpass.telemetry.registry import (
 )
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def telemetry_registry() -> Iterator[None]:
     DummyMetricReader.instances = []
     _meter, trace_module, metrics_module = build_modules()

@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 # Helper to check if MLflow is available
 pytest.importorskip("mlflow", reason="MLflow required for tracking tests")
@@ -44,15 +45,15 @@ def _build_training_frame() -> pd.DataFrame:
     )
 
 
-@pytest.fixture
-def temp_mlflow_db(tmp_path: Path):
+@fixture
+def temp_mlflow_db(tmp_path: Path) -> str:
     """Create a temporary MLflow tracking database."""
     db_path = tmp_path / "mlflow.db"
     tracking_uri = f"sqlite:///{db_path}"
     return tracking_uri
 
 
-@pytest.fixture
+@fixture
 def mlflow_config(temp_mlflow_db: str) -> MLflowConfig:
     """Create MLflow configuration with temporary database."""
     return MLflowConfig(

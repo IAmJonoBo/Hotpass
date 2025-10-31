@@ -2,6 +2,7 @@ from argparse import Namespace
 from pathlib import Path
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass.cli.commands.run import _resolve_options
 
@@ -11,7 +12,7 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-@pytest.fixture
+@fixture
 def namespace(tmp_path: Path) -> Namespace:
     input_dir = tmp_path / "input"
     input_dir.mkdir()

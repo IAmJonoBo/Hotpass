@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 duckdb = pytest.importorskip("duckdb")
 pytest.importorskip("frictionless")
@@ -14,7 +15,7 @@ from hotpass.error_handling import HotpassError  # noqa: E402
 from hotpass.pipeline import PipelineConfig, run_pipeline  # noqa: E402
 
 
-@pytest.fixture()
+@fixture()
 def sample_workbooks(tmp_path: Path) -> Path:
     """Create minimal but valid ingest workbooks in a temporary directory."""
     reachout = tmp_path / "Reachout Database.xlsx"

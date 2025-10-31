@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -18,7 +19,7 @@ from hotpass.linkage import (  # noqa: E402
 from hotpass.linkage import runner as linkage_runner  # noqa: E402
 
 
-@pytest.fixture
+@fixture
 def sample_dataframe() -> pd.DataFrame:
     return pd.DataFrame(
         [

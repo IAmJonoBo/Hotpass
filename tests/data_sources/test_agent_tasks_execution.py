@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass.data_sources import RawRecord
 from hotpass.data_sources.agents.base import AgentContext
@@ -77,7 +78,7 @@ class FakeProvider(BaseProvider):
         return [ProviderPayload(record=record, provenance=provenance, confidence=0.75)]
 
 
-@pytest.fixture
+@fixture
 def provider_registry() -> ProviderRegistry:
     registry = ProviderRegistry()
     registry.register("fake", FakeProvider)

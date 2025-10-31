@@ -235,7 +235,10 @@ def test_redact_dataframe_captures_events(mock_detector_class):
 
     expect(redacted.loc[0, "email"] == "<EMAIL_ADDRESS>", "PII should be redacted")
     expect(redacted.loc[1, "email"] == "clean", "Non-PII should remain untouched")
-    expect(events, "Redaction should emit provenance events")
+    expect(
+        bool(events),
+        "Redaction should emit provenance events",
+    )
     expect(
         events[0]["entities"][0]["entity_type"] == "EMAIL_ADDRESS",
         "Event entity type should match",

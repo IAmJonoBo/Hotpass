@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 
 def expect(condition: bool, message: str) -> None:
@@ -27,7 +28,7 @@ def _ensure_optional_dependencies(monkeypatch: pytest.MonkeyPatch) -> None:
         pyarrow_stub.bool_ = lambda: object()  # type: ignore[attr-defined]
 
 
-@pytest.fixture()
+@fixture()
 def cli_environment(monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Any]:
     """Load CLI and Prefect deployment modules with optional dependencies stubbed."""
 
@@ -37,7 +38,7 @@ def cli_environment(monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Any]:
     return cli_main, prefect_deployments
 
 
-@pytest.fixture()
+@fixture()
 def cli_parser(cli_environment: tuple[Any, Any]) -> Any:
     """Build the Hotpass CLI parser for deployment tests."""
 
@@ -45,7 +46,7 @@ def cli_parser(cli_environment: tuple[Any, Any]) -> Any:
     return cli_main.build_parser()
 
 
-@pytest.fixture()
+@fixture()
 def deployments_module(cli_environment: tuple[Any, Any]) -> Any:
     """Expose the Prefect deployments helper module for monkeypatching."""
 

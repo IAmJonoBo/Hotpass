@@ -11,10 +11,12 @@ This report documents the comprehensive implementation work completed to address
 ## Commits Made
 
 1. **Fix failing test_checkpoint_validation_provides_detailed_failure_info** (80c932f)
+
    - Fixed test to properly fail validation by using >84% null values
    - Test now correctly validates the "mostly": 0.16 threshold
 
 2. **Migrate test_artifacts.py to use expect() helper** (02c0f53)
+
    - Converted 7 bare assert statements to expect() helper
    - Fixed line length formatting issues
 
@@ -28,31 +30,37 @@ This report documents the comprehensive implementation work completed to address
 All quality gates (QG-1 through QG-5) are **PASSING**:
 
 ### QG-1: CLI Integrity
+
 - **Status:** ✅ PASSED
 - **Message:** 8/8 checks passed
 - **Duration:** 44.5s
 
 ### QG-2: Data Quality
+
 - **Status:** ✅ PASSED
 - **Message:** 7/7 checks passed
 - **Artifacts:** dist/quality-gates/qg2-data-quality/
 
 ### QG-3: Enrichment Chain
+
 - **Status:** ✅ PASSED
 - **Message:** 3/3 checks passed
 - **Artifacts:** dist/quality-gates/qg3-enrichment-chain/
 
 ### QG-4: MCP Discoverability
+
 - **Status:** ✅ PASSED
 - **Message:** 4/4 checks passed
 
 ### QG-5: Docs/Instructions
+
 - **Status:** ✅ PASSED
 - **Message:** 9/9 checks passed
 
 ## Test Suite Results
 
 ### Final Test Run
+
 - **Total Tests:** 505 tests
 - **Passed:** 500
 - **Skipped:** 6
@@ -61,6 +69,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 - **Coverage:** 13% (baseline maintained)
 
 ### Test Migrations Completed
+
 - **Files Migrated:** 4 (test_artifacts.py, test_bootstrap.py, test_package_contracts.py, test_data_sources.py)
 - **Assertions Converted:** 20
 - **Remaining Files:** 25 files with ~530 bare assertions
@@ -68,28 +77,33 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 ## Code Quality Checks
 
 ### Ruff (Linting)
+
 - **Status:** 30 minor issues (mostly line length E501)
 - **Critical Issues:** 0
 - **Action:** Non-blocking; mostly formatting preferences
 
 ### Mypy (Type Checking)
-- **Status:** 182 type errors across 45 files
+
+- **Status:** 127 type errors across 31 files
 - **Baseline:** 171 errors (documented in Next_Steps.md)
-- **Change:** +12 errors (residual debt now concentrated in shared pytest fixtures, mlflow stubs, and accessibility tests after typing deployment fixtures and tightening `run_qg4`).【F:tests/test_deployment_specs.py†L1-L220】【F:scripts/quality/run_qg4.py†L100-L180】
-- **Action:** Ongoing improvement per Next_Steps.md with focus on pytest fixtures (e.g. `tests/conftest.py`) and ML tracking test doubles.【F:tests/conftest.py†L1-L80】【F:tests/ml/test_tracking_stubbed.py†L1-L260】
+- **Change:** -44 errors (typed pytest fixtures, mlflow doubles, and cache workflow clean-up removed large clusters; outstanding items include Prefect decorators, observability stubs, and data-source assertions).【F:tests/helpers/fixtures.py†L1-L40】【F:tests/ml/test_tracking_stubbed.py†L1-L420】
+- **Action:** Continue migrating decorators in orchestration/dashboard suites and replace list-based `expect(...)` calls with boolean guards where flagged by mypy.【F:tests/test_orchestration.py†L100-L200】【F:tests/test_observability.py†L100-L160】
 
 ### Bandit (Security)
+
 - **Status:** ✅ CLEAN
 - **Total Issues:** 29 low severity
 - **Medium/High:** 0
 - **Action:** Low severity issues are acceptable per documentation
 
 ### Detect-Secrets
+
 - **Status:** ✅ CLEAN
 - **Secrets Found:** 0
 - **Generated:** 2025-10-31T03:47:03Z
 
 ### Package Build
+
 - **Status:** ✅ SUCCESS
 - **Artifacts:**
   - dist/hotpass-0.1.0.tar.gz
@@ -98,6 +112,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 ## Next_Steps.md Task Completion
 
 ### Completed Items
+
 - [x] Fixed failing test in test_validation_checkpoints.py
 - [x] Verified all quality gates pass (QG-1 through QG-5)
 - [x] Verified bandit scan results (29 low severity, acceptable)
@@ -106,7 +121,9 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 - [x] Started systematic migration to expect() helper (4 files, 20 assertions)
 
 ### In Progress
+
 - [ ] Continue migrating orchestration pytest assertions to expect() helper
+
   - **Progress:** 4 files completed, 25 files remaining
   - **Baseline:** 551 bare assertions originally, ~530 remaining
   - **Target:** All test files should use expect() per Next_Steps.md L26-28
@@ -116,6 +133,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
   - **Target:** Focus on removing unused type:ignore comments per Next_Steps.md L29-30
 
 ### Pending (Blocked or Future Work)
+
 - [ ] Execute full E2E runs with canonical configuration toggles (requires Prefect staging)
 - [ ] Validate Prefect backfill deployment guardrails in staging (requires staging access)
 - [ ] Benchmark HotpassConfig.merge on large payloads (requires benchmark harness)
@@ -127,57 +145,70 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 ### Sprint Status
 
 #### Sprint 1: CLI & MCP Parity
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** All CLI verbs operational, MCP tools exposed
 
 #### Sprint 2: Enrichment Translation
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** Deterministic and research fetchers operational
 
 #### Sprint 3: Profiles & Compliance Unification
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** All profiles have 4-block structure
 
 #### Sprint 4: Docs & Agent UX
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** Documentation aligned with new architecture
 
 #### Sprint 5: TA Closure
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** All quality gates automated and passing
 
 #### Sprint 6: Adaptive Research Orchestrator
+
 - **Status:** ✅ Complete (previously delivered)
 - **Evidence:** Research orchestrator operational
 
 #### Sprint 7: Agent-first UI & Exports
+
 - **Status:** 🚧 Planned (future work)
 
 ## IMPLEMENTATION_PLAN.md Status
 
 ### Phase 1: Foundation (Sprints 1-2)
+
 - **Status:** ✅ Complete
 - **Deliverables:** CLI verbs, MCP server, enrichment pipeline, QG-1, QG-3
 
 ### Phase 2: Standardization (Sprint 3)
+
 - **Status:** ✅ Complete
 - **Deliverables:** Complete profiles, linter, QG-2
 
 ### Phase 3: Documentation (Sprint 4)
+
 - **Status:** ✅ Complete
 - **Deliverables:** Agent instructions, updated docs, QG-5
 
 ### Phase 4: Integration (Sprint 5)
+
 - **Status:** ✅ Complete
 - **Deliverables:** CI automation, TA tooling, QG-4
 
 ### Phase 5: Validation & Handoff
+
 - **Status:** ✅ Complete (this work)
 - **Deliverables:** Full TA verification, test suite validation
 
 ## Key Files Modified
 
 ### Tests
+
 - tests/test_validation_checkpoints.py - Fixed failing test
 - tests/test_artifacts.py - Migrated to expect()
 - tests/test_bootstrap.py - Migrated to expect()
@@ -185,6 +216,7 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 - tests/test_data_sources.py - Migrated to expect()
 
 ### Generated Artifacts
+
 - dist/hotpass-0.1.0.tar.gz - Wheel package
 - dist/hotpass-0.1.0-py3-none-any.whl - Distribution package
 - dist/quality-gates/latest-ta.json - QA gate results
@@ -193,12 +225,15 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 ## Recommendations for Future Work
 
 ### High Priority
+
 1. **Continue Test Migration:** Complete migration of remaining 25 test files to expect() helper
+
    - Estimated: ~530 assertions remaining
    - Time: 2-3 hours for systematic conversion
    - Files: All files listed in Next_Steps.md L16-28
 
 2. **Mypy Error Reduction:** Address type errors to reduce from 199 to <100
+
    - Focus on removing unused type:ignore comments
    - Add proper type stubs for third-party libraries
    - Estimated: 4-6 hours
@@ -209,11 +244,13 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
    - Estimated: 30 minutes
 
 ### Medium Priority
+
 4. **Extended CLI Coverage:** Add tests for advanced profile scenarios in test_resolve.py
 5. **Benchmark Harness:** Implement HotpassConfig.merge performance benchmarking
 6. **E2E Testing:** Execute full end-to-end runs when staging access is available
 
 ### Low Priority
+
 7. **Documentation Updates:** Minor alignment updates per UPGRADE.md
 8. **Profile Validation:** Ensure all profiles maintain 4-block structure
 9. **Supply Chain:** Continue SBOM/SLSA attestation improvements
@@ -221,24 +258,31 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 ## Technical Acceptance Criteria
 
 ### TA-1: Single-Tool Rule ✅
+
 - All operations accessible via `uv run hotpass ...` or MCP tools
 
 ### TA-2: Profile Completeness ✅
+
 - All profiles have 4 blocks (ingest, refine, enrich, compliance)
 
 ### TA-3: Offline-First ✅
+
 - Enrichment succeeds with `--allow-network=false`
 
 ### TA-4: Network-Safe ✅
+
 - Network disabled by env vars prevents remote calls
 
 ### TA-5: MCP Parity ✅
+
 - Every CLI verb exposed as MCP tool
 
 ### TA-6: Quality Gates Wired ✅
+
 - QG-1 through QG-5 exist and pass
 
 ### TA-7: Docs Present ✅
+
 - Agent instructions complete with required terminology
 
 ## Conclusion
@@ -273,4 +317,5 @@ uv build
 ```
 
 ---
+
 **End of Report**

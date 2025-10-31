@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass import observability
 from tests.helpers.assertions import expect
@@ -97,7 +98,7 @@ class StubRegistry:
         return self.metrics
 
 
-@pytest.fixture()
+@fixture()
 def stub_registry(monkeypatch: pytest.MonkeyPatch) -> Generator[StubRegistry]:
     original = observability._REGISTRY
     registry = StubRegistry()

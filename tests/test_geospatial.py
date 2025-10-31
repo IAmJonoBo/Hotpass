@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -20,8 +21,8 @@ from hotpass.geospatial import (
 )
 
 
-@pytest.fixture(autouse=True)
-def reset_geospatial_globals(monkeypatch):
+@fixture(autouse=True)
+def reset_geospatial_globals(monkeypatch: pytest.MonkeyPatch) -> None:
     """Reset optional dependency flags for each test."""
 
     monkeypatch.setattr(geospatial, "GEOPY_AVAILABLE", False, raising=False)

@@ -5,8 +5,9 @@ import warnings
 from pathlib import Path
 
 import pandas as pd
-import pytest
 from marshmallow.warnings import ChangedInMarshmallow4Warning
+from tests.helpers.fixtures import fixture
+import pytest
 
 pytest_plugins = ["tests.fixtures.lineage"]
 
@@ -38,13 +39,13 @@ def pytest_configure(config: pytest.Config) -> None:
     _install_warning_filters()
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def _fail_fast_for_mutmut() -> None:
     if os.environ.get("MUTANT_UNDER_TEST") == "fail":
         pytest.fail("mutmut forced failure sentinel", pytrace=False)
 
 
-@pytest.fixture()
+@fixture()
 def sample_data_dir(tmp_path: Path) -> Path:
     data_dir = tmp_path / "data"
     data_dir.mkdir()

@@ -6,11 +6,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass import cli
 
 
-@pytest.fixture
+@fixture
 def base_backfill_config(tmp_path: Path) -> Path:
     archive_root = tmp_path / "archives"
     restore_root = tmp_path / "restore"

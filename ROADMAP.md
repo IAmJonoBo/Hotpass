@@ -59,8 +59,8 @@ phases and governance gates.
 - [x] **T5.2 Security scanning** — Codify CodeQL, detect-secrets diff mode, and
       Bandit SARIF uploads.
   - `.github/workflows/codeql.yml` and `.github/workflows/secret-scanning.yml` now run on every push/PR, while the `Process and Refine Data` workflow executes detect-secrets and Bandit checks in-line.【F:.github/workflows/codeql.yml†L1-L40】【F:.github/workflows/secret-scanning.yml†L1-L40】【F:.github/workflows/process-data.yml†L25-L140】
-- [ ] **T5.3 Docker buildx cache** — Enable cache reuse across PR builds.
-  - Upcoming PR: `ci/docker-cache` queued after quality gate hardening.
+- [x] **T5.3 Docker buildx cache** — Enable cache reuse across PR builds.
+  - Implemented via `.github/workflows/docker-cache.yml` hydrating BuildKit caches through `docker/build-push-action` with GitHub Actions cache scopes.【F:.github/workflows/docker-cache.yml†L1-L60】
 - [x] **T5.4 Provenance** — Generate SBOMs and SLSA attestations.
   - The `supply-chain` job in `.github/workflows/process-data.yml` invokes `scripts/supply_chain/generate_sbom.py` and `generate_provenance.py`, publishing artefacts and checksums for audits.【F:.github/workflows/process-data.yml†L180-L260】【F:scripts/supply_chain/generate_sbom.py†L1-L120】【F:scripts/supply_chain/generate_provenance.py†L1-L160】
 - [x] **T5.5 Ephemeral runners** — Roll out ARC manifests and AWS OIDC wiring (pending stakeholder confirmation that programme expectations are met).

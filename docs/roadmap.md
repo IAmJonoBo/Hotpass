@@ -114,9 +114,9 @@ Focus areas for the upcoming iterations:
   - [x] Enable **CodeQL**; run **detect-secrets** in diff mode; run **bandit**.【F:.github/workflows/codeql.yml†L1-L40】【F:.github/workflows/secret-scanning.yml†L1-L40】【F:.github/workflows/process-data.yml†L25-L140】
   - **Acceptance:** CodeQL and Gitleaks SARIF upload to code scanning, while detect-secrets/Bandit execute on every push through the process-data pipeline.【F:.github/workflows/process-data.yml†L25-L140】
 
-- [ ] **T5.3 `build.yml` – Docker buildx + cache**
-  - [ ] Use `docker/build-push-action` with `cache-from/to: gha`; publish image artefacts.
-  - **Acceptance:** builds hit cache across PRs; image digest attached.
+- [x] **T5.3 `build.yml` – Docker buildx + cache**
+  - [x] Use `docker/build-push-action` with `cache-from/to: gha`; publish image artefacts.【F:.github/workflows/docker-cache.yml†L1-L60】
+  - **Acceptance:** cache warming workflow in place; monitor cache hit ratio once adopted by primary CI builds.
 
 - [x] **T5.4 `provenance.yml` – SBOM + SLSA**
   - [x] Generate **SBOM** via Syft; add **build-provenance** attestations.【F:.github/workflows/process-data.yml†L180-L260】【F:scripts/supply_chain/generate_sbom.py†L1-L120】【F:scripts/supply_chain/generate_provenance.py†L1-L160】

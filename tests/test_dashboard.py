@@ -11,6 +11,7 @@ from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 _STREAMLIT_MODULE = ModuleType("streamlit")
 _STREAMLIT_MODULE.sidebar = SimpleNamespace(
@@ -74,7 +75,7 @@ class _StreamlitStub:
         self.warnings.append(message)
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in [ALLOWED_ROOTS_ENV, AUTH_PASSWORD_ENV]:
         monkeypatch.delenv(key, raising=False)

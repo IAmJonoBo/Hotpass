@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -55,7 +56,7 @@ class StubSession:
         return self.request("POST", url, **kwargs)
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure Vault-related environment variables are cleared between tests."""
 

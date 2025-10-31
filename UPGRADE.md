@@ -54,7 +54,7 @@
 - **Manifest-driven Prefect deployments** — manifests are committed; remaining work is staging validation plus doc update in `docs/how-to-guides/prefect-manifests.md` (todo).
 - **Marquez lineage smoke scheduling** — blocked until optional dependencies land on staging; track via `tests/infrastructure/test_marquez_stack.py` and staging access ticket.
 - **Assertion migration** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
-- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 182 errors concentrated in shared fixtures (for example `tests/conftest.py`) and mlflow stubs, after typing deployment specs and refactoring `scripts/quality/run_qg4.py`.【F:tests/test_deployment_specs.py†L1-L220】【F:tests/conftest.py†L1-L80】【F:scripts/quality/run_qg4.py†L100-L180】
+- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 127 errors concentrated in Prefect decorators, observability stubs, and data-source assertions after the shared fixture/mlflow clean-up.【F:tests/helpers/fixtures.py†L1-L40】【F:tests/test_observability.py†L100-L160】
 
 ### Deliverable status\*\*
 

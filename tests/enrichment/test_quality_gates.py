@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 
 def expect(condition: bool, message: str) -> None:
@@ -16,7 +17,7 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-@pytest.fixture
+@fixture
 def minimal_xlsx(tmp_path: Path) -> Path:
     """Create a minimal test XLSX file."""
     df = pd.DataFrame(

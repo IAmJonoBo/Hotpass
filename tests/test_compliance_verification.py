@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -20,7 +21,7 @@ from hotpass.compliance_verification import (  # noqa: E402
 from tests.helpers.assertions import expect
 
 
-@pytest.fixture()
+@fixture()
 def log_path(tmp_path: Path) -> Path:
     return tmp_path / "verification-log.json"
 

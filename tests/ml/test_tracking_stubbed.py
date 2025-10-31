@@ -12,6 +12,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass.ml.tracking import (
     MLflowConfig,
@@ -197,34 +198,53 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     module = ModuleType("mlflow")
     state = _FakeMlflowState()
 
-    module.models = ModuleType("mlflow.models")
-    module.models.infer_signature = lambda features, predictions: {  # noqa: E731
-        "fields": len(getattr(features, "columns", [])),
-        "predictions": list(predictions),
-    }
+    models_module = ModuleType("mlflow.models")
 
-    module.sklearn = ModuleType("mlflow.sklearn")
-    module.sklearn.log_model = lambda **kwargs: state.logged_models.append(kwargs)  # noqa: E731
-    module.sklearn.load_model = lambda uri: state.loaded_models.append(uri) or {  # noqa: E731
-        "loaded": uri
-    }
+    def infer_signature(features: Any, predictions: Any) -> dict[str, Any]:
+        column_count = len(getattr(features, "columns", []))
+        return {"fields": column_count, "predictions": list(predictions)}
+
+    setattr(models_module, "infer_signature", infer_signature)
+    setattr(module, "models", models_module)
+
+    sklearn_module = ModuleType("mlflow.sklearn")
+
+    def log_model(**kwargs: Any) -> None:
+        state.logged_models.append(dict(kwargs))
+
+    def load_model(uri: str) -> dict[str, str]:
+        state.loaded_models.append(uri)
+        return {"loaded": uri}
+
+    setattr(sklearn_module, "log_model", log_model)
+    setattr(sklearn_module, "load_model", load_model)
+    setattr(module, "sklearn", sklearn_module)
 
     def start_run(run_name: str | None = None) -> _RunContext:
         return _RunContext(state, run_name)
 
-    module.start_run = start_run
-    module.set_tracking_uri = lambda uri: setattr(state, "tracking_uri", uri)  # noqa: E731
-    module.set_registry_uri = lambda uri: setattr(state, "registry_uri", uri)  # noqa: E731
-    module.get_experiment_by_name = state.get_experiment
-    module.create_experiment = lambda name, **kwargs: state.create_experiment(  # noqa: E731
-        name,
-        artifact_location=kwargs.get("artifact_location"),
-    )
-    module.set_experiment = state.set_active_experiment
+    setattr(module, "start_run", start_run)
 
-    module.log_params = state.update_params
-    module.log_metrics = state.update_metrics
-    module.set_tag = state.set_tag
+    def set_tracking_uri(uri: str) -> None:
+        state.tracking_uri = uri
+
+    def set_registry_uri(uri: str) -> None:
+        state.registry_uri = uri
+
+    setattr(module, "set_tracking_uri", set_tracking_uri)
+
+    setattr(module, "set_registry_uri", set_registry_uri)
+    setattr(module, "get_experiment_by_name", state.get_experiment)
+
+    def create_experiment(name: str, *, artifact_location: str | None = None) -> SimpleNamespace:
+        return state.create_experiment(name, artifact_location=artifact_location)
+
+    setattr(module, "create_experiment", create_experiment)
+    setattr(module, "set_experiment", state.set_active_experiment)
+
+    setattr(module, "log_params", state.update_params)
+    setattr(module, "log_metrics", state.update_metrics)
+    setattr(module, "set_tag", state.set_tag)
 
     def log_artifact(path: str, artifact_path: str | None = None) -> None:
         run_id = state.active_run_id
@@ -236,8 +256,8 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     def log_artifacts(path: str, artifact_path: str | None = None) -> None:
         log_artifact(path, artifact_path)
 
-    module.log_artifact = log_artifact
-    module.log_artifacts = log_artifacts
+    setattr(module, "log_artifact", log_artifact)
+    setattr(module, "log_artifacts", log_artifacts)
 
     def get_run(run_id: str) -> SimpleNamespace:
         record = state.runs[run_id]
@@ -249,18 +269,21 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
             )
         )
 
-    module.get_run = get_run
+    setattr(module, "get_run", get_run)
 
     exceptions_module = ModuleType("mlflow.exceptions")
-    exceptions_module.MlflowException = _FakeMlflowException
-    module.exceptions = exceptions_module
+    setattr(exceptions_module, "MlflowException", _FakeMlflowException)
+    setattr(module, "exceptions", exceptions_module)
 
-    module.MlflowClient = lambda: _FakeMlflowClient(state)  # noqa: E731
+    def mlflow_client_factory() -> _FakeMlflowClient:
+        return _FakeMlflowClient(state)
+
+    setattr(module, "MlflowClient", mlflow_client_factory)
 
     return module, state
 
 
-@pytest.fixture
+@fixture
 def fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     """Provide a stub mlflow module and its backing state."""
 
@@ -345,7 +368,7 @@ def test_log_training_run_records_payload(
         "file" in record.artifacts and "dir" in record.artifacts,
         "Artifacts should be logged",
     )
-    expect(state.logged_models, "Model logging should capture payloads")
+    expect(bool(state.logged_models), "Model logging should capture payloads")
 
 
 def test_log_training_run_formats_metadata_and_skips_missing_artifacts(

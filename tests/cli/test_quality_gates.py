@@ -374,4 +374,7 @@ class TestTechnicalAcceptance:
         expect(isinstance(payload, dict), "TA summary artifact must be a JSON object")
         history_path = Path("dist/quality-gates/history.ndjson")
         expect(history_path.exists(), "TA history log should exist after running all gates")
-        expect(history_path.read_text(encoding="utf-8").strip(), "TA history log should contain entries")
+        expect(
+            bool(history_path.read_text(encoding="utf-8").strip()),
+            "TA history log should contain entries",
+        )

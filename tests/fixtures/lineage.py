@@ -8,6 +8,7 @@ from types import ModuleType
 from typing import Any
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 
 @dataclass(slots=True)
@@ -17,7 +18,7 @@ class CapturedLineage:
     events: list[Any]
 
 
-@pytest.fixture()
+@fixture()
 def capture_lineage(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[CapturedLineage]:

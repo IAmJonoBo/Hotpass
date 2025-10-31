@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -11,7 +13,7 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def _write_dataset(tmp_path):
+def _write_dataset(tmp_path: Path) -> Path:
     path = tmp_path / "research-input.xlsx"
     df = pd.DataFrame(
         {
@@ -25,7 +27,9 @@ def _write_dataset(tmp_path):
 
 
 @pytest.mark.usefixtures("monkeypatch")
-def test_plan_research_cli_offline(tmp_path, monkeypatch):
+def test_plan_research_cli_offline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     dataset = _write_dataset(tmp_path)
     monkeypatch.delenv("FEATURE_ENABLE_REMOTE_RESEARCH", raising=False)
     monkeypatch.delenv("ALLOW_NETWORK_RESEARCH", raising=False)
@@ -46,7 +50,7 @@ def test_plan_research_cli_offline(tmp_path, monkeypatch):
 
 
 @pytest.mark.usefixtures("monkeypatch")
-def test_crawl_cli_offline(monkeypatch):
+def test_crawl_cli_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FEATURE_ENABLE_REMOTE_RESEARCH", raising=False)
     monkeypatch.delenv("ALLOW_NETWORK_RESEARCH", raising=False)
 

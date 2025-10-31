@@ -137,7 +137,10 @@ def test_pipeline_progress_replays_high_volume_fixture() -> None:
     suppression_logs = [
         message for message in recording_progress.log_messages if "Suppressed" in message
     ]
-    expect(suppression_logs, "fixture playback should emit suppression summary")
+    expect(
+        bool(suppression_logs),
+        "fixture playback should emit suppression summary",
+    )
     suppressed_counts = [
         int("".join(ch for ch in message if ch.isdigit()) or "0") for message in suppression_logs
     ]

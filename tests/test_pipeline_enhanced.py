@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -29,7 +30,7 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def reset_observability(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[None]:
@@ -42,7 +43,7 @@ def reset_observability(
     observability.shutdown_observability()
 
 
-@pytest.fixture
+@fixture
 def base_pipeline_config(tmp_path: Path) -> PipelineConfig:
     return PipelineConfig(
         input_dir=tmp_path,
@@ -51,7 +52,7 @@ def base_pipeline_config(tmp_path: Path) -> PipelineConfig:
     )
 
 
-@pytest.fixture
+@fixture
 def sample_result() -> PipelineResult:
     frame = pd.DataFrame({"organization_name": ["Alpha"]})
     report = QualityReport(

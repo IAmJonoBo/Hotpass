@@ -13,6 +13,8 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 
+import requests
+
 import scripts.arc.verify_runner_lifecycle as lifecycle
 
 
@@ -33,12 +35,18 @@ class _Response:
         return None
 
 
-class _Session:
+class _Session(requests.Session):
     def __init__(self, payloads: Iterator[dict[str, Any]]) -> None:
+        super().__init__()
         self._payloads = payloads
         self.request_count = 0
 
-    def get(self, url: str, headers: dict[str, str], timeout: float) -> _Response:  # noqa: ARG002
+    def get(  # type: ignore[override]
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+        timeout: float | tuple[float, float] | None = None,
+    ) -> _Response:
         self.request_count += 1
         try:
             payload = next(self._payloads)

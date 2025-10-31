@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 import pytest
+from tests.helpers.fixtures import fixture
 
 from hotpass.prefect.deployments import DeploymentSpec
 
@@ -94,7 +95,7 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
                 sys.modules[module_name] = original
 
 
-@pytest.fixture(scope="module")
+@fixture(scope="module")
 def deployments_module() -> Generator[types.ModuleType, None, None]:
     """Provide the Prefect deployments module with isolated imports."""
 
@@ -109,7 +110,7 @@ def expect(condition: bool, message: str) -> None:
         pytest.fail(message)
 
 
-@pytest.fixture(scope="module")
+@fixture(scope="module")
 def loaded_specs(
     deployments_module: types.ModuleType,
 ) -> dict[str, DeploymentSpec]:

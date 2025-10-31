@@ -18,6 +18,7 @@ from unittest.mock import Mock, patch
 import anyio
 import pandas as pd
 import pytest
+from tests.helpers.fixtures import fixture
 
 _pandera_stub = types.ModuleType("pandera")
 _pandera_pandas = types.ModuleType("pandera.pandas")
@@ -105,22 +106,22 @@ def expect(condition: bool, message: str) -> None:
         pytest.fail(message)
 
 
-@pytest.fixture
+@fixture
 def anyio_backend() -> str:
     """Limit anyio tests to the asyncio backend to avoid trio dependency."""
 
     return "asyncio"
 
 
-@pytest.fixture(autouse=True)
-def reset_orchestration(monkeypatch):
+@fixture(autouse=True)
+def reset_orchestration(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure Prefect decorators do not retain state between tests."""
 
     monkeypatch.setattr(orchestration, "flow", orchestration.flow, raising=False)
     monkeypatch.setattr(orchestration, "task", orchestration.task, raising=False)
 
 
-@pytest.fixture(autouse=True)
+@fixture(autouse=True)
 def disable_prefect_concurrency(monkeypatch: pytest.MonkeyPatch) -> None:
     """Prevent tests from starting ephemeral Prefect servers."""
 
@@ -136,7 +137,7 @@ def disable_prefect_concurrency(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
-@pytest.fixture
+@fixture
 def mock_pipeline_result():
     """Create a mock pipeline result."""
     result = Mock()

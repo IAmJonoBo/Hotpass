@@ -9,7 +9,7 @@
 - [ ] **QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
   - **Progress:** Added `tests/cli/test_resolve_profile.py` covering profile-driven Splink defaults, sensitive-field redaction, and output writes. Remaining: expand orchestrator stress fixtures once staging data is available.
 - [ ] **Engineering & QA** — Type shared pytest fixtures (notably `tests/test_deployment_specs.py`) and fix the unreachable branch in `scripts/quality/run_qg4.py` to reduce the mypy error set.
-- [ ] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).
+- [x] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).【F:.github/workflows/docker-cache.yml†L1-L60】
 - [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns.
 - [ ] **Docs & UX (Phase 6)** — Finish Diátaxis navigation uplift in PR `docs/data-governance-nav` follow-on, ensuring governance artefacts surfaced (owner: Docs & UX).
 
@@ -18,10 +18,11 @@
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
+- [ ] Document expected staging artefacts for Prefect backfill guardrails and ARC runner sign-off runs so evidence drops into `dist/staging/backfill/` and `dist/staging/arc/` when access resumes (owner: Platform & QA).
 - [ ] Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
   - **Progress:** test_error_handling.py completed (46 assertions migrated); compliance verification + enrichment suites migrated to `expect()`; agentic orchestration coverage converted 2025-10-31. Remaining bare-assert files: 31.
 - [ ] Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
-  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 now reports 182 errors (down from 197 after typing `tests/test_deployment_specs.py` fixtures and refactoring `scripts/quality/run_qg4.py`). Remaining clusters include untyped pytest fixtures in shared test helpers and mlflow stubs.【F:tests/test_deployment_specs.py†L1-L220】【F:scripts/quality/run_qg4.py†L100-L180】
+  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 now reports 127 errors (down from 197 after typing shared fixtures and normalising mlflow doubles). Outstanding work: migrate remaining pytest decorators (`tests/test_orchestration.py`, `tests/test_dashboard.py`, etc.) and tighten validation helpers highlighted in the latest run.【F:tests/test_orchestration.py†L100-L200】【F:tests/helpers/fixtures.py†L1-L40】
 
 ## Deliverables
 

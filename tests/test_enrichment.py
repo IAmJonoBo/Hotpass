@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
+from collections.abc import Iterator
+from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
@@ -32,16 +34,16 @@ from hotpass.enrichment.intent import (
 from tests.helpers.assertions import expect
 
 
-@pytest.fixture(autouse=True)
-def reset_enrichment_flags(monkeypatch):
+@fixture(autouse=True)
+def reset_enrichment_flags(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure optional dependency flags start from a clean slate."""
 
     monkeypatch.setattr(enrichment, "REQUESTS_AVAILABLE", True, raising=False)
     monkeypatch.setattr(enrichment, "TRAFILATURA_AVAILABLE", True, raising=False)
 
 
-@pytest.fixture
-def temp_cache():
+@fixture
+def temp_cache() -> Iterator[CacheManager]:
     """Create temporary cache for testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = CacheManager(db_path=f"{tmpdir}/test_cache.db", ttl_hours=1)
