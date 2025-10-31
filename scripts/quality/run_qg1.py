@@ -127,6 +127,37 @@ def _check_cli_help() -> CheckResult:
     )
 
 
+def _check_profile_lint() -> CheckResult:
+    """Ensure profile linter passes for bundled profiles."""
+
+    def validator(result: subprocess.CompletedProcess[str]) -> tuple[bool, str]:
+        if result.returncode != 0:
+            output = result.stdout.strip() or result.stderr.strip()
+            return False, output or "Profile linter reported failures"
+
+        # Surface the summary lines (Total/Passed/Failed) when available.
+        summary = "Profile linter passed"
+        for line in reversed(result.stdout.splitlines()):
+            if line.startswith("Passed:") or line.startswith("Failed:"):
+                summary = line.strip()
+                break
+        return True, summary
+
+    passed, message, duration = _run_command(
+        ["uv", "run", "python", "tools/profile_lint.py"],
+        validator=validator,
+        timeout=90,
+    )
+
+    return CheckResult(
+        check_id="profile-lint",
+        description="`python tools/profile_lint.py` validates bundled profiles",
+        passed=passed,
+        message=message,
+        duration_seconds=duration,
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run Hotpass QG-1 (CLI Integrity) checks.",
@@ -174,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         _check_overview(),
         _check_cli_help(),
         *(_check_command_help(command) for command in ("overview", "refine", "enrich", "qa", "contracts")),
+        _check_profile_lint(),
     ]
 
     summary = _format_summary(checks)

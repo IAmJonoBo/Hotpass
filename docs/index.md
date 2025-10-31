@@ -34,6 +34,7 @@ Welcome to the Hotpass knowledge base. These pages follow the [Diátaxis](https:
 
 /reference/cli
 /reference/data-model
+/reference/profiles
 /reference/expectations
 /reference/repo-inventory
 /reference/source-mapping

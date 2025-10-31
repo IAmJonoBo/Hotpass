@@ -19,14 +19,15 @@ from hotpass.compliance import (  # noqa: E402
     detect_pii_in_dataframe,
     redact_dataframe,
 )
+from tests.helpers.assertions import expect  # noqa: E402
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", False)
 def test_pii_detector_init_no_presidio():
     """Test PII detector initialization without Presidio."""
     detector = PIIDetector()
-    assert detector.analyzer is None
-    assert detector.anonymizer is None
+    expect(detector.analyzer is None, "Analyzer should be absent when Presidio disabled")
+    expect(detector.anonymizer is None, "Anonymizer should be absent when Presidio disabled")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -60,9 +61,9 @@ def test_detect_pii_success():
         detector = PIIDetector()
         results = detector.detect_pii("test@example.com")
 
-        assert len(results) == 1
-        assert results[0]["entity_type"] == "EMAIL_ADDRESS"
-        assert results[0]["score"] == 0.95
+        expect(len(results) == 1, "Detector should return a single result")
+        expect(results[0]["entity_type"] == "EMAIL_ADDRESS", "Result entity type should match")
+        expect(results[0]["score"] == 0.95, "Result score should reflect analyzer output")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -73,8 +74,8 @@ def test_detect_pii_empty_text():
         patch("hotpass.compliance.AnonymizerEngine"),
     ):
         detector = PIIDetector()
-        assert detector.detect_pii("") == []
-        assert detector.detect_pii(None) == []
+        expect(detector.detect_pii("") == [], "Empty text should yield no detections")
+        expect(detector.detect_pii(None) == [], "None input should yield no detections")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -105,7 +106,7 @@ def test_anonymize_text_success():
         detector = PIIDetector()
         result = detector.anonymize_text("test@example.com")
 
-        assert result == "<EMAIL_ADDRESS>"
+        expect(result == "<EMAIL_ADDRESS>", "Anonymization should replace detected PII")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -122,7 +123,7 @@ def test_anonymize_text_no_pii():
         detector = PIIDetector()
         result = detector.anonymize_text("Hello world")
 
-        assert result == "Hello world"
+        expect(result == "Hello world", "Text without PII should remain unchanged")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -151,10 +152,10 @@ def test_detect_pii_in_dataframe(mock_detector_class):
 
     result_df = detect_pii_in_dataframe(df, columns=["name", "email"])
 
-    assert "name_has_pii" in result_df.columns
-    assert "email_has_pii" in result_df.columns
-    assert result_df["name_has_pii"].sum() == 2
-    assert result_df["email_has_pii"].sum() == 2
+    expect("name_has_pii" in result_df.columns, "PII flags should be added for name column")
+    expect("email_has_pii" in result_df.columns, "PII flags should be added for email column")
+    expect(result_df["name_has_pii"].sum() == 2, "Name column should flag both rows")
+    expect(result_df["email_has_pii"].sum() == 2, "Email column should flag both rows")
 
 
 @patch("hotpass.compliance.PIIDetector")
@@ -173,7 +174,7 @@ def test_detect_pii_in_dataframe_no_presidio(mock_detector_class):
     result_df = detect_pii_in_dataframe(df)
 
     # Should return original dataframe
-    assert len(result_df.columns) == len(df.columns)
+    expect(len(result_df.columns) == len(df.columns), "When Presidio is unavailable the dataframe is unchanged")
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -201,8 +202,8 @@ def test_anonymize_dataframe(mock_detector_class):
 
     result_df = anonymize_dataframe(df, columns=["name", "email"])
 
-    assert result_df.loc[0, "name"] == "<PERSON>"
-    assert result_df.loc[0, "email"] == "<EMAIL_ADDRESS>"
+    expect(result_df.loc[0, "name"] == "<PERSON>", "Name should be replaced with anonymized value")
+    expect(result_df.loc[0, "email"] == "<EMAIL_ADDRESS>", "Email should be replaced with anonymized value")
 
 
 @patch("hotpass.compliance.PIIDetector")
