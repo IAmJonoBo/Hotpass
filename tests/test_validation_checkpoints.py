@@ -48,11 +48,13 @@ def test_checkpoint_validation_fails_with_missing_required_field():
 
 def test_checkpoint_validation_provides_detailed_failure_info():
     """DataContractError includes detailed failure information."""
+    # Create data with >84% null values to fail the "mostly": 0.16 threshold
+    # (which requires at least 16% non-null, i.e., max 84% null)
     df = pd.DataFrame(
         {
-            "Organisation Name": [None, "Valid Org"],
-            "ID": [1, 2],
-            "Type": ["Flight School", "Flight School"],
+            "Organisation Name": [None, None, None, None, None, None, "Valid Org"],
+            "ID": [1, 2, 3, 4, 5, 6, 7],
+            "Type": ["Flight School"] * 7,
         }
     )
 

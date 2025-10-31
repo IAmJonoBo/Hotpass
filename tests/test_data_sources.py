@@ -6,6 +6,7 @@ import pytest
 pytest.importorskip("frictionless")
 
 from hotpass.data_sources import ExcelReadOptions, load_reachout_database  # noqa: E402
+from tests.helpers.assertions import expect
 
 
 @pytest.mark.usefixtures("sample_data_dir")
@@ -23,9 +24,9 @@ def test_load_reachout_database_chunk_size_applies(
 
     df = load_reachout_database(sample_data_dir, "ZA", ExcelReadOptions(chunk_size=1))
 
-    assert len(df) == 2
+    expect(len(df) == 2, "DataFrame should have 2 rows")
     # Both organisation and contact sheets should be streamed.
-    assert captured_rows.count(1) >= 2
+    expect(captured_rows.count(1) >= 2, "Chunk size should be applied to both sheets")
 
 
 def test_excel_stage_to_parquet_invoked(
@@ -46,4 +47,4 @@ def test_excel_stage_to_parquet_invoked(
         ExcelReadOptions(chunk_size=1, stage_dir=tmp_path, stage_to_parquet=True),
     )
 
-    assert calls, "Expected staging to parquet when enabled"
+    expect(calls, "Expected staging to parquet when enabled")
