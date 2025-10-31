@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Callable, Literal, TypeVar, cast
 
 import pandas as pd
 import pytest
@@ -15,6 +15,15 @@ pytest.importorskip("streamlit")
 pytest.importorskip("nameparser")
 
 from tests.helpers.assertions import expect
+from tests.helpers.pytest_marks import parametrize
+
+F = TypeVar("F", bound=Callable[..., object])
+
+
+def accessibility_mark(func: F) -> F:
+    """Typed wrapper around the ``pytest.mark.accessibility`` decorator."""
+
+    return cast(F, pytest.mark.accessibility(func))
 
 import hotpass.dashboard as dashboard
 
@@ -139,8 +148,8 @@ class AccessibilityStreamlit:
         return None
 
 
-@pytest.mark.accessibility
-@pytest.mark.parametrize("widget", ["text_input", "selectbox", "number_input"])
+@accessibility_mark
+@parametrize("widget", ["text_input", "selectbox", "number_input"])
 def test_sidebar_widgets_include_help(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -163,7 +172,7 @@ def test_sidebar_widgets_include_help(
         expect(bool(text), f"Help text missing for {call.label}")
 
 
-@pytest.mark.accessibility
+@accessibility_mark
 def test_run_button_uses_accessible_configuration(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -177,18 +186,18 @@ def test_run_button_uses_accessible_configuration(
 
     dashboard.main()
 
-    expect(stub.button_kwargs is not None, "Run button was not configured")
+    button_kwargs = stub.button_kwargs
+    if button_kwargs is None:  # pragma: no cover - defensive guard for mypy
+        pytest.fail("Run button was not configured")
+    assert button_kwargs is not None
+    expect(button_kwargs.get("type") == "primary", "Run button should use primary styling")
     expect(
-        stub.button_kwargs.get("type") == "primary",
-        "Run button should use primary styling",
-    )
-    expect(
-        stub.button_kwargs.get("use_container_width") is True,
+        button_kwargs.get("use_container_width") is True,
         "Run button should occupy the available width",
     )
 
 
-@pytest.mark.accessibility
+@accessibility_mark
 def test_tabs_cover_primary_journeys(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Tabs should align with pipeline control, execution history, and quality metrics."""
 
@@ -210,7 +219,7 @@ def test_tabs_cover_primary_journeys(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     )
 
 
-@pytest.mark.accessibility
+@accessibility_mark
 def test_spinner_announces_status(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Spinner must provide textual status for assistive tech."""
 

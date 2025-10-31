@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -130,7 +131,7 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
 
     class DummyOutcome:
         def __init__(self, plan_payload: dict[str, object]):
-            self._payload = {
+            self._payload: dict[str, Any] = {
                 "plan": plan_payload,
                 "steps": [],
                 "enriched_row": None,
@@ -144,12 +145,12 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
         def success(self) -> bool:
             return True
 
-        def to_dict(self) -> dict[str, object]:
+        def to_dict(self) -> dict[str, Any]:
             return self._payload
 
-    def fake_plan(self, context: ResearchContext):
+    def fake_plan(self, context: ResearchContext) -> DummyOutcome:
         expect(context.profile is profile, "Server should pass custom profile to orchestrator")
-        plan_payload = {
+        plan_payload: dict[str, object] = {
             "entity_name": "Example Flight School",
             "entity_slug": "example-flight-school",
             "query": None,
@@ -180,6 +181,7 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
     expect(result["success"] is True, "Plan research should succeed with custom profile")
     plan = result["outcome"]["plan"]
     rate_limit = plan.get("rate_limit")
-    expect(rate_limit is not None, "Plan should include rate limit details")
+    if rate_limit is None:
+        raise AssertionError("Plan should include rate limit details")
     expect(rate_limit["min_interval_seconds"] == 1.5, "Rate limit interval should propagate")
     expect(rate_limit["burst"] == 3, "Rate limit burst should propagate")

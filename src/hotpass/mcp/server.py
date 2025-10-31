@@ -16,7 +16,7 @@ from typing import Any
 
 import pandas as pd
 
-from hotpass.config import get_default_profile, load_industry_profile
+from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile
 from hotpass.research import ResearchContext, ResearchOrchestrator
 
 # Configure logging
@@ -516,7 +516,7 @@ class HotpassMCPServer:
             "outcome": outcome.to_dict(),
         }
 
-    def _load_industry_profile(self, profile_name: str):
+    def _load_industry_profile(self, profile_name: str) -> IndustryProfile:
         if profile_name == "generic":
             return get_default_profile("generic")
         try:

@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 import pytest
+from tests.helpers.pytest_marks import usefixtures
 
 from hotpass.cli.main import main as cli_main
 
@@ -27,7 +28,7 @@ class DummyLogger:
         self.events.append((name, payload))
 
 
-@pytest.mark.usefixtures("monkeypatch")
+@usefixtures("monkeypatch")
 def test_resolve_profile_defaults(tmp_path: Path, monkeypatch) -> None:
     input_path = tmp_path / "duplicates.csv"
     output_path = tmp_path / "deduped.csv"

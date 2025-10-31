@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -24,7 +24,7 @@ def _contract_path() -> Path:
 
 def load_contract() -> dict[str, Any]:
     with open(_contract_path(), encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+        return cast(dict[str, Any], yaml.safe_load(handle))
 
 
 def _get_subparsers(

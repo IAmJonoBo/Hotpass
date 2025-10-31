@@ -246,7 +246,8 @@ class TestQG4MCPDiscoverability:
         steps = payload.get("steps")
         expect(isinstance(steps, list), "QG-4 payload must include steps")
         tool_step = next((step for step in steps if step.get("id") == "required-tools"), None)
-        expect(isinstance(tool_step, dict), "QG-4 steps must include required-tools step")
+        if not isinstance(tool_step, dict):
+            raise AssertionError("QG-4 steps must include required-tools step")
         expect(tool_step.get("status") == "passed", "QG-4 required-tools step must pass")
 
 

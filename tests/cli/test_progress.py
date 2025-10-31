@@ -129,7 +129,9 @@ def test_pipeline_progress_replays_high_volume_fixture() -> None:
         ),
         None,
     )
-    expect(aggregate_task is not None, "fixture playback should create aggregate task")
+    if aggregate_task is None:  # pragma: no cover - defensive guard for mypy
+        pytest.fail("fixture playback should create aggregate task")
+    assert aggregate_task is not None
     expect(
         aggregate_task.completed == aggregate_task.total,
         "aggregate task should finish when replaying fixture",

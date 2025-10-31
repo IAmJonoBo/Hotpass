@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+from tests.helpers.pytest_marks import usefixtures
 
 from hotpass.cli.main import main as cli_main
 
@@ -26,7 +27,7 @@ def _write_dataset(tmp_path: Path) -> Path:
     return path
 
 
-@pytest.mark.usefixtures("monkeypatch")
+@usefixtures("monkeypatch")
 def test_plan_research_cli_offline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -49,7 +50,7 @@ def test_plan_research_cli_offline(
     expect(exit_code == 0, "CLI plan research should exit successfully")
 
 
-@pytest.mark.usefixtures("monkeypatch")
+@usefixtures("monkeypatch")
 def test_crawl_cli_offline(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FEATURE_ENABLE_REMOTE_RESEARCH", raising=False)
     monkeypatch.delenv("ALLOW_NETWORK_RESEARCH", raising=False)

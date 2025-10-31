@@ -8,12 +8,12 @@ import os
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from tests.helpers.fixtures import fixture
 
-_STREAMLIT_MODULE = ModuleType("streamlit")
+_STREAMLIT_MODULE = cast(Any, ModuleType("streamlit"))
 _STREAMLIT_MODULE.sidebar = SimpleNamespace(
     header=lambda *args, **kwargs: None,
     text_input=lambda *args, **kwargs: "",
@@ -39,6 +39,12 @@ from hotpass.dashboard import (  # noqa: E402
     save_pipeline_run,
 )
 from tests.helpers.assertions import expect  # noqa: E402
+
+
+def _dashboard_streamlit() -> Any:
+    """Return the Streamlit module exposed by the dashboard with ``Any`` typing."""
+
+    return cast(Any, getattr(dashboard, "st"))
 
 
 class _SidebarStub:
@@ -139,13 +145,13 @@ def test_validate_directory_helpers_return_resolved(
 
 def test_require_authentication_without_password(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(AUTH_PASSWORD_ENV, raising=False)
-    dashboard.st.session_state.clear()
+    cast(dict[str, Any], _dashboard_streamlit().session_state).clear()
     expect(_require_authentication(), "No password configured should allow access")
 
 
 def test_require_authentication_with_session_token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(AUTH_PASSWORD_ENV, "secret")
-    dashboard.st.session_state[AUTH_STATE_KEY] = True
+    cast(dict[str, Any], _dashboard_streamlit().session_state)[AUTH_STATE_KEY] = True
     expect(_require_authentication(), "Existing session flag should bypass prompt")
 
 
@@ -158,8 +164,8 @@ def test_require_authentication_success_flow(monkeypatch: pytest.MonkeyPatch) ->
     allowed = _require_authentication()
 
     expect(allowed, "Correct password should unlock dashboard")
-    expect(stub.success_messages, "Success message should be emitted on unlock")
-    expect(stub.session_state[AUTH_STATE_KEY], "Session flag should be set after unlock")
+    expect(bool(stub.success_messages), "Success message should be emitted on unlock")
+    expect(stub.session_state[AUTH_STATE_KEY] is True, "Session flag should be set after unlock")
 
 
 def test_load_and_save_pipeline_history(tmp_path: Path) -> None:

@@ -5,13 +5,13 @@ from __future__ import annotations
 import io
 import string
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable
 
 import openpyxl
 import pandas as pd
 import pytest
 
-from tests.helpers.hypothesis import composite, given, settings, st
+from tests.helpers.hypothesis import DrawFn, SearchStrategy, composite, given, settings, st
 
 from hotpass.formatting import apply_excel_formatting
 
@@ -49,7 +49,7 @@ def test_apply_excel_formatting_preserves_unicode(values: list[str]) -> None:
 
 
 @composite
-def _formatting_frames(draw) -> pd.DataFrame:
+def _formatting_frames(draw: DrawFn) -> pd.DataFrame:
     row_count = draw(st.integers(min_value=1, max_value=4))
     names = draw(
         st.lists(
@@ -83,7 +83,8 @@ def _formatting_frames(draw) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-_FORMATTING_FRAMES = _formatting_frames()
+_FORMATTING_FRAMES_FACTORY: Callable[[], SearchStrategy[pd.DataFrame]] = _formatting_frames
+_FORMATTING_FRAMES: SearchStrategy[pd.DataFrame] = _FORMATTING_FRAMES_FACTORY()
 
 
 @settings(max_examples=12, deadline=None)

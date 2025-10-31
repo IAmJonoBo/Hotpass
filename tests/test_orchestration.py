@@ -4,90 +4,36 @@
 
 import importlib
 import sys
-import types
 import zipfile
 from collections.abc import Callable
 from contextlib import asynccontextmanager, contextmanager
 from datetime import date, datetime
 from importlib import util
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import Mock, patch
 
 import anyio
 import pandas as pd
 import pytest
+from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions
 from tests.helpers.fixtures import fixture
 from tests.helpers.pytest_marks import anyio_mark
-from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions
+from tests.helpers.stubs import (
+    make_duckdb_stub,
+    make_pandera_stub,
+    make_polars_stub,
+    make_rapidfuzz_stub,
+)
 
-
-class _StubColumn:
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
-        self.args = args
-        self.kwargs = kwargs
-
-
-class _StubDataFrameSchema:
-    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover
-        self.args = args
-        self.kwargs = kwargs
-
-
-_pandera_stub = types.ModuleType("pandera")
-_pandera_pandas = types.ModuleType("pandera.pandas")
-_pandera_errors = types.ModuleType("pandera.errors")
-setattr(_pandera_pandas, "Column", _StubColumn)
-setattr(_pandera_pandas, "DataFrameSchema", _StubDataFrameSchema)
-setattr(_pandera_stub, "pandas", _pandera_pandas)
-setattr(_pandera_errors, "SchemaErrors", type("SchemaErrors", (Exception,), {}))
-setattr(_pandera_stub, "errors", _pandera_errors)
-sys.modules.setdefault("pandera", _pandera_stub)
-sys.modules.setdefault("pandera.pandas", _pandera_pandas)
-sys.modules.setdefault("pandera.errors", _pandera_errors)
-
-class _StubRapidFuzzModule(types.ModuleType):
-    def __init__(self) -> None:
-        super().__init__("rapidfuzz.fuzz")
-        self.token_sort_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
-        self.partial_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
-        self.token_set_ratio = staticmethod(lambda *_args, **_kwargs: 100.0)
-
-
-_rapidfuzz_stub = types.ModuleType("rapidfuzz")
-_rapidfuzz_fuzz = _StubRapidFuzzModule()
-setattr(_rapidfuzz_stub, "fuzz", _rapidfuzz_fuzz)
-sys.modules.setdefault("rapidfuzz", _rapidfuzz_stub)
-sys.modules.setdefault("rapidfuzz.fuzz", _rapidfuzz_fuzz)
-
-class _StubDuckDBConnection:
-    def __init__(self, *_args: Any, **_kwargs: Any) -> None:
-        self.args = _args
-        self.kwargs = _kwargs
-
-
-_duckdb_stub = types.ModuleType("duckdb")
-setattr(_duckdb_stub, "DuckDBPyConnection", _StubDuckDBConnection)
-sys.modules.setdefault("duckdb", _duckdb_stub)
-
+make_pandera_stub()
+make_rapidfuzz_stub()
+make_duckdb_stub()
 if util.find_spec("polars") is None:
-    _polars_stub = types.ModuleType("polars")
+    make_polars_stub()
 
-    class _StubPolarsFrame:
-        def __init__(self, *_args: Any, **_kwargs: Any) -> None:  # pragma: no cover
-            self.args = _args
-            self.kwargs = _kwargs
-
-    setattr(_polars_stub, "DataFrame", _StubPolarsFrame)
-    setattr(_polars_stub, "LazyFrame", _StubPolarsFrame)
-    setattr(_polars_stub, "Series", _StubPolarsFrame)
-    setattr(_polars_stub, "Expr", _StubPolarsFrame)
-    setattr(_polars_stub, "col", lambda *_args, **_kwargs: _StubPolarsFrame(*_args, **_kwargs))
-    setattr(_polars_stub, "concat", lambda *_args, **_kwargs: _StubPolarsFrame(*_args, **_kwargs))
-    sys.modules.setdefault("polars", _polars_stub)
-
-sys.modules.setdefault("frictionless", types.ModuleType("frictionless"))
+sys.modules.setdefault("frictionless", ModuleType("frictionless"))
 
 from hotpass.config_schema import HotpassConfig
 
@@ -469,12 +415,15 @@ def test_refinement_pipeline_flow_propagates_runtime_overrides(
         options: PipelineRunOptionsType,
     ) -> PipelineRunSummaryType:
         captured.append(options)
-        return PipelineRunSummary(
-            success=True,
-            total_records=1,
-            elapsed_seconds=0.25,
-            output_path=tmp_path / "outputs" / "refined.xlsx",
-            quality_report={"rows": 1},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=1,
+                elapsed_seconds=0.25,
+                output_path=tmp_path / "outputs" / "refined.xlsx",
+                quality_report={"rows": 1},
+            ),
         )
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", _record_run)
@@ -565,12 +514,18 @@ def test_refinement_pipeline_flow_propagates_runtime_overrides(
         config.telemetry.otlp_timeout == 5.5,
         "Telemetry timeout should propagate to telemetry settings.",
     )
+    telemetry_context = options.telemetry_context
     expect(
-        options.telemetry_context["hotpass.flow"] == "hotpass-refinement-pipeline",
+        telemetry_context is not None,
+        "Telemetry context should be populated when telemetry is enabled.",
+    )
+    context = cast(dict[str, Any], telemetry_context)
+    expect(
+        context["hotpass.flow"] == "hotpass-refinement-pipeline",
         "Telemetry context should include flow identifier.",
     )
     expect(
-        options.telemetry_context["hotpass.command"] == "prefect.refinement_flow",
+        context["hotpass.command"] == "prefect.refinement_flow",
         "Telemetry context should include command identifier.",
     )
 
@@ -621,12 +576,15 @@ def test_backfill_flow_processes_multiple_runs(
     ) -> PipelineRunSummaryType:
         captured_configs.append(options.config)
         pipeline_output = options.config.pipeline.output_path
-        return PipelineRunSummary(
-            success=True,
-            total_records=5,
-            elapsed_seconds=1.5,
-            output_path=pipeline_output,
-            quality_report={"rows": 5},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=5,
+                elapsed_seconds=1.5,
+                output_path=pipeline_output,
+                quality_report={"rows": 5},
+            ),
         )
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
@@ -690,12 +648,15 @@ def test_backfill_flow_is_idempotent(monkeypatch: pytest.MonkeyPatch, tmp_path: 
         options: PipelineRunOptionsType,
     ) -> PipelineRunSummaryType:
         call_paths.append(options.config.pipeline.input_dir)
-        return PipelineRunSummary(
-            success=True,
-            total_records=3,
-            elapsed_seconds=1.0,
-            output_path=options.config.pipeline.output_path,
-            quality_report={"rows": 3},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=3,
+                elapsed_seconds=1.0,
+                output_path=options.config.pipeline.output_path,
+                quality_report={"rows": 3},
+            ),
         )
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
@@ -760,18 +721,29 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
         options: PipelineRunOptionsType,
     ) -> PipelineRunSummaryType:
         calls.append(options.config.pipeline.input_dir)
-        return PipelineRunSummary(
-            success=True,
-            total_records=2,
-            elapsed_seconds=0.5,
-            output_path=options.config.pipeline.output_path,
-            quality_report={"rows": 2},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=2,
+                elapsed_seconds=0.5,
+                output_path=options.config.pipeline.output_path,
+                quality_report={"rows": 2},
+            ),
         )
 
-    @asynccontextmanager
-    async def _failing_concurrency(*_args, **_kwargs):
-        raise RuntimeError("test concurrency failure")
-        yield
+    class _RaiseOnEnter:
+        def __init__(self, exc: Exception) -> None:
+            self.exc = exc
+
+        async def __aenter__(self) -> None:
+            raise self.exc
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    def _failing_concurrency(*_args: object, **_kwargs: object) -> _RaiseOnEnter:
+        return _RaiseOnEnter(RuntimeError("test concurrency failure"))
 
     monkeypatch.setattr(orchestration, "run_pipeline_once", fake_run_pipeline_once)
     monkeypatch.setattr(orchestration, "prefect_concurrency", _failing_concurrency, raising=False)
@@ -790,18 +762,21 @@ def test_backfill_flow_falls_back_when_concurrency_fails(
     )
 
 
-@pytest.mark.anyio("asyncio")
+@anyio_mark("asyncio")
 async def test_run_with_prefect_concurrency_acquires_and_releases(
     tmp_path: Path,
 ) -> None:
     events: list[tuple[str, ...]] = []
 
-    summary = PipelineRunSummary(
-        success=True,
-        total_records=5,
-        elapsed_seconds=0.25,
-        output_path=tmp_path / "refined.xlsx",
-        quality_report={"rows": 5},
+    summary: PipelineRunSummaryType = cast(
+        PipelineRunSummaryType,
+        PipelineRunSummary(
+            success=True,
+            total_records=5,
+            elapsed_seconds=0.25,
+            output_path=tmp_path / "refined.xlsx",
+            quality_report={"rows": 5},
+        ),
     )
 
     @asynccontextmanager
@@ -841,24 +816,35 @@ async def test_run_with_prefect_concurrency_acquires_and_releases(
     expect(("exit", "hotpass/tests", "2") in events, "Concurrency context should be exited")
 
 
-@pytest.mark.anyio("asyncio")
+@anyio_mark("asyncio")
 async def test_run_with_prefect_concurrency_falls_back_on_error(
     tmp_path: Path,
 ) -> None:
     events: list[str] = []
 
-    summary = PipelineRunSummary(
-        success=True,
-        total_records=1,
-        elapsed_seconds=0.1,
-        output_path=tmp_path / "fallback.xlsx",
-        quality_report={"rows": 1},
+    summary: PipelineRunSummaryType = cast(
+        PipelineRunSummaryType,
+        PipelineRunSummary(
+            success=True,
+            total_records=1,
+            elapsed_seconds=0.1,
+            output_path=tmp_path / "fallback.xlsx",
+            quality_report={"rows": 1},
+        ),
     )
 
-    @asynccontextmanager
-    async def _failing_concurrency(*_args: object, **_kwargs: object):
-        raise RuntimeError("boom")
-        yield
+    class _RaiseOnEnter:
+        def __init__(self, exc: Exception) -> None:
+            self.exc = exc
+
+        async def __aenter__(self) -> None:
+            raise self.exc
+
+        async def __aexit__(self, *_exc: object) -> None:
+            return None
+
+    def _failing_concurrency(*_args: object, **_kwargs: object) -> _RaiseOnEnter:
+        return _RaiseOnEnter(RuntimeError("boom"))
 
     async def _run_sync(
         func: Callable[[], PipelineRunSummaryType],
@@ -891,7 +877,7 @@ async def test_run_with_prefect_concurrency_falls_back_on_error(
     )
 
 
-@pytest.mark.anyio("asyncio")
+@anyio_mark("asyncio")
 async def test_run_with_prefect_concurrency_releases_on_callback_error() -> None:
     """Concurrency guard should release slots when the callback raises."""
 
@@ -937,7 +923,7 @@ async def test_run_with_prefect_concurrency_releases_on_callback_error() -> None
     )
 
 
-@pytest.mark.anyio("asyncio")
+@anyio_mark("asyncio")
 async def test_run_with_prefect_concurrency_releases_on_run_sync_error() -> None:
     """Concurrency guard should release slots when the thread runner fails."""
 
@@ -961,12 +947,15 @@ async def test_run_with_prefect_concurrency_releases_on_run_sync_error() -> None
 
     def _callback() -> PipelineRunSummaryType:
         events.append(("callback",))
-        return PipelineRunSummary(
-            success=True,
-            total_records=0,
-            elapsed_seconds=0.0,
-            output_path=Path("/tmp/unused.xlsx"),
-            quality_report={},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=0,
+                elapsed_seconds=0.0,
+                output_path=Path("/tmp/unused.xlsx"),
+                quality_report={},
+            ),
         )
 
     with pytest.raises(RuntimeError):
@@ -991,12 +980,15 @@ def test_execute_with_concurrency_uses_async_path(
 ) -> None:
     events: list[tuple[str, ...]] = []
 
-    summary = PipelineRunSummary(
-        success=True,
-        total_records=4,
-        elapsed_seconds=0.4,
-        output_path=tmp_path / "concurrency.xlsx",
-        quality_report={"rows": 4},
+    summary: PipelineRunSummaryType = cast(
+        PipelineRunSummaryType,
+        PipelineRunSummary(
+            success=True,
+            total_records=4,
+            elapsed_seconds=0.4,
+            output_path=tmp_path / "concurrency.xlsx",
+            quality_report={"rows": 4},
+        ),
     )
 
     @asynccontextmanager
@@ -1039,12 +1031,15 @@ def test_execute_with_concurrency_returns_immediate_without_slots(
     """Execution should fall back to a direct callback when slots are disabled."""
 
     def _callback() -> PipelineRunSummaryType:
-        return PipelineRunSummary(
-            success=True,
-            total_records=2,
-            elapsed_seconds=0.1,
-            output_path=Path("/tmp/out.xlsx"),
-            quality_report={"rows": 2},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=2,
+                elapsed_seconds=0.1,
+                output_path=Path("/tmp/out.xlsx"),
+                quality_report={"rows": 2},
+            ),
         )
 
     monkeypatch.setattr(orchestration, "prefect_concurrency", None, raising=False)
@@ -1070,12 +1065,15 @@ def test_execute_with_concurrency_falls_back_when_anyio_raises(
 
     def _callback() -> PipelineRunSummaryType:
         events.append("callback")
-        return PipelineRunSummary(
-            success=True,
-            total_records=1,
-            elapsed_seconds=0.1,
-            output_path=Path("/tmp/out.xlsx"),
-            quality_report={"rows": 1},
+        return cast(
+            PipelineRunSummaryType,
+            PipelineRunSummary(
+                success=True,
+                total_records=1,
+                elapsed_seconds=0.1,
+                output_path=Path("/tmp/out.xlsx"),
+                quality_report={"rows": 1},
+            ),
         )
 
     def _failing_run(*_args: object, **_kwargs: object) -> PipelineRunSummaryType:

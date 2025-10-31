@@ -416,13 +416,13 @@ def run_ta_checks() -> tuple[bool, str]:
 def _persist_ta_summary(payload: dict[str, Any]) -> Path | None:
     """Persist the TA summary payload to the shared artifact path."""
 
-    artifact_path = payload.get("artifact_path")
-    destination: Path
-    artifact_from_payload = isinstance(artifact_path, str) and artifact_path
-    if artifact_from_payload:
-        destination = Path(artifact_path)
+    artifact_path_value = payload.get("artifact_path")
+    if isinstance(artifact_path_value, str) and artifact_path_value:
+        destination: Path = Path(artifact_path_value)
+        artifact_from_payload = True
     else:
         destination = TA_ARTIFACT_PATH
+        artifact_from_payload = False
 
     try:
         if not artifact_from_payload:

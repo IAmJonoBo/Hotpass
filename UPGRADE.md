@@ -54,7 +54,7 @@
 - **Manifest-driven Prefect deployments** — manifests are committed; remaining work is staging validation plus doc update in `docs/how-to-guides/prefect-manifests.md` (todo).
 - **Marquez lineage smoke scheduling** — blocked until optional dependencies land on staging; track via `tests/infrastructure/test_marquez_stack.py` and staging access ticket.
 - **Assertion migration** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
-- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 59 errors across 18 files (baseline archived at `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`). Execute the four-phase remediation plan (Hypothesis wrappers → optional-dependency stubs → CLI/MCP typing → long-tail cleanup) with quality gates at each phase before closing TA-6.【F:Next_Steps.md†L20-L48】【F:tests/test_orchestration.py†L1-L200】
+- **Telemetry/mypy audit** — remediation plan (Hypothesis wrappers → optional-dependency stubs → CLI/MCP typing → long-tail cleanup) completed; `uv run mypy src tests scripts` (2025-10-31) now reports 0 errors (baseline archived at `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`).【F:Next_Steps.md†L20-L48】【F:tests/helpers/stubs.py†L1-L170】
 
 ### Deliverable status\*\*
 

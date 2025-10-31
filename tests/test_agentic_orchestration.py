@@ -144,5 +144,8 @@ def test_broker_agent_run_executes_pipeline_with_approval() -> None:
     expect(log_sink[0].status == "approved", "First log entry should show approval")
     expect(log_sink[0].approved is True, "Approval entry should mark approved")
     expect(log_sink[1].status == "executed", "Execution entry should be recorded")
-    expect(log_sink[1].result is not None, "Execution entry should include a result payload")
-    expect(log_sink[1].result.get("success") is True, "Execution result should indicate success")
+    result_payload = log_sink[1].result
+    if result_payload is None:  # pragma: no cover - defensive guard for mypy
+        pytest.fail("Execution entry should include a result payload")
+    assert result_payload is not None
+    expect(result_payload.get("success") is True, "Execution result should indicate success")

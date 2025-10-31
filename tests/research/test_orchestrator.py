@@ -70,13 +70,16 @@ def test_plan_offline_path(tmp_path):
     expect(statuses.get("native_crawl") == "skipped", "Crawl skipped without network")
     expect(statuses.get("backfill") == "success", "Backfill step should flag missing fields")
     rate_limit = outcome.plan.rate_limit
-    expect(rate_limit is not None, "Plan should carry rate limit details from profile")
+    if rate_limit is None:
+        raise AssertionError("Plan should carry rate limit details from profile")
     expect(
         rate_limit.min_interval_seconds == 1.0,
         "Rate limit min interval should propagate into the plan",
     )
-    expect(outcome.artifact_path is not None, "Outcome should persist an artefact path")
-    expect(Path(outcome.artifact_path).exists(), "Artefact file should be written to disk")
+    artifact_path = outcome.artifact_path
+    if artifact_path is None:
+        raise AssertionError("Outcome should persist an artefact path")
+    expect(Path(artifact_path).exists(), "Artefact file should be written to disk")
 
     audit_path = cache_root / "audit.log"
     expect(audit_path.exists(), "Audit log should be written")
@@ -144,16 +147,21 @@ def test_crawl_persists_artifact_and_rate_limit(tmp_path, monkeypatch):
 
     native_crawl_step = next(step for step in outcome.steps if step.name == "native_crawl")
     artifacts = native_crawl_step.artifacts
+    if artifacts is None:
+        raise AssertionError("Native crawl artifacts should be populated")
     results_path = artifacts.get("results_path")
-    expect(isinstance(results_path, str), "Native crawl should record results path")
+    if not isinstance(results_path, str):
+        raise AssertionError("Native crawl should record results path")
     stored_path = Path(results_path)
     expect(stored_path.exists(), "Stored crawl artefact should exist on disk")
 
     payload = json.loads(stored_path.read_text(encoding="utf-8"))
     expect(payload.get("entity") == outcome.plan.entity_slug, "Crawl artefact should capture entity slug")
     expect(payload.get("results"), "Crawl artefact should include crawl results")
-    expect(outcome.plan.rate_limit is not None, "Plan should capture rate limit when configured")
+    rate_limit = outcome.plan.rate_limit
+    if rate_limit is None:
+        raise AssertionError("Plan should capture rate limit when configured")
     expect(
-        outcome.plan.rate_limit.burst == 2,
+        rate_limit.burst == 2,
         "Burst value from profile should be preserved in the plan",
     )

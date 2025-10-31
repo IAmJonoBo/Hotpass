@@ -144,8 +144,9 @@ def test_trace_operation_records_attributes_and_errors(stub_registry: StubRegist
             "Exception should be recorded on span",
         )
         status = stub_registry.tracer.started[-1].status
-        assert status is not None, "Status should be set on error"
-        assert status.code == StubStatusCode.ERROR, "Span status should mark error"
+        expect(status is not None, "Status should be set on error")
+        status_code = cast(StubStatus, status).code
+        expect(status_code == StubStatusCode.ERROR, "Span status should mark error")
     else:  # pragma: no cover - defensive guard
         raise AssertionError("RuntimeError should propagate from trace_operation")
 

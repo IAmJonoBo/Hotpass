@@ -11,8 +11,8 @@ import pandas as pd
 from rich.console import Console
 from rich.table import Table
 
-from hotpass.config import get_default_profile, load_industry_profile
-from hotpass.research import ResearchContext, ResearchOrchestrator
+from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile
+from hotpass.research import ResearchContext, ResearchOrchestrator, ResearchOutcome
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -148,7 +148,7 @@ def _handle_research_plan(namespace: argparse.Namespace, cli_profile: CLIProfile
 def _resolve_industry_profile(
     namespace: argparse.Namespace,
     cli_profile: CLIProfile | None,
-):
+) -> IndustryProfile:
     profile_name = namespace.profile_name
     if profile_name:
         return load_industry_profile(profile_name)
@@ -200,7 +200,11 @@ def _load_row(
     return frame.iloc[0]
 
 
-def _render_outcome(console: Console, outcome, output_path: Path | None) -> None:
+def _render_outcome(
+    console: Console,
+    outcome: ResearchOutcome,
+    output_path: Path | None,
+) -> None:
     table = Table(title=f"Adaptive Research Plan — {outcome.plan.entity_name}")
     table.add_column("Step", style="cyan")
     table.add_column("Status", style="magenta")

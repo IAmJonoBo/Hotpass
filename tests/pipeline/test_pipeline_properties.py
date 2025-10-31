@@ -10,14 +10,10 @@ from typing import Any, cast
 
 import pandas as pd
 import pytest
+import hotpass.pipeline.aggregation as aggregation_module
 from tests.helpers.hypothesis import HealthCheck, given, settings, st
 
-from hotpass.pipeline.aggregation import (
-    SSOT_COLUMNS,
-    YEAR_FIRST_PATTERN,
-    _aggregate_group,
-    _latest_iso_date,
-)
+from hotpass.pipeline.aggregation import YEAR_FIRST_PATTERN, _aggregate_group, _latest_iso_date
 from hotpass.pipeline.base import execute_pipeline
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
 
@@ -26,6 +22,10 @@ def expect(condition: bool, message: str) -> None:
     if not condition:
         pytest.fail(message)
 
+
+SSOT_COLUMNS: tuple[str, ...] = cast(
+    tuple[str, ...], getattr(aggregation_module, "SSOT_COLUMNS")
+)
 
 _NON_DETERMINISTIC_METRICS = {
     "duckdb_sort_seconds",
@@ -50,31 +50,32 @@ def _coerce_expected_iso(values: list[Any]) -> str | None:
         if value is None:
             continue
         if isinstance(value, pd.Timestamp):
-            timestamp = pd.to_datetime(value, utc=True)
+            candidate = pd.to_datetime(value, utc=True)
         else:
             text = str(value).strip()
             if not text:
                 continue
-            prefer_dayfirst = not YEAR_FIRST_PATTERN.match(text)
-            timestamp = pd.to_datetime(
+            prefer_dayfirst = not bool(YEAR_FIRST_PATTERN.match(text))
+            candidate = pd.to_datetime(
                 text,
                 errors="coerce",
                 dayfirst=prefer_dayfirst,
                 utc=True,
             )
-            if pd.isna(timestamp):
-                timestamp = pd.to_datetime(
+            if pd.isna(candidate):
+                candidate = pd.to_datetime(
                     text,
                     errors="coerce",
                     dayfirst=not prefer_dayfirst,
                     utc=True,
                 )
-        if pd.notna(timestamp):
-            parsed.append(timestamp)
+        if pd.isna(candidate):
+            continue
+        parsed.append(cast(pd.Timestamp, candidate))
     if not parsed:
         return None
-    latest = cast(pd.Timestamp, max(parsed))
-    return latest.date().isoformat()
+    latest = max(parsed)
+    return cast(str, latest.date().isoformat())
 
 
 @settings(max_examples=15, deadline=None)

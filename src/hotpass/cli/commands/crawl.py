@@ -9,8 +9,8 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-from hotpass.config import get_default_profile, load_industry_profile
-from hotpass.research import ResearchOrchestrator
+from hotpass.config import IndustryProfile, get_default_profile, load_industry_profile
+from hotpass.research import ResearchOrchestrator, ResearchOutcome
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -91,7 +91,7 @@ def _command_handler(namespace: argparse.Namespace, cli_profile: CLIProfile | No
     return 0 if outcome.success else 2
 
 
-def _resolve_profile(namespace: argparse.Namespace, cli_profile: CLIProfile | None):
+def _resolve_profile(namespace: argparse.Namespace, cli_profile: CLIProfile | None) -> IndustryProfile:
     if namespace.profile_name:
         return load_industry_profile(namespace.profile_name)
     if cli_profile and cli_profile.industry_profile:
@@ -99,7 +99,7 @@ def _resolve_profile(namespace: argparse.Namespace, cli_profile: CLIProfile | No
     return get_default_profile("generic")
 
 
-def _render(console: Console, outcome) -> None:
+def _render(console: Console, outcome: ResearchOutcome) -> None:
     table = Table(title=f"Crawl Summary — {outcome.plan.entity_name}")
     table.add_column("Step", style="cyan")
     table.add_column("Status", style="magenta")
