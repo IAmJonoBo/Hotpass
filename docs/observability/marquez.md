@@ -27,9 +27,12 @@ stack locally with Docker Compose.
   -f infra/marquez/docker-compose.yaml up -d`. If you prefer the manual
   approach, run those commands directly from the `infra/marquez/` directory.
   Follow up with `make marquez-down` (or `docker compose down`) when you are
-  done. Override the default ports with
-  `make MARQUEZ_API_PORT=5500 MARQUEZ_UI_PORT=3500 marquez-up` if `5000` or
-  `3000` are already bound on your machine.
+  done. Override the default ports if `5000` or `3000` are already bound on
+  your machine—for example:
+
+  ```bash
+  MARQUEZ_API_PORT=5500 MARQUEZ_UI_PORT=3500 make marquez-up
+  ```
 
 1. Open the UI at [http://localhost:3000](http://localhost:3000) once the
    containers report `healthy`.
@@ -47,6 +50,8 @@ export HOTPASS_LINEAGE_NAMESPACE="hotpass.local"
 
 The namespace defaults to `hotpass.local` if unset. Set
 `HOTPASS_LINEAGE_PRODUCER` to override the producer URI advertised in events.
+When you change `MARQUEZ_API_PORT`, update `OPENLINEAGE_URL` to match the new
+port (for example `http://localhost:5500`).
 
 Run a pipeline execution (for example `uv run hotpass run --log-format json ...`)
 and refresh the Marquez UI to explore the captured datasets, jobs, and runs. The
