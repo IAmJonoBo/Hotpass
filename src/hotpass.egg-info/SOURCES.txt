@@ -1,6 +1,5 @@
 README.md
 pyproject.toml
-docs/reference/profiles.md
 data_expectations/checkpoints/contact_capture.json
 data_expectations/checkpoints/contact_company_addresses.json
 data_expectations/checkpoints/contact_company_cat.json
@@ -22,6 +21,7 @@ data_expectations/suites/contact_company_contacts.json
 data_expectations/suites/reachout_contact_info.json
 data_expectations/suites/reachout_organisation.json
 data_expectations/suites/sacaa_cleaned.json
+docs/reference/profiles.md
 schemas/contact_capture.schema.json
 schemas/contact_company_addresses.schema.json
 schemas/contact_company_cat.schema.json
@@ -195,7 +195,6 @@ tests/test_enrichment_validators.py
 tests/test_entity_resolution.py
 tests/test_error_handling.py
 tests/test_evidence.py
-tests/helpers/assertions.py
 tests/test_formatting.py
 tests/test_geospatial.py
 tests/test_lineage.py
@@ -218,3 +217,4 @@ tests/test_telemetry_bootstrap.py
 tests/test_telemetry_registry.py
 tests/test_validation_checkpoints.py
 tests/test_versioning.py
+tests/helpers/assertions.py
