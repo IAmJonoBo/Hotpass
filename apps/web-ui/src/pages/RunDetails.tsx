@@ -8,19 +8,27 @@
  * - Run parameters and metadata
  */
 
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useOutletContext } from 'react-router-dom'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, Clock, Tag } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, Clock, Tag, UserCheck } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { prefectApi, mockPrefectData } from '@/api/prefect'
 import { cn, formatDuration, getStatusColor } from '@/lib/utils'
+import { ApprovalPanel } from '@/components/hil/ApprovalPanel'
 import type { QAResult } from '@/types'
+
+interface OutletContext {
+  openAssistant: (message?: string) => void
+}
 
 export function RunDetails() {
   const { runId } = useParams<{ runId: string }>()
+  const { openAssistant } = useOutletContext<OutletContext>()
+  const [approvalPanelOpen, setApprovalPanelOpen] = useState(false)
 
   // Fetch run details
   const { data: run, isLoading } = useQuery({
@@ -269,12 +277,32 @@ export function RunDetails() {
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2">
-        <Link to="/lineage">
-          <Button variant="outline">View Lineage</Button>
-        </Link>
-        <Button>Rerun Pipeline</Button>
+      <div className="flex justify-between gap-2">
+        <Button
+          variant="default"
+          onClick={() => setApprovalPanelOpen(true)}
+        >
+          <UserCheck className="mr-2 h-4 w-4" />
+          Review & Approve
+        </Button>
+        <div className="flex gap-2">
+          <Link to="/lineage">
+            <Button variant="outline">View Lineage</Button>
+          </Link>
+          <Button>Rerun Pipeline</Button>
+        </div>
       </div>
+
+      {/* Approval Panel */}
+      {run && (
+        <ApprovalPanel
+          open={approvalPanelOpen}
+          onOpenChange={setApprovalPanelOpen}
+          run={run}
+          qaResults={mockQAResults}
+          onOpenAssistant={openAssistant}
+        />
+      )}
     </div>
   )
 }
