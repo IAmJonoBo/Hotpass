@@ -76,6 +76,7 @@ existing profiles:
 
 - `authority_sources`: list of trusted registries/directories queried before general web search. Each entry supports `name`, optional `url`, `cache_key`, and a `category` (`registry`, `directory`, or `dataset`).
 - `research_backfill`: controls which fields the orchestrator may backfill. Define `fields` (list of column names) and `confidence_threshold` (0–1).
+- `research_rate_limit`: throttling hints for network enrichment/crawl steps. Set `min_interval_seconds` (>= 0) to enforce a minimum delay between remote calls; optional `burst` limits consecutive calls before throttling resumes.
 
 ```yaml
 authority_sources:

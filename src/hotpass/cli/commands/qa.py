@@ -371,6 +371,10 @@ def run_ta_checks() -> tuple[bool, str]:
             else:
                 message = "Technical Acceptance gates passed"
 
+            artifact_path = payload.get("artifact_path")
+            if isinstance(artifact_path, str) and artifact_path:
+                message = f"{message}; summary saved to {artifact_path}"
+
             failed_gates: list[str] = []
             for gate in gates if isinstance(gates, list) else []:
                 if not isinstance(gate, dict):

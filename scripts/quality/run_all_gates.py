@@ -18,6 +18,11 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
+
+
+TA_ARTIFACT_DIR = Path("dist/quality-gates")
+TA_SUMMARY_PATH = TA_ARTIFACT_DIR / "latest-ta.json"
 
 
 @dataclass
@@ -205,6 +210,37 @@ def run_qg5_docs_instruction() -> GateResult:
     )
 
 
+def _build_summary_payload(results: list[GateResult]) -> dict[str, Any]:
+    return {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "gates": [
+            {
+                "id": r.gate_id,
+                "name": r.name,
+                "passed": r.passed,
+                "message": r.message,
+                "duration_seconds": r.duration_seconds,
+            }
+            for r in results
+        ],
+        "summary": {
+            "total": len(results),
+            "passed": sum(1 for r in results if r.passed),
+            "failed": sum(1 for r in results if not r.passed),
+            "all_passed": all(r.passed for r in results),
+        },
+        "artifact_path": str(TA_SUMMARY_PATH),
+    }
+
+
+def _persist_summary(payload: dict[str, Any]) -> None:
+    try:
+        TA_ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+        TA_SUMMARY_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except Exception:  # pragma: no cover - best effort persistence
+        pass
+
+
 def main() -> int:
     """Main entry point for quality gate runner."""
     parser = argparse.ArgumentParser(description="Run Hotpass quality gates")
@@ -258,42 +294,25 @@ def main() -> int:
             print(f"  Duration: {result.duration_seconds:.2f}s")
             print()
 
-    # Print summary
+    payload = _build_summary_payload(results)
+    _persist_summary(payload)
+
     if args.json:
-        # JSON output for CI
-        output = {
-            "timestamp": datetime.now(UTC).isoformat(),
-            "gates": [
-                {
-                    "id": r.gate_id,
-                    "name": r.name,
-                    "passed": r.passed,
-                    "message": r.message,
-                    "duration_seconds": r.duration_seconds,
-                }
-                for r in results
-            ],
-            "summary": {
-                "total": len(results),
-                "passed": sum(1 for r in results if r.passed),
-                "failed": sum(1 for r in results if not r.passed),
-                "all_passed": all(r.passed for r in results),
-            },
-        }
-        print(json.dumps(output, indent=2))
-        # Return based on gate results
-        return 0 if all(r.passed for r in results) else 1
+        print(json.dumps(payload, indent=2))
+        return 0 if payload["summary"]["all_passed"] else 1
     else:
         print("=" * 70)
         print("Summary")
         print("=" * 70)
-        print(f"Total gates: {len(results)}")
-        print(f"Passed: {sum(1 for r in results if r.passed)}")
-        print(f"Failed: {sum(1 for r in results if not r.passed)}")
+        summary = payload["summary"]
+        print(f"Total gates: {summary['total']}")
+        print(f"Passed: {summary['passed']}")
+        print(f"Failed: {summary['failed']}")
         print(f"Total duration: {sum(r.duration_seconds for r in results):.2f}s")
+        print(f"TA Summary: {payload['artifact_path']}")
         print()
 
-        if all(r.passed for r in results):
+        if summary["all_passed"]:
             print("✓ All quality gates passed!")
             return 0
         else:

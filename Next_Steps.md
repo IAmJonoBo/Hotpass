@@ -24,7 +24,7 @@
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [ ] 2025-11-05 — Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
-  - **Progress:** test_error_handling.py completed (46 assertions migrated), 36 test files remaining with bare assertions.
+  - **Progress:** test_error_handling.py completed (46 assertions migrated); compliance and enrichment suites now use `expect()`. Remaining bare-assert files: 34.
 - [ ] 2025-11-07 — Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
   - **Progress:** Fixed 6 mypy errors (3 unused type:ignore comments, 3 type annotation improvements), reduced from 177 to 171 errors.
 

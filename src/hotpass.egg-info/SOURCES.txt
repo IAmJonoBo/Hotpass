@@ -1,5 +1,6 @@
 README.md
 pyproject.toml
+docs/reference/profiles.md
 data_expectations/checkpoints/contact_capture.json
 data_expectations/checkpoints/contact_company_addresses.json
 data_expectations/checkpoints/contact_company_cat.json
@@ -194,6 +195,7 @@ tests/test_enrichment_validators.py
 tests/test_entity_resolution.py
 tests/test_error_handling.py
 tests/test_evidence.py
+tests/helpers/assertions.py
 tests/test_formatting.py
 tests/test_geospatial.py
 tests/test_lineage.py

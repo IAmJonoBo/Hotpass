@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from datetime import UTC, datetime
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -56,6 +57,7 @@ class ResearchPlan:
     allow_network: bool
     authority_sources: tuple[AuthoritySnapshot, ...]
     backfill_fields: tuple[str, ...]
+    rate_limit_seconds: float | None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -71,10 +73,11 @@ class ResearchPlan:
                     "url": snapshot.url,
                     "description": snapshot.description,
                 }
-                for snapshot in self.authority_sources
-            ],
-            "backfill_fields": list(self.backfill_fields),
-        }
+            for snapshot in self.authority_sources
+        ],
+        "backfill_fields": list(self.backfill_fields),
+        "rate_limit_seconds": self.rate_limit_seconds,
+    }
 
 
 @dataclass(slots=True)
@@ -109,6 +112,7 @@ class ResearchOutcome:
     enriched_row: dict[str, Any] | None
     provenance: dict[str, Any] | None
     elapsed_seconds: float
+    artifact_path: str | None = None
 
     @property
     def success(self) -> bool:
@@ -130,6 +134,7 @@ class ResearchOutcome:
             "provenance": self.provenance,
             "elapsed_seconds": self.elapsed_seconds,
             "success": self.success,
+            "artifact_path": self.artifact_path,
         }
 
 
@@ -137,11 +142,18 @@ class ResearchOrchestrator:
     """Coordinate adaptive research loops across local, deterministic, and network passes."""
 
     def __init__(
-        self, *, cache_root: Path | None = None, audit_log: Path | None = None
+        self,
+        *,
+        cache_root: Path | None = None,
+        audit_log: Path | None = None,
+        artefact_root: Path | None = None,
     ) -> None:
         self.cache_root = cache_root or Path(".hotpass")
         self.cache_root.mkdir(parents=True, exist_ok=True)
         self.audit_log = audit_log or (self.cache_root / "mcp-audit.log")
+        self.artefact_root = artefact_root or (self.cache_root / "research_runs")
+        self.artefact_root.mkdir(parents=True, exist_ok=True)
+        self._last_network_call: float | None = None
 
     def plan(self, context: ResearchContext) -> ResearchOutcome:
         """Build and execute a research plan."""
@@ -221,6 +233,13 @@ class ResearchOrchestrator:
             _filter_blank(context.backfill_fields or profile_backfill_fields)
         )
 
+        rate_limit_seconds: float | None = None
+        profile_rate_limit = getattr(context.profile, "research_rate_limit", None)
+        if profile_rate_limit is not None:
+            candidate = getattr(profile_rate_limit, "min_interval_seconds", None)
+            if isinstance(candidate, (int, float)) and candidate >= 0:
+                rate_limit_seconds = float(candidate)
+
         return ResearchPlan(
             entity_name=entity_name,
             entity_slug=entity_slug,
@@ -233,6 +252,7 @@ class ResearchOrchestrator:
             allow_network=context.allow_network,
             authority_sources=authority_sources,
             backfill_fields=backfill_fields,
+            rate_limit_seconds=rate_limit_seconds,
         )
 
     # --------------------------------------------------------------------- #
@@ -269,13 +289,15 @@ class ResearchOrchestrator:
             steps.append(self._run_backfill_plan(plan, enriched_row=enriched_row))
 
         elapsed = time.perf_counter() - start
-        return ResearchOutcome(
+        outcome = ResearchOutcome(
             plan=plan,
             steps=tuple(steps),
             enriched_row=enriched_row,
             provenance=provenance,
             elapsed_seconds=elapsed,
         )
+        self._persist_outcome(outcome)
+        return outcome
 
     # --------------------------------------------------------------------- #
     # Individual steps
@@ -412,6 +434,7 @@ class ResearchOrchestrator:
                 message="No dataset row supplied – skipping network enrichment",
             )
 
+        self._maybe_throttle(plan.rate_limit_seconds)
         try:
             enriched_series, provenance = enrich_row(
                 plan.row,
@@ -421,11 +444,14 @@ class ResearchOrchestrator:
             )
         except Exception as exc:  # pragma: no cover - network failure
             LOGGER.warning("Network enrichment failed: %s", exc)
+            self._last_network_call = time.monotonic()
             return ResearchStepResult(
                 name="network_enrichment",
                 status="error",
                 message=f"Network enrichment failed: {exc}",
             )
+
+        self._last_network_call = time.monotonic()
 
         updated = _diff_row(plan.row, enriched_series)
         message = "Network enrichment executed without updates"
@@ -472,7 +498,9 @@ class ResearchOrchestrator:
                     },
                 )
             try:
+                self._maybe_throttle(plan.rate_limit_seconds)
                 response = requests.get(plan.target_urls[0], timeout=10)
+                self._last_network_call = time.monotonic()
                 return ResearchStepResult(
                     name="native_crawl",
                     status="success",
@@ -490,6 +518,7 @@ class ResearchOrchestrator:
                 )
             except Exception as exc:  # pragma: no cover - network failure
                 LOGGER.warning("Requests crawl failed: %s", exc)
+                self._last_network_call = time.monotonic()
                 return ResearchStepResult(
                     name="native_crawl",
                     status="skipped",
@@ -519,10 +548,13 @@ class ResearchOrchestrator:
 
         process = CrawlerProcess(settings={"LOG_ENABLED": False})
         try:
+            self._maybe_throttle(plan.rate_limit_seconds)
             process.crawl(MetadataSpider)
             process.start()
+            self._last_network_call = time.monotonic()
         except Exception as exc:  # pragma: no cover - defensive guard
             LOGGER.warning("Scrapy crawl failed: %s", exc)
+            self._last_network_call = time.monotonic()
             return ResearchStepResult(
                 name="native_crawl",
                 status="skipped",
@@ -604,6 +636,25 @@ class ResearchOrchestrator:
                 handle.write("\n")
         except Exception:  # pragma: no cover - audit logging is best effort
             LOGGER.debug("Failed to persist research audit entry", exc_info=True)
+
+    def _persist_outcome(self, outcome: ResearchOutcome) -> None:
+        try:
+            timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+            filename = f"{outcome.plan.entity_slug}-{timestamp}.json"
+            path = self.artefact_root / filename
+            path.write_text(json.dumps(outcome.to_dict(), indent=2), encoding="utf-8")
+            outcome.artifact_path = str(path)
+        except Exception:  # pragma: no cover - best effort persistence
+            LOGGER.debug("Failed to persist research artefact", exc_info=True)
+
+    def _maybe_throttle(self, min_interval: float | None) -> None:
+        if not min_interval:
+            return
+        if self._last_network_call is None:
+            return
+        elapsed = time.monotonic() - self._last_network_call
+        if elapsed < min_interval:
+            time.sleep(min_interval - elapsed)
 
     @staticmethod
     def _ensure_protocol(url: str) -> str:

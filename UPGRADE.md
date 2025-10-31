@@ -124,12 +124,14 @@
 
 - Gate scripts and `hotpass qa ta` delegate to `scripts/quality/run_all_gates.py`.
 - MCP `hotpass.ta.check` calls the consolidated runner.
+- TA runs now persist `dist/quality-gates/latest-ta.json` so the latest gate summary is easy to reference post-run.
 - Outstanding: extend MCP integration tests (including adaptive research flows) and tighten TA reporting to emit structured JSON artefacts.
 
 ### Sprint 6 – Adaptive research orchestrator (**Status: ⚠️ In progress**)
 
 - `src/hotpass/research/orchestrator.py` now implements the adaptive loop (local snapshot → authority check → deterministic enrichment → optional network enrichment → native crawl/backfill planning). CLI (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wrap the planner, emitting audit entries to `./.hotpass/mcp-audit.log`.
 - Profile schema adds `authority_sources` and `research_backfill` so planners understand trusted registries and backfillable fields; agent docs cover the new flags.
+- Profile-driven throttling (`research_rate_limit`) keeps network fetchers within provider limits, and each run stores a JSON artefact under `.hotpass/research_runs/`.
 - Next: add integration tests (CLI + MCP), wire rate-limit configuration for provider-specific crawlers, and store crawl artefacts alongside provenance outputs.
 
 ### Sprint 7 – Agent-first UI & exports (**Status: 🚧 Planned**)

@@ -1,0 +1,97 @@
+{
+  "plan": {
+    "entity_name": "QG Research Org",
+    "entity_slug": "qg-research-org",
+    "query": null,
+    "target_urls": [
+      "https://example.org"
+    ],
+    "allow_network": false,
+    "authority_sources": [],
+    "backfill_fields": [
+      "contact_primary_email",
+      "contact_primary_phone",
+      "website",
+      "province",
+      "address_primary"
+    ],
+    "rate_limit_seconds": null
+  },
+  "steps": [
+    {
+      "name": "local_snapshot",
+      "status": "skipped",
+      "message": "No cached snapshot available",
+      "artifacts": {
+        "path": ".hotpass/snapshots/qg-research-org.json"
+      }
+    },
+    {
+      "name": "authority_sources",
+      "status": "skipped",
+      "message": "No authority snapshots found for entity",
+      "artifacts": {
+        "authority_sources": []
+      }
+    },
+    {
+      "name": "deterministic_enrichment",
+      "status": "skipped",
+      "message": "Deterministic enrichment executed without updates",
+      "artifacts": {
+        "updated_fields": {},
+        "enriched_row": {
+          "organization_name": "QG Research Org",
+          "contact_primary_email": NaN,
+          "website": "example.org"
+        },
+        "provenance": {
+          "sources_tried": [],
+          "network_allowed": false,
+          "applied_source": null
+        }
+      }
+    },
+    {
+      "name": "network_enrichment",
+      "status": "skipped",
+      "message": "Network enrichment disabled via flags",
+      "artifacts": {}
+    },
+    {
+      "name": "native_crawl",
+      "status": "skipped",
+      "message": "Network disabled; crawler not executed",
+      "artifacts": {}
+    },
+    {
+      "name": "backfill",
+      "status": "success",
+      "message": "Identified 1 fields for backfill attempts",
+      "artifacts": {
+        "fields": [
+          "contact_primary_email"
+        ],
+        "allow_network": false,
+        "enriched_row": {
+          "organization_name": "QG Research Org",
+          "contact_primary_email": NaN,
+          "website": "example.org"
+        }
+      }
+    }
+  ],
+  "enriched_row": {
+    "organization_name": "QG Research Org",
+    "contact_primary_email": NaN,
+    "website": "example.org"
+  },
+  "provenance": {
+    "sources_tried": [],
+    "network_allowed": false,
+    "applied_source": null
+  },
+  "elapsed_seconds": 0.0001295410329475999,
+  "success": true,
+  "artifact_path": null
+}

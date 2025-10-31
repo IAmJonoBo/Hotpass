@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pandas as pd
 
@@ -32,6 +33,9 @@ def test_plan_offline_path(tmp_path):
             "research_backfill": {
                 "fields": ["contact_primary_email", "website"],
                 "confidence_threshold": 0.7,
+            },
+            "research_rate_limit": {
+                "min_interval_seconds": 1.0,
             },
         }
     )
@@ -65,6 +69,9 @@ def test_plan_offline_path(tmp_path):
     expect(statuses.get("network_enrichment") == "skipped", "Network step disabled offline")
     expect(statuses.get("native_crawl") == "skipped", "Crawl skipped without network")
     expect(statuses.get("backfill") == "success", "Backfill step should flag missing fields")
+    expect(outcome.plan.rate_limit_seconds == 1.0, "Rate limit should propagate into the plan")
+    expect(outcome.artifact_path is not None, "Outcome should persist an artefact path")
+    expect(Path(outcome.artifact_path).exists(), "Artefact file should be written to disk")
 
     audit_path = cache_root / "audit.log"
     expect(audit_path.exists(), "Audit log should be written")
@@ -87,3 +94,5 @@ def test_crawl_summary_without_network(tmp_path):
     statuses = {step.name: step.status for step in outcome.steps}
     expect(statuses.get("network_enrichment") == "skipped", "Network enrichment should skip when disabled")
     expect(statuses.get("native_crawl") == "skipped", "Crawl should skip without network access")
+    if outcome.artifact_path:
+        expect(Path(outcome.artifact_path).exists(), "Crawl artefact should be written")

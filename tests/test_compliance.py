@@ -174,7 +174,10 @@ def test_detect_pii_in_dataframe_no_presidio(mock_detector_class):
     result_df = detect_pii_in_dataframe(df)
 
     # Should return original dataframe
-    expect(len(result_df.columns) == len(df.columns), "When Presidio is unavailable the dataframe is unchanged")
+    expect(
+        len(result_df.columns) == len(df.columns),
+        "When Presidio is unavailable the dataframe is unchanged",
+    )
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -202,8 +205,14 @@ def test_anonymize_dataframe(mock_detector_class):
 
     result_df = anonymize_dataframe(df, columns=["name", "email"])
 
-    expect(result_df.loc[0, "name"] == "<PERSON>", "Name should be replaced with anonymized value")
-    expect(result_df.loc[0, "email"] == "<EMAIL_ADDRESS>", "Email should be replaced with anonymized value")
+    expect(
+        result_df.loc[0, "name"] == "<PERSON>",
+        "Name should be replaced with anonymized value",
+    )
+    expect(
+        result_df.loc[0, "email"] == "<EMAIL_ADDRESS>",
+        "Email should be replaced with anonymized value",
+    )
 
 
 @patch("hotpass.compliance.PIIDetector")
@@ -224,11 +233,17 @@ def test_redact_dataframe_captures_events(mock_detector_class):
     config = PIIRedactionConfig(columns=("email",), capture_entity_scores=True)
     redacted, events = redact_dataframe(df, config)
 
-    assert redacted.loc[0, "email"] == "<EMAIL_ADDRESS>"
-    assert redacted.loc[1, "email"] == "clean"
-    assert events
-    assert events[0]["entities"][0]["entity_type"] == "EMAIL_ADDRESS"
-    assert events[0]["entities"][0]["score"] == pytest.approx(0.91, rel=1e-3)
+    expect(redacted.loc[0, "email"] == "<EMAIL_ADDRESS>", "PII should be redacted")
+    expect(redacted.loc[1, "email"] == "clean", "Non-PII should remain untouched")
+    expect(events, "Redaction should emit provenance events")
+    expect(
+        events[0]["entities"][0]["entity_type"] == "EMAIL_ADDRESS",
+        "Event entity type should match",
+    )
+    expect(
+        events[0]["entities"][0]["score"] == pytest.approx(0.91, rel=1e-3),
+        "Score should match detector output",
+    )
 
 
 def test_redact_dataframe_disabled():
@@ -238,20 +253,26 @@ def test_redact_dataframe_disabled():
     redacted, events = redact_dataframe(df, config)
 
     pd.testing.assert_frame_equal(redacted, df)
-    assert events == []
+    expect(events == [], "Redaction disabled should emit no events")
 
 
 def test_data_classification_enum():
     """Test DataClassification enum."""
-    assert DataClassification.PUBLIC.value == "public"
-    assert DataClassification.PII.value == "pii"
-    assert DataClassification.SENSITIVE_PII.value == "sensitive_pii"
+    expect(DataClassification.PUBLIC.value == "public", "Classification enum mismatch")
+    expect(DataClassification.PII.value == "pii", "Classification enum mismatch")
+    expect(
+        DataClassification.SENSITIVE_PII.value == "sensitive_pii",
+        "Classification enum mismatch",
+    )
 
 
 def test_lawful_basis_enum():
     """Test LawfulBasis enum."""
-    assert LawfulBasis.CONSENT.value == "consent"
-    assert LawfulBasis.LEGITIMATE_INTEREST.value == "legitimate_interest"
+    expect(LawfulBasis.CONSENT.value == "consent", "Lawful basis enum mismatch")
+    expect(
+        LawfulBasis.LEGITIMATE_INTEREST.value == "legitimate_interest",
+        "Lawful basis enum mismatch",
+    )
 
 
 def test_popia_policy_init():
@@ -267,8 +288,8 @@ def test_popia_policy_init():
 
     policy = POPIAPolicy(config)
 
-    assert policy.config == config
-    assert policy.field_classifications["email"] == "pii"
+    expect(policy.config == config, "Policy should retain config payload")
+    expect(policy.field_classifications["email"] == "pii", "Field classification mismatch")
 
 
 def test_popia_policy_classify_field():
@@ -281,8 +302,14 @@ def test_popia_policy_classify_field():
 
     policy = POPIAPolicy(config)
 
-    assert policy.classify_field("email") == DataClassification.PII
-    assert policy.classify_field("unknown") == DataClassification.INTERNAL
+    expect(
+        policy.classify_field("email") == DataClassification.PII,
+        "Classification should map to PII",
+    )
+    expect(
+        policy.classify_field("unknown") == DataClassification.INTERNAL,
+        "Unknown fields default to internal",
+    )
 
 
 def test_popia_policy_retention_period():
@@ -295,8 +322,8 @@ def test_popia_policy_retention_period():
 
     policy = POPIAPolicy(config)
 
-    assert policy.get_retention_period("email") == 730
-    assert policy.get_retention_period("unknown") is None
+    expect(policy.get_retention_period("email") == 730, "Retention should resolve to configured value")
+    expect(policy.get_retention_period("unknown") is None, "Unknown retention should be None")
 
 
 def test_popia_policy_consent_requirements():
@@ -309,8 +336,8 @@ def test_popia_policy_consent_requirements():
 
     policy = POPIAPolicy(config)
 
-    assert policy.requires_consent("email") is True
-    assert policy.requires_consent("unknown") is False
+    expect(policy.requires_consent("email") is True, "Consent requirement should match config")
+    expect(policy.requires_consent("unknown") is False, "Non-configured fields should not require consent")
 
 
 def test_popia_policy_generate_report():
@@ -340,13 +367,19 @@ def test_popia_policy_generate_report():
     policy = POPIAPolicy(config)
     report = policy.generate_compliance_report(df)
 
-    assert report["total_fields"] == 4
-    assert report["total_records"] == 1
-    assert "email" in report["pii_fields"]
-    assert "email" in report["consent_required_fields"]
-    assert report["retention_policies"]["email"] == 730
-    assert report["consent_status_summary"]["granted"] == 1
-    assert report["consent_violations"] == []
+    expect(report["total_fields"] == 4, "Report should include field count")
+    expect(report["total_records"] == 1, "Report should include record count")
+    expect("email" in report["pii_fields"], "PII fields should include email")
+    expect(
+        "email" in report["consent_required_fields"],
+        "Consent-required fields should include email",
+    )
+    expect(report["retention_policies"]["email"] == 730, "Retention policy should propagate")
+    expect(
+        report["consent_status_summary"]["granted"] == 1,
+        "Consent summary should count granted entries",
+    )
+    expect(report["consent_violations"] == [], "No consent violations expected")
 
     policy.enforce_consent(report)
 
@@ -369,7 +402,7 @@ def test_popia_policy_report_compliance_issues():
     report = policy.generate_compliance_report(df)
 
     # Should have issues because no consent requirements or retention policies
-    assert len(report["compliance_issues"]) > 0
+    expect(len(report["compliance_issues"]) > 0, "Planned consent test should flag issues")
 
 
 def test_popia_policy_reports_consent_violation():
@@ -383,7 +416,7 @@ def test_popia_policy_reports_consent_violation():
     policy = POPIAPolicy(config)
     report = policy.generate_compliance_report(df)
 
-    assert report["consent_violations"]
+    expect(report["consent_violations"], "Violations should be recorded")
     with pytest.raises(ConsentValidationError):
         policy.enforce_consent(report)
 
@@ -399,7 +432,7 @@ def test_popia_policy_enforce_consent_allows_granted_status():
     policy = POPIAPolicy(config)
     report = policy.generate_compliance_report(df)
 
-    assert report["consent_violations"] == []
+    expect(report["consent_violations"] == [], "No consent violations when consent granted")
     policy.enforce_consent(report)
 
 
@@ -414,10 +447,10 @@ def test_add_provenance_columns():
 
     result_df = add_provenance_columns(df, source_name="Test Source")
 
-    assert "data_source" in result_df.columns
-    assert "processed_at" in result_df.columns
-    assert "consent_status" in result_df.columns
-    assert result_df.loc[0, "data_source"] == "Test Source"
+    expect("data_source" in result_df.columns, "Data source column should be added")
+    expect("processed_at" in result_df.columns, "Processed timestamp should be added")
+    expect("consent_status" in result_df.columns, "Consent status column should be added")
+    expect(result_df.loc[0, "data_source"] == "Test Source", "Data source value mismatch")
 
 
 def test_add_provenance_columns_preserves_existing_consent():
@@ -432,8 +465,8 @@ def test_add_provenance_columns_preserves_existing_consent():
 
     result_df = add_provenance_columns(df, source_name="Test Source")
 
-    assert result_df.loc[0, "consent_status"] == "granted"
-    assert result_df.loc[0, "consent_date"] == "2025-10-01"
+    expect(result_df.loc[0, "consent_status"] == "granted", "Consent status value mismatch")
+    expect(result_df.loc[0, "consent_date"] == "2025-10-01", "Consent date mismatch")
 
 
 def test_add_provenance_columns_with_timestamp():
@@ -447,4 +480,4 @@ def test_add_provenance_columns_with_timestamp():
     timestamp = "2025-01-01T00:00:00"
     result_df = add_provenance_columns(df, source_name="Test", processing_timestamp=timestamp)
 
-    assert result_df.loc[0, "processed_at"] == timestamp
+    expect(result_df.loc[0, "processed_at"] == timestamp, "Processed timestamp mismatch")

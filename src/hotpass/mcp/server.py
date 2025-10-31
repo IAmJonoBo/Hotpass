@@ -574,6 +574,7 @@ class HotpassMCPServer:
                     "success": True,
                     "summary": output_data.get("summary", {}),
                     "gates": output_data.get("gates", []),
+                    "artifact_path": output_data.get("artifact_path"),
                 }
             except json.JSONDecodeError:
                 return {

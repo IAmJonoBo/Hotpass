@@ -168,6 +168,20 @@ def validate_profile_structure(profile: dict[str, Any], profile_name: str) -> li
                 if not 0 <= threshold <= 1:
                     errors.append("research_backfill.confidence_threshold must be between 0 and 1")
 
+    research_rate_limit = profile.get("research_rate_limit")
+    if research_rate_limit is not None:
+        if not isinstance(research_rate_limit, dict):
+            errors.append("research_rate_limit must be a mapping when present")
+        else:
+            min_interval = research_rate_limit.get("min_interval_seconds")
+            if min_interval is not None and not isinstance(min_interval, (int, float)):
+                errors.append("research_rate_limit.min_interval_seconds must be numeric")
+            elif isinstance(min_interval, (int, float)) and min_interval < 0:
+                errors.append("research_rate_limit.min_interval_seconds must be >= 0")
+            burst = research_rate_limit.get("burst")
+            if burst is not None and (not isinstance(burst, int) or burst <= 0):
+                errors.append("research_rate_limit.burst must be a positive integer when provided")
+
     return errors
 
 

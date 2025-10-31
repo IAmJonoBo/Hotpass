@@ -11,6 +11,7 @@ from requests import Response
 from requests.structures import CaseInsensitiveDict
 
 from hotpass.enrichment import CacheManager, RegistryLookupError, enrich_from_registry
+from tests.helpers.assertions import expect
 
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "enrichment"
 
@@ -76,11 +77,11 @@ def test_cipc_lookup_success(tmp_path: Path) -> None:
         config={"base_url": base_url},
     )
 
-    assert result["success"] is True
-    assert result["status_code"] == 200
-    assert result["payload"]["registered_name"] == "Aero Tech (Pty) Ltd"
-    assert len(result["payload"]["addresses"]) == 2
-    assert result["payload"]["officers"][0]["name"] == "Jane Doe"
+    expect(result["success"] is True, "Lookup should succeed")
+    expect(result["status_code"] == 200, "Status code should reflect success")
+    expect(result["payload"]["registered_name"] == "Aero Tech (Pty) Ltd", "Registered name mismatch")
+    expect(len(result["payload"]["addresses"]) == 2, "Two addresses expected")
+    expect(result["payload"]["officers"][0]["name"] == "Jane Doe", "Officer name mismatch")
 
 
 def test_cipc_not_found_returns_structured_error(tmp_path: Path) -> None:
@@ -104,9 +105,9 @@ def test_cipc_not_found_returns_structured_error(tmp_path: Path) -> None:
         config={"base_url": base_url},
     )
 
-    assert result["success"] is False
-    assert result["status_code"] == 404
-    assert result["errors"][0]["code"] == "not_found"
+    expect(result["success"] is False, "Lookup should fail for missing id")
+    expect(result["status_code"] == 404, "Status code should indicate missing record")
+    expect(result["errors"][0]["code"] == "not_found", "Error code mismatch")
 
 
 def test_sacaa_lookup_success(tmp_path: Path) -> None:
@@ -126,11 +127,11 @@ def test_sacaa_lookup_success(tmp_path: Path) -> None:
         config={"base_url": base_url},
     )
 
-    assert result["success"] is True
-    assert result["payload"]["trading_name"] == "Sky Charter"
-    assert result["payload"]["contacts"]["email"] == "ops@skycharter.test"
-    assert result["payload"]["officers"][0]["name"] == "Lerato Mokoena"
-    assert result["meta"]["provider_meta"]["source"] == "SACAA API"
+    expect(result["success"] is True, "Lookup should succeed")
+    expect(result["payload"]["trading_name"] == "Sky Charter", "Trading name mismatch")
+    expect(result["payload"]["contacts"]["email"] == "ops@skycharter.test", "Contact email mismatch")
+    expect(result["payload"]["officers"][0]["name"] == "Lerato Mokoena", "Officer name mismatch")
+    expect(result["meta"]["provider_meta"]["source"] == "SACAA API", "Meta source mismatch")
 
 
 def test_enrich_from_registry_raises_on_transport_error(tmp_path: Path) -> None:
@@ -166,7 +167,7 @@ def test_enrich_from_registry_uses_cache_before_rate_limit(tmp_path: Path) -> No
         session=session,
         config={"base_url": base_url, "throttle_seconds": 10},
     )
-    assert result_first["success"] is True
+    expect(result_first["success"] is True, "First call should succeed")
 
     # Second call should read from cache without invoking the session again
     result_second = enrich_from_registry(
@@ -177,5 +178,5 @@ def test_enrich_from_registry_uses_cache_before_rate_limit(tmp_path: Path) -> No
         config={"base_url": base_url, "throttle_seconds": 10},
     )
 
-    assert result_second == result_first
-    assert len(dummy_session.calls) == 1
+    expect(result_second == result_first, "Second call should return cached result")
+    expect(len(dummy_session.calls) == 1, "Session should be called once due to caching")

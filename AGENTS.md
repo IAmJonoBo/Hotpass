@@ -265,6 +265,9 @@ uv run hotpass plan research \
 uv run hotpass crawl "https://example.test" --allow-network=true
 ```
 
+- Artefacts: each run writes a JSON summary under `.hotpass/research_runs/` capturing the plan, step outcomes, and provenance metadata for future audits.
+- Throttling: profiles may set `research_rate_limit.min_interval_seconds` to enforce per-entity crawl spacing; the orchestrator applies the delay before network fetchers run.
+
 ### Key Principles
 
 1. **Profile-First**: Always specify `--profile <name>`. Profiles contain critical business logic (column mappings, validation rules, compliance settings).

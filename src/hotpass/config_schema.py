@@ -22,6 +22,10 @@ class ProfileConfig(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    class ResearchRateLimit(BaseModel):
+        min_interval_seconds: float = Field(default=0.0, ge=0.0)
+        burst: int | None = Field(default=None, ge=1)
+
     class AuthoritySource(BaseModel):
         name: str
         url: str | None = None
@@ -49,6 +53,7 @@ class ProfileConfig(BaseModel):
     custom_validators: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     authority_sources: tuple[AuthoritySource, ...] = Field(default_factory=tuple)
     research_backfill: ResearchBackfill | None = None
+    research_rate_limit: ResearchRateLimit | None = None
 
     @property
     def backfill_fields(self) -> tuple[str, ...]:
