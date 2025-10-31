@@ -111,13 +111,19 @@ def stub_registry(monkeypatch: pytest.MonkeyPatch) -> Generator[StubRegistry]:
 
 
 def test_use_registry_updates_trace_and_metrics(stub_registry: StubRegistry) -> None:
-    expect(observability.trace.Status is StubStatus, "Trace helpers should come from stub registry")
     expect(
-        observability.metrics.tracer is stub_registry.tracer, "Metrics module should surface tracer"
+        observability.trace.Status is StubStatus,
+        "Trace helpers should come from stub registry",
+    )
+    expect(
+        observability.metrics.tracer is stub_registry.tracer,
+        "Metrics module should surface tracer",
     )
 
 
-def test_initialize_observability_configures_registry(stub_registry: StubRegistry) -> None:
+def test_initialize_observability_configures_registry(
+    stub_registry: StubRegistry,
+) -> None:
     tracer, meter = observability.initialize_observability(
         service_name="svc",
         exporters=("noop",),
@@ -131,7 +137,9 @@ def test_initialize_observability_configures_registry(stub_registry: StubRegistr
     expect(meter is stub_registry.meter, "Meter handle should originate from registry")
 
 
-def test_trace_operation_records_attributes_and_errors(stub_registry: StubRegistry) -> None:
+def test_trace_operation_records_attributes_and_errors(
+    stub_registry: StubRegistry,
+) -> None:
     with observability.trace_operation("demo", {"key": "value"}) as span:
         expect(span.attributes["key"] == "value", "Attributes should be set on span")
 

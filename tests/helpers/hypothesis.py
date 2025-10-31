@@ -63,4 +63,12 @@ def composite(*args: Any, **kwargs: Any) -> Any:
     return decorator
 
 
-__all__ = ["DrawFn", "HealthCheck", "SearchStrategy", "composite", "given", "settings", "st"]
+__all__ = [
+    "DrawFn",
+    "HealthCheck",
+    "SearchStrategy",
+    "composite",
+    "given",
+    "settings",
+    "st",
+]

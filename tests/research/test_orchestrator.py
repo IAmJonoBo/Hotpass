@@ -62,13 +62,19 @@ def test_plan_offline_path(tmp_path):
     context = ResearchContext(profile=profile, row=row, allow_network=False)
     outcome = orchestrator.plan(context)
 
-    expect(outcome.plan.entity_slug == slug, "Entity slug should derive from organization name")
+    expect(
+        outcome.plan.entity_slug == slug,
+        "Entity slug should derive from organization name",
+    )
     statuses = {step.name: step.status for step in outcome.steps}
     expect(statuses.get("local_snapshot") == "success", "Local snapshot should load")
     expect(statuses.get("authority_sources") == "success", "Authority snapshot should load")
     expect(statuses.get("network_enrichment") == "skipped", "Network step disabled offline")
     expect(statuses.get("native_crawl") == "skipped", "Crawl skipped without network")
-    expect(statuses.get("backfill") == "success", "Backfill step should flag missing fields")
+    expect(
+        statuses.get("backfill") == "success",
+        "Backfill step should flag missing fields",
+    )
     rate_limit = outcome.plan.rate_limit
     if rate_limit is None:
         raise AssertionError("Plan should carry rate limit details from profile")

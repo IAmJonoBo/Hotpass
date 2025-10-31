@@ -300,10 +300,14 @@ def _handle_up(args: argparse.Namespace) -> int:
     # Resolve host/target
     host = args.host or os.environ.get("HOTPASS_BASTION_HOST")
     if via == "ssh-bastion" and not host:
-        console.print("[red]Bastion host is required (pass --host or set HOTPASS_BASTION_HOST).[/red]")
+        console.print(
+            "[red]Bastion host is required (pass --host or set HOTPASS_BASTION_HOST).[/red]"
+        )
         return 1
     if via == "ssm" and not host:
-        console.print("[red]SSM target instance ID is required (pass --host or set HOTPASS_BASTION_HOST).[/red]")
+        console.print(
+            "[red]SSM target instance ID is required (pass --host or set HOTPASS_BASTION_HOST).[/red]"
+        )
         return 1
 
     # Resolve ports
@@ -505,7 +509,9 @@ def _handle_down(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_status(args: argparse.Namespace) -> int:  # noqa: ARG001 - signature mandated
+def _handle_status(
+    args: argparse.Namespace,
+) -> int:  # noqa: ARG001 - signature mandated
     console = Console()
     sessions = _load_sessions()
     if not sessions:

@@ -85,7 +85,12 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
         payload = {
             "summary": {"total": 5, "passed": 5, "failed": 0, "all_passed": True},
             "gates": [
-                {"id": "QG-1", "name": "CLI Integrity", "passed": True, "message": "ok"},
+                {
+                    "id": "QG-1",
+                    "name": "CLI Integrity",
+                    "passed": True,
+                    "message": "ok",
+                },
                 {"id": "QG-2", "name": "Data Quality", "passed": True, "message": "ok"},
             ],
             "artifact_path": str(artifact),
@@ -102,8 +107,14 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
     )
 
     expect(result["success"] is True, "TA check tool should report success")
-    expect(result["summary"]["all_passed"] is True, "Summary should indicate all gates passed")
-    expect(Path(result["artifact_path"]).exists(), "Artifact path returned by TA tool must exist")
+    expect(
+        result["summary"]["all_passed"] is True,
+        "Summary should indicate all gates passed",
+    )
+    expect(
+        Path(result["artifact_path"]).exists(),
+        "Artifact path returned by TA tool must exist",
+    )
     expect(
         Path(result.get("history_path", history)).exists(),
         "History path should be present and exist",
@@ -149,7 +160,10 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
             return self._payload
 
     def fake_plan(self, context: ResearchContext) -> DummyOutcome:
-        expect(context.profile is profile, "Server should pass custom profile to orchestrator")
+        expect(
+            context.profile is profile,
+            "Server should pass custom profile to orchestrator",
+        )
         plan_payload: dict[str, object] = {
             "entity_name": "Example Flight School",
             "entity_slug": "example-flight-school",
@@ -183,5 +197,8 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
     rate_limit = plan.get("rate_limit")
     if rate_limit is None:
         raise AssertionError("Plan should include rate limit details")
-    expect(rate_limit["min_interval_seconds"] == 1.5, "Rate limit interval should propagate")
+    expect(
+        rate_limit["min_interval_seconds"] == 1.5,
+        "Rate limit interval should propagate",
+    )
     expect(rate_limit["burst"] == 3, "Rate limit burst should propagate")

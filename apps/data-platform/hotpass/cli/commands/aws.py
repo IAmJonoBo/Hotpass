@@ -99,11 +99,7 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     # Resolve identity
     try:
         identity_verifier = AwsIdentityVerifier(region=aws_region, profile=aws_profile)
-        identity = (
-            identity_verifier.verify()
-            if not dry_run
-            else None
-        )
+        identity = identity_verifier.verify() if not dry_run else None
     except Exception as exc:  # noqa: BLE001
         console.print(f"[red]Failed to resolve AWS identity: {exc}[/red]")
         return 1

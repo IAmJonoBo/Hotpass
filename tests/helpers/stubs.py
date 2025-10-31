@@ -22,8 +22,7 @@ def fake_module(name: str, attrs: Mapping[str, Any] | None = None) -> ModuleType
 class RapidFuzzScorer(Protocol):
     """Protocol for RapidFuzz scoring callables."""
 
-    def __call__(self, *args: Any, **kwargs: Any) -> float:
-        ...
+    def __call__(self, *args: Any, **kwargs: Any) -> float: ...
 
 
 def make_rapidfuzz_stub() -> ModuleType:

@@ -85,13 +85,22 @@ class TestEnrichmentPipeline:
                 LookupTableFetcher,
             )
 
-            expect(LookupTableFetcher is not None, "LookupTableFetcher should be importable")
+            expect(
+                LookupTableFetcher is not None,
+                "LookupTableFetcher should be importable",
+            )
             expect(
                 HistoricalDataFetcher is not None,
                 "HistoricalDataFetcher should be importable",
             )
-            expect(DerivedFieldFetcher is not None, "DerivedFieldFetcher should be importable")
-            expect(LocalRegistryFetcher is not None, "LocalRegistryFetcher should be importable")
+            expect(
+                DerivedFieldFetcher is not None,
+                "DerivedFieldFetcher should be importable",
+            )
+            expect(
+                LocalRegistryFetcher is not None,
+                "LocalRegistryFetcher should be importable",
+            )
         except ImportError as exc:
             raise AssertionError(f"Deterministic fetchers should be importable: {exc}") from exc
 
@@ -161,8 +170,14 @@ class TestQG3EnrichmentChainGate:
         # Verify provenance columns
         df = pd.read_excel(output_path)
         expect("provenance_source" in df.columns, "Must have provenance_source column")
-        expect("provenance_timestamp" in df.columns, "Must have provenance_timestamp column")
-        expect("provenance_confidence" in df.columns, "Must have provenance_confidence column")
+        expect(
+            "provenance_timestamp" in df.columns,
+            "Must have provenance_timestamp column",
+        )
+        expect(
+            "provenance_confidence" in df.columns,
+            "Must have provenance_confidence column",
+        )
         expect("provenance_strategy" in df.columns, "Must have provenance_strategy column")
         expect(
             "provenance_network_status" in df.columns,
@@ -229,7 +244,13 @@ class TestQG3EnrichmentChainGate:
 
         # Check strategy column exists and has valid values
         strategies = df["provenance_strategy"].unique()
-        valid_strategies = ["deterministic", "research", "backfill", "offline-first", "none"]
+        valid_strategies = [
+            "deterministic",
+            "research",
+            "backfill",
+            "offline-first",
+            "none",
+        ]
 
         for strategy in strategies:
             expect(

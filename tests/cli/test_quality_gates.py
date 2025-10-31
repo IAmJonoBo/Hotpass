@@ -37,7 +37,9 @@ class TestQG1CLIIntegrity:
     def test_overview_command_exists(self):
         """QG-1a: Overview command should be accessible."""
         result = subprocess.run(
-            ["uv", "run", "hotpass", "overview", "--help"], capture_output=True, text=True
+            ["uv", "run", "hotpass", "overview", "--help"],
+            capture_output=True,
+            text=True,
         )
         expect(result.returncode == 0, "overview command should have --help")
         expect("overview" in result.stdout.lower(), "overview help should mention itself")
@@ -72,10 +74,15 @@ class TestQG1CLIIntegrity:
     def test_contracts_command_exists(self):
         """QG-1e: Contracts command should be accessible."""
         result = subprocess.run(
-            ["uv", "run", "hotpass", "contracts", "--help"], capture_output=True, text=True
+            ["uv", "run", "hotpass", "contracts", "--help"],
+            capture_output=True,
+            text=True,
         )
         expect(result.returncode == 0, "contracts command should have --help")
-        expect("contract" in result.stdout.lower(), "contracts help should mention contracts")
+        expect(
+            "contract" in result.stdout.lower(),
+            "contracts help should mention contracts",
+        )
 
     def test_overview_lists_all_required_verbs(self):
         """QG-1f: Overview command should list all required verbs."""
@@ -198,12 +205,18 @@ class TestQG3EnrichmentChain:
         except json.JSONDecodeError as exc:
             raise AssertionError(f"run_qg3.py output must be JSON: {exc}") from exc
         expect(isinstance(payload, dict), "run_qg3.py payload should be a dict")
-        expect(payload.get("passed") is True, "QG-3 gate should pass on deterministic workflow")
+        expect(
+            payload.get("passed") is True,
+            "QG-3 gate should pass on deterministic workflow",
+        )
 
         artifacts = payload.get("artifacts")
         expect(isinstance(artifacts, dict), "QG-3 payload must include artifacts")
         output_workbook = artifacts.get("output_workbook")
-        expect(isinstance(output_workbook, str), "QG-3 artifacts must include output workbook path")
+        expect(
+            isinstance(output_workbook, str),
+            "QG-3 artifacts must include output workbook path",
+        )
         expect(Path(output_workbook).exists(), "QG-3 output workbook must exist")
 
         # Copy artifact to tmp to confirm readability
@@ -322,7 +335,10 @@ class TestQG5DocsInstruction:
         except json.JSONDecodeError as exc:
             raise AssertionError(f"run_qg5.py output must be JSON: {exc}") from exc
         expect(isinstance(payload, dict), "run_qg5.py payload should be a dict")
-        expect(payload.get("passed") is True, "QG-5 gate should pass on current documentation")
+        expect(
+            payload.get("passed") is True,
+            "QG-5 gate should pass on current documentation",
+        )
 
     def test_implementation_plan_exists(self):
         """QG-5e: IMPLEMENTATION_PLAN.md should exist."""
@@ -360,7 +376,10 @@ class TestTechnicalAcceptance:
 
     def test_ta7_docs_present(self):
         """TA-7a: Agent instructions and docs are present."""
-        expect(Path(".github/copilot-instructions.md").exists(), "Copilot instructions must exist")
+        expect(
+            Path(".github/copilot-instructions.md").exists(),
+            "Copilot instructions must exist",
+        )
         expect(Path("AGENTS.md").exists(), "AGENTS.md must exist")
         expect(Path("IMPLEMENTATION_PLAN.md").exists(), "Implementation plan must exist")
 
@@ -376,7 +395,10 @@ class TestTechnicalAcceptance:
             text=True,
         )
         expect(result.returncode == 0, "run_all_gates.py should exit successfully")
-        expect(summary_path.exists(), "TA summary artifact should be written to dist/quality-gates")
+        expect(
+            summary_path.exists(),
+            "TA summary artifact should be written to dist/quality-gates",
+        )
         try:
             payload = json.loads(summary_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:

@@ -26,7 +26,10 @@ class CheckResult:
 
 REQUIRED_TERM_GROUPS = {
     "copilot:profiles": (".github/copilot-instructions.md", ["profile"]),
-    "copilot:deterministic": (".github/copilot-instructions.md", ["deterministic", "offline"]),
+    "copilot:deterministic": (
+        ".github/copilot-instructions.md",
+        ["deterministic", "offline"],
+    ),
     "copilot:provenance": (".github/copilot-instructions.md", ["provenance", "source"]),
     "agents:profiles": ("AGENTS.md", ["profile", "aviation", "generic"]),
     "agents:deterministic": ("AGENTS.md", ["deterministic", "offline"]),

@@ -136,7 +136,10 @@ def test_sacaa_lookup_success(tmp_path: Path) -> None:
         result["payload"]["contacts"]["email"] == "ops@skycharter.test",
         "Contact email mismatch",
     )
-    expect(result["payload"]["officers"][0]["name"] == "Lerato Mokoena", "Officer name mismatch")
+    expect(
+        result["payload"]["officers"][0]["name"] == "Lerato Mokoena",
+        "Officer name mismatch",
+    )
     expect(result["meta"]["provider_meta"]["source"] == "SACAA API", "Meta source mismatch")
 
 

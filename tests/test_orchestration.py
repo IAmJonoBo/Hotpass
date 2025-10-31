@@ -304,7 +304,10 @@ def test_run_pipeline_once_injects_metrics(monkeypatch: pytest.MonkeyPatch, tmp_
     summary = run_pipeline_once(options)
 
     expect(summary.total_records == 7, "Summary should reflect enhanced runner output")
-    expect(captured["metrics"] is metrics_token, "Metrics token should be injected into runner")
+    expect(
+        captured["metrics"] is metrics_token,
+        "Metrics token should be injected into runner",
+    )
     expect(captured.get("extra") == "value", "Additional runner kwargs should propagate")
 
     attributes = cast(dict[str, object], captured["attributes"])
@@ -968,8 +971,14 @@ async def test_run_with_prefect_concurrency_releases_on_run_sync_error() -> None
             run_sync=_run_sync,
         )
 
-    expect(("run_sync",) in events, "Thread runner should be invoked before propagating errors")
-    expect(("callback",) not in events, "Callback should not execute when run_sync fails early")
+    expect(
+        ("run_sync",) in events,
+        "Thread runner should be invoked before propagating errors",
+    )
+    expect(
+        ("callback",) not in events,
+        "Callback should not execute when run_sync fails early",
+    )
     expect(
         ("exit", "hotpass/tests", "2") in events,
         "Concurrency context should exit after run_sync failure",

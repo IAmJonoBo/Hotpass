@@ -87,7 +87,8 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     try:
         industry_profile = load_industry_profile(profile_name)
         console.print(
-            f"[cyan]Loading profile:[/cyan] {industry_profile.display_name}", file=sys.stderr
+            f"[cyan]Loading profile:[/cyan] {industry_profile.display_name}",
+            file=sys.stderr,
         )
     except Exception as e:
         console.print(f"[red]Error loading profile:[/red] {e}", file=sys.stderr)

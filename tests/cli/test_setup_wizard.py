@@ -61,7 +61,10 @@ def test_setup_wizard_dry_run_minimal(capsys: CaptureFixture[str]) -> None:
             "--dry-run",
         ]
     )
-    expect(exit_code == 0, "Dry-run should complete successfully when all steps are skipped")
+    expect(
+        exit_code == 0,
+        "Dry-run should complete successfully when all steps are skipped",
+    )
     out = capsys.readouterr().out
     expect("Setup Plan" in out, "Wizard should render a plan table during dry-run")
 

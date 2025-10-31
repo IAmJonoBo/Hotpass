@@ -291,14 +291,18 @@ class HotpassMCPServer:
 
             else:
                 return MCPResponse(
-                    error={"code": -32601, "message": f"Method not found: {request.method}"},
+                    error={
+                        "code": -32601,
+                        "message": f"Method not found: {request.method}",
+                    },
                     id=request.id,
                 )
 
         except Exception as e:
             logger.error(f"Error handling request: {e}", exc_info=True)
             return MCPResponse(
-                error={"code": -32603, "message": f"Internal error: {str(e)}"}, id=request.id
+                error={"code": -32603, "message": f"Internal error: {str(e)}"},
+                id=request.id,
             )
 
     async def _execute_tool(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
@@ -420,7 +424,10 @@ class HotpassMCPServer:
                     return {"success": False, "error": "Invalid row ID format"}
 
             if row_index >= len(df):
-                return {"success": False, "error": f"Row index {row_index} out of range"}
+                return {
+                    "success": False,
+                    "error": f"Row index {row_index} out of range",
+                }
 
             row = df.iloc[row_index]
 

@@ -21,7 +21,10 @@ from tests.helpers.assertions import expect
 
 def test_slugify_normalises_accents_and_whitespace() -> None:
     slug = _slugify("  Résumé  Holdings  ")
-    expect(slug == "resume-holdings", "Slugify should strip diacritics and collapse whitespace")
+    expect(
+        slug == "resume-holdings",
+        "Slugify should strip diacritics and collapse whitespace",
+    )
     expect(_slugify(None) == "", "None inputs should return empty string")
 
 
@@ -36,7 +39,10 @@ def test_derive_slug_keys_uses_existing_and_fallbacks() -> None:
     )
     keys = _derive_slug_keys(df)
     expect(len(keys.unique()) == len(df), "Each row should resolve to a unique slug")
-    expect(keys.iloc[0] == "alpha-labs", "Missing slug should fall back to organisation name")
+    expect(
+        keys.iloc[0] == "alpha-labs",
+        "Missing slug should fall back to organisation name",
+    )
     expect(
         keys.iloc[2] == "western-cape-456-high",
         "Composite keys should use province and address when names missing",
@@ -60,7 +66,8 @@ def test_load_entity_history_parses_supported_format(tmp_path: Path) -> None:
     loaded = _load_entity_history(str(history))
     expect(not loaded.empty, "History loader should parse JSON array")
     expect(
-        isinstance(loaded.loc[0, "name_variants"], list), "Name variants should normalise to list"
+        isinstance(loaded.loc[0, "name_variants"], list),
+        "Name variants should normalise to list",
     )
 
 
@@ -103,7 +110,8 @@ def test_build_entity_registry_merges_history(tmp_path: Path) -> None:
     alpha = registry.loc[registry["organization_name"] == "Alpha Labs"].iloc[0]
     expect(alpha["entity_id"] == 10, "Existing entity should retain its identifier")
     expect(
-        alpha["status_history"][-1]["status"] == "active", "Current status should append to history"
+        alpha["status_history"][-1]["status"] == "active",
+        "Current status should append to history",
     )
 
 

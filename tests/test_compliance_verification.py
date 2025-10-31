@@ -85,7 +85,10 @@ def test_generate_summary_reflects_latest_run(log_path: Path) -> None:
 
     summary = generate_summary(log_path=log_path, now=ts + timedelta(days=10))
     framework_summary = summary["frameworks"]["POPIA"]
-    expect(framework_summary["due"] is False, "Framework should not be due within cadence window")
+    expect(
+        framework_summary["due"] is False,
+        "Framework should not be due within cadence window",
+    )
     expect(
         framework_summary["reviewers"] == ["Alice"],
         "Summary should capture latest reviewers",
@@ -120,4 +123,7 @@ def test_frameworks_due_handles_case_insensitivity(log_path: Path) -> None:
     due_frameworks = frameworks_due(
         ("POPIA",), log_path=log_path, now=timestamp + timedelta(days=120)
     )
-    expect(due_frameworks == ["POPIA"], "Framework should become due after cadence interval")
+    expect(
+        due_frameworks == ["POPIA"],
+        "Framework should become due after cadence interval",
+    )

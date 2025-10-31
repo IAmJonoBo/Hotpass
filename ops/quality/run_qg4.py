@@ -43,7 +43,9 @@ def _build_parser() -> argparse.ArgumentParser:
 def _import_server() -> StepResult:
     start = time.time()
     try:
-        from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
+        from hotpass.mcp.server import (
+            HotpassMCPServer,
+        )  # pylint: disable=import-outside-toplevel
     except Exception as exc:  # pragma: no cover - defensive guard
         return StepResult(
             step_id="import",
@@ -75,7 +77,9 @@ def _import_server() -> StepResult:
 
 def _check_required_tools() -> StepResult:
     start = time.time()
-    from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
+    from hotpass.mcp.server import (
+        HotpassMCPServer,
+    )  # pylint: disable=import-outside-toplevel
 
     server = HotpassMCPServer()
     tool_names = {tool.name for tool in server.tools}
@@ -109,7 +113,9 @@ def _check_required_tools() -> StepResult:
 
 def _check_schema_shapes() -> StepResult:
     start = time.time()
-    from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
+    from hotpass.mcp.server import (
+        HotpassMCPServer,
+    )  # pylint: disable=import-outside-toplevel
 
     server = HotpassMCPServer()
     issues: list[str] = []
@@ -163,7 +169,9 @@ def _exercise_research_tools() -> StepResult:
 
         import pandas as pd  # pylint: disable=import-outside-toplevel
 
-        from hotpass.mcp.server import HotpassMCPServer  # pylint: disable=import-outside-toplevel
+        from hotpass.mcp.server import (
+            HotpassMCPServer,
+        )  # pylint: disable=import-outside-toplevel
     except Exception as exc:  # pragma: no cover - defensive guard
         return StepResult(
             step_id="research-tools-import",

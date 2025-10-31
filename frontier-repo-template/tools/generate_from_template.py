@@ -5,17 +5,21 @@ Usage:
     python tools/generate_from_template.py --source templates/template.json --dest ../my-new-project
 """
 import argparse, json, os, sys, pathlib
+
 try:
     import yaml  # optional
 except Exception:
     yaml = None
 
+
 def load_spec(path):
     text = open(path, "r", encoding="utf-8").read()
     if path.endswith((".yaml", ".yml")):
-        if not yaml: raise SystemExit("PyYAML not installed")
+        if not yaml:
+            raise SystemExit("PyYAML not installed")
         return yaml.safe_load(text)
     return json.loads(text)
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -34,6 +38,7 @@ def main():
             if not p.exists():
                 p.write_text("", encoding="utf-8")
     print(f"Generated skeleton at {dest}")
+
 
 if __name__ == "__main__":
     main()

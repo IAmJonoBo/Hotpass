@@ -139,9 +139,7 @@ def _locate_row(frame: pd.DataFrame, row_identifier: str) -> tuple[int, pd.Serie
 
 def _build_payload(row_identifier: str, row_index: int, row: pd.Series) -> dict[str, Any]:
     provenance = {
-        column: str(row.get(column, "N/A"))
-        for column in PROVENANCE_COLUMNS
-        if column in row.index
+        column: str(row.get(column, "N/A")) for column in PROVENANCE_COLUMNS if column in row.index
     }
     payload: dict[str, Any] = {
         "success": bool(provenance),

@@ -68,12 +68,7 @@ def check_profile_completeness(profile_name: str) -> None:
     import yaml
 
     profile_path = (
-        PROJECT_ROOT
-        / "apps"
-        / "data-platform"
-        / "hotpass"
-        / "profiles"
-        / f"{profile_name}.yaml"
+        PROJECT_ROOT / "apps" / "data-platform" / "hotpass" / "profiles" / f"{profile_name}.yaml"
     )
     if not profile_path.exists():
         raise FitnessFailure(f"Profile {profile_name} not found at {profile_path}")

@@ -149,7 +149,10 @@ def test_extract_website_content_success(mock_trafilatura, mock_requests, temp_c
 
     expect(result["success"] is True, "Successful extraction should flag success")
     expect(result["title"] == "Test Title", "Metadata title should match extractor output")
-    expect(result["text"] == "Extracted text content", "Extracted text should match payload")
+    expect(
+        result["text"] == "Extracted text content",
+        "Extracted text should match payload",
+    )
     expect(result["url"] == "https://example.com", "Result URL should echo the request URL")
 
 
@@ -200,11 +203,17 @@ def test_extract_website_content_caching(temp_cache):
 
         # First call should hit the API
         result1 = extract_website_content("https://example.com", cache=temp_cache)
-        expect(result1["success"] is True, "First extraction should succeed via HTTP request")
+        expect(
+            result1["success"] is True,
+            "First extraction should succeed via HTTP request",
+        )
 
         # Second call should use cache
         result2 = extract_website_content("https://example.com", cache=temp_cache)
-        expect(result2["success"] is True, "Second extraction should succeed via cache reuse")
+        expect(
+            result2["success"] is True,
+            "Second extraction should succeed via cache reuse",
+        )
 
         # Verify only one API call was made
         expect(
@@ -242,12 +251,18 @@ def test_enrich_dataframe_with_websites(mock_extract, temp_cache):
 
     result_df = enrich_dataframe_with_websites(df, cache=temp_cache)
 
-    expect("website_title" in result_df.columns, "Website enrichment should add title column")
+    expect(
+        "website_title" in result_df.columns,
+        "Website enrichment should add title column",
+    )
     expect(
         "website_description" in result_df.columns,
         "Website enrichment should add description column",
     )
-    expect("website_enriched" in result_df.columns, "Website enrichment flag column should exist")
+    expect(
+        "website_enriched" in result_df.columns,
+        "Website enrichment flag column should exist",
+    )
     expect(
         result_df["website_enriched"].sum() == 2,
         "Both rows should be marked enriched when extraction succeeds",
@@ -341,7 +356,10 @@ def test_enrich_dataframe_with_websites_concurrent_runs_tasks_in_parallel(monkey
 
     result = enrich_dataframe_with_websites_concurrent(df, website_column="website", concurrency=4)
 
-    expect(peak_active >= 2, "Concurrency helper should perform at least two requests in parallel")
+    expect(
+        peak_active >= 2,
+        "Concurrency helper should perform at least two requests in parallel",
+    )
     expect(result["website_enriched"].sum() == 4, "All rows should be marked enriched")
     expect(
         (
@@ -383,9 +401,18 @@ def test_enrich_dataframe_with_registries(mock_enrich_registry, temp_cache):
 
     result_df = enrich_dataframe_with_registries(df, registry_type="cipc", cache=temp_cache)
 
-    expect("registry_type" in result_df.columns, "Registry enrichment should add type column")
-    expect("registry_status" in result_df.columns, "Registry enrichment should add status column")
-    expect("registry_number" in result_df.columns, "Registry enrichment should add number column")
+    expect(
+        "registry_type" in result_df.columns,
+        "Registry enrichment should add type column",
+    )
+    expect(
+        "registry_status" in result_df.columns,
+        "Registry enrichment should add status column",
+    )
+    expect(
+        "registry_number" in result_df.columns,
+        "Registry enrichment should add number column",
+    )
     expect(
         result_df.loc[0, "registry_number"] == "REG123",
         "Registry number should reflect successful lookup payload",
@@ -563,7 +590,10 @@ def test_run_intent_plan_generates_digest() -> None:
     digest = result.digest
     expect(isinstance(digest, pd.DataFrame), "Digest should materialise as a DataFrame")
     expect(not digest.empty, "Digest should contain aggregated signal rows")
-    expect("intent_signal_score" in digest.columns, "Digest should include intent score column")
+    expect(
+        "intent_signal_score" in digest.columns,
+        "Digest should include intent score column",
+    )
     aero_score = digest.loc[digest["target_slug"] == "aero-school", "intent_signal_score"].iloc[0]
     heli_score = digest.loc[digest["target_slug"] == "heli-ops", "intent_signal_score"].iloc[0]
     expect(aero_score > heli_score, "Aero School score should exceed Heli Ops score")
@@ -608,7 +638,10 @@ def test_intent_plan_persists_signals_and_reuses_cache(tmp_path: Path) -> None:
     stored_records = json.loads(storage_path.read_text(encoding="utf-8"))
     expect(len(stored_records) == 1, "Initial run should persist a single record")
     record = stored_records[0]
-    expect(record["target_slug"] == "aero-school", "Stored record should target Aero School")
+    expect(
+        record["target_slug"] == "aero-school",
+        "Stored record should target Aero School",
+    )
     expect("retrieved_at" in record, "Stored record should include retrieval timestamp")
     expect(
         record["provenance"]["collector"] == "news",

@@ -208,7 +208,10 @@ class TestBackwardsCompatibility:
 
         # Both should exist
         expect("column_synonyms" in profile, "Legacy column_synonyms should exist")
-        expect("refine" in profile and "mappings" in profile["refine"], "New mappings should exist")
+        expect(
+            "refine" in profile and "mappings" in profile["refine"],
+            "New mappings should exist",
+        )
 
         # Keys should match
         legacy_keys = set(profile["column_synonyms"].keys())
@@ -231,7 +234,10 @@ class TestQG2DataQualityGate:
 
         refine = profile["refine"]
         expect("expectations" in refine, "Profile should define expectations")
-        expect(len(refine["expectations"]) > 0, "Profile should have at least one expectation")
+        expect(
+            len(refine["expectations"]) > 0,
+            "Profile should have at least one expectation",
+        )
 
     def test_qg2_qa_command_exists(self):
         """QG-2b: QA command should exist (full GE integration in future)."""

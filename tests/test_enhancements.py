@@ -39,4 +39,7 @@ def test___all___declares_public_surface() -> None:
 def test_module_import_is_idempotent() -> None:
     # Re-import to ensure no side effects or missing dependencies
     module = importlib.reload(pipeline_enhancements)
-    expect(hasattr(module, "ComplianceFeature"), "Reloaded module should expose ComplianceFeature")
+    expect(
+        hasattr(module, "ComplianceFeature"),
+        "Reloaded module should expose ComplianceFeature",
+    )

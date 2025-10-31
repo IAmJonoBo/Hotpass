@@ -11,7 +11,14 @@ from typing import Any
 import openpyxl
 import pandas as pd
 import pytest
-from tests.helpers.hypothesis import DrawFn, SearchStrategy, composite, given, settings, st
+from tests.helpers.hypothesis import (
+    DrawFn,
+    SearchStrategy,
+    composite,
+    given,
+    settings,
+    st,
+)
 
 from hotpass.formatting import apply_excel_formatting
 

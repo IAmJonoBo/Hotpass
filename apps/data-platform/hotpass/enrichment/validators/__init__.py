@@ -110,7 +110,7 @@ class EmailValidator:
         *,
         dns_lookup: Callable[[str], Iterable[str]] | None = None,
         cache_ttl: timedelta = DEFAULT_CACHE_TTL,
-        smtp_probe: Callable[[str, str, tuple[str, ...]], SMTPProbeResult | None] | None = None,
+        smtp_probe: (Callable[[str, str, tuple[str, ...]], SMTPProbeResult | None] | None) = None,
     ) -> None:
         self._dns_lookup = dns_lookup or self._default_dns_lookup
         self._cache_ttl = cache_ttl

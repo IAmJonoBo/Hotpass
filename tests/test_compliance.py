@@ -27,7 +27,10 @@ def test_pii_detector_init_no_presidio():
     """Test PII detector initialization without Presidio."""
     detector = PIIDetector()
     expect(detector.analyzer is None, "Analyzer should be absent when Presidio disabled")
-    expect(detector.anonymizer is None, "Anonymizer should be absent when Presidio disabled")
+    expect(
+        detector.anonymizer is None,
+        "Anonymizer should be absent when Presidio disabled",
+    )
 
 
 @patch("hotpass.compliance.PRESIDIO_AVAILABLE", True)
@@ -62,7 +65,10 @@ def test_detect_pii_success():
         results = detector.detect_pii("test@example.com")
 
         expect(len(results) == 1, "Detector should return a single result")
-        expect(results[0]["entity_type"] == "EMAIL_ADDRESS", "Result entity type should match")
+        expect(
+            results[0]["entity_type"] == "EMAIL_ADDRESS",
+            "Result entity type should match",
+        )
         expect(results[0]["score"] == 0.95, "Result score should reflect analyzer output")
 
 
@@ -153,7 +159,10 @@ def test_detect_pii_in_dataframe(mock_detector_class):
     result_df = detect_pii_in_dataframe(df, columns=["name", "email"])
 
     expect("name_has_pii" in result_df.columns, "PII flags should be added for name column")
-    expect("email_has_pii" in result_df.columns, "PII flags should be added for email column")
+    expect(
+        "email_has_pii" in result_df.columns,
+        "PII flags should be added for email column",
+    )
     expect(result_df["name_has_pii"].sum() == 2, "Name column should flag both rows")
     expect(result_df["email_has_pii"].sum() == 2, "Email column should flag both rows")
 
@@ -329,7 +338,10 @@ def test_popia_policy_retention_period():
         policy.get_retention_period("email") == 730,
         "Retention should resolve to configured value",
     )
-    expect(policy.get_retention_period("unknown") is None, "Unknown retention should be None")
+    expect(
+        policy.get_retention_period("unknown") is None,
+        "Unknown retention should be None",
+    )
 
 
 def test_popia_policy_consent_requirements():
@@ -342,7 +354,10 @@ def test_popia_policy_consent_requirements():
 
     policy = POPIAPolicy(config)
 
-    expect(policy.requires_consent("email") is True, "Consent requirement should match config")
+    expect(
+        policy.requires_consent("email") is True,
+        "Consent requirement should match config",
+    )
     expect(
         policy.requires_consent("unknown") is False,
         "Non-configured fields should not require consent",
@@ -383,7 +398,10 @@ def test_popia_policy_generate_report():
         "email" in report["consent_required_fields"],
         "Consent-required fields should include email",
     )
-    expect(report["retention_policies"]["email"] == 730, "Retention policy should propagate")
+    expect(
+        report["retention_policies"]["email"] == 730,
+        "Retention policy should propagate",
+    )
     expect(
         report["consent_status_summary"]["granted"] == 1,
         "Consent summary should count granted entries",

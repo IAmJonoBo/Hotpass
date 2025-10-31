@@ -159,9 +159,7 @@ def main(argv: list[str] | None = None) -> int:
                 data_docs_dir=docs_dir,
             )
             message = (
-                "Validation passed"
-                if validation_result.success
-                else "Validation reported failure"
+                "Validation passed" if validation_result.success else "Validation reported failure"
             )
             results.append(
                 {
@@ -229,8 +227,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {item['message']}")
         doc_summary = summary["stats"]["docs_html_files"]
         print(
-            "Data Docs location: "
-            f"{summary['data_docs']} ({doc_summary} HTML files)",
+            f"Data Docs location: {summary['data_docs']} ({doc_summary} HTML files)",
         )
         if summary["passed"]:
             print("✓ QG-2 succeeded")

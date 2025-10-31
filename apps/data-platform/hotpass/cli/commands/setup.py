@@ -240,10 +240,14 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         return 0
 
     if not namespace.execute:
-        if interactive and (namespace.assume_yes or Confirm.ask("Execute this plan now?", default=True)):
+        if interactive and (
+            namespace.assume_yes or Confirm.ask("Execute this plan now?", default=True)
+        ):
             pass
         else:
-            console.print("[cyan]Use --execute (or reply yes) to run the plan automatically.[/cyan]")
+            console.print(
+                "[cyan]Use --execute (or reply yes) to run the plan automatically.[/cyan]"
+            )
             return 0
 
     try:
@@ -500,7 +504,9 @@ def _run_plan(steps: Sequence[WizardStep], profile: CLIProfile | None) -> None:
 
 
 def _invoke_cli(cli_args: list[str], profile: CLIProfile | None) -> int:
-    from ..main import build_parser as build_root_parser  # local import to avoid heavy startup cost
+    from ..main import (
+        build_parser as build_root_parser,
+    )  # local import to avoid heavy startup cost
 
     parser = build_root_parser()
     parsed = parser.parse_args(cli_args)

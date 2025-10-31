@@ -20,7 +20,10 @@ def _write_sample_dataset(tmp_path: Path) -> Path:
             "provenance_timestamp": ["2025-10-31T08:00:00Z", "2025-10-31T08:05:00Z"],
             "provenance_confidence": [0.9, 0.7],
             "provenance_strategy": ["offline-first", "offline-first"],
-            "provenance_network_status": ["skipped: network disabled", "skipped: network disabled"],
+            "provenance_network_status": [
+                "skipped: network disabled",
+                "skipped: network disabled",
+            ],
         }
     )
     dataset_path = tmp_path / "enriched.xlsx"

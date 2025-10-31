@@ -28,7 +28,10 @@ def test_error_context_to_dict():
 
     data = context.to_dict()
 
-    expect(data["category"] == "validation_failure", "Category should be 'validation_failure'")
+    expect(
+        data["category"] == "validation_failure",
+        "Category should be 'validation_failure'",
+    )
     expect(data["severity"] == "warning", "Severity should be 'warning'")
     expect(data["message"] == "Test error", "Message should match")
     expect(data["details"]["field"] == "email", "Field detail should be 'email'")

@@ -39,7 +39,10 @@ def test_load_industry_profile_prefers_yaml(tmp_path: Path) -> None:
     profile = load_industry_profile("custom", config_dir)
 
     expect(profile.name == "custom", "YAML file should take precedence over JSON")
-    expect(profile.column_synonyms["organization_name"] == ["company"], "YAML content should parse")
+    expect(
+        profile.column_synonyms["organization_name"] == ["company"],
+        "YAML content should parse",
+    )
 
 
 def test_load_industry_profile_falls_back_to_default(tmp_path: Path) -> None:
@@ -52,7 +55,10 @@ def test_save_industry_profile_round_trips(tmp_path: Path) -> None:
     save_industry_profile(profile, tmp_path)
 
     saved = load_industry_profile("aviation", tmp_path)
-    expect(saved.display_name == profile.display_name, "Saved profile should reload with same data")
+    expect(
+        saved.display_name == profile.display_name,
+        "Saved profile should reload with same data",
+    )
 
 
 def test_industry_profile_from_dict_validation() -> None:
@@ -62,6 +68,9 @@ def test_industry_profile_from_dict_validation() -> None:
     try:
         IndustryProfile.from_dict({"name": "broken", "required_fields": "not-a-list"})
     except ValueError as exc:
-        expect("required_fields" in str(exc), "Validation error should mention invalid type")
+        expect(
+            "required_fields" in str(exc),
+            "Validation error should mention invalid type",
+        )
     else:  # pragma: no cover - defensive guard
         raise AssertionError("ValueError expected for invalid required_fields type")

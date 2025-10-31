@@ -220,5 +220,11 @@ def test_execute_agent_tasks_falls_back_to_providers_when_no_tasks(
     result = execute_agent_tasks(agent, context, provider_registry, credential_store)
 
     expect(result.records == [], "Missing credentials should block fallback task records")
-    expect(bool(result.warnings), "Fallback execution should emit missing credential warning")
-    expect(bool(credential_store.fetches), "Fallback should still attempt to resolve credentials")
+    expect(
+        bool(result.warnings),
+        "Fallback execution should emit missing credential warning",
+    )
+    expect(
+        bool(credential_store.fetches),
+        "Fallback should still attempt to resolve credentials",
+    )

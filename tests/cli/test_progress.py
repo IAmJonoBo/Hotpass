@@ -154,7 +154,10 @@ def test_pipeline_progress_replays_high_volume_fixture() -> None:
 
 def test_render_progress_without_console_uses_null_context() -> None:
     with cli.render_progress(None) as progress_context:
-        expect(progress_context is None, "render_progress should yield None when console missing")
+        expect(
+            progress_context is None,
+            "render_progress should yield None when console missing",
+        )
 
 
 def test_render_progress_with_console_uses_pipeline_progress() -> None:

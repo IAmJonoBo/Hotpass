@@ -18,7 +18,10 @@ def test_email_validator_handles_trusted_domains() -> None:
     validator = EmailValidator()
     result = validator.validate("user@example.com")
     assert result is not None, "Validator should return a result for valid email"
-    expect(result.status is ValidationStatus.DELIVERABLE, "Trusted domain should be deliverable")
+    expect(
+        result.status is ValidationStatus.DELIVERABLE,
+        "Trusted domain should be deliverable",
+    )
     expect(bool(result.mx_hosts), "Trusted domains should populate MX hosts")
 
 
@@ -61,10 +64,12 @@ def test_contact_validation_service_caches_per_channel() -> None:
         country_code="ZA",
     )
     expect(
-        summary_first.email is summary_second.email, "Email validations should reuse cached results"
+        summary_first.email is summary_second.email,
+        "Email validations should reuse cached results",
     )
     expect(
-        summary_first.phone is summary_second.phone, "Phone validations should reuse cached results"
+        summary_first.phone is summary_second.phone,
+        "Phone validations should reuse cached results",
     )
     expect(
         isinstance(summary_first.flags(), list),
@@ -77,4 +82,7 @@ def test_logistic_scale_monotonicity() -> None:
     expect(logistic_scale(1.0) == 1.0, "Upper bound should clamp to one")
     mid = logistic_scale(0.5)
     expect(abs(mid - 0.5) < 0.05, "Midpoint should remain near 0.5 after scaling")
-    expect(logistic_scale(0.7) > logistic_scale(0.3), "Function should be monotonic increasing")
+    expect(
+        logistic_scale(0.7) > logistic_scale(0.3),
+        "Function should be monotonic increasing",
+    )

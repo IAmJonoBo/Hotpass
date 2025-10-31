@@ -108,7 +108,8 @@ def test_load_allowed_roots_from_environment(
     monkeypatch.setenv(ALLOWED_ROOTS_ENV, candidate)
     roots = _load_allowed_roots()
     expect(
-        {root.name for root in roots} == {"one", "two"}, "Environment entries should be honoured"
+        {root.name for root in roots} == {"one", "two"},
+        "Environment entries should be honoured",
     )
 
 
@@ -144,13 +145,17 @@ def test_validate_directory_helpers_return_resolved(
         _validate_output_path(tmp_path.parent / "out.xlsx", allowed)
 
 
-def test_require_authentication_without_password(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_require_authentication_without_password(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv(AUTH_PASSWORD_ENV, raising=False)
     cast(dict[str, Any], _dashboard_streamlit().session_state).clear()
     expect(_require_authentication(), "No password configured should allow access")
 
 
-def test_require_authentication_with_session_token(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_require_authentication_with_session_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv(AUTH_PASSWORD_ENV, "secret")
     cast(dict[str, Any], _dashboard_streamlit().session_state)[AUTH_STATE_KEY] = True
     expect(_require_authentication(), "Existing session flag should bypass prompt")
@@ -166,7 +171,10 @@ def test_require_authentication_success_flow(monkeypatch: pytest.MonkeyPatch) ->
 
     expect(allowed, "Correct password should unlock dashboard")
     expect(bool(stub.success_messages), "Success message should be emitted on unlock")
-    expect(stub.session_state[AUTH_STATE_KEY] is True, "Session flag should be set after unlock")
+    expect(
+        stub.session_state[AUTH_STATE_KEY] is True,
+        "Session flag should be set after unlock",
+    )
 
 
 def test_load_and_save_pipeline_history(tmp_path: Path) -> None:

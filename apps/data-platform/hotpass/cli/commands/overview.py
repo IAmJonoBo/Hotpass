@@ -50,7 +50,11 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         hotpass_version = "unknown"
 
     # Create commands table
-    table = Table(title="Available Hotpass Commands", show_header=True, header_style="bold magenta")
+    table = Table(
+        title="Available Hotpass Commands",
+        show_header=True,
+        header_style="bold magenta",
+    )
     table.add_column("Command", style="cyan", width=15)
     table.add_column("Description", style="white")
 

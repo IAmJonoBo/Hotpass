@@ -254,7 +254,14 @@ def main() -> int:
 
     if args.schema_json:
         schema = {
-            "required": ["name", "display_name", "ingest", "refine", "enrich", "compliance"],
+            "required": [
+                "name",
+                "display_name",
+                "ingest",
+                "refine",
+                "enrich",
+                "compliance",
+            ],
             "optional": [
                 "authority_sources",
                 "research_backfill",

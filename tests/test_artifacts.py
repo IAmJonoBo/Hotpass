@@ -33,12 +33,21 @@ def test_create_refined_archive_embeds_checksum(tmp_path: Path) -> None:
     )
 
     with zipfile.ZipFile(archive_path) as zf:
-        expect(excel_path.name in zf.namelist(), f"Archive should contain {excel_path.name}")
+        expect(
+            excel_path.name in zf.namelist(),
+            f"Archive should contain {excel_path.name}",
+        )
         sha_sums = zf.read("SHA256SUMS").decode().strip()
 
     digest = hashlib.sha256(excel_path.read_bytes()).hexdigest()[:12]
-    expect(archive_path.stem.endswith(digest), f"Archive stem should end with digest {digest}")
-    expect(sha_sums == f"{digest}  {excel_path.name}", "SHA256SUMS should match expected format")
+    expect(
+        archive_path.stem.endswith(digest),
+        f"Archive stem should end with digest {digest}",
+    )
+    expect(
+        sha_sums == f"{digest}  {excel_path.name}",
+        "SHA256SUMS should match expected format",
+    )
 
 
 def test_create_refined_archive_defaults_to_utc(

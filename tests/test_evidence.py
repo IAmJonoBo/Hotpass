@@ -85,4 +85,7 @@ def test_record_export_access_event_deterministic(tmp_path):
     expected_sha = "3a6eb0790f39ac87c94f3856b2dd2c5d110e6811602261a9a923d3bb23adc8b7"
     expect(payload["sha256"] == expected_sha, "SHA256 digest should match input data")
     expect(payload["context"] == {"task": "prefect"}, "Context metadata should persist")
-    expect(payload["output_path"] == str(output_file.resolve()), "Output path should be absolute")
+    expect(
+        payload["output_path"] == str(output_file.resolve()),
+        "Output path should be absolute",
+    )

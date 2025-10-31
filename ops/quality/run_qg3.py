@@ -237,7 +237,7 @@ def _build_summary(
             "output_workbook": str(output_path),
         },
         "configuration": {
-        "profile": profile or "default",
+            "profile": profile or "default",
             "allow_network": allow_network,
         },
         "stats": {

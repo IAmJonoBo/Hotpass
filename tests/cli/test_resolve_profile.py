@@ -162,7 +162,10 @@ def test_resolve_options_honours_cli_disable_flag(tmp_path: Path) -> None:
     namespace = _namespace(tmp_path, use_splink=False)
     options = _resolve_options(namespace, profile=_profile(entity_resolution=True))
 
-    expect(options.use_splink is False, "Explicit CLI flag should override profile defaults")
+    expect(
+        options.use_splink is False,
+        "Explicit CLI flag should override profile defaults",
+    )
 
 
 def test_resolve_profile_supports_label_studio_configuration(
@@ -210,6 +213,9 @@ def test_resolve_profile_supports_label_studio_configuration(
     expect(exit_code == 0, "Resolve command should succeed with Label Studio options")
     label_config = captured.get("label_studio")
     expect(label_config is not None, "Label Studio config should be constructed")
-    expect(label_config.api_url == "https://label.example", "Label Studio URL should propagate")
+    expect(
+        label_config.api_url == "https://label.example",
+        "Label Studio URL should propagate",
+    )
     expect(label_config.api_token == "token-123", "Label Studio token should propagate")
     expect(label_config.project_id == 42, "Label Studio project id should propagate")

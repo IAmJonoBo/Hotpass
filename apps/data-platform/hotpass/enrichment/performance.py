@@ -194,7 +194,10 @@ def enrich_parallel(
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(process_row_fetcher, row_idx, fetcher, row): (row_idx, fetcher)
+            executor.submit(process_row_fetcher, row_idx, fetcher, row): (
+                row_idx,
+                fetcher,
+            )
             for row_idx, fetcher, row in work_items
         }
 

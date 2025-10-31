@@ -106,7 +106,5 @@ def _handle_docs(args: argparse.Namespace) -> int:
 
     for src in sources:
         shutil.copy2(src, output_dir / src.name)
-    console.print(
-        f"[green]Copied {len(sources)} documentation files to {output_dir}[/green]"
-    )
+    console.print(f"[green]Copied {len(sources)} documentation files to {output_dir}[/green]")
     return 0

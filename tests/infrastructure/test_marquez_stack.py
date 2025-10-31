@@ -51,7 +51,10 @@ def test_marquez_compose_exposes_expected_services() -> None:
         "Marquez service should expose the API port.",
     )
 
-    expect("marquez-web" in services, "Compose stack should include the Marquez UI service.")
+    expect(
+        "marquez-web" in services,
+        "Compose stack should include the Marquez UI service.",
+    )
     marquez_ui = services.get("marquez-web", {})
     ui_depends_on = marquez_ui.get("depends_on") or {}
     if isinstance(ui_depends_on, dict):

@@ -77,7 +77,10 @@ async def test_enrich_dataframe_with_websites_async_processes_in_parallel(monkey
     # With 5 tasks at 0.05s each, sequential would take 0.25s
     # Parallel should take ~0.05s (plus overhead)
     expect(elapsed < 0.15, f"Expected parallel execution, took {elapsed:.2f}s")
-    expect(result["website_enriched"].sum() == 5, "Parallel enrichment should mark all rows")
+    expect(
+        result["website_enriched"].sum() == 5,
+        "Parallel enrichment should mark all rows",
+    )
     expect(len(call_order) == 5, "Extractor should run once per input row")
 
 
@@ -155,7 +158,10 @@ async def test_enrich_dataframe_with_websites_async_handles_exceptions(monkeypat
     result = await enrich_dataframe_with_websites_async(df, website_column="website", concurrency=3)
 
     # Good URLs should still be enriched
-    expect(result["website_enriched"].sum() == 2, "Valid URLs should be enriched despite failures")
+    expect(
+        result["website_enriched"].sum() == 2,
+        "Valid URLs should be enriched despite failures",
+    )
 
 
 @pytest.mark.asyncio
