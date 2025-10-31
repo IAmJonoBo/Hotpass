@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import time
-from datetime import UTC, datetime
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Type, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pandas as pd
 
@@ -97,11 +97,11 @@ class ResearchPlan:
                     "url": snapshot.url,
                     "description": snapshot.description,
                 }
-            for snapshot in self.authority_sources
-        ],
-        "backfill_fields": list(self.backfill_fields),
-        "rate_limit": self.rate_limit.to_dict() if self.rate_limit else None,
-    }
+                for snapshot in self.authority_sources
+            ],
+            "backfill_fields": list(self.backfill_fields),
+            "rate_limit": self.rate_limit.to_dict() if self.rate_limit else None,
+        }
 
 
 @dataclass(slots=True)
@@ -255,9 +255,7 @@ class ResearchOrchestrator:
             for source in getattr(context.profile, "authority_sources", tuple())
         )
 
-        backfill_fields = tuple(
-            _filter_blank(context.backfill_fields or profile_backfill_fields)
-        )
+        backfill_fields = tuple(_filter_blank(context.backfill_fields or profile_backfill_fields))
 
         rate_limit_policy: RateLimitPolicy | None = None
         profile_rate_limit = getattr(context.profile, "research_rate_limit", None)
@@ -277,9 +275,7 @@ class ResearchOrchestrator:
             entity_name=entity_name,
             entity_slug=entity_slug,
             query=context.query,
-            target_urls=tuple(
-                dict.fromkeys(urls)
-            ),  # preserve order while removing duplicates
+            target_urls=tuple(dict.fromkeys(urls)),  # preserve order while removing duplicates
             row=row,
             profile=context.profile,
             allow_network=context.allow_network,
@@ -292,9 +288,7 @@ class ResearchOrchestrator:
     # Execution
     # --------------------------------------------------------------------- #
 
-    def _execute(
-        self, plan: ResearchPlan, *, crawl_only: bool = False
-    ) -> ResearchOutcome:
+    def _execute(self, plan: ResearchPlan, *, crawl_only: bool = False) -> ResearchOutcome:
         start = time.perf_counter()
         steps: list[ResearchStepResult] = []
         enriched_row: dict[str, Any] | None = None
@@ -318,9 +312,7 @@ class ResearchOrchestrator:
 
         network_step = self._run_network_enrichment(plan, enriched_row=enriched_row)
         steps.append(network_step)
-        if network_step.status == "success" and network_step.artifacts.get(
-            "enriched_row"
-        ):
+        if network_step.status == "success" and network_step.artifacts.get("enriched_row"):
             enriched_row = network_step.artifacts["enriched_row"]
             provenance = network_step.artifacts.get("provenance", provenance)
 
@@ -400,9 +392,7 @@ class ResearchOrchestrator:
                 status="skipped",
                 message="No authority snapshots found for entity",
                 artifacts={
-                    "authority_sources": [
-                        snapshot.name for snapshot in plan.authority_sources
-                    ],
+                    "authority_sources": [snapshot.name for snapshot in plan.authority_sources],
                 },
             )
 
@@ -587,11 +577,12 @@ class ResearchOrchestrator:
         results: list[dict[str, Any]] = []
 
         if TYPE_CHECKING:  # pragma: no cover - typing helper
+
             class _MetadataSpiderBase:  # pylint: disable=too-few-public-methods
                 def make_requests_from_url(self, url: str) -> Any: ...
 
         else:
-            _MetadataSpiderBase = cast(Type[Any], _SpiderRuntime)
+            _MetadataSpiderBase = cast(type[Any], _SpiderRuntime)
 
         class MetadataSpider(_MetadataSpiderBase):
             name = "hotpass_metadata_spider"
@@ -818,14 +809,14 @@ def _diff_row(original: pd.Series, enriched: pd.Series) -> dict[str, tuple[Any, 
 
 def _fields_requiring_backfill(row: pd.Series, fields: Sequence[str]) -> set[str]:
     missing: set[str] = set()
-    for field in fields:
-        if field not in row:
+    for field_name in fields:
+        if field_name not in row:
             continue
-        value = row[field]
+        value = row[field_name]
         if (
             value is None
             or (isinstance(value, float) and pd.isna(value))
             or (isinstance(value, str) and not value.strip())
         ):
-            missing.add(field)
+            missing.add(field_name)
     return missing

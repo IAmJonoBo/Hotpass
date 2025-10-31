@@ -21,7 +21,9 @@ def build(
     parser = subparsers.add_parser(
         "overview",
         help="Display available Hotpass commands and system status",
-        description="Show an overview of Hotpass capabilities, available commands, and system status.",
+        description=(
+            "Show an overview of Hotpass capabilities, available commands, and system status."
+        ),
         parents=[shared.base],
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -88,13 +90,21 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     console.print()
 
     # Usage examples
+    refine_cmd = (
+        "uv run hotpass refine --input-dir ./data "
+        "--output-path ./dist/refined.xlsx --profile aviation"
+    )
+    enrich_cmd = (
+        "uv run hotpass enrich --input ./dist/refined.xlsx "
+        "--output ./dist/enriched.xlsx --profile aviation"
+    )
     console.print(
         Panel.fit(
             "[bold]Common workflows:[/bold]\n\n"
             "1. Refine a spreadsheet:\n"
-            "   [cyan]uv run hotpass refine --input-dir ./data --output-path ./dist/refined.xlsx --profile aviation[/cyan]\n\n"
+            f"   [cyan]{refine_cmd}[/cyan]\n\n"
             "2. Enrich refined data:\n"
-            "   [cyan]uv run hotpass enrich --input ./dist/refined.xlsx --output ./dist/enriched.xlsx --profile aviation[/cyan]\n\n"
+            f"   [cyan]{enrich_cmd}[/cyan]\n\n"
             "3. Run quality checks:\n"
             "   [cyan]uv run hotpass qa all[/cyan]\n\n"
             "4. Get help on any command:\n"

@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-from hotpass.mcp.server import HotpassMCPServer
 from hotpass.config import get_default_profile
-from hotpass.research import ResearchOrchestrator, ResearchContext
+from hotpass.mcp.server import HotpassMCPServer
+from hotpass.research import ResearchContext, ResearchOrchestrator
 
 
 def expect(condition: bool, message: str) -> None:
@@ -104,7 +103,10 @@ async def test_ta_check_tool(monkeypatch, tmp_path):
     expect(result["success"] is True, "TA check tool should report success")
     expect(result["summary"]["all_passed"] is True, "Summary should indicate all gates passed")
     expect(Path(result["artifact_path"]).exists(), "Artifact path returned by TA tool must exist")
-    expect(Path(result.get("history_path", history)).exists(), "History path should be present and exist")
+    expect(
+        Path(result.get("history_path", history)).exists(),
+        "History path should be present and exist",
+    )
 
 
 @pytest.mark.asyncio

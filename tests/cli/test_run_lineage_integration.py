@@ -6,9 +6,8 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from tests.fixtures.lineage import CapturedLineage
-
 from hotpass import cli
+from tests.fixtures.lineage import CapturedLineage
 
 
 def expect(condition: bool, message: str) -> None:

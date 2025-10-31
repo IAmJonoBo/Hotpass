@@ -75,7 +75,7 @@ def check_profile_completeness(profile_name: str) -> None:
         with open(profile_path) as f:
             profile = yaml.safe_load(f)
     except Exception as e:
-        raise FitnessFailure(f"Failed to load profile {profile_name}: {e}")
+        raise FitnessFailure(f"Failed to load profile {profile_name}: {e}") from e
 
     required_blocks = ["ingest", "refine", "enrich", "compliance"]
     missing = [block for block in required_blocks if block not in profile]

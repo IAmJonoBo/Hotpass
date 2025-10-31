@@ -21,7 +21,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 TA_ARTIFACT_DIR = Path("dist/quality-gates")
 TA_SUMMARY_PATH = TA_ARTIFACT_DIR / "latest-ta.json"
 TA_HISTORY_PATH = TA_ARTIFACT_DIR / "history.ndjson"

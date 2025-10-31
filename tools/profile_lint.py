@@ -15,11 +15,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 from typing import Any
 
-import json
 import yaml
 
 
@@ -43,7 +43,7 @@ def load_profile(profile_path: Path) -> dict[str, Any]:
         with open(profile_path) as f:
             return yaml.safe_load(f)
     except Exception as e:
-        raise ProfileLintError(f"Failed to load profile {profile_path}: {e}")
+        raise ProfileLintError(f"Failed to load profile {profile_path}: {e}") from e
 
 
 def validate_profile_structure(profile: dict[str, Any], profile_name: str) -> list[str]:
@@ -275,7 +275,9 @@ def main() -> int:
             "compliance": {
                 "required": ["policy", "pii_fields"],
             },
-            "authority_sources": "list[{'name': str, 'category': 'registry|directory|dataset', 'cache_key': str?}]",
+            "authority_sources": (
+                "list[{'name': str, 'category': 'registry|directory|dataset', 'cache_key': str?}]"
+            ),
             "research_backfill": {
                 "fields": "list[str]",
                 "confidence_threshold": "float between 0 and 1",

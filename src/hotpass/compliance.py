@@ -17,10 +17,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Protocol, cast
 
+import pandas as pd
 
 logger = logging.getLogger(__name__)
-
-import pandas as pd
 
 
 class AnalyzerResultProtocol(Protocol):
