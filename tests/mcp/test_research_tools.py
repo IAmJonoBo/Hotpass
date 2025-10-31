@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -69,3 +70,32 @@ async def test_crawl_tool(monkeypatch):
     expect(result["success"] is True, "Crawl tool should succeed")
     outcome = result["outcome"]
     expect(outcome["plan"]["entity_name"], "Crawl outcome should include entity name")
+
+
+@pytest.mark.asyncio
+async def test_ta_check_tool(monkeypatch, tmp_path):
+    artifact = tmp_path / "latest-ta.json"
+    artifact.write_text("{}", encoding="utf-8")
+
+    async def fake_run_command(self, cmd):  # type: ignore[override]
+        payload = {
+            "summary": {"total": 5, "passed": 5, "failed": 0, "all_passed": True},
+            "gates": [
+                {"id": "QG-1", "name": "CLI Integrity", "passed": True, "message": "ok"},
+                {"id": "QG-2", "name": "Data Quality", "passed": True, "message": "ok"},
+            ],
+            "artifact_path": str(artifact),
+        }
+        return {"returncode": 0, "stdout": json.dumps(payload), "stderr": ""}
+
+    monkeypatch.setattr(HotpassMCPServer, "_run_command", fake_run_command)
+
+    server = HotpassMCPServer()
+    result = await server._execute_tool(  # pylint: disable=protected-access
+        "hotpass.ta.check",
+        {},
+    )
+
+    expect(result["success"] is True, "TA check tool should report success")
+    expect(result["summary"]["all_passed"] is True, "Summary should indicate all gates passed")
+    expect(Path(result["artifact_path"]).exists(), "Artifact path returned by TA tool must exist")
