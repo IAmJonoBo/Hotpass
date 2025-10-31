@@ -20,12 +20,14 @@ interface ConfigSettings {
   prefectApiUrl: string
   marquezApiUrl: string
   environment: 'local' | 'staging' | 'prod'
+  telemetryEnabled: boolean
 }
 
 const DEFAULT_SETTINGS: ConfigSettings = {
   prefectApiUrl: import.meta.env.VITE_PREFECT_API_URL || 'http://localhost:4200',
   marquezApiUrl: import.meta.env.VITE_MARQUEZ_API_URL || 'http://localhost:5000',
   environment: (import.meta.env.VITE_ENVIRONMENT as ConfigSettings['environment']) || 'local',
+  telemetryEnabled: true,
 }
 
 export function Admin() {
@@ -245,6 +247,35 @@ export function Admin() {
                 Failed
               </Badge>
             )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* UI Preferences */}
+      <Card>
+        <CardHeader>
+          <CardTitle>UI Preferences</CardTitle>
+          <CardDescription>
+            Customize the user interface behavior
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium">Telemetry Strip</label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Show system status bar at the top of each page
+              </p>
+            </div>
+            <Button
+              variant={settings.telemetryEnabled ? 'default' : 'outline'}
+              size="sm"
+              onClick={() =>
+                setSettings({ ...settings, telemetryEnabled: !settings.telemetryEnabled })
+              }
+            >
+              {settings.telemetryEnabled ? 'Enabled' : 'Disabled'}
+            </Button>
           </div>
         </CardContent>
       </Card>

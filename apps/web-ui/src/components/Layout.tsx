@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { AssistantDrawer } from './assistant/AssistantDrawer'
+import { TelemetryStrip } from './telemetry/TelemetryStrip'
 import { getEnvironmentColor } from '@/lib/utils'
 
 export function Layout() {
@@ -34,6 +35,7 @@ export function Layout() {
             {environment === 'docker' && ' (containerized)'}
           </div>
         )}
+        <TelemetryStrip />
         <div className="container mx-auto p-6 max-w-7xl">
           <Outlet context={{ openAssistant }} />
         </div>
