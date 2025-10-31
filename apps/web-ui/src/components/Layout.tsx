@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { AssistantDrawer } from './assistant/AssistantDrawer'
+import { getEnvironmentColor } from '@/lib/utils'
 
 export function Layout() {
   const [assistantOpen, setAssistantOpen] = useState(false)
@@ -17,6 +18,9 @@ export function Layout() {
     setAssistantOpen(true)
   }
 
+  // Show environment banner for non-local environments
+  const showBanner = environment !== 'local'
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
@@ -24,6 +28,12 @@ export function Layout() {
         onOpenAssistant={openAssistant}
       />
       <main className="flex-1 overflow-y-auto">
+        {showBanner && (
+          <div className={`sticky top-0 z-40 px-6 py-2 text-center text-sm font-medium ${getEnvironmentColor(environment)}`}>
+            Running in {environment.toUpperCase()} environment
+            {environment === 'docker' && ' (containerized)'}
+          </div>
+        )}
         <div className="container mx-auto p-6 max-w-7xl">
           <Outlet context={{ openAssistant }} />
         </div>

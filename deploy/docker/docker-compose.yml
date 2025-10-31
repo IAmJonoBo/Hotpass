@@ -1,0 +1,97 @@
+# Hotpass Dockerized Hub
+#
+# Runs the complete Hotpass ecosystem in containers:
+# - hotpass-web: React UI (Vite dev server)
+# - marquez: OpenLineage metadata service
+# - prefect: Workflow orchestration server
+
+version: '3.8'
+
+services:
+  # Hotpass Web UI
+  hotpass-web:
+    build:
+      context: ../../apps/web-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - VITE_PREFECT_API_URL=http://prefect:4200/api
+      - VITE_MARQUEZ_API_URL=http://marquez:5000/api/v1
+      - VITE_ENVIRONMENT=docker
+    depends_on:
+      - marquez
+      - prefect
+    networks:
+      - hotpass-network
+    volumes:
+      - ../../apps/web-ui:/app
+      - /app/node_modules
+
+  # Marquez - OpenLineage Metadata Service
+  marquez:
+    image: marquezproject/marquez:latest
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    environment:
+      - MARQUEZ_PORT=5000
+      - MARQUEZ_ADMIN_PORT=5001
+      - POSTGRES_HOST=marquez-db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=marquez
+      - POSTGRES_USER=marquez
+      - POSTGRES_PASSWORD=marquez
+    depends_on:
+      - marquez-db
+    networks:
+      - hotpass-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Marquez PostgreSQL Database
+  marquez-db:
+    image: postgres:14
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=marquez
+      - POSTGRES_USER=marquez
+      - POSTGRES_PASSWORD=marquez
+    volumes:
+      - marquez-data:/var/lib/postgresql/data
+    networks:
+      - hotpass-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marquez"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prefect Server
+  prefect:
+    image: prefecthq/prefect:2-python3.11
+    ports:
+      - "4200:4200"
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_UI_ENABLED=true
+    command: prefect server start --host 0.0.0.0
+    networks:
+      - hotpass-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  hotpass-network:
+    driver: bridge
+
+volumes:
+  marquez-data:
