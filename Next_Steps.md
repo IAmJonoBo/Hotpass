@@ -6,6 +6,8 @@
 - [ ] **QA** — Execute full E2E runs with canonical configuration toggles ; reuse Prefect deployment `hotpass-e2e-staging`).
 - [ ] **Platform** — Validate Prefect backfill deployment guardrails in staging.
 - [ ] **Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
+- [ ] **Engineering & Platform** — Design and implement new CLI surface commands (`hotpass net`, `hotpass aws`, `hotpass ctx`, `hotpass env`) that wrap tunnel setup, AWS identity checks, Prefect/kube context configuration, and environment drafting.
+- [ ] **Docs & QA** — Document and test the new CLI automation surface once available (README quickstart, `docs/reference/cli.md`, `AGENTS.md`, and ARC how-to guide).
 - [ ] **QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
   - **Progress:** Added `tests/cli/test_resolve_profile.py` coverage for profile-driven Splink defaults, explicit disable flags, and Label Studio wiring; orchestrator stress fixtures still pending once staging data is available.
 - [x] **Engineering & QA** — Execute the staged mypy remediation plan (typed Hypothesis wrappers ➜ optional-dependency stubs ➜ CLI/MCP typing ➜ long-tail cleanup) to drive the error count toward zero.
@@ -28,7 +30,8 @@
 - [ ] Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
   - **Progress:** test_error_handling.py completed (46 assertions migrated); compliance verification + enrichment suites migrated to `expect()`; agentic orchestration coverage converted 2025-10-31. Remaining bare-assert files: 31.
 - [ ] Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
-  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 reports 0 errors (down from 197 baseline). Remaining follow-up: monitor new suites for decorator regressions.
+  - **Progress:** `uv run mypy apps/data-platform tests ops` on 2025-10-31 reports 0 errors (down from 197 baseline). Remaining follow-up: monitor new suites for decorator regressions.
+- [ ] Review and adopt the repository restructure guidance in `docs/architecture/repo-restructure-plan.md` as the canonical layout reference (owners: Engineering & Docs).
 
 ## Deliverables
 
@@ -45,6 +48,7 @@
 
 - `schemas/` — current frictionless contracts to be regenerated.
 - `apps/data-platform/hotpass/orchestration.py` — pipeline payload helpers requiring baseline fix.
+- `docs/architecture/repo-restructure-plan.md` — canonical mapping for the apps/ops separation and follow-up actions.
 - `docs/index.md` — landing page now surfacing governance artefacts; monitor follow-up requests.
 - `docs/reference/data-docs.md` & `docs/reference/schema-exports.md` — new reference pages for Data Docs + JSON Schema consumers.
 - `docs/governance/data-governance-navigation.md` — consolidated navigation across governance artefacts.
