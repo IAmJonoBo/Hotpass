@@ -174,6 +174,18 @@ export function Admin() {
             <p className="text-xs text-muted-foreground mt-1">
               Base URL for the Prefect API (e.g., http://localhost:4200 or https://api.prefect.cloud)
             </p>
+            {settings.prefectApiUrl.includes('.internal') && (
+              <div className="mt-2 bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs">
+                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium">
+                  <AlertCircle className="h-3 w-3" />
+                  VPC/Internal URL Detected
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  This URL appears to be in a private VPC. Make sure you're connected via VPN or
+                  bastion tunnel before testing the connection.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -224,6 +236,18 @@ export function Admin() {
             <p className="text-xs text-muted-foreground mt-1">
               Base URL for the Marquez API (e.g., http://localhost:5000 or https://marquez.staging.internal)
             </p>
+            {settings.marquezApiUrl.includes('.internal') && (
+              <div className="mt-2 bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-xs">
+                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-medium">
+                  <AlertCircle className="h-3 w-3" />
+                  VPC/Internal URL Detected
+                </div>
+                <p className="text-muted-foreground mt-1">
+                  This URL appears to be in a private VPC. Make sure you're connected via VPN or
+                  bastion tunnel before testing the connection.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

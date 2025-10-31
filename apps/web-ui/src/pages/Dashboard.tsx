@@ -173,15 +173,27 @@ export function Dashboard() {
       {/* Recent Runs Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Pipeline Runs</CardTitle>
-          <CardDescription>
-            Latest executions with status and performance metrics
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recent Pipeline Runs</CardTitle>
+              <CardDescription>
+                Latest executions with status and performance metrics
+              </CardDescription>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Last updated: {formatDistanceToNow(new Date(), { addSuffix: true })}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingPrefect ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-sm text-muted-foreground">Loading runs...</div>
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Loading runs from Prefect...</div>
+                <p className="text-xs text-muted-foreground">
+                  (Over VPN/bastion this may be slow)
+                </p>
+              </div>
             </div>
           ) : recentRuns.length === 0 ? (
             <div className="flex items-center justify-center py-8">

@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { AssistantDrawer } from './assistant/AssistantDrawer'
+import { AgentActivityPanel } from './activity/AgentActivityPanel'
 import { TelemetryStrip } from './telemetry/TelemetryStrip'
 import { getEnvironmentColor } from '@/lib/utils'
 
 export function Layout() {
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantMessage, setAssistantMessage] = useState<string>()
+  const [activityOpen, setActivityOpen] = useState(false)
 
   // Get environment from env var or localStorage config
   const environment = import.meta.env.VITE_ENVIRONMENT ||
@@ -27,6 +29,7 @@ export function Layout() {
       <Sidebar
         environment={environment}
         onOpenAssistant={openAssistant}
+        onOpenActivity={() => setActivityOpen(true)}
       />
       <main className="flex-1 overflow-y-auto">
         {showBanner && (
@@ -44,6 +47,10 @@ export function Layout() {
         open={assistantOpen}
         onOpenChange={setAssistantOpen}
         initialMessage={assistantMessage}
+      />
+      <AgentActivityPanel
+        open={activityOpen}
+        onOpenChange={setActivityOpen}
       />
     </div>
   )
