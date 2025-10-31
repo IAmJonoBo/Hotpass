@@ -2,6 +2,7 @@ from argparse import Namespace
 from pathlib import Path
 
 from hotpass.cli.commands.run import _resolve_options
+
 from tests.helpers.fixtures import fixture
 
 
@@ -74,12 +75,16 @@ def test_resolve_options_merges_telemetry(namespace: Namespace) -> None:
     options = _resolve_options(namespace, profile=None)
     config = options.canonical_config
 
-    expect(config.telemetry.enabled is True, "Telemetry should be enabled via CLI flag.")
+    expect(
+        config.telemetry.enabled is True, "Telemetry should be enabled via CLI flag."
+    )
     expect(
         config.telemetry.service_name == "hotpass-cli",
         "Service name should override default.",
     )
-    expect(config.telemetry.environment == "staging", "Environment should match CLI flag.")
+    expect(
+        config.telemetry.environment == "staging", "Environment should match CLI flag."
+    )
     expect(
         config.telemetry.exporters == ("otlp",),
         "Exporter list should prefer CLI values.",

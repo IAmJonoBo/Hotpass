@@ -8,9 +8,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-
 from hotpass import observability
 from hotpass.telemetry.registry import TelemetryRegistry
+
 from tests.helpers.assertions import expect
 from tests.helpers.fixtures import fixture
 
@@ -133,7 +133,9 @@ def test_initialize_observability_configures_registry(
     expect(bool(stub_registry.configured), "Registry configure should be invoked")
     config = stub_registry.configured[0]
     expect(config.service_name == "svc", "Service name should be forwarded to registry")
-    expect(tracer is stub_registry.tracer, "Tracer handle should originate from registry")
+    expect(
+        tracer is stub_registry.tracer, "Tracer handle should originate from registry"
+    )
     expect(meter is stub_registry.meter, "Meter handle should originate from registry")
 
 
@@ -161,7 +163,13 @@ def test_trace_operation_records_attributes_and_errors(
 
 def test_shutdown_and_metric_helpers_use_registry(stub_registry: StubRegistry) -> None:
     metrics = observability.get_pipeline_metrics()
-    assert isinstance(metrics, DummyMetrics), "Metric helper should proxy registry output"
-    expect(metrics is stub_registry.metrics, "Metric helper should proxy registry output")
+    assert isinstance(
+        metrics, DummyMetrics
+    ), "Metric helper should proxy registry output"
+    expect(
+        metrics is stub_registry.metrics, "Metric helper should proxy registry output"
+    )
     observability.shutdown_observability()
-    expect(stub_registry.shutdown_called is True, "Registry shutdown should be triggered")
+    expect(
+        stub_registry.shutdown_called is True, "Registry shutdown should be triggered"
+    )

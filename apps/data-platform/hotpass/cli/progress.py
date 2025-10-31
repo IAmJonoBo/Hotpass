@@ -10,33 +10,22 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, cast
 
+from hotpass.pipeline import (PIPELINE_EVENT_AGGREGATE_COMPLETED,
+                              PIPELINE_EVENT_AGGREGATE_PROGRESS,
+                              PIPELINE_EVENT_AGGREGATE_STARTED,
+                              PIPELINE_EVENT_COMPLETED,
+                              PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+                              PIPELINE_EVENT_EXPECTATIONS_STARTED,
+                              PIPELINE_EVENT_LOAD_COMPLETED,
+                              PIPELINE_EVENT_LOAD_STARTED,
+                              PIPELINE_EVENT_SCHEMA_COMPLETED,
+                              PIPELINE_EVENT_SCHEMA_STARTED,
+                              PIPELINE_EVENT_START,
+                              PIPELINE_EVENT_WRITE_COMPLETED,
+                              PIPELINE_EVENT_WRITE_STARTED, QualityReport)
 from rich.console import Console
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskID,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-)
-
-from hotpass.pipeline import (
-    PIPELINE_EVENT_AGGREGATE_COMPLETED,
-    PIPELINE_EVENT_AGGREGATE_PROGRESS,
-    PIPELINE_EVENT_AGGREGATE_STARTED,
-    PIPELINE_EVENT_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_STARTED,
-    PIPELINE_EVENT_LOAD_COMPLETED,
-    PIPELINE_EVENT_LOAD_STARTED,
-    PIPELINE_EVENT_SCHEMA_COMPLETED,
-    PIPELINE_EVENT_SCHEMA_STARTED,
-    PIPELINE_EVENT_START,
-    PIPELINE_EVENT_WRITE_COMPLETED,
-    PIPELINE_EVENT_WRITE_STARTED,
-    QualityReport,
-)
+from rich.progress import (BarColumn, Progress, SpinnerColumn, TaskID,
+                           TaskProgressColumn, TextColumn, TimeElapsedColumn)
 
 DEFAULT_SENSITIVE_FIELD_TOKENS: tuple[str, ...] = (
     "email",
@@ -67,10 +56,14 @@ _PERFORMANCE_FIELDS: list[tuple[str, str]] = [
 class StructuredLogger:
     """Emit structured telemetry for CLI commands."""
 
-    def __init__(self, log_format: str, sensitive_tokens: Iterable[str] | None = None) -> None:
+    def __init__(
+        self, log_format: str, sensitive_tokens: Iterable[str] | None = None
+    ) -> None:
         self.log_format = log_format
         tokens = (
-            sensitive_tokens if sensitive_tokens is not None else DEFAULT_SENSITIVE_FIELD_TOKENS
+            sensitive_tokens
+            if sensitive_tokens is not None
+            else DEFAULT_SENSITIVE_FIELD_TOKENS
         )
         self.console: Console | None = Console() if log_format == "rich" else None
         self._sensitive_tokens = tuple(sorted({token.lower() for token in tokens}))
@@ -117,9 +110,8 @@ class StructuredLogger:
             return
 
         console = self._get_console()
-        from rich.table import (  # local import to avoid unconditional dependency in JSON mode
-            Table,
-        )
+        from rich.table import \
+            Table  # local import to avoid unconditional dependency in JSON mode
 
         table = Table(
             title="Hotpass Quality Report",
@@ -130,7 +122,9 @@ class StructuredLogger:
         table.add_column("Value", justify="right")
         table.add_row("Total records", str(report.total_records))
         table.add_row("Invalid records", str(report.invalid_records))
-        table.add_row("Expectations passed", "Yes" if report.expectations_passed else "No")
+        table.add_row(
+            "Expectations passed", "Yes" if report.expectations_passed else "No"
+        )
         mean_score = f"{report.data_quality_distribution.get('mean', 0.0):.2f}"
         min_score = f"{report.data_quality_distribution.get('min', 0.0):.2f}"
         max_score = f"{report.data_quality_distribution.get('max', 0.0):.2f}"
@@ -192,7 +186,9 @@ class StructuredLogger:
             return
 
         label = report_format or "auto"
-        self._get_console().print(f"[green]Quality report written ({label}):[/green] {report_path}")
+        self._get_console().print(
+            f"[green]Quality report written ({label}):[/green] {report_path}"
+        )
 
     def log_party_store(self, output_path: Path) -> None:
         if self.log_format == "json":
@@ -308,7 +304,9 @@ class PipelineProgress:
                 if self._aggregate_total <= 0:
                     self._aggregate_last_completed = self._aggregate_progress_total
                     self._aggregate_last_update_time = time.perf_counter()
-                    self._progress.update(task_id, completed=self._aggregate_progress_total)
+                    self._progress.update(
+                        task_id, completed=self._aggregate_progress_total
+                    )
                 else:
                     completed = int(payload.get("completed", 0))
                     completed = max(0, min(completed, self._aggregate_progress_total))
@@ -319,7 +317,8 @@ class PipelineProgress:
                     if (
                         not final_update
                         and self._throttle_seconds > 0.0
-                        and now - self._aggregate_last_update_time < self._throttle_seconds
+                        and now - self._aggregate_last_update_time
+                        < self._throttle_seconds
                     ):
                         self._aggregate_throttled_updates += 1
                         return
@@ -369,7 +368,9 @@ class PipelineProgress:
     def _complete_task(self, name: str, message: str | None = None) -> None:
         task_id = self._tasks.pop(name, None)
         if task_id is not None:
-            task = next((task for task in self._progress.tasks if task.id == task_id), None)
+            task = next(
+                (task for task in self._progress.tasks if task.id == task_id), None
+            )
             total = task.total if task and task.total else 1
             self._progress.update(task_id, total=total, completed=total)
         if message:
@@ -379,7 +380,9 @@ class PipelineProgress:
         if self._aggregate_throttled_updates:
             suppressed = self._aggregate_throttled_updates
             self._aggregate_throttled_updates = 0
-            self._progress.log(f"[dim]Suppressed {suppressed} aggregate progress update(s)[/dim]")
+            self._progress.log(
+                f"[dim]Suppressed {suppressed} aggregate progress update(s)[/dim]"
+            )
 
 
 def render_progress(
@@ -389,7 +392,9 @@ def render_progress(
 
     if console is None:
         return nullcontext(None)
-    return cast(AbstractContextManager[PipelineProgress | None], PipelineProgress(console))
+    return cast(
+        AbstractContextManager[PipelineProgress | None], PipelineProgress(console)
+    )
 
 
 def _convert_paths(data: dict[str, Any]) -> dict[str, Any]:

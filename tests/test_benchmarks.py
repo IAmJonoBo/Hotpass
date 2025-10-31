@@ -6,6 +6,7 @@ pytest.importorskip("frictionless")
 
 from hotpass import benchmarks  # noqa: E402
 from hotpass.data_sources import ExcelReadOptions  # noqa: E402
+
 from tests.helpers.assertions import expect  # noqa: E402
 
 

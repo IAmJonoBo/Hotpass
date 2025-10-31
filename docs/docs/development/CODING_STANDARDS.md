@@ -8,4 +8,5 @@
 - Public APIs are documented and versioned (SemVer).
 
 ## Commit & PR discipline
+
 - Conventional Commits; small PRs; checklist completed.

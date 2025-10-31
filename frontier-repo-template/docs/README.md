@@ -1,6 +1,7 @@
 # Documentation
 
 Organised via the Diátaxis framework:
+
 - tutorials/
 - how-to/
 - reference/

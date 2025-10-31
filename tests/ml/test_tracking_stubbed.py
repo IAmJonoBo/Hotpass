@@ -12,17 +12,11 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from tests.helpers.fixtures import fixture
+from hotpass.ml.tracking import (MLflowConfig, ModelStage, get_model_metadata,
+                                 init_mlflow, load_production_model,
+                                 log_training_run, promote_model)
 
-from hotpass.ml.tracking import (
-    MLflowConfig,
-    ModelStage,
-    get_model_metadata,
-    init_mlflow,
-    load_production_model,
-    log_training_run,
-    promote_model,
-)
+from tests.helpers.fixtures import fixture
 
 
 def expect(condition: bool, message: str) -> None:
@@ -77,7 +71,9 @@ class _FakeMlflowState:
     def get_experiment(self, name: str) -> SimpleNamespace | None:
         return self.experiments.get(name)
 
-    def create_experiment(self, name: str, *, artifact_location: str | None) -> SimpleNamespace:
+    def create_experiment(
+        self, name: str, *, artifact_location: str | None
+    ) -> SimpleNamespace:
         experiment = SimpleNamespace(
             name=name,
             experiment_id=str(self._next_experiment_id),
@@ -126,13 +122,17 @@ class _FakeMlflowState:
         record = self.runs[self.active_run_id]
         record.tags[key] = str(value)
 
-    def record_artifact(self, run_id: str, artifact_path: str, destination: str) -> None:
+    def record_artifact(
+        self, run_id: str, artifact_path: str, destination: str
+    ) -> None:
         entries = self.runs[run_id].artifacts.setdefault(destination, [])
         entries.append(artifact_path)
         self.logged_artifacts.append((run_id, destination, artifact_path))
 
     # Model registry helpers --------------------------------------------
-    def register_version(self, name: str, version: int, stage: str, run_id: str) -> None:
+    def register_version(
+        self, name: str, version: int, stage: str, run_id: str
+    ) -> None:
         record = _VersionRecord(
             name=name,
             version=str(version),
@@ -185,7 +185,9 @@ class _FakeMlflowClient:
             return list(versions)
         return [record for record in versions if record.current_stage in stages]
 
-    def transition_model_version_stage(self, name: str, version: str, stage: str) -> None:
+    def transition_model_version_stage(
+        self, name: str, version: str, stage: str
+    ) -> None:
         self._state.update_stage(name, version, stage)
 
 
@@ -235,7 +237,9 @@ def _build_fake_mlflow() -> tuple[ModuleType, _FakeMlflowState]:
     module.set_registry_uri = set_registry_uri
     module.get_experiment_by_name = state.get_experiment
 
-    def create_experiment(name: str, *, artifact_location: str | None = None) -> SimpleNamespace:
+    def create_experiment(
+        name: str, *, artifact_location: str | None = None
+    ) -> SimpleNamespace:
         return state.create_experiment(name, artifact_location=artifact_location)
 
     module.create_experiment = create_experiment
@@ -305,8 +309,12 @@ def test_init_mlflow_creates_experiment(
     experiment = state.get_experiment("stub_experiment")
     expect(experiment is not None, "Experiment should be created")
     expect(state.tracking_uri == "sqlite:///tmp.db", "Tracking URI should be recorded")
-    expect(state.registry_uri == "sqlite:///registry.db", "Registry URI should be recorded")
-    expect(state.active_experiment == "stub_experiment", "Experiment should be activated")
+    expect(
+        state.registry_uri == "sqlite:///registry.db", "Registry URI should be recorded"
+    )
+    expect(
+        state.active_experiment == "stub_experiment", "Experiment should be activated"
+    )
 
 
 def test_init_mlflow_reads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -314,7 +322,9 @@ def test_init_mlflow_reads_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MLFLOW_TRACKING_URI", "sqlite:///env.db")
     monkeypatch.setenv("MLFLOW_EXPERIMENT_NAME", "env_experiment")
     monkeypatch.delenv("MLFLOW_REGISTRY_URI", raising=False)
-    monkeypatch.setenv("MLFLOW_ARTIFACT_LOCATION", os.fspath(Path("/tmp/env-artifacts")))
+    monkeypatch.setenv(
+        "MLFLOW_ARTIFACT_LOCATION", os.fspath(Path("/tmp/env-artifacts"))
+    )
 
     init_mlflow(mlflow_module=module)
 
@@ -412,8 +422,12 @@ def test_log_training_run_formats_metadata_and_skips_missing_artifacts(
         "Datetime tags should be ISO formatted",
     )
     expect(record.tags["owners"] == "ml, qa", "Iterable metadata should join values")
-    expect(record.tags["location"] == str(metadata_path), "Path metadata coerces to string")
-    expect(record.tags["raw"].startswith("{'k': 'v'"), "Fallback repr used for mappings")
+    expect(
+        record.tags["location"] == str(metadata_path), "Path metadata coerces to string"
+    )
+    expect(
+        record.tags["raw"].startswith("{'k': 'v'"), "Fallback repr used for mappings"
+    )
     expect("missing" not in record.artifacts, "Missing artifacts are ignored")
 
 
@@ -421,8 +435,12 @@ def test_promote_model_archives_existing(
     fake_mlflow: tuple[ModuleType, _FakeMlflowState],
 ) -> None:
     module, state = fake_mlflow
-    state.register_version("demo", version=1, stage=ModelStage.PRODUCTION.value, run_id="run-1")
-    state.register_version("demo", version=2, stage=ModelStage.STAGING.value, run_id="run-2")
+    state.register_version(
+        "demo", version=1, stage=ModelStage.PRODUCTION.value, run_id="run-1"
+    )
+    state.register_version(
+        "demo", version=2, stage=ModelStage.STAGING.value, run_id="run-2"
+    )
 
     promote_model(
         model_name="demo",
@@ -433,16 +451,22 @@ def test_promote_model_archives_existing(
     )
 
     prod_versions = [
-        v for v in state.model_versions["demo"] if v.current_stage == ModelStage.PRODUCTION.value
+        v
+        for v in state.model_versions["demo"]
+        if v.current_stage == ModelStage.PRODUCTION.value
     ]
     archived_versions = [
-        v for v in state.model_versions["demo"] if v.current_stage == ModelStage.ARCHIVED.value
+        v
+        for v in state.model_versions["demo"]
+        if v.current_stage == ModelStage.ARCHIVED.value
     ]
     expect(
         len(prod_versions) == 1 and prod_versions[0].version == "2",
         "Latest version promoted",
     )
-    expect(any(v.version == "1" for v in archived_versions), "Previous production archived")
+    expect(
+        any(v.version == "1" for v in archived_versions), "Previous production archived"
+    )
 
 
 def test_promote_model_without_existing_versions_raises(
@@ -458,15 +482,21 @@ def test_promote_model_without_existing_versions_raises(
             mlflow_module=module,
         )
 
-    expect("No versions found" in str(exc.value), "Error should mention missing versions")
+    expect(
+        "No versions found" in str(exc.value), "Error should mention missing versions"
+    )
 
 
 def test_promote_model_skips_archiving_when_disabled(
     fake_mlflow: tuple[ModuleType, _FakeMlflowState],
 ) -> None:
     module, state = fake_mlflow
-    state.register_version("demo", version=1, stage=ModelStage.STAGING.value, run_id="run-1")
-    state.register_version("demo", version=2, stage=ModelStage.STAGING.value, run_id="run-2")
+    state.register_version(
+        "demo", version=1, stage=ModelStage.STAGING.value, run_id="run-1"
+    )
+    state.register_version(
+        "demo", version=2, stage=ModelStage.STAGING.value, run_id="run-2"
+    )
 
     promote_model(
         model_name="demo",
@@ -477,7 +507,9 @@ def test_promote_model_skips_archiving_when_disabled(
     )
 
     staging_versions = [
-        v for v in state.model_versions["demo"] if v.current_stage == ModelStage.STAGING.value
+        v
+        for v in state.model_versions["demo"]
+        if v.current_stage == ModelStage.STAGING.value
     ]
     expect(
         len(staging_versions) == 2,
@@ -489,8 +521,12 @@ def test_model_loading_and_metadata(
     fake_mlflow: tuple[ModuleType, _FakeMlflowState],
 ) -> None:
     module, state = fake_mlflow
-    state.register_version("demo", version=1, stage=ModelStage.STAGING.value, run_id="run-10")
-    state.register_version("demo", version=3, stage=ModelStage.PRODUCTION.value, run_id="run-11")
+    state.register_version(
+        "demo", version=1, stage=ModelStage.STAGING.value, run_id="run-10"
+    )
+    state.register_version(
+        "demo", version=3, stage=ModelStage.PRODUCTION.value, run_id="run-11"
+    )
 
     result = load_production_model("demo", mlflow_module=module)
     expect(
@@ -499,9 +535,13 @@ def test_model_loading_and_metadata(
     )
     expect(state.loaded_models[-1].endswith("/Production"), "Load should record URI")
 
-    metadata = get_model_metadata("demo", stage=ModelStage.PRODUCTION, mlflow_module=module)
+    metadata = get_model_metadata(
+        "demo", stage=ModelStage.PRODUCTION, mlflow_module=module
+    )
     expect(len(metadata) == 1, "Stage filter should restrict to production")
     expect(metadata[0]["version"] == "3", "Metadata should reflect active version")
 
     all_metadata = get_model_metadata("demo", mlflow_module=module)
-    expect(len(all_metadata) == 2, "Metadata without stage should include every version")
+    expect(
+        len(all_metadata) == 2, "Metadata without stage should include every version"
+    )

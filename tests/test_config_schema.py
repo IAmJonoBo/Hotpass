@@ -5,16 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from hotpass.compliance import DataClassification
-from hotpass.config_schema import (
-    ComplianceControls,
-    FeatureSwitches,
-    GovernanceMetadata,
-    HotpassConfig,
-    PipelineRuntimeConfig,
-)
+from hotpass.config_schema import (ComplianceControls, FeatureSwitches,
+                                   GovernanceMetadata, HotpassConfig,
+                                   PipelineRuntimeConfig)
+from pydantic import ValidationError
 
 
 def test_hotpass_config_to_pipeline_and_enhanced_configs(tmp_path: Path) -> None:

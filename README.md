@@ -18,8 +18,8 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    bash ops/uv_sync_extras.sh
    ```
 
-    Need orchestration or enrichment extras? Append them to
-    `HOTPASS_UV_EXTRAS` before rerunning the helper script.
+   Need orchestration or enrichment extras? Append them to
+   `HOTPASS_UV_EXTRAS` before rerunning the helper script.
 
 2. Confirm the CLI surface and available profiles:
 

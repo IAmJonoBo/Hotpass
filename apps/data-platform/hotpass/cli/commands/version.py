@@ -6,10 +6,9 @@ import argparse
 from datetime import UTC, datetime
 from pathlib import Path
 
+from hotpass.versioning import DatasetVersion, DVCManager
 from rich.console import Console
 from rich.table import Table
-
-from hotpass.versioning import DatasetVersion, DVCManager
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -143,7 +142,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         status = manager.status()
 
         if not status["initialized"]:
-            console.print("[yellow]DVC not initialized. Run: hotpass version --init[/yellow]")
+            console.print(
+                "[yellow]DVC not initialized. Run: hotpass version --init[/yellow]"
+            )
             return 1
 
         if status.get("error"):
@@ -166,8 +167,12 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
         console.print(f"[bold blue]Adding {namespace.add} to DVC...[/bold blue]")
         if manager.add_path(namespace.add):
-            console.print(f"[bold green]✓[/bold green] {namespace.add} added to DVC tracking")
-            console.print(f"\n[dim]Commit the .dvc file: git add {namespace.add}.dvc[/dim]")
+            console.print(
+                f"[bold green]✓[/bold green] {namespace.add} added to DVC tracking"
+            )
+            console.print(
+                f"\n[dim]Commit the .dvc file: git add {namespace.add}.dvc[/dim]"
+            )
             return 0
         else:
             console.print(f"[bold red]✗[/bold red] Failed to add {namespace.add}")
@@ -220,7 +225,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                             f"{namespace.dataset}-v{version.semver}"
                         )
                     else:
-                        console.print("[yellow]Warning: Failed to create git tag[/yellow]")
+                        console.print(
+                            "[yellow]Warning: Failed to create git tag[/yellow]"
+                        )
 
                 return 0
             else:

@@ -43,9 +43,8 @@ def _build_parser() -> argparse.ArgumentParser:
 def _import_server() -> StepResult:
     start = time.time()
     try:
-        from hotpass.mcp.server import (
-            HotpassMCPServer,
-        )  # pylint: disable=import-outside-toplevel
+        from hotpass.mcp.server import \
+            HotpassMCPServer  # pylint: disable=import-outside-toplevel
     except Exception as exc:  # pragma: no cover - defensive guard
         return StepResult(
             step_id="import",
@@ -77,9 +76,8 @@ def _import_server() -> StepResult:
 
 def _check_required_tools() -> StepResult:
     start = time.time()
-    from hotpass.mcp.server import (
-        HotpassMCPServer,
-    )  # pylint: disable=import-outside-toplevel
+    from hotpass.mcp.server import \
+        HotpassMCPServer  # pylint: disable=import-outside-toplevel
 
     server = HotpassMCPServer()
     tool_names = {tool.name for tool in server.tools}
@@ -113,9 +111,8 @@ def _check_required_tools() -> StepResult:
 
 def _check_schema_shapes() -> StepResult:
     start = time.time()
-    from hotpass.mcp.server import (
-        HotpassMCPServer,
-    )  # pylint: disable=import-outside-toplevel
+    from hotpass.mcp.server import \
+        HotpassMCPServer  # pylint: disable=import-outside-toplevel
 
     server = HotpassMCPServer()
     issues: list[str] = []
@@ -129,7 +126,9 @@ def _check_schema_shapes() -> StepResult:
             continue
         if tool.name == "hotpass.qa":
             target_schema = properties_obj.get("target")
-            enum_values = target_schema.get("enum") if isinstance(target_schema, dict) else None
+            enum_values = (
+                target_schema.get("enum") if isinstance(target_schema, dict) else None
+            )
             expected_targets = {
                 "all",
                 "contracts",
@@ -139,7 +138,9 @@ def _check_schema_shapes() -> StepResult:
                 "fitness",
                 "data-quality",
             }
-            if not isinstance(enum_values, list) or not expected_targets.issubset(set(enum_values)):
+            if not isinstance(enum_values, list) or not expected_targets.issubset(
+                set(enum_values)
+            ):
                 issues.append(
                     "hotpass.qa target enum must include "
                     "'all, contracts, docs, profiles, ta, fitness, data-quality'",
@@ -168,10 +169,8 @@ def _exercise_research_tools() -> StepResult:
         from tempfile import TemporaryDirectory
 
         import pandas as pd  # pylint: disable=import-outside-toplevel
-
-        from hotpass.mcp.server import (
-            HotpassMCPServer,
-        )  # pylint: disable=import-outside-toplevel
+        from hotpass.mcp.server import \
+            HotpassMCPServer  # pylint: disable=import-outside-toplevel
     except Exception as exc:  # pragma: no cover - defensive guard
         return StepResult(
             step_id="research-tools-import",

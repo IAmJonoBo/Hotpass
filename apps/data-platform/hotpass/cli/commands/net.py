@@ -93,12 +93,16 @@ def build(
     )
     up_parser.add_argument(
         "--ssh-user",
-        default=os.environ.get("HOTPASS_BASTION_USER", os.environ.get("USER", "ec2-user")),
+        default=os.environ.get(
+            "HOTPASS_BASTION_USER", os.environ.get("USER", "ec2-user")
+        ),
         help="SSH user for bastion hops",
     )
     up_parser.add_argument(
         "--prefect-host",
-        default=os.environ.get("HOTPASS_PREFECT_REMOTE_HOST", DEFAULT_PREFECT_REMOTE_HOST),
+        default=os.environ.get(
+            "HOTPASS_PREFECT_REMOTE_HOST", DEFAULT_PREFECT_REMOTE_HOST
+        ),
         help="Remote Prefect host to forward",
     )
     up_parser.add_argument(
@@ -115,7 +119,9 @@ def build(
     )
     up_parser.add_argument(
         "--marquez-host",
-        default=os.environ.get("HOTPASS_MARQUEZ_REMOTE_HOST", DEFAULT_MARQUEZ_REMOTE_HOST),
+        default=os.environ.get(
+            "HOTPASS_MARQUEZ_REMOTE_HOST", DEFAULT_MARQUEZ_REMOTE_HOST
+        ),
         help="Remote Marquez host to forward",
     )
     up_parser.add_argument(
@@ -202,7 +208,9 @@ def _dispatch(namespace: argparse.Namespace, profile: CLIProfile | None) -> int:
     _ = profile  # network commands are environment specific
     handler = getattr(namespace, "handler", None)
     if handler is None:
-        Console().print("[red]No net subcommand specified (use 'hotpass net --help').[/red]")
+        Console().print(
+            "[red]No net subcommand specified (use 'hotpass net --help').[/red]"
+        )
         return 1
     return handler(namespace)
 
@@ -470,7 +478,9 @@ def _handle_down(args: argparse.Namespace) -> int:
         targets = sessions
     else:
         if not args.label:
-            console.print("[red]Specify --label or use --all to terminate all sessions.[/red]")
+            console.print(
+                "[red]Specify --label or use --all to terminate all sessions.[/red]"
+            )
             return 1
         targets = [session for session in sessions if session.label == args.label]
         if not targets:
@@ -493,7 +503,9 @@ def _handle_down(args: argparse.Namespace) -> int:
             continue
         if _is_process_alive(pid):
             _terminate_pid(pid)
-            console.print(f"[green]Terminated tunnel '{session.label}' (PID {pid}).[/green]")
+            console.print(
+                f"[green]Terminated tunnel '{session.label}' (PID {pid}).[/green]"
+            )
         else:
             console.print(
                 (

@@ -3,7 +3,7 @@ display_name: Generic Business
 
 # Block 1: Ingest - Data source configuration
 ingest:
-  sources: []  # No predefined sources for generic profile
+  sources: [] # No predefined sources for generic profile
   chunk_size: 5000
   staging_enabled: false
   staging_format: parquet
@@ -87,7 +87,7 @@ refine:
 
 # Block 3: Enrich - Data enrichment configuration
 enrich:
-  allow_network: false  # Default to offline
+  allow_network: false # Default to offline
   fetcher_chain:
     - deterministic
     - lookup_tables
@@ -120,11 +120,11 @@ research_backfill:
 compliance:
   policy: POPIA
   jurisdiction: ZA
-  consent_required: false  # More relaxed for generic business data
+  consent_required: false # More relaxed for generic business data
   pii_fields:
     - contact_email
     - contact_phone
-  retention_days: 730  # 2 years
+  retention_days: 730 # 2 years
   anonymization_on_request: true
   audit_trail_required: true
 

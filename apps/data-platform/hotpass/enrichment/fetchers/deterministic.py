@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 from hotpass.config import IndustryProfile
 
 from . import FetcherResult
@@ -89,7 +88,9 @@ class LookupTableFetcher:
             return None
 
         # Search for match
-        matches = lookup_table[lookup_table["organization_name"].str.lower() == org_name.lower()]
+        matches = lookup_table[
+            lookup_table["organization_name"].str.lower() == org_name.lower()
+        ]
 
         if matches.empty:
             return None

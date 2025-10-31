@@ -48,7 +48,9 @@ class _Boto3Session(Protocol):
 
 
 class _Boto3SessionModule(Protocol):
-    def Session(self, **kwargs: Any) -> _Boto3Session:  # pragma: no cover - protocol definition
+    def Session(
+        self, **kwargs: Any
+    ) -> _Boto3Session:  # pragma: no cover - protocol definition
         """Return a boto3 session instance."""
 
 
@@ -78,7 +80,9 @@ class AwsIdentityVerifier:
 
     @staticmethod
     def _default_run_command(args: list[str]) -> str:
-        result = subprocess.run(args, capture_output=True, check=True, text=True)  # nosec B603
+        result = subprocess.run(
+            args, capture_output=True, check=True, text=True
+        )  # nosec B603
         return result.stdout.strip()
 
     def verify(self) -> AwsIdentitySummary:
@@ -118,8 +122,12 @@ class AwsIdentityVerifier:
         try:
             raw_output = self._run_command(command)
         except FileNotFoundError as exc:  # pragma: no cover - covered via tests
-            raise RuntimeError("AWS CLI executable 'aws' was not found on PATH") from exc
-        except subprocess.CalledProcessError as exc:  # pragma: no cover - defensive guard
+            raise RuntimeError(
+                "AWS CLI executable 'aws' was not found on PATH"
+            ) from exc
+        except (
+            subprocess.CalledProcessError
+        ) as exc:  # pragma: no cover - defensive guard
             stderr = exc.stderr.strip() if exc.stderr else ""
             message = f"AWS CLI failed with exit code {exc.returncode}"
             if stderr:
@@ -152,7 +160,9 @@ class RunnerStatus:
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> RunnerStatus:
-        return cls(name=payload.get("name", "unknown"), busy=bool(payload.get("busy", False)))
+        return cls(
+            name=payload.get("name", "unknown"), busy=bool(payload.get("busy", False))
+        )
 
 
 class RunnerLifecycleVerifier:
@@ -185,7 +195,9 @@ class RunnerLifecycleVerifier:
 
     @staticmethod
     def _default_run_command(args: list[str]) -> str:
-        result = subprocess.run(args, capture_output=True, check=True, text=True)  # nosec B603
+        result = subprocess.run(
+            args, capture_output=True, check=True, text=True
+        )  # nosec B603
         return result.stdout.strip()
 
     def _list_runner_pods(self) -> list[str]:
@@ -273,7 +285,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--snapshot",
         type=Path,
-        help=("Optional JSON file describing pods and runner statuses for offline verification"),
+        help=(
+            "Optional JSON file describing pods and runner statuses for offline verification"
+        ),
     )
     parser.add_argument(
         "--verify-oidc",

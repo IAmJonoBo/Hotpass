@@ -4,9 +4,7 @@
   "name": "Frontier Repo Template",
   "version": "0.1.0",
   "license": "https://spdx.org/licenses/MIT.html",
-  "programmingLanguage": [
-    "agnostic"
-  ],
+  "programmingLanguage": ["agnostic"],
   "codeRepository": "https://example.com/your/repo",
   "developmentStatus": "active"
 }

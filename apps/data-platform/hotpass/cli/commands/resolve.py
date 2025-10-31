@@ -8,13 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-
-from hotpass.linkage import (
-    LabelStudioConfig,
-    LinkageConfig,
-    LinkageThresholds,
-    link_entities,
-)
+from hotpass.linkage import (LabelStudioConfig, LinkageConfig,
+                             LinkageThresholds, link_entities)
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -93,9 +88,13 @@ def build(
         default=0.7,
         help="Probability routed to Label Studio review",
     )
-    parser.add_argument("--label-studio-url", help="Label Studio base URL for review tasks")
+    parser.add_argument(
+        "--label-studio-url", help="Label Studio base URL for review tasks"
+    )
     parser.add_argument("--label-studio-token", help="Label Studio API token")
-    parser.add_argument("--label-studio-project", type=int, help="Label Studio project identifier")
+    parser.add_argument(
+        "--label-studio-project", type=int, help="Label Studio project identifier"
+    )
     parser.set_defaults(use_splink=None)
     return parser
 
@@ -135,7 +134,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         console.print("[bold cyan]Running entity resolution...[/bold cyan]")
         console.print(f"[dim]Records loaded:[/dim] {len(df)}")
 
-    thresholds = LinkageThresholds(high=options.match_threshold, review=options.review_threshold)
+    thresholds = LinkageThresholds(
+        high=options.match_threshold, review=options.review_threshold
+    )
     label_studio_config = _build_label_studio(options)
     linkage_config = LinkageConfig(
         use_splink=options.use_splink,
@@ -178,12 +179,16 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         console.print("[bold green]✓[/bold green] Entity resolution complete!")
         console.print(f"  Deduplicated records: {len(deduplicated)}")
         console.print(f"  Duplicates removed: {removed}")
-        console.print(f"  Review queue: {review_count} pairs written to {payload['review_path']}")
+        console.print(
+            f"  Review queue: {review_count} pairs written to {payload['review_path']}"
+        )
 
     return 0
 
 
-def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) -> ResolveOptions:
+def _resolve_options(
+    namespace: argparse.Namespace, profile: CLIProfile | None
+) -> ResolveOptions:
     log_format_value: str | None = getattr(namespace, "log_format", None)
     if log_format_value is None and profile is not None:
         log_format_value = profile.log_format
@@ -202,7 +207,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         sensitive_iter = [str(value) for value in raw_sensitive if value is not None]
     elif raw_sensitive is not None:
         sensitive_iter = [str(raw_sensitive)]
-    sensitive_fields = normalise_sensitive_fields(sensitive_iter, DEFAULT_SENSITIVE_FIELD_TOKENS)
+    sensitive_fields = normalise_sensitive_fields(
+        sensitive_iter, DEFAULT_SENSITIVE_FIELD_TOKENS
+    )
 
     use_splink = namespace.use_splink
     if profile and profile.features.entity_resolution and use_splink is None:
@@ -233,7 +240,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
 def _build_label_studio(options: ResolveOptions) -> LabelStudioConfig | None:
     if not (
-        options.label_studio_url and options.label_studio_token and options.label_studio_project
+        options.label_studio_url
+        and options.label_studio_token
+        and options.label_studio_project
     ):
         return None
     return LabelStudioConfig(

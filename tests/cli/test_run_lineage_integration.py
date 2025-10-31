@@ -7,6 +7,7 @@ import pytest
 pytest.importorskip("frictionless")
 
 from hotpass import cli
+
 from tests.fixtures.lineage import CapturedLineage
 
 
@@ -41,7 +42,9 @@ def test_run_command_emits_lineage_events(
     expect(exit_code == 0, "CLI run should succeed when sample data is available.")
 
     events = capture_lineage.events
-    expect(len(events) == 2, "Expected start and complete lineage events to be emitted.")
+    expect(
+        len(events) == 2, "Expected start and complete lineage events to be emitted."
+    )
 
     start_event, complete_event = events
     expect(start_event.eventType == "START", "First event should mark the run start.")

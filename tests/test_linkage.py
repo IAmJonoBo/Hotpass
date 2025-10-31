@@ -10,13 +10,9 @@ from tests.helpers.fixtures import fixture
 
 pytest.importorskip("frictionless")
 
-from hotpass.linkage import (  # noqa: E402
-    LabelStudioConfig,
-    LinkageConfig,
-    LinkagePersistence,
-    LinkageThresholds,
-    link_entities,
-)
+from hotpass.linkage import (LabelStudioConfig, LinkageConfig,  # noqa: E402
+                             LinkagePersistence, LinkageThresholds,
+                             link_entities)
 from hotpass.linkage import runner as linkage_runner  # noqa: E402
 
 

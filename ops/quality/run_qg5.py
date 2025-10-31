@@ -49,7 +49,9 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _check_file_exists(path: Path, min_length: int, description: str, check_id: str) -> CheckResult:
+def _check_file_exists(
+    path: Path, min_length: int, description: str, check_id: str
+) -> CheckResult:
     start = time.time()
     if not path.exists():
         return CheckResult(

@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 import pandas as pd
 import polars as pl
-
 from hotpass.pipeline.aggregation import AggregationResult
 from hotpass.pipeline.validation import ValidationResult
 
@@ -67,7 +66,9 @@ def build_aggregation_result(artifacts: ModularStageArtifacts) -> AggregationRes
 
     return AggregationResult(
         refined_df=artifacts.refined.copy(deep=True),
-        combined_polars=pl.from_pandas(artifacts.refined.copy(deep=True), include_index=False),
+        combined_polars=pl.from_pandas(
+            artifacts.refined.copy(deep=True), include_index=False
+        ),
         conflicts=[],
         metrics={"aggregation_seconds": 0.12},
         source_breakdown=dict(artifacts.source_breakdown),

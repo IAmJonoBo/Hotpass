@@ -11,7 +11,6 @@ import logging
 from typing import Any, Protocol
 
 import pandas as pd
-
 from hotpass.config import IndustryProfile
 
 logger = logging.getLogger(__name__)

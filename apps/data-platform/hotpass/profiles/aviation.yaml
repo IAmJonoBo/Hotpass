@@ -104,11 +104,11 @@ refine:
 
 # Block 3: Enrich - Data enrichment configuration
 enrich:
-  allow_network: false  # Default to offline, can be overridden by env/CLI
+  allow_network: false # Default to offline, can be overridden by env/CLI
   fetcher_chain:
-    - deterministic  # Always try deterministic first
-    - lookup_tables  # Local lookup tables
-    - research       # Only if network enabled
+    - deterministic # Always try deterministic first
+    - lookup_tables # Local lookup tables
+    - research # Only if network enabled
   backfillable_fields:
     - contact_email
     - contact_phone

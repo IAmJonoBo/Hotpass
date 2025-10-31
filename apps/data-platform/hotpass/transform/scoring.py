@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 from hotpass.enrichment.validators import logistic_scale
 
 DEFAULT_WEIGHTS: Mapping[str, float] = {
@@ -124,7 +123,8 @@ def train_lead_scoring_model(
 
     try:  # pragma: no cover - dependency import guarded at runtime
         from sklearn.linear_model import LogisticRegression
-        from sklearn.metrics import precision_score, recall_score, roc_auc_score
+        from sklearn.metrics import (precision_score, recall_score,
+                                     roc_auc_score)
         from sklearn.model_selection import train_test_split
     except ImportError as exc:  # pragma: no cover - informative error
         msg = (
@@ -174,7 +174,9 @@ def train_lead_scoring_model(
         stratify=stratify,
     )
 
-    estimator = LogisticRegression(max_iter=1000, solver="lbfgs", random_state=random_state)
+    estimator = LogisticRegression(
+        max_iter=1000, solver="lbfgs", random_state=random_state
+    )
     estimator.fit(X_train, y_train)
 
     validation_probabilities = estimator.predict_proba(X_valid)[:, 1]
@@ -209,7 +211,9 @@ def train_lead_scoring_model(
     serializable_metadata = dict(metadata)
     serializable_metadata["feature_names"] = list(metadata["feature_names"])
     payload = {"metrics": metrics, "metadata": serializable_metadata}
-    destination.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    destination.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
     if metric_thresholds:
         failures = {

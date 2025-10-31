@@ -283,7 +283,9 @@ def _check_prerequisites(console: Console) -> set[str]:
         "kubectl": shutil.which("kubectl"),
         "ssh": shutil.which("ssh"),
     }
-    table = Table(title="Prerequisite Check", show_header=True, header_style="bold cyan")
+    table = Table(
+        title="Prerequisite Check", show_header=True, header_style="bold cyan"
+    )
     table.add_column("Tool")
     table.add_column("Status")
     missing: set[str] = set()
@@ -421,7 +423,9 @@ def _build_plan(
 
     if not namespace.skip_arc:
         owner = namespace.arc_owner or os.environ.get("HOTPASS_ARC_OWNER")
-        repository = namespace.arc_repository or os.environ.get("HOTPASS_ARC_REPOSITORY")
+        repository = namespace.arc_repository or os.environ.get(
+            "HOTPASS_ARC_REPOSITORY"
+        )
         scale_set = namespace.arc_scale_set or os.environ.get("HOTPASS_ARC_SCALE_SET")
         snapshot = namespace.arc_snapshot
 
@@ -491,7 +495,9 @@ def _run_plan(steps: Sequence[WizardStep], profile: CLIProfile | None) -> None:
             continue
         if step.shell_command:
             try:
-                run_command(step.shell_command, check=True, env={**os.environ, **step.env})
+                run_command(
+                    step.shell_command, check=True, env={**os.environ, **step.env}
+                )
             except CommandExecutionError as exc:
                 raise RuntimeError(f"Step {idx} failed: {exc}") from exc
             continue
@@ -504,9 +510,9 @@ def _run_plan(steps: Sequence[WizardStep], profile: CLIProfile | None) -> None:
 
 
 def _invoke_cli(cli_args: list[str], profile: CLIProfile | None) -> int:
-    from ..main import (
-        build_parser as build_root_parser,
-    )  # local import to avoid heavy startup cost
+    from ..main import \
+        build_parser as \
+        build_root_parser  # local import to avoid heavy startup cost
 
     parser = build_root_parser()
     parsed = parser.parse_args(cli_args)

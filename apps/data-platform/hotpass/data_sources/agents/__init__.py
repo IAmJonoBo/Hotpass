@@ -1,14 +1,9 @@
 """Agent-based acquisition framework for Hotpass."""
 
-from .base import AcquisitionAgent, AgentContext, AgentResult, normalise_records
-from .config import (
-    AcquisitionPlan,
-    AgentDefinition,
-    AgentTaskDefinition,
-    AgentTaskKind,
-    ProviderDefinition,
-    TargetDefinition,
-)
+from .base import (AcquisitionAgent, AgentContext, AgentResult,
+                   normalise_records)
+from .config import (AcquisitionPlan, AgentDefinition, AgentTaskDefinition,
+                     AgentTaskKind, ProviderDefinition, TargetDefinition)
 from .runner import AcquisitionManager, run_plan
 
 __all__ = [

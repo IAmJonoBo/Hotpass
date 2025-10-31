@@ -20,10 +20,10 @@ checklist when verifying a deployment, refreshing evidence, or onboarding a new 
 
 ## Feature toggles and defaults
 
-| Toggle                         | Location                                                                       | Default                                                 | Notes                                                               |
-| ------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------- |
-| `pipeline.acquisition.enabled` | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Enable to run agent-based acquisition before spreadsheet ingestion. |
-| `pipeline.intent.enabled`      | `hotpass.toml` / `PipelineConfig`                                              | `false`                                                 | Controls daily intent digests and SSOT enrichment columns.          |
+| Toggle                         | Location                                                                                      | Default                                                 | Notes                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------- |
+| `pipeline.acquisition.enabled` | `hotpass.toml` / `PipelineConfig`                                                             | `false`                                                 | Enable to run agent-based acquisition before spreadsheet ingestion. |
+| `pipeline.intent.enabled`      | `hotpass.toml` / `PipelineConfig`                                                             | `false`                                                 | Controls daily intent digests and SSOT enrichment columns.          |
 | `features` bundle              | [`default_feature_bundle`](../../apps/data-platform/hotpass/pipeline/base.py)                 | `entity_resolution, geospatial, enrichment, compliance` | Adjust with care; document deviations in `Next_Steps.md`.           |
 | CLI progress JSON logging      | `--json-logs` flag (`apps/data-platform/hotpass/cli/commands/run.py`)                         | `false`                                                 | Emits structured `pipeline.*` and `intent.digest` events.           |
 | Observability exporters        | [`observability.initialize_observability`](../../apps/data-platform/hotpass/observability.py) | `console`                                               | Use environment variables or config to swap OTLP/OTLPg exporters.   |

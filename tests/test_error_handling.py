@@ -4,15 +4,10 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.error_handling import (  # noqa: E402
-    ErrorCategory,
-    ErrorContext,
-    ErrorHandler,
-    ErrorReport,
-    ErrorSeverity,
-    HotpassError,
-    ValidationError,
-)
+from hotpass.error_handling import (ErrorCategory, ErrorContext,  # noqa: E402
+                                    ErrorHandler, ErrorReport, ErrorSeverity,
+                                    HotpassError, ValidationError)
+
 from tests.helpers.assertions import expect
 
 
@@ -216,7 +211,9 @@ def test_error_report_empty():
     report = ErrorReport()
 
     expect(not report.has_errors(), "Empty report should not have errors")
-    expect(not report.has_critical_errors(), "Empty report should not have critical errors")
+    expect(
+        not report.has_critical_errors(), "Empty report should not have critical errors"
+    )
     expect(len(report.errors) == 0, "Empty report should have 0 errors")
     expect(len(report.warnings) == 0, "Empty report should have 0 warnings")
 

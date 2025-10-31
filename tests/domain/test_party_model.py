@@ -8,13 +8,9 @@ import pytest
 
 pytest.importorskip("stdnum")
 
-from hotpass.domain.party import (
-    AliasType,
-    ContactMethodType,
-    PartyKind,
-    build_party_store_from_refined,
-    render_dictionary,
-)
+from hotpass.domain.party import (AliasType, ContactMethodType, PartyKind,
+                                  build_party_store_from_refined,
+                                  render_dictionary)
 
 
 def _selection_payload() -> str:
@@ -137,7 +133,8 @@ def test_build_party_store_from_refined_creates_entities() -> None:
     )
     expect(
         any(
-            role.object_party_id == org.party_id and role.subject_party_id == contact.party_id
+            role.object_party_id == org.party_id
+            and role.subject_party_id == contact.party_id
             for role in store.roles
         ),
         "Should have relationship between contact and organization",
@@ -150,4 +147,6 @@ def test_render_dictionary_includes_party_fields() -> None:
 
     expect("Party" in markdown, "Dictionary should include Party entity")
     expect("Alias" in markdown, "Dictionary should include Alias entity")
-    expect("ContactMethod" in markdown, "Dictionary should include ContactMethod entity")
+    expect(
+        "ContactMethod" in markdown, "Dictionary should include ContactMethod entity"
+    )

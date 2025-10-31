@@ -48,6 +48,7 @@ Start the MCP server: `python -m hotpass.mcp.server`
 **Steps**:
 
 1. **Discover input data**:
+
    ```bash
    ls ./data/*.xlsx
    ```
@@ -58,6 +59,7 @@ Start the MCP server: `python -m hotpass.mcp.server`
    - Custom profile: `--profile <your-profile> --profile-search-path ./profiles`
 
 3. **Run refinement**:
+
    ```bash
    uv run hotpass refine \
      --input-dir ./data \
@@ -72,16 +74,18 @@ Start the MCP server: `python -m hotpass.mcp.server`
    - Check archived inputs if `--archive` was used
 
 **MCP Equivalent**:
+
 ```javascript
 hotpass.refine({
   input_path: "./data",
   output_path: "./dist/refined.xlsx",
   profile: "aviation",
-  archive: true
-})
+  archive: true,
+});
 ```
 
 **Expected Outputs**:
+
 - Refined Excel file with normalized columns
 - Quality report with validation results
 - Provenance metadata for each row
@@ -96,6 +100,7 @@ hotpass.refine({
 1. **Ensure refined data exists** (run Workflow 1 first if needed)
 
 2. **Run deterministic enrichment** (safe, always works offline):
+
    ```bash
    uv run hotpass enrich \
      --input ./dist/refined.xlsx \
@@ -110,6 +115,7 @@ hotpass.refine({
    - Review which fields were enriched
 
 4. **If needed, enable network enrichment** (requires env vars):
+
    ```bash
    export FEATURE_ENABLE_REMOTE_RESEARCH=1
    export ALLOW_NETWORK_RESEARCH=1
@@ -122,25 +128,27 @@ hotpass.refine({
    ```
 
 **MCP Equivalent**:
+
 ```javascript
 // Deterministic only (default)
 hotpass.enrich({
   input_path: "./dist/refined.xlsx",
   output_path: "./dist/enriched.xlsx",
   profile: "aviation",
-  allow_network: false
-})
+  allow_network: false,
+});
 
 // With network (if env permits)
 hotpass.enrich({
   input_path: "./dist/refined.xlsx",
   output_path: "./dist/enriched-network.xlsx",
   profile: "aviation",
-  allow_network: true
-})
+  allow_network: true,
+});
 ```
 
 **Expected Outputs**:
+
 - Enriched Excel file with additional columns filled
 - Provenance columns showing data sources:
   - `provenance_source` - Which fetcher provided the data
@@ -156,11 +164,13 @@ hotpass.enrich({
 **Steps**:
 
 1. **Run all checks**:
+
    ```bash
    uv run hotpass qa all
    ```
 
 2. **Run specific check types**:
+
    ```bash
    # Just fitness functions
    uv run hotpass qa fitness
@@ -176,13 +186,15 @@ hotpass.enrich({
    ```
 
 **MCP Equivalent**:
+
 ```javascript
 hotpass.qa({
-  target: "all"  // or "fitness", "profiles", "docs", "ta"
-})
+  target: "all", // or "fitness", "profiles", "docs", "ta"
+});
 ```
 
 **Expected Outputs**:
+
 - Pass/fail status for each check
 - Detailed error messages for failures
 - Suggestions for remediation
@@ -194,6 +206,7 @@ hotpass.qa({
 **Steps**:
 
 1. **Emit contract for a profile**:
+
    ```bash
    uv run hotpass contracts emit \
      --profile aviation \
@@ -211,6 +224,7 @@ hotpass.qa({
    ```
 
 **Expected Outputs**:
+
 - Schema definitions for all fields
 - Validation thresholds
 - Column mappings/synonyms
@@ -221,14 +235,16 @@ hotpass.qa({
 **Goal**: Understand where a specific data point came from.
 
 **MCP Tool** (not yet CLI command):
+
 ```javascript
 hotpass.explain_provenance({
   row_id: "org-12345",
-  dataset_path: "./dist/enriched.xlsx"
-})
+  dataset_path: "./dist/enriched.xlsx",
+});
 ```
 
 **Expected Output**:
+
 - Source of each field in the row
 - Timestamps of data fetch
 - Confidence scores
@@ -239,6 +255,7 @@ hotpass.explain_provenance({
 ### Required Environment Variables
 
 **For Network Enrichment**:
+
 ```bash
 # Enable network-based enrichment feature
 export FEATURE_ENABLE_REMOTE_RESEARCH=1
@@ -248,6 +265,7 @@ export ALLOW_NETWORK_RESEARCH=1
 ```
 
 **For API Keys** (if using external enrichment services):
+
 ```bash
 export HOTPASS_GEOCODE_API_KEY=<your-key>
 export HOTPASS_ENRICH_API_KEY=<your-key>
@@ -255,36 +273,40 @@ export HOTPASS_ENRICH_API_KEY=<your-key>
 
 ### Network Behavior Matrix
 
-| `FEATURE_ENABLE_REMOTE_RESEARCH` | `ALLOW_NETWORK_RESEARCH` | `--allow-network` | Result |
-|----------------------------------|--------------------------|-------------------|--------|
-| 0 or unset | * | * | Deterministic only |
-| 1 | 0 or unset | * | Deterministic only |
-| 1 | 1 | false | Deterministic only |
-| 1 | 1 | true | Network enabled |
+| `FEATURE_ENABLE_REMOTE_RESEARCH` | `ALLOW_NETWORK_RESEARCH` | `--allow-network` | Result             |
+| -------------------------------- | ------------------------ | ----------------- | ------------------ |
+| 0 or unset                       | \*                       | \*                | Deterministic only |
+| 1                                | 0 or unset               | \*                | Deterministic only |
+| 1                                | 1                        | false             | Deterministic only |
+| 1                                | 1                        | true              | Network enabled    |
 
 **Key Insight**: Network enrichment requires ALL THREE to be enabled for safety.
 
 ## Profile Selection Guide
 
 ### When to Use `aviation` Profile
+
 - Flight schools
 - Aviation training providers
 - Airport services
 - Aircraft maintenance companies
 
 **Key Features**:
+
 - Province/region normalization (South African focus)
 - SACAA (regulator) source prioritization
 - Training category mappings
 - Flight-specific synonyms
 
 ### When to Use `generic` Profile
+
 - General businesses
 - Any organization type
 - Unknown/mixed industries
 - Quick testing
 
 **Key Features**:
+
 - Universal column mappings
 - Standard validation thresholds
 - No industry-specific logic
@@ -331,11 +353,11 @@ refine:
 
 # Block 3: Enrich
 enrich:
-  allow_network: false  # default
+  allow_network: false # default
   fetcher_chain:
     - deterministic
     - lookup_tables
-    - research  # only if network enabled
+    - research # only if network enabled
   backfillable_fields:
     - contact_email
     - website
@@ -354,19 +376,25 @@ compliance:
 ## Troubleshooting
 
 ### Issue: "Profile not found"
+
 **Solution**: Check profile name spelling, or use `--profile-search-path` to add custom directory.
 
 ### Issue: "Network calls blocked"
+
 **Solution**: Check environment variables (`FEATURE_ENABLE_REMOTE_RESEARCH`, `ALLOW_NETWORK_RESEARCH`) and `--allow-network` flag.
 
 ### Issue: "Enrichment failed"
+
 **Solution**:
+
 1. Try deterministic only first: `--allow-network=false`
 2. Check input file format (must be XLSX)
 3. Verify profile is complete with all 4 blocks
 
 ### Issue: "Quality gate failed"
+
 **Solution**:
+
 1. Run `uv run hotpass qa all` to see specific failures
 2. Check fitness functions: `uv run python ops/quality/fitness_functions.py`
 3. Verify documentation exists (`.github/copilot-instructions.md`, `AGENTS.md`)
@@ -374,22 +402,27 @@ compliance:
 ## Quality Gates Reference
 
 ### QG-1: CLI Integrity
+
 **Test**: `uv run hotpass overview`
 **Passes if**: Lists all required verbs (refine, enrich, qa, contracts, overview)
 
 ### QG-2: Data Quality
+
 **Test**: Great Expectations suite
 **Passes if**: All profile expectations pass
 
 ### QG-3: Enrichment Chain
+
 **Test**: `uv run hotpass enrich --input <file> --output <out> --allow-network=false`
 **Passes if**: Output exists, provenance written, network skipped
 
 ### QG-4: MCP Discoverability
+
 **Test**: MCP tools/list request
 **Passes if**: All 5 tools appear (refine, enrich, qa, explain_provenance, crawl)
 
 ### QG-5: Docs/Instructions
+
 **Test**: File existence and content checks
 **Passes if**: `.github/copilot-instructions.md` and `AGENTS.md` exist with required terms
 
@@ -413,6 +446,7 @@ compliance:
 ## Examples
 
 ### Complete Refinement Pipeline
+
 ```bash
 # 1. Refine raw data
 uv run hotpass refine \
@@ -438,13 +472,14 @@ uv run hotpass contracts emit \
 ```
 
 ### MCP-Driven Pipeline
+
 ```javascript
 // Step 1: Refine
 const refineResult = await callTool("hotpass.refine", {
   input_path: "./data",
   output_path: "./dist/refined.xlsx",
   profile: "aviation",
-  archive: true
+  archive: true,
 });
 
 // Step 2: Enrich (deterministic only)
@@ -452,18 +487,18 @@ const enrichResult = await callTool("hotpass.enrich", {
   input_path: "./dist/refined.xlsx",
   output_path: "./dist/enriched.xlsx",
   profile: "aviation",
-  allow_network: false
+  allow_network: false,
 });
 
 // Step 3: QA
 const qaResult = await callTool("hotpass.qa", {
-  target: "all"
+  target: "all",
 });
 
 // Step 4: Explain a specific row
 const provenance = await callTool("hotpass.explain_provenance", {
   row_id: "org-12345",
-  dataset_path: "./dist/enriched.xlsx"
+  dataset_path: "./dist/enriched.xlsx",
 });
 ```
 
@@ -488,6 +523,7 @@ When working in GitHub Agent HQ or Copilot CLI:
 ## Support
 
 For issues or questions:
+
 1. Run `uv run hotpass doctor` for diagnostics
 2. Check `docs/` directory for detailed guides
 3. Review quality gate tests in `tests/cli/test_quality_gates.py`
@@ -495,4 +531,4 @@ For issues or questions:
 
 ---
 
-*This document is maintained as part of the Hotpass UPGRADE.md implementation.*
+_This document is maintained as part of the Hotpass UPGRADE.md implementation._

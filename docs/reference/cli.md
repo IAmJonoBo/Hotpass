@@ -60,20 +60,20 @@ uv run hotpass setup --preset staging --host bastion.example.com --dry-run
 uv run hotpass setup --preset staging --host bastion.example.com --execute --skip-arc
 ```
 
-| Option                  | Description                                                                 |
-| ----------------------- | --------------------------------------------------------------------------- |
-| `--preset {staging\|local}` | Controls default extras, namespaces, and environment targets.              |
-| `--extras EXTRA`        | Override preset extras for `ops/uv_sync_extras.sh` (repeatable).            |
-| `--skip-*`              | Skip individual stages (`deps`, `tunnels`, `aws`, `ctx`, `env`, `arc`).     |
-| `--host HOST`           | Bastion host or SSM target for the tunnel stage.                            |
-| `--aws-profile NAME`    | AWS profile used when invoking `hotpass aws`.                               |
-| `--eks-cluster NAME`    | Cluster name forwarded to `hotpass aws`/`hotpass ctx init`.                |
-| `--prefect-profile NAME`| Prefect profile configured during context bootstrap.                       |
-| `--env-target NAME`     | Target passed to `hotpass env --target`.                                    |
-| `--allow-network`       | Enable network enrichment flags in generated environment files.             |
-| `--arc-owner/--arc-repository/--arc-scale-set` | Include ARC lifecycle verification when details are provided. |
-| `--dry-run`             | Render the plan without executing commands.                                 |
-| `--execute`             | Run the generated plan immediately (skip confirmation prompts).             |
+| Option                                         | Description                                                             |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `--preset {staging\|local}`                    | Controls default extras, namespaces, and environment targets.           |
+| `--extras EXTRA`                               | Override preset extras for `ops/uv_sync_extras.sh` (repeatable).        |
+| `--skip-*`                                     | Skip individual stages (`deps`, `tunnels`, `aws`, `ctx`, `env`, `arc`). |
+| `--host HOST`                                  | Bastion host or SSM target for the tunnel stage.                        |
+| `--aws-profile NAME`                           | AWS profile used when invoking `hotpass aws`.                           |
+| `--eks-cluster NAME`                           | Cluster name forwarded to `hotpass aws`/`hotpass ctx init`.             |
+| `--prefect-profile NAME`                       | Prefect profile configured during context bootstrap.                    |
+| `--env-target NAME`                            | Target passed to `hotpass env --target`.                                |
+| `--allow-network`                              | Enable network enrichment flags in generated environment files.         |
+| `--arc-owner/--arc-repository/--arc-scale-set` | Include ARC lifecycle verification when details are provided.           |
+| `--dry-run`                                    | Render the plan without executing commands.                             |
+| `--execute`                                    | Run the generated plan immediately (skip confirmation prompts).         |
 
 Successful executions record the plan under `.hotpass/setup.json`.
 
@@ -87,14 +87,14 @@ uv run hotpass net status
 uv run hotpass net down --label bastion-session
 ```
 
-| Option                            | Description                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `--via {ssh-bastion\|ssm}`        | Select port-forwarding mechanism (default: `ssh-bastion`).                                     |
-| `--host HOST`                     | Bastion hostname or SSM target instance ID.                                                   |
-| `--prefect-port INTEGER`          | Local port for Prefect (auto-resolves conflicts with `--auto-port`).                           |
-| `--marquez-port INTEGER`          | Local port for Marquez (skip with `--no-marquez`).                                            |
-| `--detach`                        | Launch the tunnel in the background and record the PID under `.hotpass/net.json`.            |
-| `--dry-run`                       | Print the tunnel command without executing it.                                               |
+| Option                     | Description                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| `--via {ssh-bastion\|ssm}` | Select port-forwarding mechanism (default: `ssh-bastion`).                        |
+| `--host HOST`              | Bastion hostname or SSM target instance ID.                                       |
+| `--prefect-port INTEGER`   | Local port for Prefect (auto-resolves conflicts with `--auto-port`).              |
+| `--marquez-port INTEGER`   | Local port for Marquez (skip with `--no-marquez`).                                |
+| `--detach`                 | Launch the tunnel in the background and record the PID under `.hotpass/net.json`. |
+| `--dry-run`                | Print the tunnel command without executing it.                                    |
 
 State is persisted to `.hotpass/net.json`; `net status` prints active sessions and their
 local ports.
@@ -108,14 +108,14 @@ uv run hotpass aws --profile staging --region eu-west-1
 uv run hotpass aws --eks-cluster hotpass-staging --verify-kubeconfig
 ```
 
-| Option                    | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `--profile NAME`          | AWS CLI profile override.                                                   |
-| `--region NAME`           | AWS region override.                                                        |
-| `--eks-cluster NAME`      | Describe the cluster and (optionally) update kubeconfig.                    |
-| `--verify-kubeconfig`     | Run `aws eks update-kubeconfig` after describing the cluster.               |
-| `--output {text\|json}`   | Render output as Rich table or JSON (default: text).                        |
-| `--dry-run`               | Display AWS commands without executing them.                                |
+| Option                  | Description                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `--profile NAME`        | AWS CLI profile override.                                     |
+| `--region NAME`         | AWS region override.                                          |
+| `--eks-cluster NAME`    | Describe the cluster and (optionally) update kubeconfig.      |
+| `--verify-kubeconfig`   | Run `aws eks update-kubeconfig` after describing the cluster. |
+| `--output {text\|json}` | Render output as Rich table or JSON (default: text).          |
+| `--dry-run`             | Display AWS commands without executing them.                  |
 
 On success, the summary is saved to `.hotpass/aws.json`.
 
@@ -128,13 +128,13 @@ uv run hotpass ctx init --prefect-profile hotpass-staging --eks-cluster hotpass-
 uv run hotpass ctx list
 ```
 
-| Option                    | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `--prefect-profile NAME`  | Prefect profile to create or update.                                       |
-| `--prefect-url URL`       | Prefect API URL (defaults to tunnel-derived URL or `http://127.0.0.1:4200/api`). |
-| `--eks-cluster NAME`      | EKS cluster to configure via `aws eks update-kubeconfig`.                   |
-| `--kube-context NAME`     | Context alias for kubeconfig (defaults to cluster name).                    |
-| `--dry-run`               | Print commands without executing them.                                      |
+| Option                   | Description                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| `--prefect-profile NAME` | Prefect profile to create or update.                                             |
+| `--prefect-url URL`      | Prefect API URL (defaults to tunnel-derived URL or `http://127.0.0.1:4200/api`). |
+| `--eks-cluster NAME`     | EKS cluster to configure via `aws eks update-kubeconfig`.                        |
+| `--kube-context NAME`    | Context alias for kubeconfig (defaults to cluster name).                         |
+| `--dry-run`              | Print commands without executing them.                                           |
 
 Context history is recorded under `.hotpass/contexts.json`.
 
@@ -147,13 +147,13 @@ uv run hotpass env --target staging
 uv run hotpass env --target staging --allow-network --force
 ```
 
-| Option                    | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `--target NAME`           | Environment name (determines output filename).                              |
-| `--prefect-url URL`       | Override Prefect API URL.                                                   |
-| `--openlineage-url URL`   | Override OpenLineage API URL.                                               |
-| `--allow-network`         | Set `FEATURE_ENABLE_REMOTE_RESEARCH`/`ALLOW_NETWORK_RESEARCH` to `true`.    |
-| `--dry-run`               | Print the generated file without writing it.                                |
+| Option                  | Description                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `--target NAME`         | Environment name (determines output filename).                           |
+| `--prefect-url URL`     | Override Prefect API URL.                                                |
+| `--openlineage-url URL` | Override OpenLineage API URL.                                            |
+| `--allow-network`       | Set `FEATURE_ENABLE_REMOTE_RESEARCH`/`ALLOW_NETWORK_RESEARCH` to `true`. |
+| `--dry-run`             | Print the generated file without writing it.                             |
 
 When tunnels exist, ports recorded in `.hotpass/net.json` are reused automatically.
 
@@ -166,13 +166,13 @@ uv run hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-a
 uv run hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-arc --store-summary
 ```
 
-| Option                    | Description                                                                 |
-| ------------------------- | --------------------------------------------------------------------------- |
-| `--owner`, `--repository`, `--scale-set` | Identify the ARC deployment to verify.                                  |
-| `--verify-oidc`           | Additionally verify AWS identity using OIDC.                                |
-| `--snapshot PATH`         | Replay a recorded lifecycle snapshot for offline verification.              |
-| `--store-summary`         | Persist results under `.hotpass/arc/<timestamp>/`.                          |
-| `--dry-run`               | Print the underlying command without executing it.                          |
+| Option                                   | Description                                                    |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `--owner`, `--repository`, `--scale-set` | Identify the ARC deployment to verify.                         |
+| `--verify-oidc`                          | Additionally verify AWS identity using OIDC.                   |
+| `--snapshot PATH`                        | Replay a recorded lifecycle snapshot for offline verification. |
+| `--store-summary`                        | Persist results under `.hotpass/arc/<timestamp>/`.             |
+| `--dry-run`                              | Print the underlying command without executing it.             |
 
 ### `distro`
 
@@ -333,12 +333,12 @@ uv run hotpass explain-provenance \
   --json
 ```
 
-| Option           | Description                                                                                                     |
-| ---------------- | --------------------------------------------------------------------------------------------------------------- |
-| `--dataset PATH` | Required path to the enriched dataset (Excel `.xlsx/.xlsm/.xls` or `.csv`).                                     |
-| `--row-id TEXT`  | Row index (0-based) or identifier from the dataset’s `id` column.                                               |
-| `--json`         | Emit provenance details as JSON rather than a Rich table.                                                       |
-| `--output PATH`  | Persist the JSON payload to the provided path (directories are created automatically; implies `--json`).        |
+| Option           | Description                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------- |
+| `--dataset PATH` | Required path to the enriched dataset (Excel `.xlsx/.xlsm/.xls` or `.csv`).                              |
+| `--row-id TEXT`  | Row index (0-based) or identifier from the dataset’s `id` column.                                        |
+| `--json`         | Emit provenance details as JSON rather than a Rich table.                                                |
+| `--output PATH`  | Persist the JSON payload to the provided path (directories are created automatically; implies `--json`). |
 
 The command surfaces the standard provenance fields (`provenance_source`, `provenance_timestamp`,
 `provenance_confidence`, `provenance_strategy`, `provenance_network_status`) alongside the
@@ -364,7 +364,7 @@ uv run hotpass resolve --input-file data/raw.xlsx --output-file data/deduplicate
 | `--label-studio-url URL`           | Label Studio base URL for review queues.                                                         |
 | `--label-studio-token TOKEN`       | Label Studio API token.                                                                          |
 | `--label-studio-project INTEGER`   | Label Studio project identifier.                                                                 |
-| `--log-format [rich \| json]`       | Override profile defaults for structured logging (falls back to profile or `rich`).              |
+| `--log-format [rich \| json]`      | Override profile defaults for structured logging (falls back to profile or `rich`).              |
 
 `resolve` inherits the shared `--sensitive-field` flag. Profiles may supply default masks; repeat the flag to extend masks in runtime-only investigations.
 
@@ -382,15 +382,15 @@ uv run hotpass plan research \
   --output dist/research/plan.json
 ```
 
-| Option                 | Description                                                                                                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `--dataset PATH`       | Refined workbook or directory to load before planning.                                                                     |
-| `--row-id TEXT`        | Row identifier or zero-based index to focus the plan (optional when using entity slug/entity name filters).                 |
-| `--entity TEXT`        | Friendly name to locate the target row when `--row-id` is not supplied.                                                    |
-| `--url URL`            | Append target URLs for immediate crawl consideration (repeatable).                                                         |
-| `--allow-network`      | Opt into research providers that require network access (enforce via `FEATURE_ENABLE_REMOTE_RESEARCH` and `ALLOW_NETWORK_RESEARCH`). |
-| `--json`               | Emit the plan payload as JSON.                                                                                            |
-| `--output PATH`        | Persist the JSON plan to disk (directories are created automatically).                                                     |
+| Option            | Description                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `--dataset PATH`  | Refined workbook or directory to load before planning.                                                                               |
+| `--row-id TEXT`   | Row identifier or zero-based index to focus the plan (optional when using entity slug/entity name filters).                          |
+| `--entity TEXT`   | Friendly name to locate the target row when `--row-id` is not supplied.                                                              |
+| `--url URL`       | Append target URLs for immediate crawl consideration (repeatable).                                                                   |
+| `--allow-network` | Opt into research providers that require network access (enforce via `FEATURE_ENABLE_REMOTE_RESEARCH` and `ALLOW_NETWORK_RESEARCH`). |
+| `--json`          | Emit the plan payload as JSON.                                                                                                       |
+| `--output PATH`   | Persist the JSON plan to disk (directories are created automatically).                                                               |
 
 Plans honour environment toggles and profile settings. When network access is disabled the orchestrator records skipped steps so reviewers can track pending research work.
 

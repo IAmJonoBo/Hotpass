@@ -157,7 +157,9 @@ def _run_enrichment(
         passed = True
     else:
         error_text = result.stderr.strip() or result.stdout.strip()
-        message = f"Enrichment failed: {error_text}" if error_text else "Enrichment failed"
+        message = (
+            f"Enrichment failed: {error_text}" if error_text else "Enrichment failed"
+        )
         passed = False
 
     return StepResult(

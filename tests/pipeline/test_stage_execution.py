@@ -7,32 +7,27 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from tests.pipeline.fixtures import (
-    ModularStageArtifacts,
-    build_aggregation_result,
-    build_modular_stage_artifacts,
-    build_validation_result,
-)
-
 from hotpass.compliance import PIIRedactionConfig
-from hotpass.pipeline import (
-    PIPELINE_EVENT_AGGREGATE_COMPLETED,
-    PIPELINE_EVENT_AGGREGATE_PROGRESS,
-    PIPELINE_EVENT_AGGREGATE_STARTED,
-    PIPELINE_EVENT_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
-    PIPELINE_EVENT_EXPECTATIONS_STARTED,
-    PIPELINE_EVENT_LOAD_COMPLETED,
-    PIPELINE_EVENT_LOAD_STARTED,
-    PIPELINE_EVENT_SCHEMA_COMPLETED,
-    PIPELINE_EVENT_SCHEMA_STARTED,
-    PIPELINE_EVENT_START,
-    PIPELINE_EVENT_WRITE_COMPLETED,
-    PIPELINE_EVENT_WRITE_STARTED,
-    PipelineConfig,
-)
+from hotpass.pipeline import (PIPELINE_EVENT_AGGREGATE_COMPLETED,
+                              PIPELINE_EVENT_AGGREGATE_PROGRESS,
+                              PIPELINE_EVENT_AGGREGATE_STARTED,
+                              PIPELINE_EVENT_COMPLETED,
+                              PIPELINE_EVENT_EXPECTATIONS_COMPLETED,
+                              PIPELINE_EVENT_EXPECTATIONS_STARTED,
+                              PIPELINE_EVENT_LOAD_COMPLETED,
+                              PIPELINE_EVENT_LOAD_STARTED,
+                              PIPELINE_EVENT_SCHEMA_COMPLETED,
+                              PIPELINE_EVENT_SCHEMA_STARTED,
+                              PIPELINE_EVENT_START,
+                              PIPELINE_EVENT_WRITE_COMPLETED,
+                              PIPELINE_EVENT_WRITE_STARTED, PipelineConfig)
 from hotpass.pipeline.base import execute_pipeline
 from hotpass.pipeline.config import PipelineResult
+
+from tests.pipeline.fixtures import (ModularStageArtifacts,
+                                     build_aggregation_result,
+                                     build_modular_stage_artifacts,
+                                     build_validation_result)
 
 
 def expect(condition: bool, message: str) -> None:

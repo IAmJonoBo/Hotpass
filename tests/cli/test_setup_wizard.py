@@ -6,6 +6,7 @@ from pathlib import Path
 from types import ModuleType
 
 from pytest import CaptureFixture
+
 from tests.helpers.assertions import expect
 
 CLI_DIR = Path(__file__).resolve().parents[2] / "apps/data-platform/hotpass/cli"

@@ -11,13 +11,8 @@ __all__ = [
 ]
 
 try:
-    from hotpass.ml.tracking import (
-        MLflowConfig,
-        ModelStage,
-        init_mlflow,
-        log_training_run,
-        promote_model,
-    )
+    from hotpass.ml.tracking import (MLflowConfig, ModelStage, init_mlflow,
+                                     log_training_run, promote_model)
 except ImportError:  # pragma: no cover
     # MLflow is optional; gracefully handle missing dependency
     pass

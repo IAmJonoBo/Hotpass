@@ -6,7 +6,6 @@ from typing import Any
 
 import pandas as pd
 import pytest
-
 from hotpass.config import get_default_profile
 from hotpass.mcp.server import HotpassMCPServer
 from hotpass.research import ResearchContext, ResearchOrchestrator
@@ -192,7 +191,9 @@ async def test_plan_research_includes_rate_limit(tmp_path, monkeypatch):
         },
     )
 
-    expect(result["success"] is True, "Plan research should succeed with custom profile")
+    expect(
+        result["success"] is True, "Plan research should succeed with custom profile"
+    )
     plan = result["outcome"]["plan"]
     rate_limit = plan.get("rate_limit")
     if rate_limit is None:

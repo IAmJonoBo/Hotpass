@@ -3,12 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from pathlib import Path
 
-from ..enrichment.intent import (
-    IntentOrganizationSummary,
-    IntentRunResult,
-    IntentSignalStore,
-    run_intent_plan,
-)
+from ..enrichment.intent import (IntentOrganizationSummary, IntentRunResult,
+                                 IntentSignalStore, run_intent_plan)
 from .config import PipelineConfig
 
 

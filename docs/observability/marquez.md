@@ -18,21 +18,21 @@ stack locally with Docker Compose.
 
 1. Start the bundled Marquez stack:
 
-  ```bash
-  make marquez-up
-  ```
+```bash
+make marquez-up
+```
 
-  The compose file provisions a PostgreSQL backing database and the Marquez
-  application container. Behind the scenes the target executes `docker compose
+The compose file provisions a PostgreSQL backing database and the Marquez
+application container. Behind the scenes the target executes `docker compose
   -f infra/marquez/docker-compose.yaml up -d`. If you prefer the manual
-  approach, run those commands directly from the `infra/marquez/` directory.
-  Follow up with `make marquez-down` (or `docker compose down`) when you are
-  done. Override the default ports if `5000` or `3000` are already bound on
-  your machine—for example:
+approach, run those commands directly from the `infra/marquez/` directory.
+Follow up with `make marquez-down` (or `docker compose down`) when you are
+done. Override the default ports if `5000` or `3000` are already bound on
+your machine—for example:
 
-  ```bash
-  MARQUEZ_API_PORT=5500 MARQUEZ_UI_PORT=3500 make marquez-up
-  ```
+```bash
+MARQUEZ_API_PORT=5500 MARQUEZ_UI_PORT=3500 make marquez-up
+```
 
 1. Open the UI at [http://localhost:3000](http://localhost:3000) once the
    containers report `healthy`.

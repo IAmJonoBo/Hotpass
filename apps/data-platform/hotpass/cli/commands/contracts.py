@@ -9,9 +9,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from rich.console import Console
-
 from hotpass.config import load_industry_profile
+from rich.console import Console
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -103,7 +102,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
         return 1
 
 
-def emit_contracts(namespace: argparse.Namespace, industry_profile: Any, console: Console) -> int:
+def emit_contracts(
+    namespace: argparse.Namespace, industry_profile: Any, console: Console
+) -> int:
     """Emit data contracts for the profile."""
     try:
         # Build contract structure
@@ -119,15 +120,23 @@ def emit_contracts(namespace: argparse.Namespace, industry_profile: Any, console
                 "optional_fields": getattr(industry_profile, "optional_fields", []),
             },
             "validation": {
-                "email_threshold": getattr(industry_profile, "email_validation_threshold", 0.85),
-                "phone_threshold": getattr(industry_profile, "phone_validation_threshold", 0.85),
+                "email_threshold": getattr(
+                    industry_profile, "email_validation_threshold", 0.85
+                ),
+                "phone_threshold": getattr(
+                    industry_profile, "phone_validation_threshold", 0.85
+                ),
                 "website_threshold": getattr(
                     industry_profile, "website_validation_threshold", 0.75
                 ),
             },
             "metadata": {
-                "organization_term": getattr(industry_profile, "organization_term", "organization"),
-                "default_country_code": getattr(industry_profile, "default_country_code", "ZA"),
+                "organization_term": getattr(
+                    industry_profile, "organization_term", "organization"
+                ),
+                "default_country_code": getattr(
+                    industry_profile, "default_country_code", "ZA"
+                ),
             },
         }
 
@@ -147,13 +156,17 @@ def emit_contracts(namespace: argparse.Namespace, industry_profile: Any, console
         if namespace.format == "json":
             output_text = json.dumps(contract, indent=2, ensure_ascii=False)
         else:  # yaml
-            output_text = yaml.dump(contract, default_flow_style=False, allow_unicode=True)
+            output_text = yaml.dump(
+                contract, default_flow_style=False, allow_unicode=True
+            )
 
         if namespace.output:
             output_path = Path(namespace.output)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(output_text)
-            console.print(f"[green]✓[/green] Contract written to {output_path}", file=sys.stderr)
+            console.print(
+                f"[green]✓[/green] Contract written to {output_path}", file=sys.stderr
+            )
         else:
             console.print(output_text)
 
@@ -168,7 +181,9 @@ def validate_contracts(
     namespace: argparse.Namespace, industry_profile: Any, console: Console
 ) -> int:
     """Validate existing contracts against the profile."""
-    console.print("[yellow]Contract validation not yet implemented[/yellow]", file=sys.stderr)
+    console.print(
+        "[yellow]Contract validation not yet implemented[/yellow]", file=sys.stderr
+    )
     return 0
 
 

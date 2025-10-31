@@ -7,6 +7,7 @@ import pytest
 pytest.importorskip("frictionless")
 
 import hotpass  # noqa: E402
+
 from tests.helpers.assertions import expect
 
 

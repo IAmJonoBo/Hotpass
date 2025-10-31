@@ -5,7 +5,9 @@ import pytest
 
 pytest.importorskip("frictionless")
 
-from hotpass.data_sources import ExcelReadOptions, load_reachout_database  # noqa: E402
+from hotpass.data_sources import (ExcelReadOptions,  # noqa: E402
+                                  load_reachout_database)
+
 from tests.helpers.assertions import expect
 
 
@@ -35,7 +37,9 @@ def test_excel_stage_to_parquet_invoked(
 ) -> None:
     calls: list[Path] = []
 
-    def _fake_to_parquet(self: pd.DataFrame, path: Path, *, index: bool = False) -> None:
+    def _fake_to_parquet(
+        self: pd.DataFrame, path: Path, *, index: bool = False
+    ) -> None:
         calls.append(Path(path))
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", _fake_to_parquet, raising=False)

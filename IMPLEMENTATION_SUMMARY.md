@@ -16,11 +16,13 @@ This implementation successfully addresses all requirements from the problem sta
 ### Files Changed: 13 files, +836 lines, -14 lines
 
 #### New Files (3)
+
 - `.github/workflows/quality-gates.yml` (68 lines)
 - `ops/migrate_profile.py` (302 lines)
 - `apps/data-platform/hotpass/enrichment/performance.py` (276 lines)
 
 #### Modified Files (10)
+
 - `ops/quality/run_all_gates.py` (+2 lines)
 - `apps/data-platform/hotpass/cli/commands/contracts.py` (+11 lines, type fixes)
 - `apps/data-platform/hotpass/cli/commands/qa.py` (+16 lines, added data-quality)
@@ -39,6 +41,7 @@ This implementation successfully addresses all requirements from the problem sta
 **File:** `.github/workflows/quality-gates.yml`
 
 **Features:**
+
 - Runs on PRs and pushes to main
 - Executes all 5 quality gates (QG-1 through QG-5)
 - Uses existing test infrastructure
@@ -46,6 +49,7 @@ This implementation successfully addresses all requirements from the problem sta
 - Supports manual dispatch with configurable extras
 
 **Usage:**
+
 ```bash
 # Triggered automatically on PR
 # Or run manually
@@ -53,6 +57,7 @@ gh workflow run quality-gates.yml
 ```
 
 **Gates Validated:**
+
 - QG-1: CLI Integrity (all commands work)
 - QG-2: Data Quality (GE expectations valid)
 - QG-3: Enrichment Chain (network flags work)
@@ -66,17 +71,20 @@ gh workflow run quality-gates.yml
 **New Function:** `validate_profile_with_ge(profile_name: str) -> tuple[bool, str]`
 
 **Features:**
+
 - Loads all expectation suites for a profile
 - Validates suite structure and configuration
 - Returns clear success/failure messages
 - Integrated into CLI `qa` command
 
 **Integration with QA Command:**
+
 - Added `data-quality` target to `qa` command
 - Runs automatically as part of `qa all`
 - Can be run standalone: `uv run hotpass qa data-quality`
 
 **Testing:**
+
 ```bash
 # Run data quality checks
 uv run hotpass qa data-quality
@@ -93,6 +101,7 @@ python ops/migrate_profile.py --check-all
 **File:** `ops/migrate_profile.py` (302 lines)
 
 **Features:**
+
 - Automatic migration from legacy to 4-block schema
 - Validation-only mode (`--validate`)
 - Batch checking of all profiles (`--check-all`)
@@ -100,12 +109,14 @@ python ops/migrate_profile.py --check-all
 - Clear migration feedback
 
 **Schema Blocks:**
+
 1. **ingest**: Data source configuration
 2. **refine**: Normalization and validation
 3. **enrich**: Data enrichment configuration
 4. **compliance**: POPIA and data governance
 
 **Usage:**
+
 ```bash
 # Migrate a single profile
 python ops/migrate_profile.py apps/data-platform/hotpass/profiles/aviation.yaml
@@ -118,6 +129,7 @@ python ops/migrate_profile.py --check-all
 ```
 
 **Output:**
+
 ```
 Checking 3 profiles...
 
@@ -135,7 +147,9 @@ Checking 3 profiles...
 **Classes and Functions:**
 
 #### FetcherCache
+
 SQLite-based caching with configurable TTL:
+
 - Deterministic cache key generation from row data
 - Automatic expiration of old entries
 - Statistics tracking (hits, misses, total size)
@@ -156,7 +170,9 @@ stats = cache.get_stats()
 ```
 
 #### enrich_parallel
+
 ThreadPoolExecutor-based parallel enrichment:
+
 - Configurable worker count (default: 4)
 - Progress callback support
 - Automatic cache integration
@@ -173,7 +189,9 @@ enriched_df = enrich_parallel(
 ```
 
 #### benchmark_enrichment
+
 Performance comparison tool:
+
 - Sequential vs parallel execution
 - Speedup calculation
 - Resource usage tracking
@@ -194,6 +212,7 @@ results = benchmark_enrichment(
 ```
 
 **Performance Gains:**
+
 - 3-4x speedup on typical enrichment workloads
 - 70-80% cache hit rate on repeated runs
 - Reduced API calls by 75% with caching
@@ -205,7 +224,9 @@ results = benchmark_enrichment(
 **New Metrics Methods:**
 
 #### record_enrichment_duration
+
 Tracks operation duration by fetcher and strategy:
+
 ```python
 metrics.record_enrichment_duration(
     seconds=2.34,
@@ -216,23 +237,29 @@ metrics.record_enrichment_duration(
 ```
 
 **Attributes:**
+
 - `fetcher`: Fetcher class name
 - `strategy`: deterministic | research | backfill
 - `network_used`: true | false
 
 #### record_enrichment_cache_hit/miss
+
 Monitors cache effectiveness:
+
 ```python
 metrics.record_enrichment_cache_hit("WebsiteFetcher")
 metrics.record_enrichment_cache_miss("WebsiteFetcher")
 ```
 
 **Metrics:**
+
 - `hotpass.enrichment.cache_hits`: Counter with fetcher label
 - `hotpass.enrichment.cache_misses`: Counter with fetcher label
 
 #### record_enrichment_records
+
 Counts enriched records with confidence buckets:
+
 ```python
 metrics.record_enrichment_records(
     count=50,
@@ -243,12 +270,14 @@ metrics.record_enrichment_records(
 ```
 
 **Attributes:**
+
 - `fetcher`: Fetcher name
 - `strategy`: Enrichment strategy
 - `confidence_bucket`: 0%, 10%, 20%, ..., 90%, 100%
 
 **Graceful Degradation:**
 All metrics methods handle missing OpenTelemetry gracefully:
+
 - Log warnings instead of crashing
 - Return no-op when telemetry unavailable
 - Maintain existing observability patterns
@@ -258,36 +287,45 @@ All metrics methods handle missing OpenTelemetry gracefully:
 **All 23 type errors resolved across 8 files:**
 
 #### apps/data-platform/hotpass/enrichment/provenance.py (2 fixes)
+
 - Added return type annotation to `__init__`
 - Added type annotation to `provenance_data` dict
 
 #### apps/data-platform/hotpass/mcp/server.py (3 fixes)
+
 - Added return type to `__init__`
 - Added type guard for tool_name parameter
 - Fixed type annotations for response_data dict
 
-#### apps/data-platform/hotpass/enrichment/fetchers/__init__.py (1 fix)
+#### apps/data-platform/hotpass/enrichment/fetchers/**init**.py (1 fix)
+
 - Added return type to `FetcherRegistry.__init__`
 
 #### apps/data-platform/hotpass/enrichment/fetchers/research.py (2 fixes)
+
 - Fixed Callable type parameters in decorator
 - Removed unused type ignore comment
 
 #### apps/data-platform/hotpass/cli/commands/contracts.py (4 fixes)
+
 - Added `Any` import
 - Fixed type annotations for function parameters
 
 #### ops/quality/run_all_gates.py (1 fix)
+
 - Fixed missing return statement in JSON branch
 
 #### ops/migrate_profile.py (1 fix)
+
 - Added proper type annotation to loaded profile
 
 #### apps/data-platform/hotpass/enrichment/performance.py (3 fixes)
+
 - Fixed CacheManager | None type declaration
 - Fixed float/int type consistency in results dict
 
 **Verification:**
+
 ```bash
 uv run mypy src scripts
 # Success: no issues found in 151 source files
@@ -302,6 +340,7 @@ uv run pytest tests/cli/test_quality_gates.py -v
 ```
 
 All tests passed:
+
 - QG-1: 7/7 CLI integrity tests
 - QG-2: 1/1 data quality test
 - QG-3: 1/1 enrichment chain test
@@ -324,14 +363,15 @@ uv run python ops/quality/run_all_gates.py --json
 ```
 
 Output:
+
 ```json
 {
   "gates": [
-    {"id": "QG-1", "passed": true, "duration_seconds": 5.30},
-    {"id": "QG-2", "passed": true, "duration_seconds": 0.02},
-    {"id": "QG-3", "passed": true, "duration_seconds": 17.89},
-    {"id": "QG-4", "passed": true, "duration_seconds": 3.21},
-    {"id": "QG-5", "passed": true, "duration_seconds": 0.0002}
+    { "id": "QG-1", "passed": true, "duration_seconds": 5.3 },
+    { "id": "QG-2", "passed": true, "duration_seconds": 0.02 },
+    { "id": "QG-3", "passed": true, "duration_seconds": 17.89 },
+    { "id": "QG-4", "passed": true, "duration_seconds": 3.21 },
+    { "id": "QG-5", "passed": true, "duration_seconds": 0.0002 }
   ],
   "summary": {
     "total": 5,
@@ -349,6 +389,7 @@ python ops/migrate_profile.py --check-all
 ```
 
 All profiles validated successfully:
+
 - aviation.yaml: Complete ✓
 - generic.yaml: Complete ✓
 - test.yaml: Complete ✓
@@ -356,18 +397,21 @@ All profiles validated successfully:
 ## Code Quality
 
 ### Mypy: CLEAN ✅
+
 ```bash
 uv run mypy src scripts
 # Success: no issues found in 151 source files
 ```
 
 ### Ruff: 7 LINE LENGTH WARNINGS (PRE-EXISTING)
+
 ```bash
 uv run ruff check --select E,F
 # 7 E501 errors (line too long) in files not modified by this PR
 ```
 
 ### Bandit: 1 LOW SEVERITY (ACCEPTABLE) ✅
+
 ```bash
 uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/performance.py
 # 1 low severity: try-except-pass in benchmark function (intentional)
@@ -376,15 +420,18 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 ## Integration Points
 
 ### CLI Commands Enhanced
+
 - `hotpass qa data-quality` - Run Great Expectations validation
 - `hotpass qa all` - Includes data-quality checks
 - Existing commands unchanged
 
 ### New Scripts
+
 - `ops/migrate_profile.py` - Profile migration utility
 - `.github/workflows/quality-gates.yml` - CI workflow
 
 ### Library Extensions
+
 - `hotpass.validation.validate_profile_with_ge()` - GE integration
 - `hotpass.enrichment.performance.*` - Performance tools
 - `hotpass.telemetry.metrics.PipelineMetrics.*` - Enrichment metrics
@@ -392,6 +439,7 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 ## Documentation
 
 ### Usage Examples Documented
+
 - Quality gates CI workflow usage
 - Profile migration scenarios
 - QA command with data-quality target
@@ -399,6 +447,7 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 - OpenTelemetry metrics integration
 
 ### Technical Documentation
+
 - All functions have comprehensive docstrings
 - Type hints on all public APIs
 - Error handling documented
@@ -407,6 +456,7 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 ## Next Steps
 
 ### Recommended Follow-ups
+
 1. Add more expectation suites for specific data sources
 2. Implement profile linter (mentioned in Sprint 3 plan)
 3. Add distributed caching support (Redis backend)
@@ -414,6 +464,7 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 5. Add mutation testing for new performance code
 
 ### Monitoring
+
 - Enable OpenTelemetry in production
 - Monitor enrichment cache hit rates
 - Track parallel vs sequential performance
@@ -422,6 +473,7 @@ uv run bandit -r ops/migrate_profile.py apps/data-platform/hotpass/enrichment/pe
 ## Conclusion
 
 This implementation successfully delivers all requirements:
+
 - ✅ CI workflow for quality gates
 - ✅ Great Expectations integration
 - ✅ Profile migration tool

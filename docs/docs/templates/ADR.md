@@ -1,13 +1,16 @@
 # {ADR-NNN}: Title
 
-*Status:* Proposed | Accepted | Superseded by {NNN}  
-*Date:* YYYY‑MM‑DD
+_Status:_ Proposed | Accepted | Superseded by {NNN}  
+_Date:_ YYYY‑MM‑DD
 
 ## Context
+
 …
 
 ## Decision
+
 …
 
 ## Consequences
+
 …

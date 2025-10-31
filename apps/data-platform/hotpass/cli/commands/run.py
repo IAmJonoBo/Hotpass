@@ -13,33 +13,28 @@ from typing import Any
 from uuid import uuid4
 
 import pandas as pd
-from rich.prompt import Confirm
-
 from hotpass.artifacts import create_refined_archive
 from hotpass.automation.hooks import dispatch_webhooks, push_crm_updates
 from hotpass.automation.http import AutomationHTTPClient, DeadLetterQueue
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
 from hotpass.error_handling import DataContractError
-from hotpass.lineage import (
-    build_output_datasets,
-    create_emitter,
-    discover_input_datasets,
-)
+from hotpass.lineage import (build_output_datasets, create_emitter,
+                             discover_input_datasets)
 from hotpass.orchestration import build_pipeline_job_name
 from hotpass.pipeline import default_feature_bundle
-from hotpass.pipeline.orchestrator import PipelineExecutionConfig, PipelineOrchestrator
-from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions, telemetry_session
+from hotpass.pipeline.orchestrator import (PipelineExecutionConfig,
+                                           PipelineOrchestrator)
+from hotpass.telemetry.bootstrap import (TelemetryBootstrapOptions,
+                                         telemetry_session)
+from rich.prompt import Confirm
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
-from ..progress import (
-    DEFAULT_SENSITIVE_FIELD_TOKENS,
-    PipelineProgress,
-    StructuredLogger,
-    render_progress,
-)
-from ..shared import infer_report_format, load_config, normalise_sensitive_fields
+from ..progress import (DEFAULT_SENSITIVE_FIELD_TOKENS, PipelineProgress,
+                        StructuredLogger, render_progress)
+from ..shared import (infer_report_format, load_config,
+                      normalise_sensitive_fields)
 
 LEGACY_PIPELINE_KEYS: frozenset[str] = frozenset(
     {
@@ -125,7 +120,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     if not input_dir.exists():
         logger.log_error(f"Input directory does not exist: {input_dir}")
-        logger.log_error("Please create the directory or specify a different path with --input-dir")
+        logger.log_error(
+            "Please create the directory or specify a different path with --input-dir"
+        )
         return 1
     if not input_dir.is_dir():
         logger.log_error(f"Input path is not a directory: {input_dir}")
@@ -147,7 +144,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
     progress_context = render_progress(console)
     with progress_context as progress:
-        listener = progress.handle_event if isinstance(progress, PipelineProgress) else None
+        listener = (
+            progress.handle_event if isinstance(progress, PipelineProgress) else None
+        )
 
         base_config = config.to_pipeline_config(progress_listener=listener)
         enhanced_config = config.to_enhanced_config()
@@ -196,7 +195,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
                 if console:
                     console.print()
-                    console.print("[bold green]✓[/bold green] Pipeline completed successfully!")
+                    console.print(
+                        "[bold green]✓[/bold green] Pipeline completed successfully!"
+                    )
                     console.print(f"[dim]Refined data written to:[/dim] {output_path}")
 
                 if interactive and console and report.recommendations:
@@ -209,12 +210,19 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 if options.report_path is not None:
                     options.report_path.parent.mkdir(parents=True, exist_ok=True)
                     if options.report_format == "html":
-                        options.report_path.write_text(report.to_html(), encoding="utf-8")
+                        options.report_path.write_text(
+                            report.to_html(), encoding="utf-8"
+                        )
                     else:
-                        options.report_path.write_text(report.to_markdown(), encoding="utf-8")
+                        options.report_path.write_text(
+                            report.to_markdown(), encoding="utf-8"
+                        )
                     logger.log_report_write(options.report_path, options.report_format)
 
-                if options.party_store_path is not None and result.party_store is not None:
+                if (
+                    options.party_store_path is not None
+                    and result.party_store is not None
+                ):
                     options.party_store_path.parent.mkdir(parents=True, exist_ok=True)
                     payload = result.party_store.as_dict()
                     options.party_store_path.write_text(
@@ -241,7 +249,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                     automation_http_config.dead_letter_enabled
                     and automation_http_config.dead_letter_path is not None
                 ):
-                    dead_letter_queue = DeadLetterQueue(automation_http_config.dead_letter_path)
+                    dead_letter_queue = DeadLetterQueue(
+                        automation_http_config.dead_letter_path
+                    )
 
                 effective_digest = digest_df
                 if effective_digest is None:
@@ -277,24 +287,34 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
                 if config.pipeline.archive:
                     config.pipeline.dist_dir.mkdir(parents=True, exist_ok=True)
-                    archive_path = create_refined_archive(output_path, config.pipeline.dist_dir)
+                    archive_path = create_refined_archive(
+                        output_path, config.pipeline.dist_dir
+                    )
                     logger.log_archive(archive_path)
-                    lineage_outputs = build_output_datasets(base_config.output_path, archive_path)
+                    lineage_outputs = build_output_datasets(
+                        base_config.output_path, archive_path
+                    )
             except DataContractError as exc:
                 context = getattr(exc, "context", None)
                 message = context.message if context is not None else str(exc)
                 emitter.emit_fail(message, outputs=lineage_outputs)
                 logger.log_error(f"Data contract validation failed: {message}")
                 if console:
-                    console.print("[bold red]✗ Data contract validation failed[/bold red]")
+                    console.print(
+                        "[bold red]✗ Data contract validation failed[/bold red]"
+                    )
                     source_hint = (
-                        context.source_file if context and context.source_file else "unknown"
+                        context.source_file
+                        if context and context.source_file
+                        else "unknown"
                     )
                     console.print(f"[dim]Source:[/dim] {source_hint}")
                     details = context.details if context else "Unavailable"
                     console.print(f"[dim]Details:[/dim] {details}")
                     if context and context.suggested_fix:
-                        console.print(f"[yellow]Suggested fix:[/yellow] {context.suggested_fix}")
+                        console.print(
+                            f"[yellow]Suggested fix:[/yellow] {context.suggested_fix}"
+                        )
                 return 2
             except Exception as exc:  # pragma: no cover - defensive guard
                 emitter.emit_fail(str(exc), outputs=lineage_outputs)
@@ -309,7 +329,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     return 0
 
 
-def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) -> RunOptions:
+def _resolve_options(
+    namespace: argparse.Namespace, profile: CLIProfile | None
+) -> RunOptions:
     canonical = HotpassConfig()
     profile_name = profile.name if profile else None
 
@@ -374,7 +396,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
     if getattr(namespace, "intent_digest_path", None) is not None:
         pipeline_updates["intent_digest_path"] = Path(namespace.intent_digest_path)
     if getattr(namespace, "intent_signal_store", None) is not None:
-        pipeline_updates["intent_signal_store_path"] = Path(namespace.intent_signal_store)
+        pipeline_updates["intent_signal_store_path"] = Path(
+            namespace.intent_signal_store
+        )
     if getattr(namespace, "daily_list_path", None) is not None:
         pipeline_updates["daily_list_path"] = Path(namespace.daily_list_path)
     if getattr(namespace, "daily_list_size", None) is not None:
@@ -396,13 +420,21 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
     if getattr(namespace, "automation_http_backoff_max", None) is not None:
         retry_updates["backoff_max"] = float(namespace.automation_http_backoff_max)
     if getattr(namespace, "automation_http_circuit_threshold", None) is not None:
-        circuit_updates["failure_threshold"] = int(namespace.automation_http_circuit_threshold)
+        circuit_updates["failure_threshold"] = int(
+            namespace.automation_http_circuit_threshold
+        )
     if getattr(namespace, "automation_http_circuit_reset", None) is not None:
-        circuit_updates["recovery_time"] = float(namespace.automation_http_circuit_reset)
+        circuit_updates["recovery_time"] = float(
+            namespace.automation_http_circuit_reset
+        )
     if getattr(namespace, "automation_http_idempotency_header", None) is not None:
-        automation_http_updates["idempotency_header"] = namespace.automation_http_idempotency_header
+        automation_http_updates["idempotency_header"] = (
+            namespace.automation_http_idempotency_header
+        )
     if getattr(namespace, "automation_http_dead_letter", None) is not None:
-        automation_http_updates["dead_letter_path"] = Path(namespace.automation_http_dead_letter)
+        automation_http_updates["dead_letter_path"] = Path(
+            namespace.automation_http_dead_letter
+        )
     if getattr(namespace, "automation_http_dead_letter_enabled", None) is not None:
         automation_http_updates["dead_letter_enabled"] = bool(
             namespace.automation_http_dead_letter_enabled
@@ -427,7 +459,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
     if namespace.telemetry_otlp_endpoint:
         telemetry_updates["otlp_endpoint"] = namespace.telemetry_otlp_endpoint
     if namespace.telemetry_otlp_metrics_endpoint:
-        telemetry_updates["otlp_metrics_endpoint"] = namespace.telemetry_otlp_metrics_endpoint
+        telemetry_updates["otlp_metrics_endpoint"] = (
+            namespace.telemetry_otlp_metrics_endpoint
+        )
     if namespace.telemetry_otlp_insecure is not None:
         telemetry_updates["otlp_insecure"] = bool(namespace.telemetry_otlp_insecure)
     if namespace.telemetry_otlp_timeout is not None:
@@ -459,28 +493,36 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
             try:
                 automation_http_updates["timeout"] = float(env_timeout)
             except ValueError as exc:  # pragma: no cover
-                raise ValueError("HOTPASS_AUTOMATION_HTTP_TIMEOUT must be numeric") from exc
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_TIMEOUT must be numeric"
+                ) from exc
     if "attempts" not in retry_updates:
         env_retries = os.getenv("HOTPASS_AUTOMATION_HTTP_RETRIES")
         if env_retries is not None:
             try:
                 retry_updates["attempts"] = int(env_retries)
             except ValueError as exc:  # pragma: no cover
-                raise ValueError("HOTPASS_AUTOMATION_HTTP_RETRIES must be an integer") from exc
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_RETRIES must be an integer"
+                ) from exc
     if "backoff_factor" not in retry_updates:
         env_backoff = os.getenv("HOTPASS_AUTOMATION_HTTP_BACKOFF")
         if env_backoff is not None:
             try:
                 retry_updates["backoff_factor"] = float(env_backoff)
             except ValueError as exc:  # pragma: no cover
-                raise ValueError("HOTPASS_AUTOMATION_HTTP_BACKOFF must be numeric") from exc
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_BACKOFF must be numeric"
+                ) from exc
     if "backoff_max" not in retry_updates:
         env_backoff_max = os.getenv("HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX")
         if env_backoff_max is not None:
             try:
                 retry_updates["backoff_max"] = float(env_backoff_max)
             except ValueError as exc:  # pragma: no cover
-                raise ValueError("HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX must be numeric") from exc
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_BACKOFF_MAX must be numeric"
+                ) from exc
     if "failure_threshold" not in circuit_updates:
         env_threshold = os.getenv("HOTPASS_AUTOMATION_HTTP_CIRCUIT_THRESHOLD")
         if env_threshold is not None:
@@ -496,7 +538,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
             try:
                 circuit_updates["recovery_time"] = float(env_reset)
             except ValueError as exc:  # pragma: no cover
-                raise ValueError("HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET must be numeric") from exc
+                raise ValueError(
+                    "HOTPASS_AUTOMATION_HTTP_CIRCUIT_RESET must be numeric"
+                ) from exc
     if "idempotency_header" not in automation_http_updates:
         env_header = os.getenv("HOTPASS_AUTOMATION_HTTP_IDEMPOTENCY_HEADER")
         if env_header:
@@ -506,7 +550,9 @@ def _resolve_options(namespace: argparse.Namespace, profile: CLIProfile | None) 
         if env_dead_letter:
             automation_http_updates["dead_letter_path"] = Path(env_dead_letter)
     if "dead_letter_enabled" not in automation_http_updates:
-        env_dead_letter_enabled = os.getenv("HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED")
+        env_dead_letter_enabled = os.getenv(
+            "HOTPASS_AUTOMATION_HTTP_DEAD_LETTER_ENABLED"
+        )
         if env_dead_letter_enabled is not None:
             try:
                 automation_http_updates["dead_letter_enabled"] = _parse_bool(

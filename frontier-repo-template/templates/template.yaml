@@ -1,4 +1,4 @@
-template_version: '1.0.0'
+template_version: "1.0.0"
 name: frontier-repo
 description: Comprehensive, stack-agnostic repository scaffold.
 structure:

@@ -48,7 +48,6 @@ This document details the implementation plan for upgrading Hotpass to support f
 #### Implementation Tasks
 
 1. **Create new CLI commands** (`apps/data-platform/hotpass/cli/commands/`)
-
    - `overview.py` - Display available commands and system status
    - `refine.py` - Wrapper/alias for existing `run.py`
    - `enrich.py` - New enrichment command
@@ -56,13 +55,11 @@ This document details the implementation plan for upgrading Hotpass to support f
    - `contracts.py` - Contract emission command
 
 2. **Create MCP server** (`apps/data-platform/hotpass/mcp/`)
-
    - `server.py` - MCP stdio server implementation
    - `tools.py` - Tool definitions and handlers
    - `__init__.py` - Module exports
 
 3. **MCP Tools Implementation**
-
    - `hotpass.refine` - Runs refinement pipeline
    - `hotpass.enrich` - Runs enrichment with network control
    - `hotpass.qa` - Executes quality checks
@@ -122,7 +119,6 @@ def test_qg1_cli_integrity(tmp_path):
 #### Implementation Tasks
 
 1. **Create enrichment structure** (`apps/data-platform/hotpass/enrichment/`)
-
    - `fetchers/__init__.py` - Fetcher registry
    - `fetchers/deterministic.py` - Local/offline enrichment
    - `fetchers/research.py` - Network-based enrichment
@@ -130,27 +126,23 @@ def test_qg1_cli_integrity(tmp_path):
    - `provenance.py` - Provenance tracking and reporting
 
 2. **Deterministic Fetchers** (`fetchers/deterministic.py`)
-
    - Lookup table enrichment
    - Historical data backfill
    - Derived field calculation
    - Local registry queries
 
 3. **Research Fetchers** (`fetchers/research.py`)
-
    - Network guard decorator (`@requires_network`)
    - Hotpass research service integration
    - Domain-specific crawlers
    - Rate limiting and retry logic
 
 4. **Environment Controls**
-
    - `FEATURE_ENABLE_REMOTE_RESEARCH` - Master toggle
    - `ALLOW_NETWORK_RESEARCH` - Runtime toggle
    - Default: network disabled (safe by default)
 
 5. **Provenance Tracking**
-
    - Source attribution
    - Timestamp and confidence
    - Strategy metadata (deterministic/research/backfill)
@@ -229,7 +221,6 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
 #### Implementation Tasks
 
 1. **Update Profile Schema**
-
    - Define complete YAML structure with 4 blocks
    - Add validation for required sections
    - Create migration guide for existing profiles
@@ -288,7 +279,6 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    ```
 
 3. **Profile Linter** (`tools/profile_lint.py`)
-
    - Validate YAML syntax
    - Check all 4 blocks present
    - Verify field references
@@ -296,7 +286,6 @@ def test_qg3_enrichment_chain_gate(tmp_path, minimal_xlsx, monkeypatch):
    - CLI integration: `hotpass qa profiles`
 
 4. **Update Existing Profiles**
-
    - Migrate `aviation.yaml` to new schema
    - Migrate `generic.yaml` to new schema
    - Add `test.yaml` profile for QA
@@ -362,7 +351,6 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
 #### Implementation Tasks
 
 1. **Create Agent Instructions** (`docs/agent-instructions.md`)
-
    - Flow 1: "Refine the spreadsheet"
    - Flow 2: "Double-check this entry"
    - Flow 3: "Run quality gates"
@@ -370,20 +358,17 @@ def test_qg2_data_quality_gate(tmp_path, sample_data):
    - Common patterns and examples
 
 2. **Update Copilot Instructions** (`.github/copilot-instructions.md`)
-
    - Add "Profile-first" guidance
    - Add "Deterministic-first" preference
    - Add "Provenance tracking" requirements
    - Link to agent-instructions.md
 
 3. **Update AGENTS.md**
-
    - Add MCP tool descriptions
    - Add example invocations
    - Add troubleshooting section
 
 4. **Create Reference Docs**
-
    - `docs/reference/cli-commands.md` - All CLI verbs
    - `docs/reference/mcp-tools.md` - All MCP tools
    - `docs/reference/quality-gates.md` - QG-1 through QG-5
@@ -452,7 +437,6 @@ def test_qg5_docs_instruction_gate():
 #### Implementation Tasks
 
 1. **CI Automation** (`.github/workflows/quality-gates.yml`)
-
    - Job 1: QG-1 (CLI integrity)
    - Job 2: QG-2 (Data quality)
    - Job 3: QG-3 (Enrichment chain)
@@ -461,13 +445,11 @@ def test_qg5_docs_instruction_gate():
    - Matrix testing across profiles
 
 2. **Meta-MCP Tool** (`apps/data-platform/hotpass/mcp/tools/ta_check.py`)
-
    - `hotpass.ta.check` - Runs all QG checks
    - Returns structured results
    - CLI integration: `hotpass qa ta`
 
 3. **Quality Gate Scripts** (`ops/quality/`)
-
    - `run_qg1.py` - CLI integrity check
    - `run_qg2.py` - GE validation
    - `run_qg3.py` - Enrichment test
@@ -1008,20 +990,20 @@ checks.extend([
 
 ## Revision History
 
-| Version | Date       | Author   | Changes                                      |
-| ------- | ---------- | -------- | -------------------------------------------- |
+| Version | Date       | Author   | Changes                                            |
+| ------- | ---------- | -------- | -------------------------------------------------- |
 | 1.1     | 2025-10-31 | Dev Team | Status audit, TA checklist updates, roadmap parity |
-| 1.0     | 2025-10-30 | Dev Team | Initial implementation plan                  |
+| 1.0     | 2025-10-30 | Dev Team | Initial implementation plan                        |
 
 ---
 
 ## Sign-off
 
-**Technical Lead:** ******\_\_\_****** Date: ****\_\_\_****
+**Technical Lead:** **\*\***\_\_\_**\*\*** Date: \***\*\_\_\_\*\***
 
-**Product Owner:** ******\_\_\_****** Date: ****\_\_\_****
+**Product Owner:** **\*\***\_\_\_**\*\*** Date: \***\*\_\_\_\*\***
 
-**QA Lead:** ******\_\_\_****** Date: ****\_\_\_****
+**QA Lead:** **\*\***\_\_\_**\*\*** Date: \***\*\_\_\_\*\***
 
 ---
 

@@ -15,10 +15,10 @@ This document captures the scheduled rehearsal windows, owners, and artefacts th
 
 ## Schedule
 
-| Rehearsal | Date & Time (UTC) | Owner(s) | Environment | Notes |
-|-----------|------------------|----------|-------------|-------|
-| Marquez lineage smoke | 2025-11-12 14:00 – 15:00 | QA (primary), Engineering (support) | `hotpass-staging` | Completed. Artefacts: `dist/staging/marquez/20251112T140000Z/cli.log`, `dist/staging/marquez/20251112T140000Z/graph.png`. |
-| ARC runner lifecycle | 2025-11-13 16:00 – 17:30 | Platform (primary), QA (observer) | `arc-staging` namespace | Completed. Artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`. |
+| Rehearsal             | Date & Time (UTC)        | Owner(s)                            | Environment             | Notes                                                                                                                     |
+| --------------------- | ------------------------ | ----------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Marquez lineage smoke | 2025-11-12 14:00 – 15:00 | QA (primary), Engineering (support) | `hotpass-staging`       | Completed. Artefacts: `dist/staging/marquez/20251112T140000Z/cli.log`, `dist/staging/marquez/20251112T140000Z/graph.png`. |
+| ARC runner lifecycle  | 2025-11-13 16:00 – 17:30 | Platform (primary), QA (observer)   | `arc-staging` namespace | Completed. Artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.    |
 
 ## Artefact Checklist
 

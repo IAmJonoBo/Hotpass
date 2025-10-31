@@ -8,18 +8,15 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
+import hotpass.pipeline.aggregation as aggregation_module
 import pandas as pd
 import pytest
-from tests.helpers.hypothesis import HealthCheck, given, settings, st
-
-import hotpass.pipeline.aggregation as aggregation_module
-from hotpass.pipeline.aggregation import (
-    YEAR_FIRST_PATTERN,
-    _aggregate_group,
-    _latest_iso_date,
-)
+from hotpass.pipeline.aggregation import (YEAR_FIRST_PATTERN, _aggregate_group,
+                                          _latest_iso_date)
 from hotpass.pipeline.base import execute_pipeline
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
+
+from tests.helpers.hypothesis import HealthCheck, given, settings, st
 
 
 def expect(condition: bool, message: str) -> None:
@@ -40,7 +37,11 @@ _NON_DETERMINISTIC_METRICS = {
 
 
 def _stable_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in metrics.items() if key not in _NON_DETERMINISTIC_METRICS}
+    return {
+        key: value
+        for key, value in metrics.items()
+        if key not in _NON_DETERMINISTIC_METRICS
+    }
 
 
 _DATE_VARIANT = st.sampled_from(("iso", "dayfirst", "monthfirst", "timestamp"))
@@ -94,7 +95,9 @@ def _coerce_expected_iso(values: list[Any]) -> str | None:
         min_size=1,
         max_size=4,
     ),
-    st.lists(st.one_of(st.none(), st.just(""), st.text(min_size=1, max_size=5)), max_size=3),
+    st.lists(
+        st.one_of(st.none(), st.just(""), st.text(min_size=1, max_size=5)), max_size=3
+    ),
 )
 def test_latest_iso_date_handles_varied_formats(
     entries: list[tuple[datetime, str]], noise: list[Any]
@@ -113,7 +116,9 @@ def test_latest_iso_date_handles_varied_formats(
 
     result = _latest_iso_date(values)
     expected = _coerce_expected_iso(values)
-    expect(result == expected, "ISO coercion should match Pandas reference implementation")
+    expect(
+        result == expected, "ISO coercion should match Pandas reference implementation"
+    )
 
 
 @settings(max_examples=12, deadline=None)
@@ -121,7 +126,9 @@ def test_latest_iso_date_handles_varied_formats(
     st.lists(
         st.fixed_dictionaries(
             {
-                "organization_name": st.text(string.ascii_letters + " -'", min_size=1, max_size=25),
+                "organization_name": st.text(
+                    string.ascii_letters + " -'", min_size=1, max_size=25
+                ),
                 "source_dataset": st.sampled_from(
                     ["Contact Database", "Reachout Database", "SACAA Cleaned", "Agent"],
                 ),
@@ -130,9 +137,15 @@ def test_latest_iso_date_handles_varied_formats(
                     st.none(),
                     st.sampled_from(["Gauteng", "Western Cape", "KwaZulu-Natal"]),
                 ),
-                "area": st.one_of(st.none(), st.text(string.ascii_letters + " ", max_size=30)),
-                "address": st.one_of(st.none(), st.text(string.printable.strip(), max_size=50)),
-                "category": st.one_of(st.none(), st.sampled_from(["Flight School", "Aviation"])),
+                "area": st.one_of(
+                    st.none(), st.text(string.ascii_letters + " ", max_size=30)
+                ),
+                "address": st.one_of(
+                    st.none(), st.text(string.printable.strip(), max_size=50)
+                ),
+                "category": st.one_of(
+                    st.none(), st.sampled_from(["Flight School", "Aviation"])
+                ),
                 "organization_type": st.one_of(
                     st.none(), st.sampled_from(["School", "Club", "Association"])
                 ),
@@ -142,13 +155,21 @@ def test_latest_iso_date_handles_varied_formats(
                     st.sampled_from(["https://example.com", "https://hotpass.example"]),
                 ),
                 "planes": st.one_of(st.none(), st.sampled_from(["1", "2", "10"])),
-                "description": st.one_of(st.none(), st.text(string.printable.strip(), max_size=40)),
-                "notes": st.one_of(st.none(), st.text(string.printable.strip(), max_size=40)),
+                "description": st.one_of(
+                    st.none(), st.text(string.printable.strip(), max_size=40)
+                ),
+                "notes": st.one_of(
+                    st.none(), st.text(string.printable.strip(), max_size=40)
+                ),
                 "last_interaction_date": st.one_of(
                     st.none(),
-                    st.datetimes(min_value=datetime(2010, 1, 1), max_value=datetime(2040, 1, 1)),
+                    st.datetimes(
+                        min_value=datetime(2010, 1, 1), max_value=datetime(2040, 1, 1)
+                    ),
                 ),
-                "priority": st.one_of(st.none(), st.sampled_from(["High", "Medium", "Low"])),
+                "priority": st.one_of(
+                    st.none(), st.sampled_from(["High", "Medium", "Low"])
+                ),
                 "contact_names": st.lists(
                     st.text(string.ascii_letters + " -'", min_size=1, max_size=20),
                     min_size=1,
@@ -188,7 +209,9 @@ def test_aggregate_group_handles_missing_optional_columns(
     for row in rows:
         coerced = dict(row)
         if isinstance(coerced.get("last_interaction_date"), datetime):
-            coerced["last_interaction_date"] = coerced["last_interaction_date"].date().isoformat()
+            coerced["last_interaction_date"] = (
+                coerced["last_interaction_date"].date().isoformat()
+            )
         normalised_rows.append(coerced)
 
     result = _aggregate_group(
@@ -207,7 +230,9 @@ def test_aggregate_group_handles_missing_optional_columns(
     )
     assert isinstance(provenance_raw, str)
     parsed = json.loads(provenance_raw)
-    expect(isinstance(parsed, dict), "selection provenance payload must be a JSON object")
+    expect(
+        isinstance(parsed, dict), "selection provenance payload must be a JSON object"
+    )
 
 
 class _DeterministicClock:
@@ -231,13 +256,17 @@ class _DeterministicClock:
 
 _VALID_ROW = st.fixed_dictionaries(
     {
-        "organization_name": st.text(string.ascii_letters + " -'", min_size=1, max_size=25),
+        "organization_name": st.text(
+            string.ascii_letters + " -'", min_size=1, max_size=25
+        ),
         "source_dataset": st.sampled_from(
             ["Contact Database", "Reachout Database", "SACAA Cleaned"]
         ),
         "source_record_id": st.text(string.digits, min_size=1, max_size=6),
         "province": st.sampled_from(["Gauteng", "Western Cape", "KwaZulu-Natal"]),
-        "area": st.one_of(st.just(""), st.text(string.ascii_letters + " ", max_size=30)),
+        "area": st.one_of(
+            st.just(""), st.text(string.ascii_letters + " ", max_size=30)
+        ),
         "address": st.text(string.printable.strip(), min_size=1, max_size=40),
         "category": st.sampled_from(["Flight School", "Aviation"]),
         "organization_type": st.sampled_from(["School", "Club", "Association"]),
@@ -312,7 +341,9 @@ def test_pipeline_idempotent_with_seed_and_hooks(
     dataset = []
     for row in rows:
         converted = dict(row)
-        converted["last_interaction_date"] = row["last_interaction_date"].date().isoformat()
+        converted["last_interaction_date"] = (
+            row["last_interaction_date"].date().isoformat()
+        )
         dataset.append(converted)
     frame = pd.DataFrame(dataset)
 
@@ -339,9 +370,17 @@ def test_pipeline_idempotent_with_seed_and_hooks(
     )
     report_one = first_result.quality_report.to_dict()
     report_two = second_result.quality_report.to_dict()
-    report_one["performance_metrics"] = _stable_metrics(report_one["performance_metrics"])
-    report_two["performance_metrics"] = _stable_metrics(report_two["performance_metrics"])
-    expect(report_one == report_two, "quality report must remain consistent across runs")
+    report_one["performance_metrics"] = _stable_metrics(
+        report_one["performance_metrics"]
+    )
+    report_two["performance_metrics"] = _stable_metrics(
+        report_two["performance_metrics"]
+    )
+    expect(
+        report_one == report_two, "quality report must remain consistent across runs"
+    )
     stable_metrics_one = _stable_metrics(first_result.performance_metrics)
     stable_metrics_two = _stable_metrics(second_result.performance_metrics)
-    expect(stable_metrics_one == stable_metrics_two, "deterministic metrics should match")
+    expect(
+        stable_metrics_one == stable_metrics_two, "deterministic metrics should match"
+    )

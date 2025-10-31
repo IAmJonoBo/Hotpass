@@ -4,7 +4,11 @@ A tiny generator that can create the directory tree described in templates/templ
 Usage:
     python tools/generate_from_template.py --source templates/template.json --dest ../my-new-project
 """
-import argparse, json, os, sys, pathlib
+import argparse
+import json
+import os
+import pathlib
+import sys
 
 try:
     import yaml  # optional

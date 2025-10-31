@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from hotpass.cli import configuration, shared
 from hotpass.config_schema import HotpassConfig
 
@@ -63,7 +62,9 @@ enrichment = true
 
 
 def test_normalise_sensitive_fields_deduplicates_and_lowercases() -> None:
-    values = shared.normalise_sensitive_fields(["Email", "", "PHONE", "email"], ("contact",))
+    values = shared.normalise_sensitive_fields(
+        ["Email", "", "PHONE", "email"], ("contact",)
+    )
     assert values == ("contact", "email", "phone")
 
 

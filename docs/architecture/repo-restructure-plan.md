@@ -12,23 +12,23 @@
 
 ## 2. Current → Target Mapping
 
-| Current location                          | Target bucket                          | Notes / follow-up                                                                 |
-| ----------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
-| `apps/data-platform/hotpass/**`                          | `apps/data-platform/**` (primary app)  | Retain `hotpass` namespace via package module or alias; update `pyproject.toml`.  |
-| Shared runtime helpers (to be identified) | `packages/hotpass-core/**`             | Extract reusable modules from `apps/` as needed after initial move.               |
-| `ops/quality/*`                       | `ops/quality/*`                        | Update imports in quality gate runner + tests.                                    |
-| `ops/arc/*`                           | `ops/arc/*`                            | ARC verifier imports in tests/workflows must point to new path.                   |
-| `ops/idp/*` and bootstrap utilities   | `ops/bootstrap/*`                      | CLI bootstrap docs need path refresh.                                             |
-| Remaining `scripts/*`                     | `ops/` or `tools/` (per scope)         | Categorise per automation domain; adjust invocation docs & workflows.             |
-| `infra/arc`, `infra/marquez`              | `infra/` (unchanged)                   | Confirm Terraform/Kustomize references after move.                                |
-| `prefect/*.yaml`                          | `ops/orchestration/prefect/*.yaml`     | Update CLI/docs referencing manifests.                                            |
-| `docs/**`                                 | `docs/**` (unchanged)                  | Update internal links for moved code paths.                                       |
-| Governance artefacts (`ROADMAP.md`, etc.) | `docs/governance/…` (links only)       | Files remain but references to code locations must be updated.                    |
-| `tests/**`                                | `tests/**` (unchanged)                 | Update imports once runtime/scripts move.                                         |
-| `dist/**`                                 | `dist/**` (or `ops/artifacts/**`)      | Decide whether to retain root `dist`; update evidence checklists accordingly.     |
-| `schemas/`, `data_expectations/`          | `packages/data-contracts/**` (future)  | Optional follow-up; initial move may leave them in place and just relabel docs.   |
-| CLI launcher `hotpass` (shell script)     | `tools/cli/hotpass`                    | Ensure script points to new module location.                                      |
-| Root configs (`pyproject.toml`, etc.)     | Root                                  | Update paths for packages, coverage, lint config.                                 |
+| Current location                          | Target bucket                         | Notes / follow-up                                                                |
+| ----------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
+| `apps/data-platform/hotpass/**`           | `apps/data-platform/**` (primary app) | Retain `hotpass` namespace via package module or alias; update `pyproject.toml`. |
+| Shared runtime helpers (to be identified) | `packages/hotpass-core/**`            | Extract reusable modules from `apps/` as needed after initial move.              |
+| `ops/quality/*`                           | `ops/quality/*`                       | Update imports in quality gate runner + tests.                                   |
+| `ops/arc/*`                               | `ops/arc/*`                           | ARC verifier imports in tests/workflows must point to new path.                  |
+| `ops/idp/*` and bootstrap utilities       | `ops/bootstrap/*`                     | CLI bootstrap docs need path refresh.                                            |
+| Remaining `scripts/*`                     | `ops/` or `tools/` (per scope)        | Categorise per automation domain; adjust invocation docs & workflows.            |
+| `infra/arc`, `infra/marquez`              | `infra/` (unchanged)                  | Confirm Terraform/Kustomize references after move.                               |
+| `prefect/*.yaml`                          | `ops/orchestration/prefect/*.yaml`    | Update CLI/docs referencing manifests.                                           |
+| `docs/**`                                 | `docs/**` (unchanged)                 | Update internal links for moved code paths.                                      |
+| Governance artefacts (`ROADMAP.md`, etc.) | `docs/governance/…` (links only)      | Files remain but references to code locations must be updated.                   |
+| `tests/**`                                | `tests/**` (unchanged)                | Update imports once runtime/scripts move.                                        |
+| `dist/**`                                 | `dist/**` (or `ops/artifacts/**`)     | Decide whether to retain root `dist`; update evidence checklists accordingly.    |
+| `schemas/`, `data_expectations/`          | `packages/data-contracts/**` (future) | Optional follow-up; initial move may leave them in place and just relabel docs.  |
+| CLI launcher `hotpass` (shell script)     | `tools/cli/hotpass`                   | Ensure script points to new module location.                                     |
+| Root configs (`pyproject.toml`, etc.)     | Root                                  | Update paths for packages, coverage, lint config.                                |
 
 > **Action:** refine the table with specific module lists before executing any `git mv`.
 
@@ -82,4 +82,3 @@
 ---
 
 Use this document as the working plan. Update sections as mapping decisions solidify and during execution capture any deviations or post-migration clean-up tasks.
-

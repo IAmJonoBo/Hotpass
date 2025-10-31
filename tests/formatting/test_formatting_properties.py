@@ -11,16 +11,10 @@ from typing import Any
 import openpyxl
 import pandas as pd
 import pytest
-from tests.helpers.hypothesis import (
-    DrawFn,
-    SearchStrategy,
-    composite,
-    given,
-    settings,
-    st,
-)
-
 from hotpass.formatting import apply_excel_formatting
+
+from tests.helpers.hypothesis import (DrawFn, SearchStrategy, composite, given,
+                                      settings, st)
 
 
 def expect(condition: bool, message: str) -> None:
@@ -51,8 +45,12 @@ def test_apply_excel_formatting_preserves_unicode(values: list[str]) -> None:
     observed_column = next(
         sheet.iter_cols(min_row=2, max_row=len(values) + 1, min_col=1, max_col=1)
     )
-    observed = [cell.value if cell.value is not None else "" for cell in observed_column]
-    expect(observed == values, "Unicode cell values should survive formatting round-trip")
+    observed = [
+        cell.value if cell.value is not None else "" for cell in observed_column
+    ]
+    expect(
+        observed == values, "Unicode cell values should survive formatting round-trip"
+    )
 
 
 @composite
@@ -70,7 +68,9 @@ def _formatting_frames(draw: DrawFn) -> pd.DataFrame:
     if draw(st.booleans()):
         scores = draw(
             st.lists(
-                st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
+                st.floats(
+                    min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False
+                ),
                 min_size=row_count,
                 max_size=row_count,
             )
@@ -80,7 +80,9 @@ def _formatting_frames(draw: DrawFn) -> pd.DataFrame:
     if draw(st.booleans()):
         timestamps = draw(
             st.lists(
-                st.datetimes(min_value=datetime(2018, 1, 1), max_value=datetime(2035, 12, 31)),
+                st.datetimes(
+                    min_value=datetime(2018, 1, 1), max_value=datetime(2035, 12, 31)
+                ),
                 min_size=row_count,
                 max_size=row_count,
             )
@@ -90,7 +92,9 @@ def _formatting_frames(draw: DrawFn) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-_FORMATTING_FRAMES_FACTORY: Callable[[], SearchStrategy[pd.DataFrame]] = _formatting_frames
+_FORMATTING_FRAMES_FACTORY: Callable[[], SearchStrategy[pd.DataFrame]] = (
+    _formatting_frames
+)
 _FORMATTING_FRAMES: SearchStrategy[pd.DataFrame] = _FORMATTING_FRAMES_FACTORY()
 
 

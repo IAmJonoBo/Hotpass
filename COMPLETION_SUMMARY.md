@@ -13,6 +13,7 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
 ### Sprint 1: CLI & MCP Parity ✅
 
 **CLI Commands Implemented (5/5):**
+
 ```bash
 ✓ hotpass overview     # Command discovery with Rich formatting
 ✓ hotpass refine       # Refinement pipeline (delegates to run)
@@ -22,6 +23,7 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
 ```
 
 **MCP Server Implemented (5/5 tools):**
+
 - Location: `apps/data-platform/hotpass/mcp/server.py`
 - Protocol: JSON-RPC 2.0 over stdio
 - Tools: `hotpass.refine`, `hotpass.enrich`, `hotpass.qa`, `hotpass.explain_provenance`, `hotpass.crawl`
@@ -29,12 +31,14 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
 - Runnable: `python -m hotpass.mcp.server`
 
 **Quality Gates:**
+
 - QG-1 (CLI Integrity): 7/7 tests passing
 - QG-4 (MCP Discoverability): 2/2 tests passing
 
 ### Sprint 4: Docs & Agent UX ✅
 
 **Documentation Created/Updated:**
+
 1. **IMPLEMENTATION_PLAN.md** (26KB)
    - Complete sprint breakdown with estimates
    - All 5 quality gates specified
@@ -66,11 +70,13 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
    - Codex-specific guidance
 
 **Quality Gates:**
+
 - QG-5 (Docs/Instructions): 5/5 tests passing
 
 ### Test Infrastructure ✅
 
 **Quality Gate Test Suite:**
+
 - File: `tests/cli/test_quality_gates.py` (300+ lines)
 - Total Tests: 20
 - Pass Rate: 100%
@@ -78,6 +84,7 @@ The Hotpass UPGRADE.md implementation has successfully completed the foundationa
 - Pattern: Assert-free using `expect()` helper
 
 **Test Breakdown:**
+
 ```
 TestQG1CLIIntegrity           7 tests  ✓
 TestQG2DataQuality            1 test   ✓ (stub, full impl Sprint 3)
@@ -90,12 +97,14 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Technical Acceptance Status
 
 ### Completed (4/7) ✅
+
 - **TA-1:** Single-Tool Rule - All operations via `uv run hotpass`
 - **TA-5:** MCP Parity - CLI verbs exposed as MCP tools
 - **TA-6:** Quality Gates Wired - QG-1 through QG-5 as automated tests
 - **TA-7:** Docs Present - Agent instructions complete with required terminology
 
 ### Ready for Implementation (3/7) ⏳
+
 - **TA-2:** Profile Completeness - Schema defined in docs, awaiting Sprint 3
 - **TA-3:** Offline-First - Command exists, full pipeline awaits Sprint 2
 - **TA-4:** Network-Safe - Guards in place, full testing awaits Sprint 2
@@ -103,12 +112,14 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Architecture Decisions
 
 ### CLI Design
+
 - **Pattern:** Follows existing `CLICommand` dataclass pattern
 - **Structure:** `build()`, `register()`, `_command_handler()` functions
 - **Integration:** Registered in `main.py` via `CLIBuilder`
 - **Consistency:** Inherits shared parsers for uniform experience
 
 ### MCP Server Design
+
 - **Protocol:** JSON-RPC 2.0 for standard compliance
 - **Transport:** stdio for simplicity and Copilot CLI compatibility
 - **Execution:** Async subprocess calls to CLI for reusability
@@ -116,6 +127,7 @@ TestTechnicalAcceptance       4 tests  ✓
 - **Logging:** Structured logging for audit trail
 
 ### Documentation Strategy
+
 - **Layered:** Quick reference → workflows → troubleshooting
 - **Audience-specific:** Agents, humans, operators
 - **Cross-referenced:** All docs link to each other
@@ -124,16 +136,19 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Key Principles Documented
 
 ### 1. Profile-First
+
 - Always specify `--profile <name>`
 - Profiles contain critical business logic
 - Examples: `aviation`, `generic`, or custom
 
 ### 2. Deterministic-First
+
 - Enrichment defaults to offline sources
 - Network requires explicit enablement
 - Hierarchy: deterministic → lookup_tables → research
 
 ### 3. Provenance Tracking
+
 - Every enriched row has provenance metadata
 - Columns: source, timestamp, confidence, strategy, network_status
 - Required for compliance and audit trails
@@ -141,17 +156,20 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Quality Metrics
 
 ### Functional
+
 - CLI verbs with MCP equivalents: 5/5 (100%)
 - Quality gates automated: 5/5 (100%)
 - Documentation requirements: 3/3 (100%)
 
 ### Quality
+
 - Test pass rate: 20/20 (100%)
 - Fitness functions: Passing
 - Linting violations: 0
 - Assert-free tests: 100%
 
 ### Operational
+
 - QG test runtime: 58 seconds
 - CLI help response: <1 second
 - MCP server startup: <500ms
@@ -160,6 +178,7 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Remaining Work
 
 ### Sprint 2: Enrichment Translation
+
 **Estimated:** 3-4 days
 
 1. Implement enrichment pipeline:
@@ -173,6 +192,7 @@ TestTechnicalAcceptance       4 tests  ✓
 3. Implement `hotpass.explain_provenance` MCP tool
 
 ### Sprint 3: Profiles & Compliance
+
 **Estimated:** 3-4 days
 
 1. Define complete profile schema (4 blocks: ingest, refine, enrich, compliance)
@@ -182,6 +202,7 @@ TestTechnicalAcceptance       4 tests  ✓
 5. Expand `hotpass qa profiles` command
 
 ### Sprint 5: TA Closure
+
 **Estimated:** 2-3 days
 
 1. Create `.github/workflows/quality-gates.yml` for CI
@@ -195,6 +216,7 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Success Criteria Met
 
 ### From Problem Statement
+
 ✅ "Fully ingest UPGRADE.md" - Complete understanding and documentation
 ✅ "Plan out implementations" - IMPLEMENTATION_PLAN.md created
 ✅ "Frontier-spec quality gates" - 5 QGs defined and tested
@@ -207,6 +229,7 @@ TestTechnicalAcceptance       4 tests  ✓
 ## Files Changed
 
 **Created:**
+
 - `apps/data-platform/hotpass/cli/commands/overview.py` (108 lines)
 - `apps/data-platform/hotpass/cli/commands/refine.py` (42 lines)
 - `apps/data-platform/hotpass/cli/commands/enrich.py` (200 lines)
@@ -220,6 +243,7 @@ TestTechnicalAcceptance       4 tests  ✓
 - `docs/agent-instructions.md` (397 lines)
 
 **Modified:**
+
 - `apps/data-platform/hotpass/cli/main.py` (+5 commands)
 - `apps/data-platform/hotpass/cli/commands/__init__.py` (+5 exports)
 - `.github/copilot-instructions.md` (+200 lines)
@@ -250,18 +274,21 @@ uv run hotpass qa all
 ## Handover Notes
 
 ### For Sprint 2 Implementation
+
 1. Enrichment module structure already exists in `apps/data-platform/hotpass/enrichment/`
 2. Network guard logic implemented in CLI, needs backend implementation
 3. Provenance column names defined in documentation
 4. Test stub exists in `test_enrich_command_has_network_flag`
 
 ### For Sprint 3 Implementation
+
 1. Profile schema fully documented in IMPLEMENTATION_PLAN.md Appendix C
 2. Example migrations shown for aviation.yaml and generic.yaml
 3. Profile linter structure specified
 4. QG-2 test stub exists
 
 ### For Sprint 5 Implementation
+
 1. All QG tests already exist and pass
 2. CI workflow structure in IMPLEMENTATION_PLAN.md
 3. TA criteria clearly defined

@@ -18,10 +18,10 @@ last_updated: 2025-10-28
 | Lineage coverage         | pytest                 | `uv run pytest tests/test_orchestration_lineage.py tests/cli/test_run_lineage_integration.py` |
 | QA job                   |
 | Accessibility            | pytest marker          | `uv run pytest -m accessibility`                                                              | Accessibility job           |
-| Mutation testing         | mutmut                 | `uv run python ops/qa/run_mutation_tests.py`                                              | Mutation job                |
+| Mutation testing         | mutmut                 | `uv run python ops/qa/run_mutation_tests.py`                                                  | Mutation job                |
 | Contract testing         | pytest contract suite  | `uv run pytest tests/contracts`                                                               | QA job                      |
 | Static analysis          | Semgrep                | `uv run semgrep --config=policy/semgrep/hotpass.yml`                                          | Static-analysis job         |
-| Supply-chain             | CycloneDX + provenance | `uv run python ops/supply_chain/generate_sbom.py`                                         | Supply-chain job            |
+| Supply-chain             | CycloneDX + provenance | `uv run python ops/supply_chain/generate_sbom.py`                                             | Supply-chain job            |
 | Policy-as-code           | OPA                    | `opa eval --data policy --input dist/sbom/hotpass-sbom.json "data.hotpass.allow"`             | Supply-chain job            |
 
 The Semgrep scan relies on the repository-hosted `policy/semgrep/hotpass.yml` ruleset so quality gates pass without fetching

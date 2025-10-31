@@ -7,9 +7,8 @@ import os
 import sys
 from pathlib import Path
 
-from rich.console import Console
-
 from hotpass.config import load_industry_profile
+from rich.console import Console
 
 from ..builder import CLICommand, SharedParsers
 from ..configuration import CLIProfile
@@ -98,7 +97,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     # Validate inputs
     input_path = Path(namespace.input)
     if not input_path.exists():
-        console.print(f"[red]Error:[/red] Input file not found: {input_path}", file=sys.stderr)
+        console.print(
+            f"[red]Error:[/red] Input file not found: {input_path}", file=sys.stderr
+        )
         return 1
 
     output_path = Path(namespace.output)
@@ -129,7 +130,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
     console.print(f"[cyan]Output:[/cyan] {output_path}")
     network_status = "enabled" if allow_network else "disabled (deterministic only)"
     console.print(f"[cyan]Network enrichment:[/cyan] {network_status}")
-    console.print(f"[cyan]Confidence threshold:[/cyan] {namespace.confidence_threshold}")
+    console.print(
+        f"[cyan]Confidence threshold:[/cyan] {namespace.confidence_threshold}"
+    )
 
     # Import enrichment pipeline (lazy import to avoid circular dependencies)
     try:
@@ -157,7 +160,9 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
 
         df.to_excel(output_path, index=False)
         console.print(f"[green]✓[/green] Enriched data written to {output_path}")
-        console.print("[yellow]Note:[/yellow] Full enrichment pipeline coming in Sprint 2")
+        console.print(
+            "[yellow]Note:[/yellow] Full enrichment pipeline coming in Sprint 2"
+        )
         return 0
 
     # Run enrichment pipeline

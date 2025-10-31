@@ -51,20 +51,20 @@ Codex runners start with a lean `dev orchestration` profile. To add or remove ex
 
 1. Choose the extras your task needs (space-separated):
 
-  | Profile          | Extras string                                                   | Notes                                         |
-  | ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
-  | `core` (default) | `dev orchestration`                                             | Installs CLI + Prefect orchestration support. |
-  | `docs`           | `dev docs`                                                      | Adds Sphinx + Diátaxis toolchain.             |
-  | `geospatial`     | `dev orchestration geospatial`                                  | Adds GeoPandas/Geopy extras.                  |
-  | `compliance`     | `dev orchestration compliance`                                  | Adds Presidio-based compliance stack.         |
-  | `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.                |
+| Profile          | Extras string                                                   | Notes                                         |
+| ---------------- | --------------------------------------------------------------- | --------------------------------------------- |
+| `core` (default) | `dev orchestration`                                             | Installs CLI + Prefect orchestration support. |
+| `docs`           | `dev docs`                                                      | Adds Sphinx + Diátaxis toolchain.             |
+| `geospatial`     | `dev orchestration geospatial`                                  | Adds GeoPandas/Geopy extras.                  |
+| `compliance`     | `dev orchestration compliance`                                  | Adds Presidio-based compliance stack.         |
+| `full`           | `dev orchestration enrichment geospatial compliance dashboards` | Everything, slower to install.                |
 
 2. Export the selection before running `uv sync` (Codex setup script):
 
-  ```bash
-  export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
-  bash ops/uv_sync_extras.sh
-  ```
+```bash
+export HOTPASS_UV_EXTRAS="dev orchestration geospatial"
+bash ops/uv_sync_extras.sh
+```
 
 3. After the extras install step, the firewall should be locked down. Declare every required extra up front—additional installs will fail once the firewall is active.
 
@@ -340,7 +340,6 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
 ### Available MCP Tools
 
 1. **`hotpass.refine`**
-
    - Description: Run the Hotpass refinement pipeline
    - Inputs:
      - `input_path` (required): Directory or file with data to refine
@@ -349,7 +348,6 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
      - `archive` (default: false): Create archive of refined output
 
 2. **`hotpass.enrich`**
-
    - Description: Enrich refined data with additional information
    - Inputs:
      - `input_path` (required): Refined input file
@@ -358,13 +356,11 @@ The server runs in stdio mode and responds to JSON-RPC 2.0 requests.
      - `allow_network` (default: false): Enable network-based enrichment
 
 3. **`hotpass.qa`**
-
    - Description: Run quality assurance checks
    - Inputs:
      - `target` (default: "all"): Which checks to run (all | fitness | profiles | contracts | docs | ta)
 
 4. **`hotpass.explain_provenance`**
-
    - Description: Explain data provenance for a specific row
    - Inputs:
      - `row_id` (required): ID of the row to explain

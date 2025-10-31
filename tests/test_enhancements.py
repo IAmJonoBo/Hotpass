@@ -6,6 +6,7 @@ import importlib
 
 from hotpass import pipeline_enhancements
 from hotpass.pipeline.features import ComplianceFeature, EnhancedPipelineConfig
+
 from tests.helpers.assertions import expect
 
 

@@ -12,6 +12,7 @@ pytest.importorskip("frictionless")
 
 import hotpass.artifacts as artifacts  # noqa: E402
 from hotpass.artifacts import create_refined_archive  # noqa: E402
+
 from tests.helpers.assertions import expect
 
 

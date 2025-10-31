@@ -1,17 +1,14 @@
 """Ensure the compatibility layer re-exports expected feature classes."""
 
-from hotpass.pipeline.features import (  # noqa: TID252
-    ComplianceFeature,
-    EnhancedPipelineConfig,
-    EnrichmentFeature,
-)
-from hotpass.pipeline_enhancements import (  # noqa: TID252
-    ComplianceFeature as ExportedComplianceFeature,
-)
-from hotpass.pipeline_enhancements import (
-    EnhancedPipelineConfig as ExportedEnhancedPipelineConfig,
-)
-from hotpass.pipeline_enhancements import EnrichmentFeature as ExportedEnrichmentFeature
+from hotpass.pipeline.features import (ComplianceFeature,  # noqa: TID252
+                                       EnhancedPipelineConfig,
+                                       EnrichmentFeature)
+from hotpass.pipeline_enhancements import \
+    ComplianceFeature as ExportedComplianceFeature  # noqa: TID252
+from hotpass.pipeline_enhancements import \
+    EnhancedPipelineConfig as ExportedEnhancedPipelineConfig
+from hotpass.pipeline_enhancements import \
+    EnrichmentFeature as ExportedEnrichmentFeature
 from hotpass.pipeline_enhancements import __all__ as exported_symbols
 
 
@@ -21,7 +18,9 @@ def expect(condition: bool, message: str) -> None:
 
 
 def test_pipeline_enhancements_reexports_feature_types() -> None:
-    expect("ComplianceFeature" in exported_symbols, "Compliance feature should be exported")
+    expect(
+        "ComplianceFeature" in exported_symbols, "Compliance feature should be exported"
+    )
     expect("EnhancedPipelineConfig" in exported_symbols, "Config should be exported")
     expect(
         ExportedComplianceFeature is ComplianceFeature,

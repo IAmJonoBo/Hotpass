@@ -12,15 +12,15 @@
 
 ## 2. Proposed Commands
 
-| Verb | Purpose | Key options | Outputs / state |
-| ---- | ------- | ----------- | --------------- |
-| `hotpass net up` | Establish SSH or SSM tunnels to staging assets. | `--via {ssh-bastion, ssm}`, `--prefect-port`, `--marquez-port`, `--profile` | `.hotpass/net.json` with assigned local ports; background process PID. |
-| `hotpass net down` | Tear down active tunnel sessions. | `--all` / `--pid`, `--via` | Removes `.hotpass/net.json`, stops processes. |
-| `hotpass aws check` | Validate AWS identity and EKS access. | `--profile`, `--region`, `--eks-cluster`, `--verify-oidc` | Prints STS identity, optional kubeconfig check; writes `.hotpass/aws.json`. |
-| `hotpass ctx init` | Bootstrap Prefect + kubectl contexts. | `--prefect-profile`, `--eks-cluster`, `--kube-context`, `--overwrite` | Shells out to `prefect profile create`, `aws eks update-kubeconfig`; records `.hotpass/contexts.json`. |
-| `hotpass env write` | Produce `.env.<environment>` for downstream tooling. | `--target`, `--prefect-url`, `--openlineage-url`, `--allow-network`, `--overwrite` | Writes `.env.<target>` with validated values; references existing tunnel ports if present. |
-| `hotpass arc verify` | CLI wrapper for ARC lifecycle checks. | Mirrors `ops/arc/verify_runner_lifecycle.py` options. | Pretty prints results; optional JSON output path; integrates with `.hotpass/arc/<date>/`. |
-| `hotpass distro docs` | (Packaging helper) Extract CLI/man pages from the dist archive. | `--output` | Materialises Markdown/HTML docs for bundle distribution. |
+| Verb                  | Purpose                                                         | Key options                                                                        | Outputs / state                                                                                        |
+| --------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `hotpass net up`      | Establish SSH or SSM tunnels to staging assets.                 | `--via {ssh-bastion, ssm}`, `--prefect-port`, `--marquez-port`, `--profile`        | `.hotpass/net.json` with assigned local ports; background process PID.                                 |
+| `hotpass net down`    | Tear down active tunnel sessions.                               | `--all` / `--pid`, `--via`                                                         | Removes `.hotpass/net.json`, stops processes.                                                          |
+| `hotpass aws check`   | Validate AWS identity and EKS access.                           | `--profile`, `--region`, `--eks-cluster`, `--verify-oidc`                          | Prints STS identity, optional kubeconfig check; writes `.hotpass/aws.json`.                            |
+| `hotpass ctx init`    | Bootstrap Prefect + kubectl contexts.                           | `--prefect-profile`, `--eks-cluster`, `--kube-context`, `--overwrite`              | Shells out to `prefect profile create`, `aws eks update-kubeconfig`; records `.hotpass/contexts.json`. |
+| `hotpass env write`   | Produce `.env.<environment>` for downstream tooling.            | `--target`, `--prefect-url`, `--openlineage-url`, `--allow-network`, `--overwrite` | Writes `.env.<target>` with validated values; references existing tunnel ports if present.             |
+| `hotpass arc verify`  | CLI wrapper for ARC lifecycle checks.                           | Mirrors `ops/arc/verify_runner_lifecycle.py` options.                              | Pretty prints results; optional JSON output path; integrates with `.hotpass/arc/<date>/`.              |
+| `hotpass distro docs` | (Packaging helper) Extract CLI/man pages from the dist archive. | `--output`                                                                         | Materialises Markdown/HTML docs for bundle distribution.                                               |
 
 > Additional verbs (e.g., `hotpass net status`, `hotpass ctx list`) can be layered after the initial rollout once operator feedback is collected.
 

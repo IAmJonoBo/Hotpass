@@ -60,14 +60,14 @@ compliance:
 
 ### Metadata fields
 
-| Field                     | Description                                                                 |
-|--------------------------|-----------------------------------------------------------------------------|
-| `name`                    | Machine-readable identifier (also used as filename).                        |
-| `display_name`            | Human-readable label surfaced in CLI output.                                |
-| `default_country_code`    | ISO country code used for normalisation defaults.                           |
-| `organization_term`       | Domain-specific term used in user messaging.                                |
-| `source_priorities`       | Legacy priority map; superseded by `ingest.sources[].priority`.             |
-| `column_synonyms`         | Legacy synonym map; migrated to `refine.mappings`.                          |
+| Field                  | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `name`                 | Machine-readable identifier (also used as filename).            |
+| `display_name`         | Human-readable label surfaced in CLI output.                    |
+| `default_country_code` | ISO country code used for normalisation defaults.               |
+| `organization_term`    | Domain-specific term used in user messaging.                    |
+| `source_priorities`    | Legacy priority map; superseded by `ingest.sources[].priority`. |
+| `column_synonyms`      | Legacy synonym map; migrated to `refine.mappings`.              |
 
 ## Optional research metadata
 
