@@ -12,6 +12,7 @@ pytest.importorskip("frictionless")
 
 import hotpass.artifacts as artifacts  # noqa: E402
 from hotpass.artifacts import create_refined_archive  # noqa: E402
+from tests.helpers.assertions import expect
 
 
 def test_create_refined_archive_embeds_checksum(tmp_path: Path) -> None:
@@ -24,17 +25,20 @@ def test_create_refined_archive_embeds_checksum(tmp_path: Path) -> None:
 
     archive_path = create_refined_archive(excel_path, archive_dir, timestamp=timestamp)
 
-    assert archive_path.exists()
+    expect(archive_path.exists(), "Archive path should exist")
     expected_prefix = "refined-data-20250101T123000Z-"
-    assert archive_path.name.startswith(expected_prefix)
+    expect(
+        archive_path.name.startswith(expected_prefix),
+        f"Archive name should start with {expected_prefix}",
+    )
 
     with zipfile.ZipFile(archive_path) as zf:
-        assert excel_path.name in zf.namelist()
+        expect(excel_path.name in zf.namelist(), f"Archive should contain {excel_path.name}")
         sha_sums = zf.read("SHA256SUMS").decode().strip()
 
     digest = hashlib.sha256(excel_path.read_bytes()).hexdigest()[:12]
-    assert archive_path.stem.endswith(digest)
-    assert sha_sums == f"{digest}  {excel_path.name}"
+    expect(archive_path.stem.endswith(digest), f"Archive stem should end with digest {digest}")
+    expect(sha_sums == f"{digest}  {excel_path.name}", "SHA256SUMS should match expected format")
 
 
 def test_create_refined_archive_defaults_to_utc(
@@ -55,4 +59,7 @@ def test_create_refined_archive_defaults_to_utc(
     archive_path = create_refined_archive(excel_path, tmp_path)
     digest = hashlib.sha256(excel_path.read_bytes()).hexdigest()[:12]
 
-    assert archive_path.name == f"refined-data-20250102T154500Z-{digest}.zip"
+    expect(
+        archive_path.name == f"refined-data-20250102T154500Z-{digest}.zip",
+        f"Archive name should match expected format with digest {digest}",
+    )
