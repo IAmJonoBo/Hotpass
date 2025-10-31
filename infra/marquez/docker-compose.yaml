@@ -1,15 +1,16 @@
-version: "3.9"
-
 services:
   marquez-db:
     image: postgres:14
+    platform: linux/amd64
     container_name: marquez-db
     environment:
       POSTGRES_DB: marquez
       POSTGRES_USER: marquez
       POSTGRES_PASSWORD: marquez
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U marquez"]
+      test:
+        - CMD-SHELL
+        - pg_isready -U marquez
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,6 +19,7 @@ services:
 
   marquez:
     image: marquezproject/marquez:0.50.0
+    platform: linux/amd64
     container_name: marquez
     depends_on:
       marquez-db:
@@ -32,10 +34,12 @@ services:
       MARQUEZ_DB_USER: marquez
       MARQUEZ_DB_PASSWORD: marquez
     ports:
-      - "5000:5000"
-      - "3000:3000"
+      - "${MARQUEZ_API_PORT:-5000}:5000"
+      - "${MARQUEZ_UI_PORT:-3000}:3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 > /dev/null"]
+      test:
+        - CMD-SHELL
+        - wget -qO- http://localhost:3000 > /dev/null
       interval: 15s
       timeout: 5s
       retries: 5

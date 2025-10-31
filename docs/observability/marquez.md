@@ -16,18 +16,22 @@ stack locally with Docker Compose.
 
 ## Start Marquez
 
-1. Navigate to the bundled infrastructure assets:
+1. Start the bundled Marquez stack:
 
-   ```bash
-   cd infra/marquez
-   docker compose up
-   ```
+  ```bash
+  make marquez-up
+  ```
 
-   The compose file provisions a PostgreSQL backing database and the Marquez
-   application container. Logs will stream to the terminal until you stop the
-   stack with `Ctrl+C` or `docker compose down`.
+  The compose file provisions a PostgreSQL backing database and the Marquez
+  application container. Behind the scenes the target executes `docker compose
+  -f infra/marquez/docker-compose.yaml up -d`. If you prefer the manual
+  approach, run those commands directly from the `infra/marquez/` directory.
+  Follow up with `make marquez-down` (or `docker compose down`) when you are
+  done. Override the default ports with
+  `make MARQUEZ_API_PORT=5500 MARQUEZ_UI_PORT=3500 marquez-up` if `5000` or
+  `3000` are already bound on your machine.
 
-2. Open the UI at [http://localhost:3000](http://localhost:3000) once the
+1. Open the UI at [http://localhost:3000](http://localhost:3000) once the
    containers report `healthy`.
 
 ## Configure Hotpass to emit to Marquez

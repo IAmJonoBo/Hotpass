@@ -84,6 +84,7 @@ src/hotpass/cli/commands/dashboard.py
 src/hotpass/cli/commands/deploy.py
 src/hotpass/cli/commands/doctor.py
 src/hotpass/cli/commands/enrich.py
+src/hotpass/cli/commands/explain_provenance.py
 src/hotpass/cli/commands/init.py
 src/hotpass/cli/commands/orchestrate.py
 src/hotpass/cli/commands/overview.py
