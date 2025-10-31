@@ -11,9 +11,7 @@ import openpyxl
 import pandas as pd
 import pytest
 
-from hypothesis import strategies as st
-from hypothesis import given, settings
-from hypothesis.strategies import composite
+from tests.helpers.hypothesis import composite, given, settings, st
 
 from hotpass.formatting import apply_excel_formatting
 

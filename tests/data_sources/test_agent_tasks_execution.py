@@ -198,10 +198,7 @@ def test_execute_agent_tasks_handles_policy_warnings(
     result = execute_agent_tasks(agent, context, provider_registry, credential_store)
 
     expect(result.records == [], "Disallowed policies should skip records")
-    expect(
-        result.warnings and len(result.warnings) >= 2,
-        "Warnings should capture policy failures",
-    )
+    expect(len(result.warnings) >= 2, "Warnings should capture policy failures")
 
 
 def test_execute_agent_tasks_falls_back_to_providers_when_no_tasks(

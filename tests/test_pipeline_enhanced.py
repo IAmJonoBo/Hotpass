@@ -138,7 +138,7 @@ def test_initialize_observability_enabled_invokes_dependencies(monkeypatch):
         is metrics_mock,
         "Bootstrap should return the metrics instance from the delegate.",
     )
-    options = captured["options"]
+    options = cast(TelemetryBootstrapOptions, captured["options"])
     expect(
         isinstance(options, TelemetryBootstrapOptions),
         "Bootstrap should receive telemetry bootstrap options.",

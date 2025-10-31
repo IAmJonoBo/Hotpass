@@ -124,7 +124,7 @@ def test_initialize_observability_configures_registry(stub_registry: StubRegistr
         export_to_console=False,
         resource_attributes={"env": "test"},
     )
-    expect(stub_registry.configured, "Registry configure should be invoked")
+    expect(bool(stub_registry.configured), "Registry configure should be invoked")
     config = stub_registry.configured[0]
     expect(config.service_name == "svc", "Service name should be forwarded to registry")
     expect(tracer is stub_registry.tracer, "Tracer handle should originate from registry")
@@ -155,4 +155,4 @@ def test_shutdown_and_metric_helpers_use_registry(stub_registry: StubRegistry) -
     assert isinstance(metrics, DummyMetrics), "Metric helper should proxy registry output"
     expect(metrics is stub_registry.metrics, "Metric helper should proxy registry output")
     observability.shutdown_observability()
-    expect(stub_registry.shutdown_called, "Registry shutdown should be triggered")
+    expect(stub_registry.shutdown_called is True, "Registry shutdown should be triggered")

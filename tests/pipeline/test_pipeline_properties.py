@@ -6,20 +6,19 @@ import json
 import string
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import pytest
-from hypothesis import HealthCheck, given, settings
-from hypothesis import strategies as st
+from tests.helpers.hypothesis import HealthCheck, given, settings, st
 
-from hotpass.pipeline.aggregation import (
-    SSOT_COLUMNS,
-    YEAR_FIRST_PATTERN,
-    _aggregate_group,
-    _latest_iso_date,
-)
+from hotpass.pipeline import aggregation as aggregation
 from hotpass.pipeline.base import execute_pipeline
+
+SSOT_COLUMNS = aggregation.SSOT_COLUMNS
+YEAR_FIRST_PATTERN = aggregation.YEAR_FIRST_PATTERN
+_aggregate_group = aggregation._aggregate_group
+_latest_iso_date = aggregation._latest_iso_date
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
 
 
@@ -74,7 +73,8 @@ def _coerce_expected_iso(values: list[Any]) -> str | None:
             parsed.append(timestamp)
     if not parsed:
         return None
-    return max(parsed).date().isoformat()
+    latest = cast(pd.Timestamp, max(parsed))
+    return latest.date().isoformat()
 
 
 @settings(max_examples=15, deadline=None)

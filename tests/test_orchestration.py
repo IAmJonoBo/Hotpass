@@ -12,7 +12,7 @@ from datetime import date, datetime
 from importlib import util
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import Mock, patch
 
 import anyio
@@ -20,9 +20,9 @@ import pandas as pd
 import pytest
 from tests.helpers.fixtures import fixture
 
-_pandera_stub = types.ModuleType("pandera")
-_pandera_pandas = types.ModuleType("pandera.pandas")
-_pandera_errors = types.ModuleType("pandera.errors")
+_pandera_stub = cast(Any, types.ModuleType("pandera"))
+_pandera_pandas = cast(Any, types.ModuleType("pandera.pandas"))
+_pandera_errors = cast(Any, types.ModuleType("pandera.errors"))
 
 
 class _StubColumn:
@@ -35,41 +35,41 @@ class _StubDataFrameSchema:
         return
 
 
-_pandera_pandas.Column = _StubColumn
-_pandera_pandas.DataFrameSchema = _StubDataFrameSchema
-_pandera_stub.pandas = _pandera_pandas
-_pandera_errors.SchemaErrors = type("SchemaErrors", (Exception,), {})
-_pandera_stub.errors = _pandera_errors
+setattr(_pandera_pandas, "Column", _StubColumn)
+setattr(_pandera_pandas, "DataFrameSchema", _StubDataFrameSchema)
+setattr(_pandera_stub, "pandas", _pandera_pandas)
+setattr(_pandera_errors, "SchemaErrors", type("SchemaErrors", (Exception,), {}))
+setattr(_pandera_stub, "errors", _pandera_errors)
 sys.modules.setdefault("pandera", _pandera_stub)
 sys.modules.setdefault("pandera.pandas", _pandera_pandas)
 sys.modules.setdefault("pandera.errors", _pandera_errors)
 
-_rapidfuzz_stub = types.ModuleType("rapidfuzz")
-_rapidfuzz_fuzz = types.ModuleType("rapidfuzz.fuzz")
-_rapidfuzz_fuzz.token_sort_ratio = lambda *args, **kwargs: 100.0
-_rapidfuzz_fuzz.partial_ratio = lambda *args, **kwargs: 100.0
-_rapidfuzz_fuzz.token_set_ratio = lambda *args, **kwargs: 100.0
-_rapidfuzz_stub.fuzz = _rapidfuzz_fuzz
+_rapidfuzz_stub = cast(Any, types.ModuleType("rapidfuzz"))
+_rapidfuzz_fuzz = cast(Any, types.ModuleType("rapidfuzz.fuzz"))
+setattr(_rapidfuzz_fuzz, "token_sort_ratio", lambda *args, **kwargs: 100.0)
+setattr(_rapidfuzz_fuzz, "partial_ratio", lambda *args, **kwargs: 100.0)
+setattr(_rapidfuzz_fuzz, "token_set_ratio", lambda *args, **kwargs: 100.0)
+setattr(_rapidfuzz_stub, "fuzz", _rapidfuzz_fuzz)
 sys.modules.setdefault("rapidfuzz", _rapidfuzz_stub)
 sys.modules.setdefault("rapidfuzz.fuzz", _rapidfuzz_fuzz)
 
-_duckdb_stub = types.ModuleType("duckdb")
-_duckdb_stub.DuckDBPyConnection = type("DuckDBPyConnection", (), {})
+_duckdb_stub = cast(Any, types.ModuleType("duckdb"))
+setattr(_duckdb_stub, "DuckDBPyConnection", type("DuckDBPyConnection", (), {}))
 sys.modules.setdefault("duckdb", _duckdb_stub)
 
 if util.find_spec("polars") is None:
-    _polars_stub = types.ModuleType("polars")
+    _polars_stub = cast(Any, types.ModuleType("polars"))
 
     class _StubPolarsFrame:
         def __init__(self, *_args, **_kwargs) -> None:  # pragma: no cover - stub
             return
 
-    _polars_stub.DataFrame = _StubPolarsFrame
-    _polars_stub.LazyFrame = _StubPolarsFrame
-    _polars_stub.Series = _StubPolarsFrame
-    _polars_stub.Expr = _StubPolarsFrame
-    _polars_stub.col = lambda *_args, **_kwargs: _StubPolarsFrame()
-    _polars_stub.concat = lambda *_args, **_kwargs: _StubPolarsFrame()
+    setattr(_polars_stub, "DataFrame", _StubPolarsFrame)
+    setattr(_polars_stub, "LazyFrame", _StubPolarsFrame)
+    setattr(_polars_stub, "Series", _StubPolarsFrame)
+    setattr(_polars_stub, "Expr", _StubPolarsFrame)
+    setattr(_polars_stub, "col", lambda *_args, **_kwargs: _StubPolarsFrame())
+    setattr(_polars_stub, "concat", lambda *_args, **_kwargs: _StubPolarsFrame())
     sys.modules.setdefault("polars", _polars_stub)
 
 sys.modules.setdefault("frictionless", types.ModuleType("frictionless"))
