@@ -6,7 +6,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { Activity, Clock, GitBranch, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,8 +16,15 @@ import { cn, formatDuration, getStatusColor } from '@/lib/utils'
 import { mockPrefectData } from '@/api/prefect'
 import { useHILApprovals } from '@/store/hilStore'
 import { LiveRefinementPanel } from '@/components/refinement/LiveRefinementPanel'
+import { PowerTools } from '@/components/powertools/PowerTools'
+
+interface OutletContext {
+  openAssistant: (message?: string) => void
+}
 
 export function Dashboard() {
+  const { openAssistant } = useOutletContext<OutletContext>()
+
   // Fetch Prefect flow runs from last 24h
   const { data: flowRuns = [], isLoading: isLoadingPrefect } = useQuery({
     queryKey: ['flowRuns'],
@@ -159,6 +166,9 @@ export function Dashboard() {
 
       {/* Live Refinement Panel */}
       <LiveRefinementPanel />
+
+      {/* Power Tools */}
+      <PowerTools onOpenAssistant={() => openAssistant()} />
 
       {/* Recent Runs Table */}
       <Card>
