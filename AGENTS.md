@@ -267,6 +267,7 @@ uv run hotpass crawl "https://example.test" --allow-network=true
 
 - Artefacts: each run writes a JSON summary under `.hotpass/research_runs/` capturing the plan, step outcomes, and provenance metadata for future audits.
 - Throttling: profiles may set `research_rate_limit.min_interval_seconds` (plus optional `burst`) to enforce per-entity crawl spacing; the orchestrator enforces the burst window before applying the delay and records crawl metadata under `.hotpass/research_runs/<slug>/crawl/`.
+- Guardrails: enable `FEATURE_ENABLE_REMOTE_RESEARCH=1` and `ALLOW_NETWORK_RESEARCH=1` only when network fetchers are approved; combine with profile rate limits to respect provider SLAs and audit via the crawl artefacts above.
 
 ### Key Principles
 
@@ -395,6 +396,14 @@ uv run pytest tests/cli/test_quality_gates.py -v
 ```
 
 Expected: 20/20 tests passing.
+
+For longitudinal tracking run:
+
+```bash
+python scripts/quality/ta_history_report.py --json
+```
+
+This summarises the TA history stored under `dist/quality-gates/history.ndjson` (latest thresholds feed the MCP/CLI TA tooling).
 
 ---
 

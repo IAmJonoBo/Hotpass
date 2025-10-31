@@ -16,13 +16,13 @@
   - Supply-chain automation publishes SBOM, provenance, and checksums directly from `.github/workflows/process-data.yml`, backed by `scripts/supply_chain/` utilities.
   - Adaptive research orchestrator shipped under `src/hotpass/research/`, with CLI verbs (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wiring deterministic-first planning into agent workflows.
 - **In progress**
-  - Extend coverage/integration tests for the research orchestrator and expand profile documentation/examples around authority sources/backfill behaviour.
+  - Docs navigation uplift and long-tail telemetry/performance benchmarking remain open (Sprint 4 follow-ons).
+  - Streamlit UI/export backlog (Sprint 7) scheduled post-orchestrator GA.
 - Profile-first linkage improvements still need additional coverage; the `expect()` helper is now adopted across compliance/enrichment suites with 32 legacy `assert` usages remaining elsewhere.
-  - Docs navigation uplift and long-tail telemetry/performance benchmarking are partially complete and need follow-on sign-offs.
 - **Blockers / dependencies**
   - Staging access is still required to capture live Marquez lineage evidence and ARC runner smoke logs.
   - Docker buildx cache reuse work has not begun; pipeline cost reductions remain blocked pending that PR.
-- Adaptive research enhancements depend on tightening provider-specific guardrails before enabling network defaults at scale; rate-limit scaffolding now exists per profile, and human-in-the-loop controls remain outstanding.
+- Adaptive research enhancements depend on tightening provider-specific automation before enabling network defaults at scale; rate-limit scaffolding now exists per profile, and human-in-the-loop controls remain outstanding.
 
 ---
 
@@ -109,31 +109,31 @@
 - CLI `hotpass enrich` implements `--allow-network` toggle aligned with env flags.
 - **Quality gate:** `uv run hotpass enrich --allow-network=false` run in QG‑3; research fetchers currently contain placeholder API integrations.
 
-### Sprint 3 – Profiles & compliance unification (**Status: ⚠️ In progress**)
+### Sprint 3 – Profiles & compliance unification (**Status: ✅ Complete**)
 
 - Profile linter (`tools/profile_lint.py`) validates ingest/refine/enrich/compliance blocks.
+- JSON/Schema outputs (`tools/profile_lint.py --json/--schema-json`) power QG summaries and contributor tooling, guarded by `tests/profiles/test_profile_lint_cli.py`.
 - Contract tests and Great Expectations suites validate active profiles.
-- Remaining work: surface profile validation output in the QG summary and extend coverage for advanced profile/linkage scenarios.
 
 ### Sprint 4 – Docs & agent UX (**Status: ✅ Complete with follow-ons**)
 
 - Docs refreshed (`docs/reference/cli.md`, `.github/copilot-instructions.md`, `AGENTS.md`) and MCP instructions included.
 - Additional work planned: navigation uplift QA (due 2026-01-07) and agent walkthrough updates tied to adaptive research features.
 
-### Sprint 5 – Technical Acceptance automation (**Status: ⚠️ In progress**)
+### Sprint 5 – Technical Acceptance automation (**Status: ✅ Complete with follow-ons**)
 
 - Gate scripts and `hotpass qa ta` delegate to `scripts/quality/run_all_gates.py`.
 - MCP `hotpass.ta.check` calls the consolidated runner.
 - TA runs now persist `dist/quality-gates/latest-ta.json` and append to `dist/quality-gates/history.ndjson` (written by `hotpass qa ta` / `scripts/quality/run_all_gates.py`) so the latest gate summary and history are easy to reference post-run.
-- MCP regression tests now cover research planning, crawl, rate-limit propagation, and TA summaries (`tests/mcp/test_research_tools.py`).
-- Outstanding: publish TA summary analytics (the JSON artefact and history now persist under `dist/quality-gates/` but still lack aggregation/reporting).
+- `scripts/quality/ta_history_report.py` produces pass-rate analytics from the persisted history; MCP regression tests now cover research planning, crawl, rate-limit propagation, and TA summaries (`tests/mcp/test_research_tools.py`).
+- Follow-on: optionally surface TA analytics in dashboards/telemetry (data pipeline now captured locally).
 
-### Sprint 6 – Adaptive research orchestrator (**Status: ⚠️ In progress**)
+### Sprint 6 – Adaptive research orchestrator (**Status: ✅ Complete with follow-ons**)
 
 - `src/hotpass/research/orchestrator.py` now implements the adaptive loop (local snapshot → authority check → deterministic enrichment → optional network enrichment → native crawl/backfill planning). CLI (`plan research`, `crawl`) and MCP tools (`hotpass.plan.research`, `hotpass.crawl`) wrap the planner, emitting audit entries to `./.hotpass/mcp-audit.log`.
 - Profile schema adds `authority_sources` and `research_backfill` so planners understand trusted registries and backfillable fields; agent docs cover the new flags.
 - Profile-driven throttling (`research_rate_limit` min interval + optional burst) keeps network fetchers within provider limits, and each native crawl stores metadata snapshots under `.hotpass/research_runs/<entity>/crawl/` alongside the run summary.
-- MCP + CLI integration tests cover research planning, crawl, rate limits, and artefact persistence; next up is surfacing provider-specific guardrail configuration alongside the crawl artefact catalogue.
+- MCP + CLI integration tests cover research planning, crawl, rate limits, and artefact persistence; provider guardrail guidance now ships in `docs/reference/profiles.md` and `AGENTS.md` (future follow-on: per-provider automation & staging rehearsals).
 
 ### Sprint 7 – Agent-first UI & exports (**Status: 🚧 Planned**)
 

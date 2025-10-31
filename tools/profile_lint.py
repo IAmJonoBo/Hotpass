@@ -19,6 +19,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import json
 import yaml
 
 
@@ -238,8 +239,54 @@ def main() -> int:
         default=Path("src/hotpass/profiles"),
         help="Directory containing profiles",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit lint results as JSON instead of human-readable output",
+    )
+    parser.add_argument(
+        "--schema-json",
+        action="store_true",
+        help="Print the expected profile schema structure as JSON and exit",
+    )
 
     args = parser.parse_args()
+
+    if args.schema_json:
+        schema = {
+            "required": ["name", "display_name", "ingest", "refine", "enrich", "compliance"],
+            "optional": [
+                "authority_sources",
+                "research_backfill",
+                "research_rate_limit",
+            ],
+            "ingest": {
+                "required": ["sources", "chunk_size"],
+            },
+            "refine": {
+                "required": ["mappings", "deduplication", "expectations"],
+                "deduplication": {
+                    "required": ["strategy", "threshold"],
+                },
+            },
+            "enrich": {
+                "required": ["allow_network", "fetcher_chain"],
+            },
+            "compliance": {
+                "required": ["policy", "pii_fields"],
+            },
+            "authority_sources": "list[{'name': str, 'category': 'registry|directory|dataset', 'cache_key': str?}]",
+            "research_backfill": {
+                "fields": "list[str]",
+                "confidence_threshold": "float between 0 and 1",
+            },
+            "research_rate_limit": {
+                "min_interval_seconds": "float >= 0",
+                "burst": "int > 0",
+            },
+        }
+        print(json.dumps(schema, indent=2))
+        return 0
 
     if not args.profiles_dir.exists():
         print(f"Error: Profiles directory not found: {args.profiles_dir}", file=sys.stderr)
@@ -252,36 +299,80 @@ def main() -> int:
             print(f"Error: Profile not found: {profile_path}", file=sys.stderr)
             return 1
 
-        print(f"Linting profile: {args.profile}")
+        if not args.json:
+            print(f"Linting profile: {args.profile}")
         success, errors = lint_profile(profile_path)
+        summary = {
+            "profiles": [
+                {
+                    "name": args.profile,
+                    "passed": success,
+                    "errors": errors,
+                }
+            ],
+            "summary": {
+                "total": 1,
+                "passed": 1 if success else 0,
+                "failed": 0 if success else 1,
+                "all_passed": success,
+            },
+        }
 
-        if success:
-            print(f"✓ {args.profile}: PASS")
-            return 0
+        if args.json:
+            print(json.dumps(summary, indent=2))
         else:
-            print(f"✗ {args.profile}: FAIL")
-            for error in errors:
-                print(f"  - {error}")
-            return 1
+            if success:
+                print(f"✓ {args.profile}: PASS")
+            else:
+                print(f"✗ {args.profile}: FAIL")
+                for error in errors:
+                    print(f"  - {error}")
+
+        return 0 if success else 1
     else:
         # Lint all profiles
-        print(f"Linting all profiles in {args.profiles_dir}")
         results = lint_all_profiles(args.profiles_dir)
 
         all_passed = True
-        for profile_name, (success, errors) in sorted(results.items()):
-            if success:
-                print(f"✓ {profile_name}: PASS")
-            else:
-                print(f"✗ {profile_name}: FAIL")
-                for error in errors:
-                    print(f"  - {error}")
-                all_passed = False
+        if not args.json:
+            print(f"Linting all profiles in {args.profiles_dir}")
 
-        print()
-        print(f"Total profiles: {len(results)}")
-        print(f"Passed: {sum(1 for s, _ in results.values() if s)}")
-        print(f"Failed: {sum(1 for s, _ in results.values() if not s)}")
+        profile_entries = []
+        for profile_name, (success, errors) in sorted(results.items()):
+            profile_entries.append(
+                {
+                    "name": profile_name,
+                    "passed": success,
+                    "errors": errors,
+                }
+            )
+            if not success:
+                all_passed = False
+            if not args.json:
+                if success:
+                    print(f"✓ {profile_name}: PASS")
+                else:
+                    print(f"✗ {profile_name}: FAIL")
+                    for error in errors:
+                        print(f"  - {error}")
+
+        summary = {
+            "profiles": profile_entries,
+            "summary": {
+                "total": len(results),
+                "passed": sum(1 for s, _ in results.values() if s),
+                "failed": sum(1 for s, _ in results.values() if not s),
+                "all_passed": all_passed,
+            },
+        }
+
+        if args.json:
+            print(json.dumps(summary, indent=2))
+        else:
+            print()
+            print(f"Total profiles: {summary['summary']['total']}")
+            print(f"Passed: {summary['summary']['passed']}")
+            print(f"Failed: {summary['summary']['failed']}")
 
         return 0 if all_passed else 1
 
