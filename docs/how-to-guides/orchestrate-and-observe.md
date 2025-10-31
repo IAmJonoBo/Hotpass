@@ -1,7 +1,7 @@
 ---
 title: How-to — orchestrate and observe Hotpass runs
 summary: Configure Prefect deployments and OpenTelemetry exporters for continuous Hotpass operations.
-last_updated: 2025-10-26
+last_updated: 2025-10-31
 ---
 
 Use this guide when you need to promote Hotpass from ad-hoc execution to a scheduled, observable service.
@@ -77,6 +77,27 @@ Each run writes the following artefacts under the configured output directory
 
 Label Studio tasks include both the match probability and the configured
 thresholds so reviewers understand why a pair requires attention.
+
+## Run adaptive research from the CLI
+
+The `plan research` and `crawl` verbs wrap the adaptive orchestrator. Use them to stage enrichment work or dry-run crawls:
+
+```bash
+uv run hotpass plan research \
+  --dataset ./dist/refined.xlsx \
+  --row-id 0 \
+  --url https://example.test \
+  --allow-network \
+  --json \
+  --output dist/research/plan.json
+
+uv run hotpass crawl "https://example.test" --allow-network
+```
+
+- Set `FEATURE_ENABLE_REMOTE_RESEARCH=1` and `ALLOW_NETWORK_RESEARCH=1` to permit network fetchers; otherwise the orchestrator remains deterministic.
+- `--json` emits the full plan payload, while `--output` writes it to disk alongside the standard console summary.
+- CLI coverage in `tests/cli/test_research_plan.py` and `tests/cli/test_resolve_profile.py` ensures profile defaults (Splink, sensitive fields, Label Studio configs) stay intact—mirror those scenarios when adding new profiles or providers.
+- Archive plan outputs under `dist/staging/e2e/<timestamp>/` during staging rehearsals so stakeholders can audit proposed crawls.
 
 ## Toggle Prefect runtime decorators
 

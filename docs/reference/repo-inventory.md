@@ -1,7 +1,7 @@
 ---
 title: Reference — repository inventory
 summary: Snapshot of Hotpass packages, interfaces, orchestration flows, tests, datasets, and CI automation.
-last_updated: 2025-10-30
+last_updated: 2025-10-31
 ---
 
 This inventory highlights the moving parts that power Hotpass. Use the tables below to
@@ -23,6 +23,7 @@ extend the platform.
 | CLI surface               | Unified CLI, progress logging, and enhanced compatibility shim.                                                                                   | [`cli/`](../../src/hotpass/cli/) · [`cli_enhanced.py`](../../src/hotpass/cli_enhanced.py)                                                                                                      |
 | Compliance & validation   | POPIA/ISO evidence logging, PIIs redaction, schema + expectation gates.                                                                           | [`compliance.py`](../../src/hotpass/compliance.py) · [`compliance_verification.py`](../../src/hotpass/compliance_verification.py) · [`validation.py`](../../src/hotpass/validation.py)         |
 | Observability & telemetry | Metric exporters, OpenTelemetry wiring, and structured logging helpers.                                                                           | [`telemetry/`](../../src/hotpass/telemetry/) · [`observability.py`](../../src/hotpass/observability.py)                                                                                        |
+| Benchmarks & profiling    | Performance baselines for configuration merges and future orchestration hotspots.                                                                | [`scripts/benchmarks/hotpass_config_merge.py`](../../scripts/benchmarks/hotpass_config_merge.py) · `dist/benchmarks/`                                                                          |
 
 ## Console scripts
 
@@ -44,7 +45,7 @@ extend the platform.
 - [ ] `tests/automation/` — HTTP client policies and webhook/CRM delivery fixtures.
 - [ ] `tests/enrichment/` — Intent collectors, validators, and enrichment adapters.
 - [ ] `tests/linkage/` — Entity resolution and probabilistic matching coverage.
-- [ ] `tests/cli/` — Command parsing, progress reporting, and option integration tests.
+- [ ] `tests/cli/` — Command parsing, progress reporting, and option integration tests (includes plan/research and resolve Label Studio coverage added 2025-10-31).
 - [ ] `tests/data_sources/` — Reader/writer adapters and dataset helpers.
 - [ ] `tests/accessibility/` — Accessibility smoke tests for dashboards and reports.
 - [ ] `tests/contracts/` — Golden contracts for CLI outputs and pipeline reports.

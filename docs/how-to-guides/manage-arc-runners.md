@@ -1,7 +1,7 @@
 ---
 title: Deploy GitHub ARC runners for Hotpass pipelines
 summary: Provision and operate ephemeral GitHub Actions runners on Kubernetes using OIDC and the Actions Runner Controller.
-last_updated: 2025-12-29
+last_updated: 2025-10-31
 ---
 
 This guide walks platform engineers through deploying the GitHub Actions Runner Controller (ARC) manifests shipped with Hotpass,
@@ -118,6 +118,15 @@ uv run python scripts/arc/verify_runner_lifecycle.py \
 Snapshots let QA and Platform teams verify workflow wiring during dry runs
 without requiring Kubernetes or GitHub API access. Update the JSON to match the
 expected lifecycle for more advanced rehearsal scenarios.
+
+### Capture staging evidence
+
+When rehearsing against `hotpass-staging`, capture artefacts for programme sign-off:
+
+1. Run the lifecycle script with `--output json` and save the payload to `dist/staging/arc/<timestamp>/lifecycle.json`.
+2. Export AWS STS identity details (or copy the script output) to `dist/staging/arc/<timestamp>/sts.txt` to confirm OIDC assumptions.
+3. Link both artefacts in `docs/operations/staging-rehearsal-plan.md` and reference them from `Next_Steps.md` before marking the task complete.
+4. If access is blocked, note the reason and planned follow-up in `Next_Steps_Log.md`.
 
 ## 5. Tear down the runners
 

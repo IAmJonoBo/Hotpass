@@ -1,7 +1,7 @@
 ---
 title: Hotpass roadmap
 summary: Status of the Hotpass modernisation programme, quality gates, and follow-up work.
-last_updated: 2025-12-26
+last_updated: 2025-10-31
 ---
 
 This roadmap is the single source of truth for the Hotpass programme. It captures the active plan, guardrails, acceptance criteria, and the mapping of work to the repository layout so that changes are incremental, reversible, and observable.
@@ -15,6 +15,12 @@ Focus areas for the upcoming iterations:
 - **CI/CD & runners**: uv-based quality gates (ruff, mypy, pytest+coverage, SARIF), CodeQL/detect-secrets/bandit, Docker buildx with cache, SBOM + SLSA attestations, and ephemeral self-hosted runners via Actions Runner Controller (ARC) with OIDC→AWS.
 - **Docs & UX**: Diátaxis structure enforced; add `hotpass doctor` and `hotpass init` to streamline onboarding and troubleshooting.
 - **Governance artefacts**: Landing page now links to Data Docs, Marquez lineage, and schema export references so reviewers can jump straight to validation context while triaging pull requests.
+- **Performance baselines**: `scripts/benchmarks/hotpass_config_merge.py` now measures canonical config merges; baseline results are stored under `dist/benchmarks/` and feed into preflight reviews.
+
+### Current blockers
+
+- **Staging rehearsals** (Prefect backfill guardrails, full E2E pipeline replay, ARC lifecycle rerun) remain on hold pending restored access to `hotpass-staging`. Tracking instructions live in `docs/operations/staging-rehearsal-plan.md`.
+- **Docs Diátaxis uplift** is still underway; tutorials/how-tos are being updated incrementally alongside feature work.
 
 ## Iteration plan (date-free)
 
@@ -135,11 +141,13 @@ Focus areas for the upcoming iterations:
 
 - [ ] **T6.1 Diátaxis docs structure**
   - [ ] Ensure `docs/` uses Tutorials, How‑tos, Reference, and Explanations; link Data Docs and the lineage UI from the docs home.
+  - **Progress:** Tutorials/how-tos are being updated incrementally (for example, staging rehearsal guidance now lives in `docs/operations/staging-rehearsal-plan.md`); landing page uplift still pending.
   - **Acceptance:** landing page shows the four doc types; "How‑to: run a backfill" and "How‑to: read Data Docs" exist.
 
 - [ ] **T6.2 CLI UX – `hotpass doctor` and `hotpass init`**
   - [ ] `doctor`: environment check (Python, uv, Prefect profile, OTel vars) and dataset sample validation.
   - [ ] `init`: generate config, sample data, and one‑shot bootstrap.
+  - **Progress:** CLI verbs ship and are covered in `docs/reference/cli.md`; further UX polish (walkthroughs, troubleshooting) deferred until staging rehearsals conclude.
   - **Acceptance:** both commands succeed from a fresh checkout and provide actionable remediation hints on failure.
 
 ---

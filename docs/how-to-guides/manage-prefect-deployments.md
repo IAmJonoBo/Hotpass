@@ -1,7 +1,7 @@
 ---
 title: How-to — manage Prefect deployment manifests
 summary: Version, review, and apply Prefect deployment manifests for Hotpass flows.
-last_updated: 2025-10-29
+last_updated: 2025-10-31
 ---
 
 This guide explains how to work with the manifest-based Prefect deployment workflow introduced in October 2025.
@@ -92,3 +92,17 @@ manifest is re-applied.
   production CI and exercise the Prefect manifests, orchestration flows, and assert migrations.
 - In CI, ensure the quality-gates workflow executes the same trio to maintain parity. When Prefect workers are available in
   the shared pool, you can trigger orchestration QA (`uv run hotpass qa ta`) concurrently with the unit test matrix.
+
+## Stage backfill guardrail rehearsals
+
+The release preflight requires a staged backfill rehearsal. Once staging access is restored:
+
+1. Apply the staging manifest overlay if needed (`uv run hotpass deploy --manifest-dir prefect/staging --flow backfill`).
+2. Trigger the backfill deployment via Prefect (`uv run prefect deployment run hotpass-backfill --params '{"since": "<date>"}'`).
+3. Export artefacts to `dist/staging/backfill/<timestamp>/`:
+   - `prefect.log` — Prefect flow log export.
+   - `summary.json` — key guardrail metrics (concurrency limits, QA outcomes, dataset counts).
+   - `cli.sh` — commands executed during the rehearsal for audit parity.
+4. Link the artefacts in `docs/operations/staging-rehearsal-plan.md` and `Next_Steps.md` to unblock programme sign-off.
+
+Document any access blockers in `Next_Steps_Log.md` so the programme manager can reschedule the rehearsal window.

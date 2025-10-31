@@ -1,7 +1,7 @@
 ---
 title: Reference — command-line interface
 summary: Detailed options for the unified `hotpass` CLI entry point and its subcommands.
-last_updated: 2025-12-08
+last_updated: 2025-10-31
 ---
 
 Hotpass now ships a single console script: `hotpass`. Subcommands map to the core
@@ -223,6 +223,50 @@ uv run hotpass resolve --input-file data/raw.xlsx --output-file data/deduplicate
 | `--label-studio-url URL`           | Label Studio base URL for review queues.                                                         |
 | `--label-studio-token TOKEN`       | Label Studio API token.                                                                          |
 | `--label-studio-project INTEGER`   | Label Studio project identifier.                                                                 |
+| `--log-format [rich \| json]`       | Override profile defaults for structured logging (falls back to profile or `rich`).              |
+
+`resolve` inherits the shared `--sensitive-field` flag. Profiles may supply default masks; repeat the flag to extend masks in runtime-only investigations.
+
+### `plan research`
+
+Generate an adaptive research plan that combines deterministic enrichment, network enrichment (when permitted), and crawl/backfill guidance.
+
+```bash
+uv run hotpass plan research \
+  --dataset ./dist/refined.xlsx \
+  --row-id 0 \
+  --url https://example.test \
+  --allow-network \
+  --json \
+  --output dist/research/plan.json
+```
+
+| Option                 | Description                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `--dataset PATH`       | Refined workbook or directory to load before planning.                                                                     |
+| `--row-id TEXT`        | Row identifier or zero-based index to focus the plan (optional when using entity slug/entity name filters).                 |
+| `--entity TEXT`        | Friendly name to locate the target row when `--row-id` is not supplied.                                                    |
+| `--url URL`            | Append target URLs for immediate crawl consideration (repeatable).                                                         |
+| `--allow-network`      | Opt into research providers that require network access (enforce via `FEATURE_ENABLE_REMOTE_RESEARCH` and `ALLOW_NETWORK_RESEARCH`). |
+| `--json`               | Emit the plan payload as JSON.                                                                                            |
+| `--output PATH`        | Persist the JSON plan to disk (directories are created automatically).                                                     |
+
+Plans honour environment toggles and profile settings. When network access is disabled the orchestrator records skipped steps so reviewers can track pending research work.
+
+### `crawl`
+
+Execute only the crawling component of the research pipeline.
+
+```bash
+uv run hotpass crawl "https://example.test" --allow-network
+```
+
+| Option            | Description                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `QUERY_OR_URL`    | Either a URL to crawl or a free-text query for provider search adapters.                                    |
+| `--allow-network` | Enable network calls; otherwise the command validates configuration and exits without contacting providers. |
+
+Crawler runs write JSON artefacts to `.hotpass/research_runs/<slug>/` and respect profile-defined throttling (`research_rate_limit`).
 
 ### `deploy`
 
