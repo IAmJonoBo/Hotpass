@@ -17,6 +17,7 @@ from .commands import (
     deploy,
     doctor,
     enrich,
+    explain_provenance,
     init,
     orchestrate,
     overview,
@@ -57,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     builder.register(overview.register())
     builder.register(refine.register())
     builder.register(enrich.register())
+    builder.register(explain_provenance.register())
     builder.register(qa.register())
     builder.register(contracts.register())
     builder.register(plan.register())

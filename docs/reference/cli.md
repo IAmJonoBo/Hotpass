@@ -37,6 +37,7 @@ The unified CLI exposes five primary verbs that map to the workflows described i
 - `uv run hotpass enrich` — enrich refined data with deterministic and optional research sources.
 - `uv run hotpass qa` — run quality gates (`fitness`, `data-quality`, `docs`, `contracts`, `cli`, `ta`).
 - `uv run hotpass contracts` — emit contract bundles (YAML/JSON) for downstream systems.
+- `uv run hotpass explain-provenance --dataset ./dist/enriched.xlsx --row-id 0 --json` — surface provenance metadata for a specific row (prints a table by default or JSON with `--json`).
 - `uv run hotpass plan research --dataset ./dist/refined.xlsx --row-id 0 --allow-network` — generate an adaptive research plan that combines local snapshots, deterministic enrichment, optional network fetchers, and crawl/backfill recommendations.
 - `uv run hotpass crawl "https://example.test" --allow-network` — trigger the crawler-only pathway (uses the same orchestrator engine but skips deterministic enrichment).
 
@@ -179,6 +180,29 @@ uv run hotpass orchestrate [OPTIONS]
 
 Profiles enabling enrichment or compliance must declare intent statements (`intent = [...]`) to
 enforce guardrails such as consent capture and audit logging.
+
+### `explain-provenance`
+
+Inspect provenance metadata for a specific row in an enriched workbook.
+
+```bash
+uv run hotpass explain-provenance \
+  --dataset ./dist/enriched.xlsx \
+  --row-id 0 \
+  --json
+```
+
+| Option           | Description                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `--dataset PATH` | Required path to the enriched dataset (Excel `.xlsx/.xlsm/.xls` or `.csv`).                                     |
+| `--row-id TEXT`  | Row index (0-based) or identifier from the dataset’s `id` column.                                               |
+| `--json`         | Emit provenance details as JSON rather than a Rich table.                                                       |
+| `--output PATH`  | Persist the JSON payload to the provided path (directories are created automatically; implies `--json`).        |
+
+The command surfaces the standard provenance fields (`provenance_source`, `provenance_timestamp`,
+`provenance_confidence`, `provenance_strategy`, `provenance_network_status`) alongside the
+associated `organization_name`. When no provenance columns are present the command prints a warning
+and exits with status `2` so pipeline owners can treat it as a soft failure.
 
 ### `resolve`
 

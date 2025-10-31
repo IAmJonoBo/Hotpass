@@ -41,6 +41,13 @@ These notes equip GitHub Copilot CLI, Copilot Agent HQ, and Codex-based agents t
      --profile generic \
      --allow-network=false
    ```
+   Inspect provenance for any enriched row when needed:
+   ```bash
+   uv run hotpass explain-provenance \
+     --dataset ./dist/enriched.xlsx \
+     --row-id 0 \
+     --json
+   ```
 5. **Execute quality gates**
    ```bash
    uv run hotpass qa all

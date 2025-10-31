@@ -229,6 +229,18 @@ uv run hotpass enrich \
   --allow-network=true
 ```
 
+**Explain provenance** (surface enrichment metadata for a specific row):
+
+```bash
+uv run hotpass explain-provenance \
+  --dataset ./dist/enriched.xlsx \
+  --row-id 0 \
+  --json
+```
+
+> Use `--json` for machine-readable output or omit it for a Rich table. The command exits with status
+> `2` when provenance columns are missing so agents can trace absent metadata quickly.
+
 **QA** (quality assurance checks):
 
 ```bash

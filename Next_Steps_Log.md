@@ -1,6 +1,6 @@
 # Next Steps Log
 
-_Updated 2025-10-30_
+_Updated 2025-10-31_
 
 ## Tasks
 
@@ -8,6 +8,13 @@ _Updated 2025-10-30_
 - [x] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/pipeline/fixtures/stage_inputs.py†L1-L111】
 - [x] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).【F:tests/cli/test_progress.py†L1-L149】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】
 - [x] **2025-12-31 · Engineering** — Add Prefect flow integration tests for canonical overrides (extend `tests/test_orchestration.py`; capture fixtures during the 2025-12-18 staging run alongside QA).【F:tests/test_orchestration.py†L1-L260】
+- [x] **2025-10-31 · Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).【F:prefect/backfill.yaml†L1-L40】【F:prefect/refinement.yaml†L1-L40】
+- [x] **2025-10-31 · Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening follow-up (`observability/marquez-bootstrap`) and capture lineage QA artefacts (`dist/staging/marquez/`).【F:tests/infrastructure/test_marquez_stack.py†L1-L46】【F:tests/test_lineage.py†L149-L200】
+- [x] **2025-10-31 · Platform (Phase 5)** — Harden uv-based CI quality gates via `.github/workflows/quality-gates.yml`, enforcing QG-1→QG-5 with `scripts/quality/run_qg*.py` helpers.【F:.github/workflows/quality-gates.yml†L1-L110】【F:scripts/quality/run_all_gates.py†L1-L200】
+- [x] **2025-10-31 · Security (Phase 5)** — Enable CodeQL, detect-secrets diff mode, and Bandit SARIF uploads (workflows `codeql.yml`, `secret-scanning.yml`, and `process-data.yml`).【F:.github/workflows/codeql.yml†L1-L40】【F:.github/workflows/secret-scanning.yml†L1-L40】【F:.github/workflows/process-data.yml†L25-L140】
+- [x] **2025-10-31 · Platform (Phase 5)** — Publish SBOM + SLSA attestations using `scripts/supply_chain/generate_sbom.py` and `generate_provenance.py` in the `process-data` workflow.【F:.github/workflows/process-data.yml†L180-L260】【F:scripts/supply_chain/generate_sbom.py†L1-L120】【F:scripts/supply_chain/generate_provenance.py†L1-L160】
+- [x] **2025-10-31 · Platform (Phase 5)** — Complete ARC runner rollout and OIDC wiring through PR `infra/arc-rollout`, coordinating smoke tests and archiving artefacts under `dist/staging/arc/`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
+- [x] **2025-10-31 · Engineering** — Add `hotpass explain-provenance` CLI alias so MCP `hotpass.explain_provenance` now has a parity command (includes JSON output flag and tests).【F:src/hotpass/cli/commands/explain_provenance.py†L1-L175】【F:tests/cli/test_explain_provenance.py†L1-L88】
 - [x] **2025-11-01 · Docs & Engineering** — Update README/CONTRIBUTING onboarding flow (quickstarts, preflight, doc links) and sync Diátaxis landing page/navigation with new data governance assets (Data Docs, Marquez, schema/reference).【376708†L1-L40】【8c8202†L1-L93】
 - [x] **2025-10-28 · Engineering/Docs** — Implement dataset contract models, regeneration tooling, docs reference, and ADR (landed via contracts module + docs automation).
 - [x] **2025-10-28 · QA & Engineering** — Add OpenLineage fallback coverage and tighten lineage typing (new `tests/test_lineage.py`, mypy cluster resolved via importlib guard).

@@ -8,6 +8,7 @@ __all__ = [
     "deploy",
     "doctor",
     "enrich",
+    "explain_provenance",
     "init",
     "orchestrate",
     "overview",

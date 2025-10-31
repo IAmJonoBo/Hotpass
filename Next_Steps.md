@@ -8,16 +8,10 @@
 - [ ] **Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
   - **Progress:** Added `tests/cli/test_resolve_profile.py` covering profile-driven Splink defaults, sensitive-field redaction, and output writes. Remaining: expand orchestrator stress fixtures once staging data is available.
-- [x] **Platform (Phase 3)** — Merge Prefect deployment manifests from PR `prefect/deployment-manifests` and validate idempotent schedules (owner: Platform).
-- [x] **Engineering & QA (Phase 3)** — Exercise OpenLineage + Marquez hardening in follow-up to PR `observability/marquez-bootstrap`, capturing lineage QA evidence (owners: Engineering & QA). Staging rehearsal completed; artefacts under `dist/staging/marquez/` (CLI log + UI capture).
-- [x] **Platform (Phase 5)** — Harden uv-based CI quality gates in PR `ci/uv-quality-gates` to unblock coverage enforcement (owner: Platform).【F:.github/workflows/quality-gates.yml†L1-L110】【F:scripts/quality/run_all_gates.py†L1-L200】
-- [x] **Security (Phase 5)** — Ship PR `security/codeql-and-secrets` enabling CodeQL, detect-secrets diff mode, and Bandit SARIF (owner: Security).【F:.github/workflows/codeql.yml†L1-L40】【F:.github/workflows/secret-scanning.yml†L1-L40】【F:.github/workflows/process-data.yml†L25-L120】
+- [ ] **Engineering & QA** — Type shared pytest fixtures (notably `tests/test_deployment_specs.py`) and fix the unreachable branch in `scripts/quality/run_qg4.py` to reduce the mypy error set.
 - [ ] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).
-- [x] **Platform (Phase 5)** — Publish SBOM + SLSA attestations via PR `supply-chain/provenance` (owner: Platform).【F:.github/workflows/process-data.yml†L180-L260】【F:scripts/supply_chain/generate_sbom.py†L1-L120】
-- [x] **Platform (Phase 5)** — Complete ARC runner rollout and OIDC wiring through PR `infra/arc-rollout`, coordinating with QA for smoke tests (owner: Platform). Lifecycle rehearsal executed; artefacts stored at `dist/staging/arc/` (lifecycle report + STS confirmation).
-- [x] **Engineering (Phase 5)** — Finalise OpenTelemetry exporter propagation post-PR `telemetry/bootstrap` with additional QA sign-off (owner: Engineering).【F:src/hotpass/cli/commands/run.py†L156-L531】【F:src/hotpass/telemetry/bootstrap.py†L1-L200】
+- [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns.
 - [ ] **Docs & UX (Phase 6)** — Finish Diátaxis navigation uplift in PR `docs/data-governance-nav` follow-on, ensuring governance artefacts surfaced (owner: Docs & UX).
-- [x] **Engineering & UX (Phase 6)** — Release `cli/doctor-and-init` onboarding UX refinements and regression coverage (owner: Engineering & UX).【F:src/hotpass/cli/commands/doctor.py†L1-L200】【F:src/hotpass/cli/commands/init.py†L1-L220】【F:docs/reference/cli.md†L1-L160】
 
 ## Steps
 
@@ -27,7 +21,7 @@
 - [ ] Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
   - **Progress:** test_error_handling.py completed (46 assertions migrated); compliance verification + enrichment suites migrated to `expect()`; agentic orchestration coverage converted 2025-10-31. Remaining bare-assert files: 31.
 - [ ] Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
-  - **Progress:** Latest `uv run mypy src tests scripts` on 2025-10-31 reports 197 errors (up from 171); clusters centred on untyped pytest fixtures (for example `tests/test_deployment_specs.py`) and an unreachable guard in `scripts/quality/run_qg4.py` introduced by recent tooling updates.【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
+  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 now reports 182 errors (down from 197 after typing `tests/test_deployment_specs.py` fixtures and refactoring `scripts/quality/run_qg4.py`). Remaining clusters include untyped pytest fixtures in shared test helpers and mlflow stubs.【F:tests/test_deployment_specs.py†L1-L220】【F:scripts/quality/run_qg4.py†L100-L180】
 
 ## Deliverables
 
@@ -36,7 +30,7 @@
 ## Quality Gates
 
 - [x] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace. Live rehearsal artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [ ] Types — `uv run mypy src tests scripts` surfaced 197 errors on 2025-10-31; prioritise typing shared fixtures (see `tests/test_deployment_specs.py`) and fix the unreachable return in `scripts/quality/run_qg4.py` before tackling lower-priority decorators.【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
+- [ ] Types — `uv run mypy src tests scripts` surfaced 182 errors on 2025-10-31; next focus areas are shared pytest fixtures (`tests/conftest.py`) and mlflow stubs before tackling accessibility tests.【F:tests/conftest.py†L1-L80】【F:tests/ml/test_tracking_stubbed.py†L1-L260】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
 

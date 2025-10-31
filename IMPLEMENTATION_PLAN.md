@@ -538,7 +538,7 @@ All operations accessible via `uv run hotpass ...` or equivalent MCP tools.
 
 **Verification:**
 
-- [ ] Every MCP tool has CLI equivalent (gap: `hotpass.explain_provenance` remains MCP-only; consider adding a lightweight CLI alias in a follow-up).
+- [x] Every MCP tool has CLI equivalent (`hotpass explain-provenance` mirrors the MCP helper).【F:src/hotpass/cli/commands/explain_provenance.py†L1-L160】【F:src/hotpass/cli/main.py†L20-L80】
 - [x] No operations require secondary repos/tools.【F:src/hotpass/cli/commands/overview.py†L1-L200】【F:src/hotpass/mcp/server.py†L1-L360】
 
 ### TA-2: Profile Completeness

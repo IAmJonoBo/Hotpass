@@ -8,8 +8,11 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from typing import Any, Generator
 
 import pytest
+
+from hotpass.prefect.deployments import DeploymentSpec
 
 
 @contextmanager
@@ -92,7 +95,7 @@ def _load_deployments_module() -> Iterator[types.ModuleType]:
 
 
 @pytest.fixture(scope="module")
-def deployments_module() -> Iterator[types.ModuleType]:
+def deployments_module() -> Generator[types.ModuleType, None, None]:
     """Provide the Prefect deployments module with isolated imports."""
 
     with _load_deployments_module() as module:
@@ -109,14 +112,14 @@ def expect(condition: bool, message: str) -> None:
 @pytest.fixture(scope="module")
 def loaded_specs(
     deployments_module: types.ModuleType,
-) -> dict[str, object]:
+) -> dict[str, DeploymentSpec]:
     specs = deployments_module.load_deployment_specs(Path("prefect"))
     expect(bool(specs), "No deployment specs discovered under the prefect/ directory.")
     return {spec.identifier: spec for spec in specs}
 
 
 def test_specs_include_refinement_and_backfill(
-    loaded_specs: dict[str, object],
+    loaded_specs: dict[str, DeploymentSpec],
 ) -> None:
     """The repo should ship manifests for both refinement and backfill flows."""
 
@@ -128,7 +131,7 @@ def test_specs_include_refinement_and_backfill(
 
 
 def test_refinement_manifest_encodes_incremental_resume_options(
-    loaded_specs: dict[str, object],
+    loaded_specs: dict[str, DeploymentSpec],
 ) -> None:
     """The refinement manifest encodes parameters for incremental and resumable runs."""
 
@@ -165,7 +168,7 @@ def test_refinement_manifest_encodes_incremental_resume_options(
 def test_build_runner_deployment_renders_prefect_model(
     identifier: str,
     deployments_module: types.ModuleType,
-    loaded_specs: dict[str, object],
+    loaded_specs: dict[str, DeploymentSpec],
 ) -> None:
     """Deployment manifests compile into Prefect RunnerDeployment objects."""
 
@@ -247,10 +250,10 @@ def test_deploy_pipeline_applies_overrides(
     recorder = DummyRunnerDeployRecorder()
     monkeypatch.setattr(deployments_module.runner, "deploy", recorder, raising=False)
 
-    captured: list[object] = []
+    captured: list[DeploymentSpec] = []
     original_build = deployments_module.build_runner_deployment
 
-    def _capture(spec: object) -> object:
+    def _capture(spec: DeploymentSpec) -> Any:
         captured.append(spec)
         return original_build(spec)
 

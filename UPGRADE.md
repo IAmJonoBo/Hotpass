@@ -54,7 +54,7 @@
 - **Manifest-driven Prefect deployments** — manifests are committed; remaining work is staging validation plus doc update in `docs/how-to-guides/prefect-manifests.md` (todo).
 - **Marquez lineage smoke scheduling** — blocked until optional dependencies land on staging; track via `tests/infrastructure/test_marquez_stack.py` and staging access ticket.
 - **Assertion migration** — partially complete; 36 suites still contain bare `assert` (e.g. `tests/test_evidence.py`).
-- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 197 errors concentrated in shared fixtures (for example `tests/test_deployment_specs.py`) and the MCP gate guard (`scripts/quality/run_qg4.py`).【F:tests/test_deployment_specs.py†L70-L200】【F:scripts/quality/run_qg4.py†L100-L220】
+- **Telemetry/mypy audit** — first pass removed six mypy issues; latest `uv run mypy src tests scripts` (2025-10-31) reports 182 errors concentrated in shared fixtures (for example `tests/conftest.py`) and mlflow stubs, after typing deployment specs and refactoring `scripts/quality/run_qg4.py`.【F:tests/test_deployment_specs.py†L1-L220】【F:tests/conftest.py†L1-L80】【F:scripts/quality/run_qg4.py†L100-L180】
 
 ### Deliverable status\*\*
 
@@ -156,6 +156,7 @@ uv run hotpass refine --input-dir ./data --output-path ./dist/refined.xlsx --pro
 uv run hotpass enrich --input ./dist/refined.xlsx --output ./dist/enriched.xlsx --profile <profile> --allow-network=<true|false>
 uv run hotpass qa <target>
 uv run hotpass contracts emit --profile <profile>
+uv run hotpass explain-provenance --dataset ./dist/enriched.xlsx --row-id 0 --json
 ```
 
 - `overview` lists available commands, profiles, and quick start hints.
@@ -163,6 +164,7 @@ uv run hotpass contracts emit --profile <profile>
 - `enrich` performs deterministic-first enrichment, promoting network fetchers only when `--allow-network=true` and environment flags permit.
 - `qa` targets (`all`, `cli`, `contracts`, `docs`, `profiles`, `fitness`, `data-quality`, `ta`) and delegates to gate scripts.
 - `contracts emit` regenerates governed schemas for downstream consumers.
+- `explain-provenance` surfaces provenance metadata for a specific row, returning JSON when the `--json` flag is supplied (status `2` when provenance columns are absent).
 
 ### 3.2 MCP tooling requirements
 

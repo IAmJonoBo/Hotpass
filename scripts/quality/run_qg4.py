@@ -115,18 +115,15 @@ def _check_schema_shapes() -> StepResult:
     issues: list[str] = []
     for tool in server.tools:
         schema = tool.input_schema
-        if not isinstance(schema, dict):
-            issues.append(f"{tool.name} input schema must be a dict")
-            continue
         if schema.get("type") != "object":
             issues.append(f"{tool.name} input schema type must be 'object'")
-        properties = schema.get("properties")
-        if not isinstance(properties, dict):
+        properties_obj = schema.get("properties")
+        if not isinstance(properties_obj, dict):
             issues.append(f"{tool.name} input schema missing properties")
+            continue
         if tool.name == "hotpass.qa":
-            target_enum = (
-                properties.get("target", {}).get("enum") if isinstance(properties, dict) else None
-            )
+            target_schema = properties_obj.get("target")
+            enum_values = target_schema.get("enum") if isinstance(target_schema, dict) else None
             expected_targets = {
                 "all",
                 "contracts",
@@ -136,30 +133,23 @@ def _check_schema_shapes() -> StepResult:
                 "fitness",
                 "data-quality",
             }
-            if not isinstance(target_enum, list) or not expected_targets.issubset(set(target_enum)):
+            if not isinstance(enum_values, list) or not expected_targets.issubset(set(enum_values)):
                 issues.append(
                     "hotpass.qa target enum must include "
                     "'all, contracts, docs, profiles, ta, fitness, data-quality'",
                 )
         if tool.name == "hotpass.plan.research":
-            urls_schema = properties.get("urls", {}) if isinstance(properties, dict) else {}
-            if urls_schema.get("type") != "array":
+            urls_schema = properties_obj.get("urls")
+            if not isinstance(urls_schema, dict) or urls_schema.get("type") != "array":
                 issues.append("hotpass.plan.research.urls must be an array")
 
-    if issues:
-        return StepResult(
-            step_id="schema-shape",
-            description="Validate MCP tool schemas",
-            passed=False,
-            message="; ".join(issues),
-            duration_seconds=time.time() - start,
-        )
-
+    passed = not issues
+    message = "; ".join(issues) if issues else "MCP tool schemas are well-formed"
     return StepResult(
         step_id="schema-shape",
         description="Validate MCP tool schemas",
-        passed=True,
-        message="MCP tool schemas are well-formed",
+        passed=passed,
+        message=message,
         duration_seconds=time.time() - start,
     )
 
