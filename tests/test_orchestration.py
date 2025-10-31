@@ -19,6 +19,7 @@ import anyio
 import pandas as pd
 import pytest
 from tests.helpers.fixtures import fixture
+from tests.helpers.pytest_marks import anyio_mark
 from hotpass.telemetry.bootstrap import TelemetryBootstrapOptions
 
 

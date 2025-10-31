@@ -8,7 +8,7 @@
 - [ ] **Engineering** — Benchmark `HotpassConfig.merge` on large payloads.
 - [ ] **QA & Engineering** — Extend orchestrate/resolve CLI coverage for advanced profiles (reuse CLI stress fixtures and add resolve scenarios in `tests/cli/test_resolve.py`).
   - **Progress:** Added `tests/cli/test_resolve_profile.py` covering profile-driven Splink defaults, sensitive-field redaction, and output writes. Remaining: expand orchestrator stress fixtures once staging data is available.
-- [ ] **Engineering & QA** — Type shared pytest fixtures (notably `tests/test_deployment_specs.py`) and fix the unreachable branch in `scripts/quality/run_qg4.py` to reduce the mypy error set.
+- [ ] **Engineering & QA** — Execute the staged mypy remediation plan (typed Hypothesis wrappers ➜ optional-dependency stubs ➜ CLI/MCP typing ➜ long-tail cleanup) to drive the error count toward zero.
 - [x] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).【F:.github/workflows/docker-cache.yml†L1-L60】
 - [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns.
 - [ ] **Docs & UX (Phase 6)** — Finish Diátaxis navigation uplift in PR `docs/data-governance-nav` follow-on, ensuring governance artefacts surfaced (owner: Docs & UX).
@@ -19,10 +19,16 @@
 - [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
 - [ ] Document expected staging artefacts for Prefect backfill guardrails and ARC runner sign-off runs so evidence drops into `dist/staging/backfill/` and `dist/staging/arc/` when access resumes (owner: Platform & QA).
+- [ ] **Types remediation roadmap (Engineering & QA)** — execute the staged plan and record checkpoints:
+  - **Phase 0** (Baseline capture) — archived `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`; current `uv run pytest -q` fails fast on the new Hypothesis composite wrapper and needs Phase 1 follow-up.
+  - **Phase 1** (Hypothesis/property suites) — typed wrappers + suite updates; quality gate: property tests compile with zero decorator warnings.
+  - **Phase 2** (Optional dependency stubs) — centralise stubs (`tests/helpers/stubs.py`), refactor orchestration/dashboard suites; gate: mypy errors <40 with no new test failures.
+  - **Phase 3** (CLI/MCP/source typing) — annotate CLI commands, MCP server, remaining fixtures; gate: mypy errors <15 and `uv run pytest` green.
+  - **Phase 4** (Long tail) — eliminate residual list-based expects/unreachables; gate: mypy ≤5 errors unless explicitly deferred with documented rationale.
 - [ ] Continue migrating orchestration pytest assertions to `expect()` helper outside touched scenarios (owner: QA & Engineering).
   - **Progress:** test_error_handling.py completed (46 assertions migrated); compliance verification + enrichment suites migrated to `expect()`; agentic orchestration coverage converted 2025-10-31. Remaining bare-assert files: 31.
 - [ ] Audit remaining telemetry/CLI modules for strict mypy readiness and convert outstanding bare assertions (owner: Engineering & QA).
-  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 now reports 127 errors (down from 197 after typing shared fixtures and normalising mlflow doubles). Outstanding work: migrate remaining pytest decorators (`tests/test_orchestration.py`, `tests/test_dashboard.py`, etc.) and tighten validation helpers highlighted in the latest run.【F:tests/test_orchestration.py†L100-L200】【F:tests/helpers/fixtures.py†L1-L40】
+  - **Progress:** `uv run mypy src tests scripts` on 2025-10-31 reports 59 errors across 18 files (down from 197 baseline). Remaining work follows the phased plan below.
 
 ## Deliverables
 
@@ -31,7 +37,7 @@
 ## Quality Gates
 
 - [x] Infrastructure — ARC runner smoke test workflow (`ARC runner smoke test`) reports healthy lifecycle across staging namespace. Live rehearsal artefacts: `dist/staging/arc/20251113T160000Z/lifecycle.json`, `dist/staging/arc/20251113T160000Z/sts.txt`.【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:scripts/arc/verify_runner_lifecycle.py†L1-L210】
-- [ ] Types — `uv run mypy src tests scripts` surfaced 182 errors on 2025-10-31; next focus areas are shared pytest fixtures (`tests/conftest.py`) and mlflow stubs before tackling accessibility tests.【F:tests/conftest.py†L1-L80】【F:tests/ml/test_tracking_stubbed.py†L1-L260】
+- [ ] Types — `uv run mypy src tests scripts` surfaced 59 errors on 2025-10-31; see phased remediation plan below for scope and checkpoints.【F:tests/test_orchestration.py†L1-L200】【F:tests/helpers/hypothesis.py†L1-L80】
 - [ ] Lineage — `uv run pytest tests/test_lineage.py tests/scripts/test_arc_runner_verifier.py` pending optional dependency install; rerun alongside Marquez smoke per quickstart once extras land.【860a1f†L1-L18】【477232†L1-L80】【ec8339†L1-L80】【b3de0d†L1-L42】
   - [ ] Infrastructure — `uv run python scripts/arc/verify_runner_lifecycle.py --owner ...` to capture lifecycle report for ARC runners (blocked awaiting staging access).【73fd99†L41-L55】
 

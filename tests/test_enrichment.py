@@ -14,6 +14,7 @@ import pandas as pd
 import pytest
 from collections.abc import Iterator
 from tests.helpers.fixtures import fixture
+from tests.helpers.pytest_marks import parametrize
 
 pytest.importorskip("frictionless")
 
@@ -433,7 +434,7 @@ def test_enrich_dataframe_with_registries_null_names(mock_enrich_registry, temp_
     )
 
 
-@pytest.mark.parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
+@parametrize("collector_name", ["news", "hiring", "traffic", "tech-adoption"])
 def test_run_intent_plan_registers_collectors(collector_name: str) -> None:
     """Each built-in collector should emit at least one signal."""
 

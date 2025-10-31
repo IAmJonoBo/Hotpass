@@ -6,19 +6,19 @@ import json
 import string
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, cast
 
 import pandas as pd
 import pytest
 from tests.helpers.hypothesis import HealthCheck, given, settings, st
 
-from hotpass.pipeline import aggregation as aggregation
+from hotpass.pipeline.aggregation import (
+    SSOT_COLUMNS,
+    YEAR_FIRST_PATTERN,
+    _aggregate_group,
+    _latest_iso_date,
+)
 from hotpass.pipeline.base import execute_pipeline
-
-SSOT_COLUMNS = aggregation.SSOT_COLUMNS
-YEAR_FIRST_PATTERN = aggregation.YEAR_FIRST_PATTERN
-_aggregate_group = cast(Callable[[Any, Any], Any], getattr(aggregation, "_aggregate_group"))
-_latest_iso_date = cast(Callable[[list[Any]], str | None], getattr(aggregation, "_latest_iso_date"))
 from hotpass.pipeline.config import PipelineConfig, PipelineRuntimeHooks
 
 

@@ -49,7 +49,7 @@ def test_apply_excel_formatting_preserves_unicode(values: list[str]) -> None:
 
 
 @composite
-def _formatting_frames(draw: st.DrawFn) -> pd.DataFrame:
+def _formatting_frames(draw) -> pd.DataFrame:
     row_count = draw(st.integers(min_value=1, max_value=4))
     names = draw(
         st.lists(
@@ -83,8 +83,11 @@ def _formatting_frames(draw: st.DrawFn) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
+_FORMATTING_FRAMES = _formatting_frames()
+
+
 @settings(max_examples=12, deadline=None)
-@given(_formatting_frames())
+@given(_FORMATTING_FRAMES)
 def test_apply_excel_formatting_handles_optional_columns(frame: pd.DataFrame) -> None:
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:

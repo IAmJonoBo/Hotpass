@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, TypeVar, overload, cast
+from typing import Any, Callable, ParamSpec, TypeVar, cast
 
 from hypothesis import HealthCheck as HealthCheck  # re-export
 from hypothesis import given as _given
@@ -12,32 +12,25 @@ from hypothesis.strategies import SearchStrategy
 from hypothesis.strategies import composite as _composite
 from hypothesis import strategies as st  # re-export for convenience
 
-F = TypeVar("F", bound=Callable[..., object])
+P = ParamSpec("P")
+R = TypeVar("R")
 T = TypeVar("T")
 
 
-@overload
-def given(*args: Any, **kwargs: Any) -> Callable[[F], F]: ...
-
-
-def given(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+def given(*args: Any, **kwargs: Any) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Typed wrapper around ``hypothesis.given``."""
 
-    def decorator(func: F) -> F:
-        return cast(F, _given(*args, **kwargs)(func))
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        return cast(Callable[P, R], _given(*args, **kwargs)(func))
 
     return decorator
 
 
-@overload
-def settings(*args: Any, **kwargs: Any) -> Callable[[F], F]: ...
-
-
-def settings(*args: Any, **kwargs: Any) -> Callable[[F], F]:
+def settings(*args: Any, **kwargs: Any) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Typed wrapper around ``hypothesis.settings``."""
 
-    def decorator(func: F) -> F:
-        return cast(F, _settings(*args, **kwargs)(func))
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+        return cast(Callable[P, R], _settings(*args, **kwargs)(func))
 
     return decorator
 

@@ -84,10 +84,10 @@ All quality gates (QG-1 through QG-5) are **PASSING**:
 
 ### Mypy (Type Checking)
 
-- **Status:** 127 type errors across 31 files
+- **Status:** 59 type errors across 18 files
 - **Baseline:** 171 errors (documented in Next_Steps.md)
-- **Change:** -44 errors (typed pytest fixtures, mlflow doubles, and cache workflow clean-up removed large clusters; outstanding items include Prefect decorators, observability stubs, and data-source assertions).【F:tests/helpers/fixtures.py†L1-L40】【F:tests/ml/test_tracking_stubbed.py†L1-L420】
-- **Action:** Continue migrating decorators in orchestration/dashboard suites and replace list-based `expect(...)` calls with boolean guards where flagged by mypy.【F:tests/test_orchestration.py†L100-L200】【F:tests/test_observability.py†L100-L160】
+- **Change:** -112 errors after shared fixture typing, mlflow stub normalisation, and the initial Hypothesis wrapper pass (baseline archived at `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`). Outstanding items follow the staged remediation roadmap (Hypothesis wrappers → optional-dependency stubs → CLI/MCP typing → long-tail cleanup).【F:tests/helpers/hypothesis.py†L1-L80】【F:tests/test_orchestration.py†L1-L200】
+- **Action:** Execute the four-phase remediation plan with quality gates (property suites typed, stubs centralised, CLI/MCP annotated, residuals cleared) before updating the final TA gate.【F:Next_Steps.md†L20-L48】
 
 ### Bandit (Security)
 

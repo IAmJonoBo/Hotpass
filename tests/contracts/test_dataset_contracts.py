@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from tests.helpers.pytest_marks import parametrize
 
 from hotpass import contracts
 
@@ -25,7 +26,7 @@ SCHEMAS_DIR = REPO_ROOT / "schemas"
 DOC_PATH = REPO_ROOT / "docs" / "reference" / "schemas.md"
 
 
-@pytest.mark.parametrize(
+@parametrize(
     "contract",
     contracts.DATASET_CONTRACTS,
     ids=lambda contract: contract.name,
