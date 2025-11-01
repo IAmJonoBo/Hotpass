@@ -4,6 +4,7 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  envPrefix: ['VITE_', 'PREFECT_', 'OPENLINEAGE_', 'HOTPASS_'],
   plugins: [react()],
   resolve: {
     alias: {
@@ -12,14 +13,20 @@ export default defineConfig({
   },
   server: {
     port: 3001,
+    fs: {
+      allow: [
+        path.resolve(__dirname),
+        path.resolve(__dirname, '..', '..'),
+      ],
+    },
     proxy: {
       '/api/marquez': {
-        target: 'http://localhost:5000',
+        target: process.env.OPENLINEAGE_URL || process.env.VITE_MARQUEZ_API_URL || 'http://localhost:5000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/marquez/, '/api/v1'),
       },
       '/api/prefect': {
-        target: process.env.VITE_PREFECT_API_URL || 'http://localhost:4200',
+        target: process.env.PREFECT_API_URL || process.env.VITE_PREFECT_API_URL || 'http://localhost:4200',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/prefect/, '/api'),
       },

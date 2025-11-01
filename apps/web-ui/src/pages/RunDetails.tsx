@@ -96,6 +96,9 @@ export function RunDetails() {
     )
   }
 
+  const rawMarquezUrl = import.meta.env.OPENLINEAGE_URL || import.meta.env.VITE_MARQUEZ_API_URL || ''
+  const marquezUiBase = rawMarquezUrl.replace(/\/api(?:\/v1)?$/, '')
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,6 +121,21 @@ export function RunDetails() {
         >
           {run.state_name}
         </Badge>
+      </div>
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="sm">
+          <a
+            href={marquezUiBase ? `${marquezUiBase}/runs/${encodeURIComponent(run.id)}` : '#'}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1"
+          >
+            Open in Marquez
+          </a>
+        </Button>
+        <div className="text-xs text-muted-foreground">
+          Uses the shared OPENLINEAGE_URL so CLI and UI link to the same namespace.
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -8,6 +8,10 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
 - **Quality first**: Great Expectations, POPIA compliance checks, and actionable quality reports keep stakeholders informed.
 - **Operational**: Prefect orchestration, OpenTelemetry metrics, and a Streamlit dashboard make the pipeline production-friendly.
 
+## Product vision
+
+Hotpass is stewarded by Jonathan Botha to prove that an open, automation-friendly data refinery can match enterprise suites feature-for-feature. Every shipping artifact—Prefect deployments, Marquez lineage facets, ARC manifests, agent tools—lives in Git so staging runs mirror what lands in production. The goal: messy spreadsheets in, governed outputs out, with clear provenance and repeatable automation.
+
 ## Five-minute quickstart
 
 1. Create an isolated environment with uv:
@@ -80,6 +84,19 @@ Hotpass ingests messy spreadsheet collections (primarily XLSX) alongside orchest
    ```bash
    python ops/idp/bootstrap.py --execute
    ```
+
+### Docker compose (local stack)
+
+For an end-to-end sandbox run:
+
+```bash
+cd deploy/docker
+docker compose up --build
+# Optional LLM sidecar:
+docker compose --profile llm up
+```
+
+The startup banner will remind you to open the VPN/bastion if the Prefect or Marquez health checks remain red.
 
 ### Automate tunnels and contexts
 

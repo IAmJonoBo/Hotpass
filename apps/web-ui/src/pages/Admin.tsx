@@ -25,9 +25,18 @@ interface ConfigSettings {
 }
 
 const DEFAULT_SETTINGS: ConfigSettings = {
-  prefectApiUrl: import.meta.env.VITE_PREFECT_API_URL || 'http://localhost:4200',
-  marquezApiUrl: import.meta.env.VITE_MARQUEZ_API_URL || 'http://localhost:5000',
-  environment: (import.meta.env.VITE_ENVIRONMENT as ConfigSettings['environment']) || 'local',
+  prefectApiUrl:
+    import.meta.env.PREFECT_API_URL ||
+    import.meta.env.VITE_PREFECT_API_URL ||
+    'http://localhost:4200',
+  marquezApiUrl:
+    import.meta.env.OPENLINEAGE_URL ||
+    import.meta.env.VITE_MARQUEZ_API_URL ||
+    'http://localhost:5000',
+  environment:
+    (import.meta.env.HOTPASS_ENVIRONMENT as ConfigSettings['environment']) ||
+    (import.meta.env.VITE_ENVIRONMENT as ConfigSettings['environment']) ||
+    'local',
   telemetryEnabled: true,
 }
 

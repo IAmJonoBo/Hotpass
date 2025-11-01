@@ -12,7 +12,9 @@ export function Layout() {
   const [activityOpen, setActivityOpen] = useState(false)
 
   // Get environment from env var or localStorage config
-  const environment = import.meta.env.VITE_ENVIRONMENT ||
+  const environment =
+    import.meta.env.HOTPASS_ENVIRONMENT ||
+    import.meta.env.VITE_ENVIRONMENT ||
     (typeof window !== 'undefined' && localStorage.getItem('hotpass_environment')) ||
     'local'
 

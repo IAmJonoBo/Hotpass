@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: arc-runners
+  labels:
+    app.kubernetes.io/name: arc-runners
+    app.kubernetes.io/part-of: hotpass-arc

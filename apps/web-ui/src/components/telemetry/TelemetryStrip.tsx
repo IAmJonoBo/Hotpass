@@ -11,13 +11,17 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { prefectApi } from '@/api/prefect'
 import { marquezApi } from '@/api/marquez'
+import { useLineageTelemetry } from '@/hooks/useLineageTelemetry'
 
 interface TelemetryStripProps {
   className?: string
 }
 
 export function TelemetryStrip({ className }: TelemetryStripProps) {
-  const environment = import.meta.env.VITE_ENVIRONMENT || 'local'
+  const environment =
+    import.meta.env.HOTPASS_ENVIRONMENT ||
+    import.meta.env.VITE_ENVIRONMENT ||
+    'local'
 
   // Check if telemetry is enabled (from localStorage/Admin)
   const telemetryEnabled =
@@ -71,6 +75,8 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
     enabled: telemetryEnabled,
   })
 
+  const { data: lineageTelemetry } = useLineageTelemetry()
+
   if (!telemetryEnabled) {
     return null
   }
@@ -84,7 +90,8 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
 
   const hasIssues = recentFailedRuns > 0 ||
     prefectHealth?.status === 'error' ||
-    marquezHealth?.status === 'error'
+    marquezHealth?.status === 'error' ||
+    (lineageTelemetry?.incompleteFacets ?? 0) > 0
 
   return (
     <div
@@ -154,19 +161,24 @@ export function TelemetryStrip({ className }: TelemetryStripProps) {
       </div>
 
       {/* Right side - Last update */}
-      <div className="flex items-center gap-2">
-        {hasIssues && (
-          <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20">
-            <Activity className="h-3 w-3 mr-1" />
-            Action Required
-          </Badge>
-        )}
+      <div className="flex items-center gap-4">
         <span className="text-muted-foreground">
-          Last poll:{' '}
-          {prefectHealth?.timestamp
-            ? formatDistanceToNow(prefectHealth.timestamp, { addSuffix: true })
-            : 'never'}
+          Telemetry: {lineageTelemetry?.incompleteFacets ?? 0} pending backfills · {lineageTelemetry?.failedToday ?? 0} failed today · {lineageTelemetry?.jobsToday ?? 0} jobs today
         </span>
+        <div className="flex items-center gap-2">
+          {hasIssues && (
+            <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20">
+              <Activity className="h-3 w-3 mr-1" />
+              Action Required
+            </Badge>
+          )}
+          <span className="text-muted-foreground">
+            Last poll:{' '}
+            {prefectHealth?.timestamp
+              ? formatDistanceToNow(prefectHealth.timestamp, { addSuffix: true })
+              : 'never'}
+          </span>
+        </div>
       </div>
     </div>
   )

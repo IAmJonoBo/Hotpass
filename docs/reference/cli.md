@@ -174,6 +174,7 @@ uv run hotpass arc --owner ExampleOrg --repository Hotpass --scale-set hotpass-a
 | `--verify-oidc`                          | Additionally verify AWS identity using OIDC.                   |
 | `--snapshot PATH`                        | Replay a recorded lifecycle snapshot for offline verification. |
 | `--store-summary`                        | Persist results under `.hotpass/arc/<timestamp>/`.             |
+| `--status-path PATH`                     | Write the JSON result to disk for the web UI health probes.    |
 | `--dry-run`                              | Print the underlying command without executing it.             |
 
 ### `distro`

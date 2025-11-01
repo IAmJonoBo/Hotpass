@@ -32,7 +32,10 @@ export function PowerTools({ onOpenAssistant }: PowerToolsProps) {
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
 
   // Check if running in Docker
-  const environment = import.meta.env.VITE_ENVIRONMENT || 'local'
+  const environment =
+    import.meta.env.HOTPASS_ENVIRONMENT ||
+    import.meta.env.VITE_ENVIRONMENT ||
+    'local'
   const isDocker = environment === 'docker'
 
   const copyCommand = (command: string, id: string) => {

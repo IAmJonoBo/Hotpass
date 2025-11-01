@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Lineage } from './pages/Lineage'
 import { RunDetails } from './pages/RunDetails'
 import { Admin } from './pages/Admin'
+import { Health } from './pages/Health'
 import { Assistant } from './pages/Assistant'
 import './index.css'
 
@@ -28,6 +29,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/lineage" element={<Lineage />} />
             <Route path="/assistant" element={<Assistant />} />
+            <Route path="/health" element={<Health />} />
             <Route path="/runs/:runId" element={<RunDetails />} />
             <Route path="/admin" element={<Admin />} />
           </Route>

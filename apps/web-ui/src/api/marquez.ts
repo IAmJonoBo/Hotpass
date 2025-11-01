@@ -2,7 +2,7 @@
  * Marquez/OpenLineage API client
  *
  * Fetches lineage data from the Marquez backend.
- * Base URL configured via VITE_MARQUEZ_API_URL env variable.
+ * Base URL configured via OPENLINEAGE_URL (shared with CLI) or VITE_MARQUEZ_API_URL.
  *
  * ASSUMPTION: Marquez is available at the configured URL (default: http://localhost:5000)
  * ASSUMPTION: API follows standard Marquez v1 endpoints
@@ -18,7 +18,11 @@ import type {
 
 const getBaseUrl = (): string => {
   // In production, use proxy path; in dev, vite.config.ts handles the proxy
-  return import.meta.env.VITE_MARQUEZ_API_URL || '/api/marquez'
+  return (
+    import.meta.env.OPENLINEAGE_URL ||
+    import.meta.env.VITE_MARQUEZ_API_URL ||
+    '/api/marquez'
+  )
 }
 
 export const marquezApi = {
@@ -104,6 +108,19 @@ export const marquezApi = {
       throw new Error(`Failed to fetch lineage: ${response.statusText}`)
     }
     return response.json()
+  },
+
+  async checkHealth(): Promise<boolean> {
+    const base = getBaseUrl()
+    try {
+      const response = await fetch(`${base}/api/v1/namespaces?limit=1`, {
+        headers: { Accept: 'application/json' },
+      })
+      return response.ok
+    } catch (error) {
+      console.warn('Marquez health check failed:', error)
+      return false
+    }
   },
 }
 

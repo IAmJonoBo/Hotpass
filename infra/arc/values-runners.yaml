@@ -1,0 +1,43 @@
+runnerScaleSet:
+  name: hotpass-arc
+  namespace: arc-runners
+  githubConfigUrl: https://github.com/IAmJonoBo/Hotpass
+  minRunners: 0
+  maxRunners: 5
+  containerMode: docker
+
+  template:
+    spec:
+      serviceAccountName: arc-runner
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner:3.12.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: arc-github-app
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 2Gi
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: arc
+          effect: NoSchedule
+
+serviceAccount:
+  create: true
+  name: arc-runner
+  namespace: arc-runners
+
+persistence:
+  enabled: false
+
+logging:
+  level: info

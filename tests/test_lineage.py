@@ -49,14 +49,22 @@ class _StubDataset:
 
 
 class _StubRun:
-    def __init__(self, *, runId: str) -> None:  # noqa: N803 - OpenLineage naming
+    def __init__(self, *, runId: str, facets: Mapping[str, object] | None = None) -> None:  # noqa: N803 - OpenLineage naming
         self.runId = runId
+        self.facets = dict(facets or {})
 
 
 class _StubJob:
-    def __init__(self, *, namespace: str, name: str) -> None:
+    def __init__(
+        self,
+        *,
+        namespace: str,
+        name: str,
+        facets: Mapping[str, object] | None = None,
+    ) -> None:
         self.namespace = namespace
         self.name = name
+        self.facets = dict(facets or {})
 
 
 class _StubRunEvent:
@@ -218,6 +226,15 @@ def test_lineage_emitter_honours_environment_configuration(
     expect(
         captured.get("producer") == emitter.producer,
         "Producer setter should receive override value.",
+    )
+    latest_event = _StubClient.emitted[-1]
+    expect(
+        "hotpass" in latest_event.run.facets,
+        "Hotpass facet should be attached to run events.",
+    )
+    expect(
+        latest_event.run.facets["hotpass"].get("hotpass_version"),
+        "Hotpass facet should include the package version.",
     )
 
 

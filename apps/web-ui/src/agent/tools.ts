@@ -6,6 +6,7 @@
 
 import { prefectApi } from '@/api/prefect'
 import { marquezApi } from '@/api/marquez'
+import { getCachedToolContract, loadToolContract, type ToolDefinition } from './contract'
 
 export interface ToolResult {
   success: boolean
@@ -19,6 +20,12 @@ export interface ToolCall {
   tool: string
   timestamp: Date
   result?: ToolResult
+}
+
+export const toolContract: ToolDefinition[] = getCachedToolContract()
+
+export async function refreshToolContract(): Promise<ToolDefinition[]> {
+  return loadToolContract()
 }
 
 /**

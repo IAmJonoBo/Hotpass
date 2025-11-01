@@ -7,7 +7,8 @@ import {
   Moon,
   Sun,
   MessageSquare,
-  History
+  History,
+  Stethoscope,
 } from 'lucide-react'
 import { cn, getEnvironmentColor } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -43,6 +44,7 @@ export function Sidebar({ environment = 'local', onOpenAssistant, onOpenActivity
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Lineage', href: '/lineage', icon: GitBranch },
+    { name: 'Health', href: '/health', icon: Stethoscope },
     { name: 'Assistant', href: '/assistant', icon: MessageSquare },
     { name: 'Admin', href: '/admin', icon: Settings },
   ]

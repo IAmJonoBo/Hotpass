@@ -70,6 +70,11 @@ def build(
         help="Persist the verification output under .hotpass/arc/<timestamp>/",
     )
     parser.add_argument(
+        "--status-path",
+        type=Path,
+        help="Write the JSON verification result to this path for the web UI health checks.",
+    )
+    parser.add_argument(
         "--store-dir",
         type=Path,
         help="Custom directory to store verification output (defaults to .hotpass/arc/<timestamp>)",
@@ -95,6 +100,8 @@ def register() -> CLICommand:
 def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) -> int:
     _ = profile
     console = Console()
+    if namespace.status_path and namespace.output != "json":
+        namespace.output = "json"
     command = _build_runner_command(namespace)
     console.print(f"[cyan]ARC verification command:[/cyan] {format_command(command)}")
 
@@ -140,6 +147,18 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
             json.dumps(metadata, indent=2), encoding="utf-8"
         )
         console.print(f"[green]Stored verification output under {output_dir}[/green]")
+
+    if namespace.status_path:
+        status_path = Path(namespace.status_path)
+        try:
+            payload = json.loads(proc.stdout or "{}")
+        except json.JSONDecodeError as exc:
+            console.print(f"[red]Failed to decode ARC status JSON: {exc}[/red]")
+            return 1
+        payload.setdefault("verified_at", datetime.now(tz=UTC).isoformat())
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        console.print(f"[green]ARC status written to {status_path}[/green]")
 
     return 0
 

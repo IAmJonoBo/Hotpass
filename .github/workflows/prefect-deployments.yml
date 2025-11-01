@@ -1,0 +1,47 @@
+name: Prefect Deployments
+
+on:
+  pull_request:
+    paths:
+      - 'apps/data-platform/hotpass/orchestration.py'
+      - 'ops/prefect/**'
+      - 'prefect.yaml'
+      - 'prefect/*.yaml'
+      - '.github/workflows/prefect-deployments.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
+        with:
+          python-version: '3.13'
+
+      - name: Synchronise dependencies
+        env:
+          HOTPASS_UV_EXTRAS: 'dev orchestration'
+        run: bash ops/uv_sync_extras.sh
+
+      - name: Generate Prefect deployments
+        run: |
+          uv run python ops/prefect/build_deployments.py
+
+      - name: Diff generated manifests
+        run: |
+          git status --short -- prefect/deployments || true
+          git diff --exit-code prefect/deployments
+
+      - name: Upload generated manifests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prefect-deployments
+          path: prefect/deployments
+          if-no-files-found: error

@@ -17,6 +17,7 @@ import { mockPrefectData } from '@/api/prefect'
 import { useHILApprovals } from '@/store/hilStore'
 import { LiveRefinementPanel } from '@/components/refinement/LiveRefinementPanel'
 import { PowerTools } from '@/components/powertools/PowerTools'
+import { useLineageTelemetry, jobHasHotpassFacet } from '@/hooks/useLineageTelemetry'
 
 interface OutletContext {
   openAssistant: (message?: string) => void
@@ -41,6 +42,8 @@ export function Dashboard() {
 
   // Fetch HIL approvals
   const { data: hilApprovals = {} } = useHILApprovals()
+
+  const { data: lineageTelemetry } = useLineageTelemetry()
 
   // Helper to get HIL status badge
   const getHILStatusBadge = (runId: string) => {
@@ -96,6 +99,31 @@ export function Dashboard() {
   const completedRuns = recentRuns.filter(r => r.state_type === 'COMPLETED').length
   const failedRuns = recentRuns.filter(r => r.state_type === 'FAILED').length
   const runningRuns = recentRuns.filter(r => r.state_type === 'RUNNING').length
+
+  const latestSpreadsheets = recentRuns.slice(0, 50).map((run) => {
+    const params = run.parameters ?? {}
+    const hil = hilApprovals[run.id]
+    return {
+      id: run.id,
+      name: String(params.input_dir || params.source || run.name || 'Unknown input'),
+      status: run.state_name,
+      geDocs: String(params.data_docs_url || '/dist/data-docs/index.html'),
+      notes: hil?.comment || '-',
+      run,
+    }
+  })
+
+  const suggestedBackfills = (lineageTelemetry?.jobs || [])
+    .filter((job) => !jobHasHotpassFacet(job))
+    .slice(0, 5)
+    .map((job) => ({
+      id: `backfill-${job.name}`,
+      name: `${job.name} (lineage)` ,
+      status: 'Needs provenance',
+      geDocs: '#',
+      notes: 'Missing hotpass lineage facets',
+      run: null,
+    }))
 
   return (
     <div className="space-y-6">
@@ -169,6 +197,63 @@ export function Dashboard() {
 
       {/* Power Tools */}
       <PowerTools onOpenAssistant={() => openAssistant()} />
+
+      {/* Latest Spreadsheets */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Latest 50 Spreadsheets</CardTitle>
+          <CardDescription>
+            Pipeline inputs with Great Expectations documentation and operator notes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Source</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>GE Docs</TableHead>
+                <TableHead>Operator Notes</TableHead>
+                <TableHead className="text-right">Last Run</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...latestSpreadsheets, ...suggestedBackfills].map((entry) => (
+                <TableRow key={entry.id} className={entry.run ? undefined : 'bg-yellow-500/10'}>
+                  <TableCell className="font-medium">
+                    {entry.name}
+                    {!entry.run && (
+                      <Badge variant="outline" className="ml-2 text-xs text-yellow-700 border-yellow-500/50">
+                        Suggested backfill
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn(getStatusColor(entry.status))}>
+                      {entry.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {entry.geDocs && entry.geDocs !== '#' ? (
+                      <a href={entry.geDocs} className="text-primary hover:underline" target="_blank" rel="noreferrer">
+                        View Docs
+                      </a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Not published</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {entry.notes}
+                  </TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">
+                    {entry.run?.start_time ? new Date(entry.run.start_time).toLocaleString() : '—'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Recent Runs Table */}
       <Card>

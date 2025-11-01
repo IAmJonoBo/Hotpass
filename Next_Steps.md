@@ -12,15 +12,15 @@
   - **Progress:** Added `tests/cli/test_resolve_profile.py` coverage for profile-driven Splink defaults, explicit disable flags, and Label Studio wiring; orchestrator stress fixtures still pending once staging data is available.
 - [x] **Engineering & QA** — Execute the staged mypy remediation plan (typed Hypothesis wrappers ➜ optional-dependency stubs ➜ CLI/MCP typing ➜ long-tail cleanup) to drive the error count toward zero.
 - [x] **Platform (Phase 5)** — Enable Docker buildx cache reuse through PR `ci/docker-cache` (owner: Platform).【F:.github/workflows/docker-cache.yml†L1-L60】
-- [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns.
+- [ ] **Platform & QA** — Capture staging evidence for Prefect backfill guardrails and ARC runner sign-off once access returns _(post-1.0)_.
 - [ ] **Docs & UX (Phase 6)** — Finish Diátaxis navigation uplift in PR `docs/data-governance-nav` follow-on, ensuring governance artefacts surfaced (owner: Docs & UX).
 
 ## Steps
 
 - [ ] Reconfirm post-PR hygiene: ensure `Next_Steps.md` updated alongside each PR hand-off as per contributing guide (rolling reminder for all owners).【2ed7b7†L71-L71】
-- [ ] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (in progress 2025-10-29).
+- [x] Introduce manifest-driven Prefect deployments with CLI/docs/ADR updates (completed 2025-11-01).
 - [ ] Schedule Marquez lineage smoke against `observability/marquez-bootstrap` follow-up once optional dependencies land (target 2025-11-29) using the quickstart workflow.【d9a97b†L24-L29】【b3de0d†L1-L42】
-- [ ] Document expected staging artefacts for Prefect backfill guardrails and ARC runner sign-off runs so evidence drops into `dist/staging/backfill/` and `dist/staging/arc/` when access resumes (owner: Platform & QA).
+- [ ] Document expected staging artefacts for Prefect backfill guardrails and ARC runner sign-off runs so evidence drops into `dist/staging/backfill/` and `dist/staging/arc/` when access resumes (owner: Platform & QA, _(post-1.0)_).
 - [x] **Types remediation roadmap (Engineering & QA)** — execute the staged plan and record checkpoints:
   - **Phase 0** (Baseline capture) — archived `dist/quality-gates/baselines/mypy-baseline-2025-10-31.txt`; pytest baseline confirmed.
   - **Phase 1** (Hypothesis/property suites) — typed wrappers + suite updates; property suites now raise zero decorator warnings.

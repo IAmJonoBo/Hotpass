@@ -4,6 +4,7 @@ _Updated 2025-10-31_
 
 ## Tasks
 
+- [x] **2025-11-01 · Engineering & Platform** — Lock orchestration, lineage, and ARC surfaces (Prefect deployment generator, health page, ARC manifests, OpenLineage facets, security sweep).【F:ops/prefect/build_deployments.py†L1-L120】【F:.github/workflows/prefect-deployments.yml†L1-L60】【F:apps/web-ui/src/pages/Health.tsx†L1-L160】【F:infra/arc/README.md†L1-L60】【F:apps/data-platform/hotpass/lineage.py†L1-L380】【F:.github/workflows/security-scan.yml†L1-L80】
 - [x] **2025-11-05 · Platform** — Deploy GitHub ARC runner scale set to staging and exercise OIDC smoke workflow (align with infra runbooks, target week of 2025-11-04).【F:ops/arc/verify_runner_lifecycle.py†L1-L210】【F:.github/workflows/arc-ephemeral-runner.yml†L1-L60】【F:docs/how-to-guides/manage-arc-runners.md†L1-L108】
 - [x] **2025-12-13 · QA & Engineering** — Add regression coverage for modular pipeline stages (finalise `tests/pipeline/fixtures/` by 2025-12-09; pair nightly dry-run after CLI stress test).【F:tests/pipeline/test_stage_execution.py†L1-L201】【F:tests/pipeline/fixtures/stage_inputs.py†L1-L111】
 - [x] **2025-12-20 · QA** — Exercise CLI progress reporting under high-volume fixtures (generate 10k-run dataset in `tests/cli/fixtures/progress_high_volume.json` and reserve 02:00–04:00 UTC window).【F:tests/cli/test_progress.py†L1-L149】【F:tests/cli/fixtures/progress_high_volume.json†L1-L1】

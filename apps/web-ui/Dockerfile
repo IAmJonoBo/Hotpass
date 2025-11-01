@@ -3,6 +3,14 @@
 
 FROM node:20-alpine AS builder
 
+ARG PREFECT_API_URL=http://localhost:4200/api
+ARG OPENLINEAGE_URL=http://localhost:5000/api/v1
+
+ENV PREFECT_API_URL=${PREFECT_API_URL}
+ENV OPENLINEAGE_URL=${OPENLINEAGE_URL}
+ENV VITE_PREFECT_API_URL=${PREFECT_API_URL}
+ENV VITE_MARQUEZ_API_URL=${OPENLINEAGE_URL}
+
 WORKDIR /app
 
 # Copy package files
@@ -22,6 +30,8 @@ FROM nginx:alpine
 
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+COPY ../../deploy/docker/bin/health-banner.sh /docker-entrypoint.d/10-health-banner.sh
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf

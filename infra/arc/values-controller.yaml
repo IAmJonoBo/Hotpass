@@ -1,0 +1,36 @@
+controller:
+  image:
+    repository: ghcr.io/actions/actions-runner-controller/actions-runner-controller
+    tag: v0.28.1
+    pullPolicy: IfNotPresent
+  managerNamespace: arc-controller
+  metrics:
+    serviceMonitor:
+      enabled: false
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 512Mi
+
+githubApp:
+  id: 123456 # replace with your GitHub App ID
+  installationId: 987654 # replace with installation ID
+  privateKeySecret:
+    name: arc-github-app
+    key: privateKey
+    create: false
+  webhookSecret:
+    name: arc-github-app
+    key: webhookSecret
+    create: false
+
+leaderElection:
+  namespace: arc-controller
+
+serviceAccount:
+  create: true
+  name: arc-controller
+  namespace: arc-controller

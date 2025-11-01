@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { executeTool, type ToolResult, type ToolCall } from '@/agent/tools'
+import { executeTool, toolContract, refreshToolContract, type ToolResult, type ToolCall } from '@/agent/tools'
 import { useQuery } from '@tanstack/react-query'
 import { prefectApi } from '@/api/prefect'
+import { useLineageTelemetry } from '@/hooks/useLineageTelemetry'
 
 export interface ChatMessage {
   id: string
@@ -41,6 +42,7 @@ export function AssistantChat({ className, initialMessage }: AssistantChatProps)
   const [input, setInput] = useState(initialMessage || '')
   const [isProcessing, setIsProcessing] = useState(false)
   const [lastToolCall, setLastToolCall] = useState<ToolCall | null>(null)
+  const [contract, setContract] = useState(toolContract)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fetch telemetry data
@@ -57,7 +59,12 @@ export function AssistantChat({ className, initialMessage }: AssistantChatProps)
   })
 
   const lastPollTime = new Date()
-  const environment = import.meta.env.VITE_ENVIRONMENT || 'local'
+  const environment =
+    import.meta.env.HOTPASS_ENVIRONMENT ||
+    import.meta.env.VITE_ENVIRONMENT ||
+    'local'
+
+  const { data: lineageTelemetry } = useLineageTelemetry()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -69,6 +76,10 @@ export function AssistantChat({ className, initialMessage }: AssistantChatProps)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessage])
+
+  useEffect(() => {
+    refreshToolContract().then(setContract).catch(() => {})
+  }, [])
 
   const handleSendMessage = async (messageText?: string) => {
     const text = messageText || input.trim()
@@ -152,7 +163,10 @@ export function AssistantChat({ className, initialMessage }: AssistantChatProps)
           }
         }
       } else {
-        responseContent = "I understand you want help, but I didn't recognize a specific command. Try:\n• 'list flows'\n• 'list lineage'\n• 'open run [id]'\n• 'get runs'"
+        const suggestions = contract
+          .map(tool => `• ${tool.name} — ${tool.method} ${tool.path}`)
+          .join('\n')
+        responseContent = `I understand you want help, but I didn't recognize a specific command. Available tools:\n${suggestions}`
       }
 
       const assistantMessage: ChatMessage = {
@@ -263,15 +277,12 @@ export function AssistantChat({ className, initialMessage }: AssistantChatProps)
         )}
 
         {/* Telemetry footer */}
-        <div className="w-full text-xs text-muted-foreground border-t pt-2 space-y-1">
-          <div className="flex justify-between">
-            <span>Last poll from Prefect: {formatDistanceToNow(lastPollTime, { addSuffix: true })}</span>
-            <Badge variant="outline" className="text-xs">{flowRuns.length} recent runs</Badge>
-          </div>
-          <div className="flex justify-between">
-            <span>Lineage source: Marquez (namespace: hotpass)</span>
-            <span>Environment: <Badge variant="outline" className="text-xs">{environment}</Badge></span>
-          </div>
+        <div className="w-full text-xs text-muted-foreground border-t pt-2 flex items-center justify-between">
+          <span>
+            Telemetry: {lineageTelemetry?.incompleteFacets ?? 0} pending backfills ·{' '}
+            {flowRuns.length} cached Prefect runs · last sync {formatDistanceToNow(lastPollTime, { addSuffix: true })} · source=marquez
+          </span>
+          <Badge variant="outline" className="text-xs">Env: {environment}</Badge>
         </div>
 
         {/* Input */}

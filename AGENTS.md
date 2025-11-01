@@ -185,6 +185,10 @@ network_access = true
 3. Execute the **Agent run command**.
 4. Upload `dist/refined.xlsx` as artifact.
 
+### Tool Contract
+
+- Machine-readable tool definitions live in [`tools.json`](./tools.json). The same file is consumed by the web UI chat console so Codex, Copilot, and custom agents share an identical contract (`list_prefect_flows`, `get_marquez_lineage`, `run_hotpass_refine`).
+
 ---
 
 ## 8) CLI Commands (UPGRADE.md Aligned)

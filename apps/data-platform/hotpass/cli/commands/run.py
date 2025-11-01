@@ -19,10 +19,14 @@ from hotpass.automation.http import AutomationHTTPClient, DeadLetterQueue
 from hotpass.config import load_industry_profile
 from hotpass.config_schema import HotpassConfig
 from hotpass.error_handling import DataContractError
-from hotpass.lineage import (build_output_datasets, create_emitter,
-                             discover_input_datasets)
+from hotpass.lineage import (
+    build_hotpass_run_facet,
+    build_output_datasets,
+    create_emitter,
+    discover_input_datasets,
+)
 from hotpass.orchestration import build_pipeline_job_name
-from hotpass.pipeline import default_feature_bundle
+from hotpass.pipeline import PipelineConfig, default_feature_bundle
 from hotpass.pipeline.orchestrator import (PipelineExecutionConfig,
                                            PipelineOrchestrator)
 from hotpass.telemetry.bootstrap import (TelemetryBootstrapOptions,
@@ -54,7 +58,40 @@ LEGACY_PIPELINE_KEYS: frozenset[str] = frozenset(
         "qa_mode",
         "observability",
         "sensitive_fields",
-    }
+}
+
+
+def _resolve_profile_name(config: PipelineConfig) -> str | None:
+    industry_profile = getattr(config, "industry_profile", None)
+    profile_name = getattr(industry_profile, "name", None)
+    if profile_name:
+        return str(profile_name)
+    expectation = getattr(config, "expectation_suite_name", None)
+    if expectation:
+        return str(expectation)
+    return None
+
+
+def _first_dataset_name(datasets: Iterable[Any]) -> str | None:
+    for dataset in datasets:
+        if isinstance(dataset, Mapping):
+            name = dataset.get("name")
+            if name:
+                return str(name)
+        elif isinstance(dataset, Path):
+            return str(dataset)
+        else:
+            candidate = str(dataset).strip()
+            if candidate:
+                return candidate
+    return None
+
+
+def _research_enabled() -> bool:
+    truthy = {"1", "true", "yes", "on"}
+    feature = os.getenv("FEATURE_ENABLE_REMOTE_RESEARCH", "0").lower()
+    allow = os.getenv("ALLOW_NETWORK_RESEARCH", "false").lower()
+    return feature in truthy and allow in truthy
 )
 
 
@@ -178,11 +215,18 @@ def _command_handler(namespace: argparse.Namespace, profile: CLIProfile | None) 
                 metrics=metrics,
             )
 
+            input_datasets = discover_input_datasets(base_config.input_dir)
+            facets = build_hotpass_run_facet(
+                profile=_resolve_profile_name(base_config),
+                source_spreadsheet=_first_dataset_name(input_datasets),
+                research_enabled=_research_enabled(),
+            )
             emitter = create_emitter(
                 build_pipeline_job_name(base_config),
                 run_id=base_config.run_id,
+                facets=facets,
             )
-            emitter.emit_start(inputs=discover_input_datasets(base_config.input_dir))
+            emitter.emit_start(inputs=input_datasets)
 
             lineage_outputs = build_output_datasets(base_config.output_path)
             archive_path: Path | None = None

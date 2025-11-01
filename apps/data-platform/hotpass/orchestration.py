@@ -23,8 +23,12 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from .artifacts import create_refined_archive
 from .config import get_default_profile
-from .lineage import (build_output_datasets, create_emitter,
-                      discover_input_datasets)
+from .lineage import (
+    build_hotpass_run_facet,
+    build_output_datasets,
+    create_emitter,
+    discover_input_datasets,
+)
 from .pipeline import PipelineConfig, run_pipeline
 from .telemetry.bootstrap import TelemetryBootstrapOptions, telemetry_session
 
@@ -467,11 +471,17 @@ def _execute_pipeline(
 ) -> PipelineRunSummary:
     """Execute the pipeline runner and return a structured summary."""
 
+    input_datasets = discover_input_datasets(config.input_dir)
+    facets = build_hotpass_run_facet(
+        profile=_resolve_profile_name(config),
+        source_spreadsheet=_first_dataset_name(input_datasets),
+        research_enabled=_research_enabled(),
+    )
     emitter = create_emitter(
         build_pipeline_job_name(config),
         run_id=config.run_id,
+        facets=facets,
     )
-    input_datasets = discover_input_datasets(config.input_dir)
     emitter.emit_start(inputs=input_datasets)
 
     archive_path: Path | None = None
@@ -637,6 +647,39 @@ def _lookup_nested(
 def _sanitise_component(value: str) -> str:
     cleaned = value.replace("\\", "-").replace("/", "-").strip()
     return cleaned or "default"
+
+
+def _resolve_profile_name(config: PipelineConfig) -> str | None:
+    profile = getattr(config, "industry_profile", None)
+    candidate = getattr(profile, "name", None)
+    if candidate:
+        return str(candidate)
+    expectation = getattr(config, "expectation_suite_name", None)
+    if expectation:
+        return str(expectation)
+    return None
+
+
+def _first_dataset_name(datasets: Sequence[Any]) -> str | None:
+    for dataset in datasets:
+        if isinstance(dataset, Mapping):
+            name = dataset.get("name")
+            if name:
+                return str(name)
+        elif isinstance(dataset, Path):
+            return str(dataset)
+        else:
+            candidate = str(dataset).strip()
+            if candidate:
+                return candidate
+    return None
+
+
+def _research_enabled() -> bool:
+    feature = os.getenv("FEATURE_ENABLE_REMOTE_RESEARCH", "0").lower()
+    allow = os.getenv("ALLOW_NETWORK_RESEARCH", "false").lower()
+    truthy = {"1", "true", "yes", "on"}
+    return feature in truthy and allow in truthy
 
 
 def _format_archive_path(

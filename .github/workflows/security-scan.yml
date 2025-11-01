@@ -1,0 +1,59 @@
+name: Security & Supply Chain
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          additional-args: '--verbose'
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7
+        with:
+          python-version: '3.13'
+
+      - name: Synchronise dependencies
+        env:
+          HOTPASS_UV_EXTRAS: 'dev orchestration'
+        run: bash ops/uv_sync_extras.sh
+
+      - name: pip-audit
+        run: uv tool run pip-audit --strict
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/web-ui/package-lock.json
+
+      - name: Install web UI dependencies
+        working-directory: apps/web-ui
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: apps/web-ui
+        run: npx playwright install --with-deps
+
+      - name: Playwright tests
+        working-directory: apps/web-ui
+        env:
+          CI: 'true'
+        run: npm run test:e2e

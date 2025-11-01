@@ -2,7 +2,7 @@
  * Prefect API client
  *
  * Fetches flow and flow run data from Prefect Cloud/Server.
- * Base URL configured via VITE_PREFECT_API_URL env variable.
+ * Base URL configured via PREFECT_API_URL (shared with CLI) or VITE_PREFECT_API_URL.
  *
  * ASSUMPTION: Prefect API is available at the configured URL (default: http://localhost:4200)
  * ASSUMPTION: API key authentication handled via proxy or environment
@@ -15,7 +15,11 @@ import type {
 } from '@/types'
 
 const getBaseUrl = (): string => {
-  return import.meta.env.VITE_PREFECT_API_URL || '/api/prefect'
+  return (
+    import.meta.env.PREFECT_API_URL ||
+    import.meta.env.VITE_PREFECT_API_URL ||
+    '/api/prefect'
+  )
 }
 
 export const prefectApi = {
@@ -80,6 +84,29 @@ export const prefectApi = {
       throw new Error(`Failed to fetch deployments: ${response.statusText}`)
     }
     return response.json()
+  },
+
+  async checkHealth(): Promise<boolean> {
+    const url = `${getBaseUrl()}/health`
+    try {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } })
+      if (!response.ok) {
+        return false
+      }
+      const payload = await response.json().catch(() => null)
+      if (payload && typeof payload === 'object') {
+        if ('status' in payload) {
+          return String(payload.status).toLowerCase() === 'healthy'
+        }
+        if ('healthy' in payload) {
+          return Boolean(payload.healthy)
+        }
+      }
+      return true
+    } catch (error) {
+      console.warn('Prefect health check failed:', error)
+      return false
+    }
   },
 }
 

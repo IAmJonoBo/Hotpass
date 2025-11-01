@@ -7,9 +7,11 @@ import logging
 import os
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
+from importlib import metadata
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
+from importlib import metadata
 
 OpenLineageClient: Any | None
 set_lineage_producer: Callable[[str], None] | None
@@ -45,6 +47,22 @@ DEFAULT_PRODUCER = "https://hotpass.dev/lineage"
 
 DatasetSpec = str | Path | Mapping[str, object]
 
+try:
+    _HOTPASS_VERSION = metadata.version("hotpass")
+except metadata.PackageNotFoundError:  # pragma: no cover - during editable installs
+    _HOTPASS_VERSION = "unknown"
+
+
+def _build_facet_block(facets: Mapping[str, Any] | None, producer: str) -> dict[str, Any]:
+    if not facets:
+        return {}
+    cleaned: dict[str, Any] = {"_producer": producer}
+    for key, value in facets.items():
+        if value is None:
+            continue
+        cleaned[key] = value
+    return {"hotpass": cleaned}
+
 
 class LineageEmitter:
     """Thin wrapper around the OpenLineage client with graceful fallbacks."""
@@ -56,6 +74,7 @@ class LineageEmitter:
         run_id: str | None = None,
         namespace: str | None = None,
         producer: str | None = None,
+        facets: Mapping[str, Any] | None = None,
     ) -> None:
         self.job_name = job_name
         self.namespace = namespace or os.getenv(
@@ -67,6 +86,8 @@ class LineageEmitter:
         )
         self.producer = str(resolved_producer)
         self._inputs: Sequence[Any] | None = None
+        self._run_facets = _build_facet_block(facets, self.producer)
+        self._job_facets = dict(self._run_facets)
 
         self._client: Any | None = self._initialise_client()
         self._active = self._client is not None
@@ -99,8 +120,8 @@ class LineageEmitter:
             eventTime=_now(),
             producer=self.producer,
             eventType=RunState.START,
-            run=Run(runId=self.run_id),
-            job=Job(namespace=self.namespace, name=self.job_name),
+            run=Run(runId=self.run_id, facets=self._run_facets),
+            job=Job(namespace=self.namespace, name=self.job_name, facets=self._job_facets),
             inputs=list(self._inputs),
             outputs=[],
         )
@@ -124,8 +145,8 @@ class LineageEmitter:
             eventTime=_now(),
             producer=self.producer,
             eventType=RunState.COMPLETE,
-            run=Run(runId=self.run_id),
-            job=Job(namespace=self.namespace, name=self.job_name),
+            run=Run(runId=self.run_id, facets=self._run_facets),
+            job=Job(namespace=self.namespace, name=self.job_name, facets=self._job_facets),
             inputs=list(self._inputs or []),
             outputs=self._build_datasets(outputs or (), OutputDataset),
         )
@@ -150,8 +171,8 @@ class LineageEmitter:
             eventTime=_now(),
             producer=self.producer,
             eventType=RunState.FAIL,
-            run=Run(runId=self.run_id),
-            job=Job(namespace=self.namespace, name=self.job_name),
+            run=Run(runId=self.run_id, facets=self._run_facets),
+            job=Job(namespace=self.namespace, name=self.job_name, facets=self._job_facets),
             inputs=list(self._inputs or []),
             outputs=self._build_datasets(outputs or (), OutputDataset),
         )
@@ -319,12 +340,15 @@ def create_emitter(
     run_id: str | None = None,
     namespace: str | None = None,
     producer: str | None = None,
+    facets: Mapping[str, Any] | None = None,
 ) -> LineageEmitter:
+    facet_payload = facets or {"hotpass_version": _HOTPASS_VERSION}
     emitter = LineageEmitter(
         job_name,
         run_id=run_id,
         namespace=namespace,
         producer=producer,
+        facets=facet_payload,
     )
     if emitter.is_enabled:
         return emitter
@@ -341,10 +365,29 @@ def _normalise_path_string(value: str) -> str:
     return str(Path(value).expanduser())
 
 
+def build_hotpass_run_facet(
+    *,
+    profile: str | None,
+    source_spreadsheet: str | None,
+    research_enabled: bool | None,
+) -> Mapping[str, Any]:
+    facet: dict[str, Any] = {
+        "hotpass_version": _HOTPASS_VERSION,
+    }
+    if profile:
+        facet["profile"] = profile
+    if source_spreadsheet:
+        facet["source_spreadsheet"] = source_spreadsheet
+    if research_enabled is not None:
+        facet["research_enabled"] = bool(research_enabled)
+    return facet
+
+
 __all__ = [
     "build_output_datasets",
     "create_emitter",
     "discover_input_datasets",
     "LineageEmitter",
     "NullLineageEmitter",
+    "build_hotpass_run_facet",
 ]
